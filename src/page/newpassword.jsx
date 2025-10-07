@@ -3,7 +3,7 @@ import { HiChevronLeft } from "react-icons/hi";
 import mainImage from "../assets/img/rebs_login.png";
 import { useNavigate } from "react-router-dom";
 
-export default function ForgotPasswordUI() {
+export default function NewPasswordUI() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -38,14 +38,15 @@ export default function ForgotPasswordUI() {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Forgot Password Email:", email);
+    // Navigate to OTP page
     navigate("/otp");
   };
 
   return (
-    <div className="w-full h-screen bg-black flex justify-center items-center p-4 font-sans">
+    <div className="w-full h-screen bg-black flex justify-center items-center p-4">
       <div className="flex h-full w-full rounded-2xl overflow-hidden">
-        {/* ---------- Left panel ---------- */}
-        <div className="relative w-[55%] overflow-hidden rounded-l-2xl">
+        {/* Left panel */}
+        <div className="relative w-[55%] overflow-hidden rounded-l-2xl ">
           <img src={mainImage} alt="Office" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/40 flex flex-col">
             <div className="relative flex flex-col justify-end h-full p-4">
@@ -82,13 +83,16 @@ export default function ForgotPasswordUI() {
           </div>
         </div>
 
-        {/* ---------- Right panel ---------- */}
+        {/* Gap */}
+        <div className="w-2 bg-black"></div>
+
+        {/* Right panel */}
         <div className="w-[45%] bg-white rounded-r-2xl flex flex-col justify-between">
           {/* Form area */}
           <div className="flex-grow flex justify-center items-center px-6 md:px-8 lg:px-12">
             <div className="w-full max-w-md transform scale-90 p-6">
-              {/* Header */}
-              <div className="flex items-center mb-8">
+              {/* Header: Chevron + Vertical Bar */}
+              <div className="flex items-center mb-6">
                 <div
                   className="flex items-center cursor-pointer mr-2"
                   onClick={() => navigate("/")}
@@ -100,24 +104,32 @@ export default function ForgotPasswordUI() {
               </div>
 
               {/* Description */}
-              <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-                <span className="font-semibold text-black">Hi,</span> Welcome to the password reset page. <br />
-                Please enter your email below to continue.
+              <p className="text-gray-500 text-sm mb-6">
+                <span className="font-semibold text-black">Hi,</span> Welcome to the password reset page, <br />
+                Enter your email first.
               </p>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <input
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email"
-                  className="w-full text-black placeholder-gray-500 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent py-2 font-sans"
+                  placeholder="New Password"
+                  className="w-full text-black border-b border-gray-300 focus:outline-none focus:border-black bg-transparent py-1.5"
+                  required
+                />
+                 <input
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Conform Password"
+                  className="w-full text-black border-b border-gray-300 focus:outline-none focus:border-black bg-transparent py-1.5 "
                   required
                 />
                 <button
                   type="submit"
-                  className="w-full py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-xl transition duration-150 font-sans"
+                  className="w-full py-2.5 bg-black hover:bg-gray-800 text-white font-medium rounded-xl transition duration-150"
                 >
                   Next
                 </button>
@@ -125,7 +137,7 @@ export default function ForgotPasswordUI() {
             </div>
           </div>
 
-          {/* Footer */}
+          {/* Footer inside right panel */}
           <div className="w-full px-6 md:px-8 py-4 flex justify-between text-center md:text-left">
             <div>
               <p className="text-[12px] text-gray-800">

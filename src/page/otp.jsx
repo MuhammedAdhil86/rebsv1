@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import { HiChevronLeft } from "react-icons/hi";
 import mainImage from "../assets/img/rebs_login.png";
-import RebsLogo from "../assets/img/Picture1.png"
 import { useNavigate } from "react-router-dom";
 
-export default function ForgotPasswordUI() {
+export default function OtpUi() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const slides = [
@@ -39,15 +37,16 @@ export default function ForgotPasswordUI() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Forgot Password - Email:", email, "OTP:", otp);
-    navigate("/otp"); // Navigate to /otp on submit
+    console.log("Forgot Password Email:", email);
+    // Navigate to OTP page
+    navigate("/otp");
   };
 
   return (
     <div className="w-full h-screen bg-black flex justify-center items-center p-4">
-      <div className="flex h-full w-full rounded-2xl overflow-hidden max-w-[1200px]">
+      <div className="flex h-full w-full rounded-2xl overflow-hidden">
         {/* Left panel */}
-        <div className="relative w-[55%] overflow-hidden rounded-l-2xl">
+        <div className="relative w-[55%] overflow-hidden rounded-l-2xl ">
           <img src={mainImage} alt="Office" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/40 flex flex-col">
             <div className="relative flex flex-col justify-end h-full p-4">
@@ -89,16 +88,6 @@ export default function ForgotPasswordUI() {
 
         {/* Right panel */}
         <div className="w-[45%] bg-white rounded-r-2xl flex flex-col justify-between">
-          {/* Top Logo */}
-          <div className="flex items-center px-6 md:px-8 lg:px-12 pt-6 mb-4">
-            <img
-              src={RebsLogo}
-              alt="Rebs Logo"
-              className="w-10 h-10 mr-2"
-            />
-            
-          </div>
-
           {/* Form area */}
           <div className="flex-grow flex justify-center items-center px-6 md:px-8 lg:px-12">
             <div className="w-full max-w-md transform scale-90 p-6">
@@ -111,45 +100,33 @@ export default function ForgotPasswordUI() {
                   <HiChevronLeft className="text-gray-700 mr-1" size={24} />
                   <div className="w-px h-5 bg-gray-400 mr-2"></div>
                 </div>
-                <h1 className="text-xl text-black">Forgot Password</h1>
+                <h1 className="text-xl font-medium text-black">Forgot Password</h1>
               </div>
 
               {/* Description */}
               <p className="text-gray-500 text-sm mb-6">
-                <span className="font-semibold text-black">Hi,</span> welcome to the password reset page,<br />
-                Please enter the OTP that has been sent to your email.
+                <span className="font-semibold text-black">Hi,</span> Welcome to the password reset page, <br />
+                Enter your email first.
               </p>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="w-full text-black border-b border-gray-300 focus:outline-none focus:border-black bg-transparent py-1.5"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    OTP
-                  </label>
-                  <input
-                    type="text"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter OTP"
-                    className="w-full text-black border-b border-gray-300 focus:outline-none focus:border-black bg-transparent py-1.5"
-                    required
-                  />
-                </div>
-
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email"
+                  className="w-full text-black border-b border-gray-300 focus:outline-none focus:border-black bg-transparent py-1.5"
+                  required
+                />
+                 <input
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Otp"
+                  className="w-full text-black border-b border-gray-300 focus:outline-none focus:border-black bg-transparent py-1.5"
+                  required
+                />
                 <button
                   type="submit"
                   className="w-full py-2.5 bg-black hover:bg-gray-800 text-white font-medium rounded-xl transition duration-150"

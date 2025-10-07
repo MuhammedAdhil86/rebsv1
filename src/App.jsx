@@ -1,21 +1,15 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Login from "./page/login";
-
-import ForgotPasswordUI from "./page/forgetpasssword";
-import OtpUi from "./page/otp";
+import AppRoutes from "./routes/AppRoutes";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/forgetpass" element={<ForgotPasswordUI/>}/>
-          <Route path="/otp" element={<OtpUi/>}/>
-        </Routes>
-      </div>
-    </BrowserRouter>
+    <div className="">
+      {/* Global toast notifications */}
+      <Toaster position="top-right" reverseOrder={false} />
+      
+      <AppRoutes />
+    </div>
   );
 }
 

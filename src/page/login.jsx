@@ -1,47 +1,84 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { Link } from "react-router-dom"; // 👈 Import for navigation
+import { Link, useNavigate } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 import mainImage from "../assets/img/rebs_login.png";
+import { useAuthStore } from "../utils/authStore";
+import { UserLogin } from "../repos/userRepo";
 
 export default function LoginUI() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
+  const { login } = useAuthStore();
+  const navigate = useNavigate();
 
   const slides = [
-    {
-      title: "User-Friendly Interface",
-      description:
-        "Intuitive design for effortless navigation and enhanced user experience.",
-    },
-    {
-      title: "Integration Capabilities",
-      description: "Seamless connectivity with third-party tools and platforms",
-    },
-    {
-      title: "Analytics and Reporting",
-      description:
-        "Data-driven insights to optimize performance and decision-making.",
-    },
-    {
-      title: "Mobile Accessibility",
-      description:
-        "Stay connected and productive on the go with mobile-friendly solutions.",
-    },
-    {
-      title: "Data Security",
-      description:
-        "Robust protection measures to safeguard sensitive information",
-    },
+    { title: "User-Friendly Interface", description: "Intuitive design for effortless navigation and enhanced user experience." },
+    { title: "Integration Capabilities", description: "Seamless connectivity with third-party tools and platforms." },
+    { title: "Analytics and Reporting", description: "Data-driven insights to optimize performance and decision-making." },
+    { title: "Mobile Accessibility", description: "Stay connected and productive on the go with mobile-friendly solutions." },
+    { title: "Data Security", description: "Robust protection measures to safeguard sensitive information." },
   ];
 
-  const showSlide = (index) => setCurrentSlide(index);
+  // Slide auto-change
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Remember email
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberEmail");
+    if (savedEmail) setEmail(savedEmail);
+  }, []);
+
+  // Handle login
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Correct payload: username instead of email
+      console.log("Logging in with:", { username: email, password });
+      const data = await UserLogin({ username: email, password });
+
+      // Save auth in store
+      login(data.data.token, data.data.user);
+
+      // Remember email
+      if (rememberMe) {
+        localStorage.setItem("rememberEmail", email);
+      } else {
+        localStorage.removeItem("rememberEmail");
+      }
+
+      toast.success("Login Successful!");
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Full Axios error:", err);
+      const backendMessage = err.response?.data?.message;
+      if (backendMessage) {
+        toast.error(backendMessage);
+        console.log("Backend message:", backendMessage);
+      } else {
+        toast.error(err.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="w-full h-screen bg-black overflow-hidden flex">
+    <div className="w-full h-screen bg-black overflow-hidden flex relative">
+      <Toaster position="top-right" />
       <div className="flex w-full h-full">
-        {/* Left - Image + Slides */}
+        {/* Left - Slides */}
         <div className="relative h-full overflow-hidden" style={{ width: "55%" }}>
           <img src={mainImage} alt="Office" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/40 flex flex-col">
@@ -57,24 +94,16 @@ export default function LoginUI() {
                   <p className="text-white text-sm mb-20">{slide.description}</p>
                 </div>
               ))}
-
-              {/* Navigation dots */}
               <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex gap-2">
                 {slides.map((_, index) => (
                   <span
                     key={index}
-                    onClick={() => showSlide(index)}
-                    className={`w-2 h-2 rounded-full cursor-pointer ${
-                      currentSlide === index ? "bg-white" : "bg-gray-400"
-                    }`}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`w-2 h-2 rounded-full cursor-pointer ${currentSlide === index ? "bg-white" : "bg-gray-400"}`}
                   ></span>
                 ))}
               </div>
-
-              {/* Website */}
-              <div className="absolute bottom-2 left-2 text-white text-sm">
-                www.rebs.in
-              </div>
+              <div className="absolute bottom-2 left-2 text-white text-sm">www.rebs.in</div>
             </div>
           </div>
         </div>
@@ -82,80 +111,70 @@ export default function LoginUI() {
         {/* Right - Login Form */}
         <div className="h-full flex flex-col relative" style={{ width: "45%" }}>
           <div className="bg-white w-full h-full flex flex-col">
-            {/* Centered login card */}
             <div className="flex-grow flex justify-center items-center px-6 md:px-8 lg:px-12">
               <div className="w-full max-w-md transform scale-90 p-6">
-                {/* Header */}
-                <div className="text-start mb-4">
-                  <h1 className="text-3xl font-normal text-black mb-1">
-                    Welcome back,
-                  </h1>
+                <div className="text-start mb-6">
+                  <h1 className="text-3xl font-normal text-black mb-1">Welcome back,</h1>
                   <h1 className="text-3xl font-normal text-black mb-2">Admin</h1>
-                  <p className="text-gray-500 text-sm">
-                    Welcome back! Please enter your details
-                  </p>
+                  <p className="text-gray-500 text-sm">Welcome back! Please enter your details</p>
                 </div>
 
-                {/* Form */}
-                <div className="space-y-4">
-                  {/* Email */}
+                <form onSubmit={handleLogin} className="space-y-10">
                   <div>
                     <input
                       type="text"
                       placeholder="Email"
-                      className="w-full text-black border-b border-gray-400 focus:outline-none focus:border-black bg-transparent py-1.5"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="username"
+                      className="w-full font-sans text-black placeholder-gray-500 border-b border-gray-400 focus:outline-none focus:border-black bg-transparent py-1.5"
                     />
                   </div>
 
-                  {/* Password */}
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       placeholder="Password"
-                      className="w-full text-black border-b border-gray-400 focus:outline-none focus:border-black bg-transparent py-1.5 pr-8"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                      className="w-full font-sans text-black placeholder-gray-500 border-b border-gray-400 focus:outline-none focus:border-black bg-transparent py-1.5 pr-8"
                     />
                     <div
                       className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 cursor-pointer"
-                      onClick={togglePasswordVisibility}
+                      onClick={() => setShowPassword((prev) => !prev)}
                     >
-                      {showPassword ? (
-                        <FaEyeSlash size={16} />
-                      ) : (
-                        <FaEye size={16} />
-                      )}
+                      {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
                     </div>
                   </div>
 
-                  {/* Remember me + Recovery */}
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center">
                       <input
                         type="checkbox"
+                        checked={rememberMe}
+                        onChange={() => setRememberMe(!rememberMe)}
                         className="h-4 w-4 text-black border-gray-300 rounded"
                       />
-                      <label className="ml-2 block text-gray-700">
-                        Remember me
-                      </label>
+                      <label className="ml-2 block text-gray-700 font-sans">Remember me</label>
                     </div>
 
-                    {/* 👇 Link to Forgot Password page */}
-                    <Link
-                      to="/forgetpass"
-                      className="font-semibold text-black hover:text-gray-800"
-                    >
-                      recovery password
+                    <Link to="/forgetpass" className="font-sans font-semibold text-black hover:text-gray-800">
+                      Recovery Password
                     </Link>
                   </div>
 
-                  {/* Submit */}
-                  <button className="w-full py-2.5 bg-black hover:bg-gray-800 text-white font-medium rounded-xl transition duration-150">
-                    Login
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-2.5 bg-black hover:bg-gray-800 text-white font-medium rounded-xl transition duration-150"
+                  >
+                    {loading ? "Logging in..." : "Login"}
                   </button>
-                </div>
+                </form>
               </div>
             </div>
 
-            {/* Footer */}
             <div className="absolute bottom-2 left-0 w-full px-6 md:px-8 flex justify-between text-center md:text-left">
               <div>
                 <p className="text-[12px] text-gray-800">
