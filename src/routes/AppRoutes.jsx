@@ -1,6 +1,6 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuthStore } from "../utils/authStore"; // ✅ Import Zustand store
+import { useAuthStore } from "../store/authStore";
 
 // Pages
 import Login from "../page/login";
@@ -10,11 +10,18 @@ import NewPasswordUI from "../page/newpassword";
 import Dashboard from "../page/dashboard";
 import WorkFromHome from "../page/workfromhome";
 import Settings from "../page/settings";
+import LogPage from "../page/testpage";
 
-// ✅ ProtectedRoute component
-const ProtectedRoute = ({ element: Component }) => {
+// ProtectedRoute Component
+const ProtectedRoute = ({ element: Element }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  return isAuthenticated ? <Component /> : <Navigate to="/" replace />;
+
+  if (!isAuthenticated) {
+    // Redirect to root login page
+    return <Navigate to="/" replace />;
+  }
+
+  return <Element />;
 };
 
 function AppRoutes() {
@@ -28,14 +35,13 @@ function AppRoutes() {
       <Route path="/workfromhome" element={<WorkFromHome />} />
 
       {/* --- Protected Routes --- */}
-      <Route
-        path="/dashboard"
-        element={<ProtectedRoute element={Dashboard} />}
-      />
-         <Route
-        path="/settings"
-        element={<ProtectedRoute element={Settings} />}
-      />
+      <Route path="/dashboard" element={<ProtectedRoute element={Dashboard} />} />
+      <Route path="/settings" element={<ProtectedRoute element={Settings} />} />
+      <Route path="/test" element={<ProtectedRoute element={LogPage} />} />
+      {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
+
+      {/* Catch-all redirect to login */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

@@ -4,12 +4,20 @@ import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
-    <div className="">
-      {/* Global toast notifications */}
-      <Toaster position="top-right" reverseOrder={false} />
-      
+    <>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 3000, // <-- auto close after 3 seconds
+          style: {
+    
+            borderRadius: "8px",
+          },
+        }}
+      />
       <AppRoutes />
-    </div>
+    </>
   );
 }
 

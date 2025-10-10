@@ -3,7 +3,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import mainImage from "../assets/img/rebs_login.png";
-import { useAuthStore } from "../utils/authStore";
+import { useAuthStore } from "../store/authStore";
 import { UserLogin } from "../repos/userRepo";
 
 export default function LoginUI() {
@@ -58,7 +58,7 @@ export default function LoginUI() {
         localStorage.removeItem("rememberEmail");
       }
 
-      toast.success("Login Successful!");
+     toast.success("Login Successful!", { duration: 3000 });
       navigate("/dashboard");
     } catch (err) {
       console.error("Full Axios error:", err);
@@ -76,7 +76,7 @@ export default function LoginUI() {
 
   return (
     <div className="w-full h-screen bg-black overflow-hidden flex relative">
-      <Toaster position="top-right" />
+
       <div className="flex w-full h-full">
         {/* Left - Slides */}
         <div className="relative h-full overflow-hidden" style={{ width: "55%" }}>

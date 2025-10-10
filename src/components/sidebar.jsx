@@ -5,12 +5,14 @@ import { Icon } from "@iconify/react";
 import avatar from "../assets/img/avatar.svg";
 import rebsLogo from "../assets/img/Picture1.png";
 
-function SideBar({ userId, userData, isCollapsed, toggleSidebar, onLogout }) {
+function SideBar({ userId, userData, onLogout }) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  const toggleSidebar = () => setIsCollapsed(!isCollapsed);
   const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
 
-  // ✅ Construct display name (first_name + last_name + nick_name)
+  // ✅ Construct display name
   const firstName = userData?.first_name || "";
   const lastName = userData?.last_name || "";
   const nickName = userData?.nick_name ? `(${userData.nick_name})` : "";
@@ -41,7 +43,7 @@ function SideBar({ userId, userData, isCollapsed, toggleSidebar, onLogout }) {
         { title: "Payroll", path: `/u/${userId}/payroll`, icon: icons.payroll },
         { title: "Reports", path: `/u/${userId}/reports`, icon: icons.reports },
         { title: "Asset Manager", path: `/u/${userId}/assetmanager`, icon: icons.asset },
-        { title: "Manage Employees", path: `/u/${userId}/manageemployees`, icon: icons.manageEmployees },
+        { title: "Manage Employees", path: `/manageemployees`, icon: icons.manageEmployees },
         { title: "Work From Home", path: `/u/${userId}/workfromhome`, icon: icons.workfromhome },
       ],
     },
@@ -90,32 +92,37 @@ function SideBar({ userId, userData, isCollapsed, toggleSidebar, onLogout }) {
         </button>
       </div>
 
-      {/* Profile Section */}
-      <div className="px-4 pb-2">
-        <div
-          onClick={toggleProfile}
-          className={`w-[240px] h-[50px] flex items-center space-x-3 px-4 rounded-lg transition-colors bg-[#1C2526] ${
-            isProfileOpen ? "bg-gray-600" : "hover:bg-gray-600"
-          }`}
-        >
-          <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
-          <div className="flex-1 text-left">
-            {/* ✅ Full name + nickname */}
-            <span className="block text-sm">{displayName || "Admin"}</span>
-            <span className="block text-xs text-gray-400">{userData?.user_type || "Admin"}</span>
-          </div>
-
-          <div className="relative flex items-center justify-center">
-            <Link to="/settings">
-                        <Settings className="w-5 h-5 text-gray-400 cursor-pointer hover:text-white" />
-            </Link>
-
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] flex items-center justify-center rounded-full border border-black">
-              8
-            </span>
-          </div>
-        </div>
+ {/* Profile Section */}
+<div className="px-4 pb-2">
+  <div
+    onClick={toggleProfile}
+    className={`${
+      isCollapsed ? "w-16 md:w-20 px-2" : "w-[240px] px-4"
+    } h-[50px] flex items-center space-x-3 rounded-lg transition-all duration-300 ${
+      !isCollapsed ? (isProfileOpen ? "bg-gray-600" : "hover:bg-gray-600 bg-[#1C2526]") : ""
+    }`}
+  >
+    <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
+    {!isCollapsed && (
+      <div className="flex-1 text-left">
+        <span className="block text-sm">{displayName || "Admin"}</span>
+        <span className="block text-xs text-gray-400">{userData?.user_type || "Admin"}</span>
       </div>
+    )}
+    {!isCollapsed && (
+      <div className="relative flex items-center justify-center">
+        <Link to="/settings">
+          <Settings className="w-5 h-5 text-gray-400 cursor-pointer hover:text-white" />
+        </Link>
+        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] flex items-center justify-center rounded-full border border-black">
+          8
+        </span>
+      </div>
+    )}
+  </div>
+</div>
+
+
 
       {/* Sidebar Menu */}
       <nav className="flex-1 flex flex-col justify-start mt-5">

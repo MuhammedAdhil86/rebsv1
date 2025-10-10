@@ -1,29 +1,20 @@
 import React, { useState } from "react";
-import SideBar from "../components/sidebar";
+import DashboardLayout from "../ui/pagelayout";
 import DashboardHead from "../components/dashboard/head";
 import DashboardOverview from "../components/dashboard/overview";
 import LogDetails from "../components/dashboard/Attendance Tabs/logdetails";
 import LeaveRequestes from "../components/tables/leaverequests";
-import DailyAttendance from "../components/tables/daily-attendance"; 
-import MusterRoll from "../components/tables/musterroll";  // ✅ Import Muster Roll
+import DailyAttendance from "../components/tables/daily-attendance";
+import MusterRoll from "../components/tables/musterroll";
 
 function Dashboard({ userId, userName, onLogout }) {
-  // Active tab state
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Attendance data
-  const ATTENDANCE_DATA = {
-    total: 134,
-    ontime: 86,
-    delay: 12,
-    late: 9,
-    absent: 21,
-  };
+  const ATTENDANCE_DATA = { total: 134, ontime: 86, delay: 12, late: 9, absent: 21 };
 
   const getWidth = (value) =>
     ATTENDANCE_DATA?.total ? `${(value / ATTENDANCE_DATA.total) * 100}%` : "0%";
 
-  // Calendar days
   const CALENDAR_DAYS = [
     { day: "Sunday", date: "06" },
     { day: "Monday", date: "07" },
@@ -35,7 +26,6 @@ function Dashboard({ userId, userName, onLogout }) {
     { day: "Sunday", date: "13" },
   ];
 
-  // Employees
   const EMPLOYEES = [
     { name: "Vishnu", role: "UI/UX Designer", status: "Online" },
     { name: "Aswin Lal", role: "Designer", status: "Online" },
@@ -45,7 +35,6 @@ function Dashboard({ userId, userName, onLogout }) {
     { name: "Hridya S B", role: "Junior Developer", status: "Late" },
   ];
 
-  // Leaves
   const LEAVES = [
     { name: "Vishnu", role: "UI/UX Designer", date: "Only Today" },
     { name: "Aswin Lal", role: "Designer", date: "14 Feb" },
@@ -53,48 +42,32 @@ function Dashboard({ userId, userName, onLogout }) {
   ];
 
   return (
-    <div className="flex h-screen bg-black p-3 overflow-hidden">
-      {/* Sidebar */}
-      <SideBar
-        userId={userId}
+    <DashboardLayout userId={userId} userName={userName} onLogout={onLogout}>
+      <DashboardHead
         userName={userName}
-        isCollapsed={false}
-        toggleSidebar={() => {}}
-        onLogout={onLogout}
+        ATTENDANCE_DATA={ATTENDANCE_DATA}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
       />
 
-      {/* Main Dashboard */}
-      <div className="flex-1 bg-white rounded-2xl shadow-lg overflow-y-auto ml-3 p-6">
-        {/* Header with Tabs */}
-        <DashboardHead
-          userName={userName}
+      {activeTab === "overview" && (
+        <DashboardOverview
           ATTENDANCE_DATA={ATTENDANCE_DATA}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          getWidth={getWidth}
+          CALENDAR_DAYS={CALENDAR_DAYS}
+          EMPLOYEES={EMPLOYEES}
+          LEAVES={LEAVES}
         />
+      )}
 
-        {/* Render tab content */}
-        {activeTab === "overview" && (
-          <DashboardOverview
-            ATTENDANCE_DATA={ATTENDANCE_DATA}
-            getWidth={getWidth}
-            CALENDAR_DAYS={CALENDAR_DAYS}
-            EMPLOYEES={EMPLOYEES}
-            LEAVES={LEAVES}
-          />
-        )}
+      {activeTab === "logdetails" && (
+        <LogDetails CALENDAR_DAYS={CALENDAR_DAYS} EMPLOYEES={EMPLOYEES} />
+      )}
 
-        {activeTab === "logdetails" && (
-          <LogDetails CALENDAR_DAYS={CALENDAR_DAYS} EMPLOYEES={EMPLOYEES} />
-        )}
-
-        {activeTab === "leaverequests" && <LeaveRequestes />}
-
-        {activeTab === "dailyAttendance" && <DailyAttendance />}
-
-        {activeTab === "musterRoll" && <MusterRoll />}  {/* ✅ Added Muster Roll */}
-      </div>
-    </div>
+      {activeTab === "leaverequests" && <LeaveRequestes />}
+      {activeTab === "dailyAttendance" && <DailyAttendance />}
+      {activeTab === "musterRoll" && <MusterRoll />}
+    </DashboardLayout>
   );
 }
 
