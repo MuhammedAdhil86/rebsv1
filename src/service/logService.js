@@ -1,4 +1,4 @@
-import axiosInstance from "./axiosInstance";
+import axiosInstance from "./axiosinstance";
 
 // Endpoint for logs
 export const getLog = "/admin/stafflog/list";
