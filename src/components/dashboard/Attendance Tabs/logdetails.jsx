@@ -6,7 +6,7 @@ import useWebSocket from "../../../Hooks/useWebsocket";
 import MapModal from "../../../utils/mapmodel";
 import { getLogEntriesForDate } from "../../../service/logService";
 
-// Function to get place name from latitude & longitude using OpenStreetMap Nominatim
+// Function to get place name from latitude & longitude
 const getPlaceName = async (latitude, longitude) => {
   if (!latitude || !longitude) return "-";
   try {
@@ -33,7 +33,7 @@ const LogDetails = () => {
   const [mapModal, setMapModal] = useState(null);
   const scrollRef = useRef(null);
 
-  const { connectionStatus, log: websocketLogs } = useWebSocket();
+  const { log: websocketLogs } = useWebSocket();
 
   const CALENDAR_DAYS = Array.from({ length: 30 }, (_, i) => {
     const dateObj = dayjs().add(i, "day");
@@ -115,171 +115,147 @@ const LogDetails = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-gray-100 rounded-b-2xl w-full lg:w-[1020px]">
-      <h2 className="font-semibold text-lg sm:text-xl">Log Details</h2>
+   <div className="flex-1 grid grid-cols-1 gap-4 p-2 sm:p-4 bg-gray-100 rounded-b-2xl w-full max-w-[1020px] mx-auto">
+  {/* Left Section - Logs */}
+  <div className="flex flex-col gap-2">
+    <h2 className="font-semibold text-lg sm:text-xl mb-2">Log Details</h2>
 
-      {/* Calendar */}
-      <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 sm:px-4 py-2 sm:py-3 overflow-hidden">
-        <button
-          onClick={() => scroll("left")}
-          className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-gray-200 shrink-0"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <div className="flex-shrink-0 text-gray-400">
-          <Icon icon="solar:calendar-date-bold" className="w-5 h-5" />
-        </div>
-
-        <div
-          ref={scrollRef}
-          className="flex gap-2 overflow-x-auto scrollbar-hide flex-1"
-        >
-          {CALENDAR_DAYS.map((item, idx) => (
-            <button
-              key={idx}
-              onClick={() => setSelectedDate(item.fullDate)}
-              className={`flex flex-col items-center justify-center w-[60px] sm:w-[75px] h-[50px] sm:h-[55px] rounded-xl text-xs font-medium transition-all duration-200 flex-shrink-0 ${
-                dayjs(selectedDate).format("YYYY-MM-DD") ===
-                dayjs(item.fullDate).format("YYYY-MM-DD")
-                  ? "bg-black text-white"
-                  : "bg-white text-gray-800 border-2 border-gray-100 hover:border-gray-300"
-              }`}
-            >
-              <span className="text-[9px] sm:text-[10px]">{item.day}</span>
-              <span className="text-[12px] sm:text-[14px] font-bold mt-1">{item.date}</span>
-            </button>
-          ))}
-        </div>
-
-        <button
-          onClick={() => scroll("right")}
-          className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-gray-200 shrink-0"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
+    {/* Calendar */}
+    <div className="flex items-center gap-1 bg-gray-100 rounded-xl px-2 py-1 overflow-hidden">
+      <button onClick={() => scroll("left")} className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-gray-200 shrink-0">
+        <ChevronLeft className="w-3.5 h-3.5" />
+      </button>
+      <div className="flex-shrink-0 text-gray-400">
+        <Icon icon="solar:calendar-date-bold" className="w-4 h-4" />
       </div>
 
-      {/* Log Table */}
-      <div className="overflow-x-auto mt-4">
-        {loading ? (
-          <p className="p-4">Loading logs...</p>
-        ) : error ? (
-          <p className="p-4 text-red-600">Error: {JSON.stringify(error)}</p>
-        ) : (
-          <table className=" text-sm rounded-lg overflow-hidden min-w-[600px] sm:min-w-full w-[900px]">
-            <thead className="bg-white text-gray-500 text-left text-xs uppercase">
-              <tr>
-                {["Name", "Device", "Time", "Distance", "Location", "Status"].map(
-                  (col) => (
-                    <th key={col} className="px-3 sm:px-4 py-2 sm:py-3 font-medium">
-                      {col}
-                    </th>
-                  )
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y bg-white">
-              {logs.length > 0 ? (
-                logs.map((log) =>
-                  log.attendance?.map((att) => {
-                    const combinedDateTime =
-                      log.date && att.time
-                        ? `${log.date.split("T")[0]}T${att.time.split("T")[1]}`
-                        : null;
+      <div ref={scrollRef} className="flex gap-1 overflow-x-auto scrollbar-hide flex-1">
+        {CALENDAR_DAYS.map((item, idx) => (
+          <button
+            key={idx}
+            onClick={() => setSelectedDate(item.fullDate)}
+            className={`flex flex-col items-center justify-center w-[55px] sm:w-[70px] h-[45px] sm:h-[50px] rounded-lg text-[10px] sm:text-xs font-medium transition-all duration-200 flex-shrink-0 ${
+              dayjs(selectedDate).format("YYYY-MM-DD") === dayjs(item.fullDate).format("YYYY-MM-DD")
+                ? "bg-black text-white"
+                : "bg-white text-gray-800 border border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            <span>{item.day}</span>
+            <span className="font-bold mt-1">{item.date}</span>
+          </button>
+        ))}
+      </div>
 
-                    const { latitude, longitude } = att.location_info || {};
-                    const isRevealed = revealed[att.id];
-                    const isLoadingLocation = loadingLocations[att.id];
+      <button onClick={() => scroll("right")} className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-gray-200 shrink-0">
+        <ChevronRight className="w-3.5 h-3.5" />
+      </button>
+    </div>
 
-                    return (
-                      <tr key={att.id} className="hover:bg-gray-50">
-                        <td className="px-3 sm:px-4 py-2 sm:py-3">{att.name}</td>
-                        <td className="px-3 sm:px-4 py-2 sm:py-3">
-                          {att.location_info?.device || "Unknown"}
-                        </td>
-                        <td className="px-3 sm:px-4 py-2 sm:py-3">
-                          {combinedDateTime
-                            ? dayjs(combinedDateTime).format(
-                                "h:mm A, MMMM D, YYYY"
-                              )
-                            : "-"}
-                        </td>
-                        <td className="px-3 sm:px-4 py-2 sm:py-3">
-                          {att.distance || "Calculating..."} Km
-                        </td>
-                        <td className="px-3 sm:px-4 py-2 sm:py-3">
-                          {!latitude || !longitude ? (
-                            "-"
-                          ) : isRevealed ? (
-                            <div>
-                              {isLoadingLocation ? (
-                                <span className="text-gray-400 animate-pulse">
-                                  Loading location...
-                                </span>
-                              ) : (
-                                <>
-                                  <span>{locations[att.id]}</span>
-                                  <br />
-                                  <button
-                                    className="text-blue-600 underline mt-1"
-                                    onClick={() =>
-                                      handleViewMap(latitude, longitude, att.name, att.image)
-                                    }
-                                  >
-                                    View Map
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          ) : (
-                            <button
-                              className="text-blue-600 underline"
-                              onClick={() =>
-                                handleSeeLocation(att.id, latitude, longitude)
-                              }
-                            >
-                              See Location
-                            </button>
-                          )}
-                        </td>
-                        <td className="px-3 sm:px-4 py-2 sm:py-3">
-                          <span
-                            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${
-                              att.status === "IN"
-                                ? "bg-green-100 text-green-600"
-                                : "bg-red-100 text-red-600"
-                            }`}
+    {/* Log Table */}
+    <div className="overflow-x-auto mt-2">
+      {loading ? (
+        <p className="p-2 text-sm">Loading logs...</p>
+      ) : error ? (
+        <p className="p-2 text-sm text-red-600">Error: {JSON.stringify(error)}</p>
+      ) : (
+        <table className="min-w-full text-sm border-collapse">
+          <thead className="bg-white text-gray-500 text-left text-xs uppercase">
+            <tr>
+              {["Name", "Device", "Time", "Distance", "Location", "Status"].map((col) => (
+                <th key={col} className="px-2 sm:px-3 py-1 sm:py-2 font-medium">{col}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y bg-white">
+            {logs.length > 0 ? (
+              logs.map((log) =>
+                log.attendance?.map((att) => {
+                  const combinedDateTime =
+                    log.date && att.time
+                      ? `${log.date.split("T")[0]}T${att.time.split("T")[1]}`
+                      : null;
+
+                  const { latitude, longitude } = att.location_info || {};
+                  const isRevealed = revealed[att.id];
+                  const isLoadingLocation = loadingLocations[att.id];
+
+                  return (
+                    <tr key={att.id} className="hover:bg-gray-50">
+                      <td className="px-2 sm:px-3 py-1 sm:py-2">{att.name}</td>
+                      <td className="px-2 sm:px-3 py-1 sm:py-2">{att.location_info?.device || "Unknown"}</td>
+                      <td className="px-2 sm:px-3 py-1 sm:py-2">
+                        {combinedDateTime ? dayjs(combinedDateTime).format("h:mm A, MMM D, YYYY") : "-"}
+                      </td>
+                      <td className="px-2 sm:px-3 py-1 sm:py-2">{att.distance || "Calculating..."} Km</td>
+                      <td className="px-2 sm:px-3 py-1 sm:py-2">
+                        {!latitude || !longitude ? (
+                          "-"
+                        ) : isRevealed ? (
+                          <div>
+                            {isLoadingLocation ? (
+                              <span className="text-gray-400 animate-pulse">Loading location...</span>
+                            ) : (
+                              <>
+                                <span>{locations[att.id]}</span>
+                                <br />
+                                <button
+                                  className="text-blue-600 underline mt-1"
+                                  onClick={() => handleViewMap(latitude, longitude, att.name, att.image)}
+                                >
+                                  View Map
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            className="text-blue-600 underline"
+                            onClick={() => handleSeeLocation(att.id, latitude, longitude)}
                           >
-                            {att.status === "IN" ? "Login" : "Logout"}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )
-              ) : (
-                <tr>
-                  <td colSpan="6" className="text-center py-4 text-gray-500">
-                    No logs found for selected date.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {/* Map Modal */}
-      {mapModal && (
-        <MapModal
-          latitude={mapModal.latitude}
-          longitude={mapModal.longitude}
-          employeeName={mapModal.employeeName}
-          employeeImage={mapModal.employeeImage}
-          onClose={() => setMapModal(null)}
-        />
+                            See Location
+                          </button>
+                        )}
+                      </td>
+                      <td className="px-2 sm:px-3 py-1 sm:py-2">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            att.status === "IN"
+                              ? "bg-green-100 text-green-600"
+                              : "bg-red-100 text-red-600"
+                          }`}
+                        >
+                          {att.status === "IN" ? "Login" : "Logout"}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )
+            ) : (
+              <tr>
+                <td colSpan="6" className="text-center py-4 text-gray-500 text-sm">
+                  No logs found for selected date.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       )}
     </div>
+  </div>
+
+  {/* Map Modal */}
+  {mapModal && (
+    <MapModal
+      latitude={mapModal.latitude}
+      longitude={mapModal.longitude}
+      employeeName={mapModal.employeeName}
+      employeeImage={mapModal.employeeImage}
+      onClose={() => setMapModal(null)}
+    />
+  )}
+</div>
+
   );
 };
 

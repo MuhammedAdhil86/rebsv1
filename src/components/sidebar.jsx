@@ -5,18 +5,17 @@ import { Icon } from "@iconify/react";
 import avatar from "../assets/img/avatar.svg";
 import rebsLogo from "../assets/img/Picture1.png";
 
-function SideBar({ userId, userData, onLogout }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+function SideBar({ userData, isCollapsed, toggleSidebar }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const toggleSidebar = () => setIsCollapsed(!isCollapsed);
   const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
+  const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
 
-  // ✅ Construct display name
   const firstName = userData?.first_name || "";
   const lastName = userData?.last_name || "";
   const nickName = userData?.nick_name ? `(${userData.nick_name})` : "";
-  const displayName = `${firstName} ${lastName} ${nickName}`.trim();
+  const displayName = `${firstName} ${lastName} ${nickName}`.trim() || userData?.name || "Admin";
 
   const icons = {
     hr: <Icon icon="si:dashboard-line" width="20" />,
@@ -38,77 +37,100 @@ function SideBar({ userId, userData, onLogout }) {
       section: "HUMAN RESOURCES",
       items: [
         { title: "Attendance", path: `/dashboard`, icon: icons.hr },
-        { title: "Muster Roll", path: `/u/${userId}/musteroll`, icon: icons.muster },
-        { title: "Events", path: `/u/${userId}/events`, icon: icons.events },
-        { title: "Payroll", path: `/u/${userId}/payroll`, icon: icons.payroll },
-        { title: "Reports", path: `/u/${userId}/reports`, icon: icons.reports },
-        { title: "Asset Manager", path: `/u/${userId}/assetmanager`, icon: icons.asset },
+        { title: "Muster Roll", path: `/u/${userData?.id}/musteroll`, icon: icons.muster },
+        { title: "Events", path: `/u/${userData?.id}/events`, icon: icons.events },
+        { title: "Payroll", path: `/u/${userData?.id}/payroll`, icon: icons.payroll },
+        { title: "Reports", path: `/u/${userData?.id}/reports`, icon: icons.reports },
+        { title: "Asset Manager", path: `/u/${userData?.id}/assetmanager`, icon: icons.asset },
         { title: "Manage Employees", path: `/manageemployee`, icon: icons.manageEmployees },
-        { title: "Work From Home", path: `/u/${userId}/workfromhome`, icon: icons.workfromhome },
+        { title: "Work From Home", path: `/u/${userData?.id}/workfromhome`, icon: icons.workfromhome },
       ],
     },
     {
       section: "ONBOARDING",
       items: [
         { title: "Organization", path: `manageempl`, icon: icons.organisationonboard },
-        { title: "Employee", path: `/u/${userId}/employeeOnboard`, icon: icons.employeeOnboard },
+        { title: "Employee", path: `/u/${userData?.id}/employeeOnboard`, icon: icons.employeeOnboard },
       ],
     },
     {
       section: "HIRING PROCESS",
       items: [
-        { title: "Job Creation", path: `/u/${userId}/jobcreation`, icon: icons.Hiring },
-        { title: "Interview Process", path: `/u/${userId}/interviewprocess`, icon: icons.interview },
+        { title: "Job Creation", path: `/u/${userData?.id}/jobcreation`, icon: icons.Hiring },
+        { title: "Interview Process", path: `/u/${userData?.id}/interviewprocess`, icon: icons.interview },
       ],
     },
   ];
 
   return (
-    <div
-      className={`${
-        isCollapsed ? "w-16 md:w-20" : "w-[255px] "
-      } h-screen font-sans  text-white flex flex-col transition-all duration-300 fixed md:static top-0 left-0 z-50 shadow-lg `}
-    >
-      {/* Logo + Toggle */}
-      <div className="flex justify-between items-center p-4">
-        <div className="flex items-center gap-2">
-          <img
-            src={rebsLogo}
-            alt="Logo"
-            className={`${isCollapsed ? "hidden" : "block"} h-8 w-8`}
-          />
-          {!isCollapsed && <span className="text-white text-lg font-normal">REBS HR</span>}
-        </div>
-        <button
-          onClick={toggleSidebar}
-          className="p-1 hover:bg-gray-600 rounded transition-colors"
-        >
-          <Icon
-            icon="flowbite:bars-from-left-outline"
-            width="24"
-            height="24"
-            className="text-white"
-          />
-        </button>
-      </div>
+    <>
+      {/* Mobile Hamburger */}
+      <button
+        className="md:hidden p-2 fixed top-4 left-4 z-50 bg-gray-800 rounded "
+        onClick={toggleMobileSidebar}
+      >
+        <Icon icon="flowbite:bars-from-left-outline" width="24" height="24" />
+      </button>
 
- {/* Profile Section */}
-<div className="px-4 pb-2">
+      {/* Overlay for Mobile */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={toggleMobileSidebar}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={`bg-black fixed top-0 left-0 z-50 h-[100vh] flex flex-col text-white shadow-lg
+        transition-transform duration-300
+        ${isCollapsed ? "w-[6%]" : "w-[20%]"}
+        ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+      >
+        {/* Logo + Toggle */}
+        <div className="flex justify-between items-center p-4 ">
+          <div className="flex items-center gap-2">
+            <img
+              src={rebsLogo}
+              alt="Logo"
+              className={`${isCollapsed ? "hidden" : "block"} h-8 w-8`}
+            />
+            {!isCollapsed && <span className="text-white text-lg font-normal">REBS HR</span>}
+          </div>
+          <button
+            onClick={toggleSidebar}
+            className="p-1  rounded transition-colors"
+          >
+            <Icon
+              icon="flowbite:bars-from-left-outline"
+              width="24"
+              height="24"
+              className="text-white"
+            />
+          </button>
+        </div>
+
+        {/* Profile Section */}
+<div className="mt-5 flex justify-center">
   <div
     onClick={toggleProfile}
-    className={`${
-      isCollapsed ? "w-16 md:w-20 px-2" : "w-[240px] px-4"
-    } h-[50px] flex items-center space-x-3 rounded-lg transition-all duration-300 ${
-      !isCollapsed ? (isProfileOpen ? "bg-gray-600" : "hover:bg-gray-600 bg-[#1C2526]") : ""
-    }`}
+    className={`flex items-center justify-center rounded-lg transition-colors duration-300 cursor-pointer
+      ${isCollapsed ? "w-12 h-12 bg-[#111827] hover:bg-gray-700" : "w-[90%] px-4 h-14"}
+      ${!isCollapsed && (isProfileOpen ? "bg-gray-600" : "bg-gray-800 hover:bg-gray-600")}
+    `}
   >
+    {/* Always show profile image */}
     <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
+
+    {/* Show name and role only when expanded */}
     {!isCollapsed && (
-      <div className="flex-1 text-left">
-        <span className="block text-sm">{displayName || "Admin"}</span>
+      <div className="flex-1 text-left ml-3">
+        <span className="block text-sm">{displayName}</span>
         <span className="block text-xs text-gray-400">{userData?.user_type || "Admin"}</span>
       </div>
     )}
+
+    {/* Settings icon only when expanded */}
     {!isCollapsed && (
       <div className="relative flex items-center justify-center">
         <Link to="/settings">
@@ -123,37 +145,35 @@ function SideBar({ userId, userData, onLogout }) {
 </div>
 
 
-
-      {/* Sidebar Menu */}
-      <nav className="flex-1 flex flex-col justify-start mt-5">
-        {menuItems.map((menu, index) => (
-          <div key={index} className="px-4 mb-2">
-            {!isCollapsed && (
-              <p className="text-gray-400 text-xs mb-1 px-2 tracking-wider">
-                {menu.section}
-              </p>
-            )}
-            {menu.items.map((item, idx) => (
-              <NavLink
-                key={idx}
-                to={item.path}
-                className={({ isActive }) =>
-                  `h-[30px] flex items-center space-x-3 px-3 rounded-lg transition-all duration-200 text-sm ${
-                    isActive
-                      ? "bg-[#1C2526] text-white font-light"
-                      : "text-neutral-600 hover:text-white hover:bg-gray-800"
-                  }`
-                }
-                style={{ width: isCollapsed ? "48px" : "220px" }}
-              >
-                <span className="flex-shrink-0">{item.icon}</span>
-                {!isCollapsed && <span className="flex-1 text-left">{item.title}</span>}
-              </NavLink>
-            ))}
-          </div>
-        ))}
-      </nav>
-    </div>
+        {/* Sidebar Menu */}
+        <nav className="flex-1 flex flex-col justify-start mt-5 overflow-y-auto">
+          {menuItems.map((menu, index) => (
+            <div key={index} className="px-4 mb-2">
+              {!isCollapsed && (
+                <p className="text-gray-400 text-xs mb-1 px-2 tracking-wider">{menu.section}</p>
+              )}
+              {menu.items.map((item, idx) => (
+                <NavLink
+                  key={idx}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `h-[40px] flex items-center space-x-3 px-3 rounded-lg transition-all duration-200 text-sm ${
+                      isActive
+                        ? "bg-[#1C2526] text-white font-light"
+                        : "text-neutral-600 hover:text-white hover:bg-gray-800"
+                    }`
+                  }
+                  style={{ width: isCollapsed ? "6%" : "90%" }}
+                >
+                  <span className="flex-shrink-0">{item.icon}</span>
+                  {!isCollapsed && <span className="flex-1 text-left">{item.title}</span>}
+                </NavLink>
+              ))}
+            </div>
+          ))}
+        </nav>
+      </div>
+    </>
   );
 }
 
