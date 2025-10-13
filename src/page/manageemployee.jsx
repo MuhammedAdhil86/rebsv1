@@ -1,160 +1,233 @@
-// import React from "react";
-// import SideBar from "../components/sidebar";
-// import { FaSearch, FaThLarge, FaList } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import DashboardLayout from "../ui/pagelayout";
+import avatar from "../assets/img/avatar.svg";
+import { FiBell, FiSearch, FiPlus, FiMoreHorizontal } from "react-icons/fi";
+import { Icon } from "@iconify/react"; // For email & phone icons
+import { getStaffDetails } from "../service/employeeService"; // ✅ API
 
-// function Employees({ userId, userName, onLogout }) {
-//   const employees = [
-//     { name: "Riyas Muhammad", designation: "CEO & Founder", date: "May 10, 2025", mobile: "9207093845", status: "Active" },
-//     { name: "Rohith R R", designation: "Golang Developer", date: "May 10, 2025", mobile: "9207093845", status: "Deactivated" },
-//     { name: "Greeshma", designation: "React Developer", date: "May 10, 2025", mobile: "9207093845", status: "Active" },
-//     { name: "Hriday S B", designation: "Web Developer", date: "May 10, 2025", mobile: "9207093845", status: "Active" },
-//     { name: "Gokul S", designation: "Golang Developer", date: "May 10, 2025", mobile: "9207093845", status: "Deactivated" },
-//     { name: "Atwin Lal", designation: "UI/UX Designer", date: "May 10, 2025", mobile: "9207093845", status: "Deactivated" },
-//     { name: "Manu", designation: "React Developer", date: "May 10, 2025", mobile: "9207093845", status: "Deactivated" },
-//     { name: "Adithryu", designation: "React Developer", date: "May 10, 2025", mobile: "9207093845", status: "Active" },
-//     { name: "Atwin Gigi", designation: "Golang Developer", date: "May 10, 2025", mobile: "9207093845", status: "Active" },
-//     { name: "Manu Gopi", designation: "React Developer", date: "May 10, 2025", mobile: "9207093845", status: "Active" },
-//   ];
+// Tabs for filter
+const TABS = [
+  { key: "all", label: "All Employees" },
+  { key: "active", label: "Active Employees" },
+  { key: "inactive", label: "Inactive Employees" },
+];
 
-//   return (
-//     <div className="flex h-screen bg-black p-3 overflow-hidden">
-//       {/* Sidebar */}
-//       <SideBar
-//         userId={userId}
-//         userName={userName}
-//         isCollapsed={false}
-//         toggleSidebar={() => {}}
-//         onLogout={onLogout}
-//       />
+function ManageEmployees() {
+  const [employees, setEmployees] = useState([]);
+  const [tab, setTab] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
-//       {/* Main Content */}
-//       <div className="flex-1 bg-white rounded-2xl shadow-lg overflow-y-auto ml-3 p-6">
-//         {/* Header */}
-//         <div className="flex justify-between items-center mb-6">
-//           <div>
-//             <h1 className="text-gray-700 font-semibold text-sm">Manage Employees</h1>
-//             <div className="flex mt-2 border-b border-gray-200">
-//               <button className="px-4 pb-2 border-b-2 border-black text-black font-medium text-sm">
-//                 All Employees
-//               </button>
-//               <button className="px-4 pb-2 text-gray-500 text-sm">Active Employees</button>
-//               <button className="px-4 pb-2 text-gray-500 text-sm">Deleted Employees</button>
-//             </div>
-//           </div>
+  // ✅ Helper to format date
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "N/A";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }); // 👉 gives "03 Mar 2025"
+  };
 
-//           <div className="flex items-center space-x-4">
-//             <button className="border rounded-full p-2 hover:bg-gray-100">
-//               <img
-//                 src="https://cdn-icons-png.flaticon.com/512/1827/1827429.png"
-//                 alt="settings"
-//                 className="w-4 h-4"
-//               />
-//             </button>
-//             <div className="w-10 h-10 rounded-full overflow-hidden border">
-//               <img
-//                 src="https://via.placeholder.com/40"
-//                 alt="profile"
-//                 className="w-full h-full object-cover"
-//               />
-//             </div>
-//           </div>
-//         </div>
+  // === Fetch Employee Data ===
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        setLoading(true);
+        const data = await getStaffDetails();
 
-//         {/* Top Actions */}
-//         <div className="bg-white rounded-2xl shadow p-6">
-//           <div className="flex justify-between items-center mb-4">
-//             <div className="flex items-center gap-2">
-//               <span className="text-red-500 text-lg font-semibold">8</span>
-//               <span className="text-gray-700 text-sm font-medium">Total Employee</span>
-//             </div>
+        const formatted = data.map((emp) => ({
+          id: emp.id,
+          name: `${emp.first_name || ""} ${emp.last_name || ""}`.trim(),
+          designation: emp.designation || "N/A",
+          department: emp.department || "N/A",
+          phone: emp.ph_no || "N/A",
+          email: emp.email || "N/A",
+          is_active: emp.is_active,
+          date_of_join: formatDate(emp.date_of_join),
+          img: emp.img || avatar,
+        }));
 
-//             <div className="flex items-center gap-2">
-//               <button className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm">
-//                 + Bulk Action
-//               </button>
-//               <button className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm">
-//                 + Add Employee
-//               </button>
+        setEmployees(formatted);
+      } catch (err) {
+        console.error("Error fetching employees:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-//               <div className="flex items-center bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 ml-2">
-//                 <FaSearch className="text-gray-400 text-sm" />
-//                 <input
-//                   type="text"
-//                   placeholder="Search"
-//                   className="bg-transparent outline-none text-sm text-gray-600 ml-2"
-//                 />
-//               </div>
+    fetchEmployees();
+  }, []);
 
-//               <div className="flex gap-2 ml-2">
-//                 <button className="border rounded-lg p-2 hover:bg-gray-100">
-//                   <FaThLarge className="text-gray-600" />
-//                 </button>
-//                 <button className="border rounded-lg p-2 hover:bg-gray-100">
-//                   <FaList className="text-gray-600" />
-//                 </button>
-//               </div>
-//             </div>
-//           </div>
+  // === Filter logic ===
+  const filteredEmployees = employees
+    .filter((emp) => {
+      if (tab === "active")
+        return emp.is_active === true || emp.is_active === "true";
+      if (tab === "inactive")
+        return emp.is_active === false || emp.is_active === "false";
+      return true;
+    })
+    .filter((emp) => {
+      if (!searchTerm) return true;
+      const term = searchTerm.toLowerCase();
+      return (
+        emp.name.toLowerCase().includes(term) ||
+        emp.department.toLowerCase().includes(term) ||
+        emp.designation.toLowerCase().includes(term) ||
+        emp.phone.toString().includes(term)
+      );
+    });
 
-//           {/* Employee Table */}
-//           <div className="overflow-x-auto">
-//             <table className="w-full text-sm text-left">
-//               <thead>
-//                 <tr className="text-gray-500 border-b">
-//                   <th className="py-3 px-4">
-//                     <input type="checkbox" />
-//                   </th>
-//                   <th className="py-3 px-4">Name</th>
-//                   <th className="py-3 px-4">Designation</th>
-//                   <th className="py-3 px-4">Date of Joining</th>
-//                   <th className="py-3 px-4">Department</th>
-//                   <th className="py-3 px-4">Branch</th>
-//                   <th className="py-3 px-4">Mobile</th>
-//                   <th className="py-3 px-4">Status</th>
-//                   <th className="py-3 px-4"></th>
-//                 </tr>
-//               </thead>
-//               <tbody>
-//                 {employees.map((emp, index) => (
-//                   <tr key={index} className="border-b hover:bg-gray-50 transition">
-//                     <td className="py-3 px-4">
-//                       <input type="checkbox" />
-//                     </td>
-//                     <td className="py-3 px-4 text-gray-700">{emp.name}</td>
-//                     <td className="py-3 px-4 text-gray-500">{emp.designation}</td>
-//                     <td className="py-3 px-4 text-gray-500">{emp.date}</td>
-//                     <td className="py-3 px-4 text-gray-400">N/A</td>
-//                     <td className="py-3 px-4 text-gray-400">N/A</td>
-//                     <td className="py-3 px-4 text-gray-500">{emp.mobile}</td>
-//                     <td className="py-3 px-4">
-//                       {emp.status === "Active" ? (
-//                         <span className="bg-green-100 text-green-600 px-3 py-1 rounded-lg text-xs font-medium">
-//                           Active
-//                         </span>
-//                       ) : (
-//                         <span className="bg-red-100 text-red-500 px-3 py-1 rounded-lg text-xs font-medium">
-//                           Deactivated
-//                         </span>
-//                       )}
-//                     </td>
-//                     <td className="py-3 px-4 text-right text-gray-500 cursor-pointer">⋮</td>
-//                   </tr>
-//                 ))}
-//               </tbody>
-//             </table>
-//           </div>
+  // === Render Each Employee Card ===
+  const renderEmployeeCard = (emp) => (
+    <div
+      key={emp.id}
+      className="bg-white rounded-2xl shadow border border-gray-200 p-6 flex flex-col justify-between h-full transition hover:shadow-md"
+    >
+      {/* Top Section */}
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center space-x-4">
+          <img
+            src={emp.img}
+            alt={emp.name}
+            className="w-14 h-14 rounded-full object-cover"
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              emp.is_active === true || emp.is_active === "true"
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            {emp.is_active === true || emp.is_active === "true"
+              ? "Active"
+              : "Inactive"}
+          </span>
+          <button className="p-2 rounded-full hover:bg-gray-100">
+            <FiMoreHorizontal className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+      </div>
 
-//           {/* Pagination */}
-//           <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
-//             <span>
-//               Rows per page: <b>10</b>
-//             </span>
-//             <span>1–10 of 11</span>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
+      {/* Name & Designation */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-800">{emp.name}</h3>
+        <p className="text-xs text-gray-500">{emp.designation}</p>
+      </div>
 
-// export default ManageEmployees;
+      {/* Details Section */}
+      <div className="flex flex-col space-y-2 text-sm text-gray-600 bg-gray-100 p-3 rounded-lg mt-2">
+           <div className="flex justify-between">
+          <span className="text-gray-700">Department</span>
+          <span className="text-gray-700">Date of Joining</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-700">{emp.department}</span>
+          <span className="text-gray-700">{emp.date_of_join}</span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Icon icon="solar:phone-linear" className="text-gray-600 w-4 h-4" />
+          <span>{emp.phone}</span>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Icon icon="mage:email" className="text-gray-600 w-4 h-4" />
+          <span>{emp.email}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  // === UI ===
+  return (
+    <DashboardLayout>
+      <div className="bg-white h-[567px] rounded-2xl p-5 flex flex-col">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-1">
+          <h1 className="text-xl font-semibold text-gray-800">
+            Manage Employees
+          </h1>
+          <div className="flex items-center space-x-4">
+            <div className="w-8 h-8 flex items-center justify-center border rounded-full">
+              <FiBell className="w-5 h-5 text-gray-600" />
+            </div>
+            <img
+              src={avatar}
+              alt="Profile"
+              className="w-8 h-8 rounded-full object-cover"
+            />
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <section className="bg-white w-full mb-2">
+          <div className="border-b flex flex-wrap gap-4 px-0 pt-2 text-sm text-gray-600">
+            {TABS.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`pb-2 whitespace-nowrap transition-colors ${
+                  tab === t.key
+                    ? "border-b-2 border-black font-semibold text-black"
+                    : "text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Controls */}
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
+          <span className="text-gray-700 font-medium">
+            {loading
+              ? "Loading..."
+              : `${filteredEmployees.length} Total Employees`}
+          </span>
+
+          <div className="flex items-center space-x-2">
+            <button className="flex items-center bg-black hover:bg-gray-800 text-white px-3 py-2 rounded-lg text-sm">
+              <FiPlus className="w-4 h-4 mr-1" />
+              Add Employee
+            </button>
+
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                placeholder="Search"
+                className="border border-gray-300 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <FiSearch className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            </div>
+          </div>
+        </div>
+
+        {/* Employee Cards */}
+        <div className="flex-1 overflow-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {loading ? (
+              <div className="col-span-full text-center text-gray-500 py-10">
+                Loading...
+              </div>
+            ) : filteredEmployees.length > 0 ? (
+              filteredEmployees.map((emp) => renderEmployeeCard(emp))
+            ) : (
+              <div className="col-span-full text-center text-gray-500 py-10">
+                No employees to show.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}
+
+export default ManageEmployees;

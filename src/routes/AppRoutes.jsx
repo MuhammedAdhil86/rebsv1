@@ -11,6 +11,7 @@ import Dashboard from "../page/dashboard";
 import WorkFromHome from "../page/workfromhome";
 import Settings from "../page/settings";
 import LogPage from "../page/testpage";
+import ManageEmployees from "../page/manageemployee";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ element: Element }) => {
@@ -37,6 +38,7 @@ function AppRoutes() {
       {/* --- Protected Routes --- */}
       <Route path="/dashboard" element={<ProtectedRoute element={Dashboard} />} />
       <Route path="/settings" element={<ProtectedRoute element={Settings} />} />
+      <Route path="/manageemployee" element={<ProtectedRoute element={ManageEmployees} />} />
       <Route path="/test" element={<ProtectedRoute element={LogPage} />} />
       {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
 

@@ -1,16 +1,35 @@
 import { create } from "zustand";
+import { getStaffDetails } from "../service/employeeService";
 
-const useEmployeeStore = create((set) => ({
+const useEmployeeStore = create((set, get) => ({
   employees: [],
-  selectedDay: new Date().toISOString().split("T")[0], // default today
+  loading: false,
+  error: null,
   selectedEmployee: null,
   drawerOpen: false,
   refreshTrigger: 0,
-  setEmployees: (data) => set({ employees: data }),
+  
+  // ✅ Date selection state
+  selectedDay: null,
   setSelectedDay: (day) => set({ selectedDay: day }),
-  setSelectedEmployee: (employee) => set({ selectedEmployee: employee }),
+
+  // ✅ Basic setters
+  setSelectedEmployee: (emp) => set({ selectedEmployee: emp }),
   setDrawerOpen: (open) => set({ drawerOpen: open }),
-  triggerRefresh: () => set((state) => ({ refreshTrigger: state.refreshTrigger + 1 })),
+  setEmployees: (emps) => set({ employees: emps }),
+  triggerRefresh: () => set((s) => ({ refreshTrigger: s.refreshTrigger + 1 })),
+
+  // ✅ Fetch employees from API
+  fetchEmployees: async () => {
+    try {
+      set({ loading: true });
+      const data = await getStaffDetails();
+      set({ employees: data, loading: false });
+    } catch (error) {
+      console.error("Error fetching employee details:", error);
+      set({ error, loading: false });
+    }
+  },
 }));
 
 export default useEmployeeStore;

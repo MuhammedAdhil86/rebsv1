@@ -43,14 +43,14 @@ function SideBar({ userId, userData, onLogout }) {
         { title: "Payroll", path: `/u/${userId}/payroll`, icon: icons.payroll },
         { title: "Reports", path: `/u/${userId}/reports`, icon: icons.reports },
         { title: "Asset Manager", path: `/u/${userId}/assetmanager`, icon: icons.asset },
-        { title: "Manage Employees", path: `/manageemployees`, icon: icons.manageEmployees },
+        { title: "Manage Employees", path: `/manageemployee`, icon: icons.manageEmployees },
         { title: "Work From Home", path: `/u/${userId}/workfromhome`, icon: icons.workfromhome },
       ],
     },
     {
       section: "ONBOARDING",
       items: [
-        { title: "Organization", path: `/u/${userId}/orgOnboard`, icon: icons.organisationonboard },
+        { title: "Organization", path: `manageempl`, icon: icons.organisationonboard },
         { title: "Employee", path: `/u/${userId}/employeeOnboard`, icon: icons.employeeOnboard },
       ],
     },
@@ -66,8 +66,8 @@ function SideBar({ userId, userData, onLogout }) {
   return (
     <div
       className={`${
-        isCollapsed ? "w-16 md:w-20" : "w-[255px]"
-      } h-screen font-sans bg-black text-white flex flex-col transition-all duration-300 fixed md:static top-0 left-0 z-50 shadow-lg`}
+        isCollapsed ? "w-16 md:w-20" : "w-[255px] "
+      } h-screen font-sans  text-white flex flex-col transition-all duration-300 fixed md:static top-0 left-0 z-50 shadow-lg `}
     >
       {/* Logo + Toggle */}
       <div className="flex justify-between items-center p-4">

@@ -51,7 +51,7 @@ function LeaveRequestes() {
 
   return (
     <>
-      <section className="bg-gray-100 rounded-xl shadow-sm overflow-x-auto p-4">
+      <section className="bg-gray-100 rounded-xl shadow-sm overflow-x-auto p-4 w-[1020px]">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Leave Requests</h3>

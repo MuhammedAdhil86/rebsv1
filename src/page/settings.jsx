@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuthStore } from "../store/authStore";
-import DashboardLayout from "../ui/pagelayout";// ✅ Reuse layout
+import DashboardLayout from "../ui/pagelayout";
 import avatar from "../assets/img/avatar.svg";
 import { FiUser, FiLock, FiInfo, FiLogOut } from "react-icons/fi";
 
@@ -58,77 +58,74 @@ function Settings() {
 
   return (
     <DashboardLayout userName={formData.firstName || "User"} onLogout={handleLogout}>
-      {/* ✅ All existing page content intact */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-lg font-semibold text-gray-800">Settings</h1>
-        <div className="w-9 h-9 rounded-full overflow-hidden border">
-          <img src={avatar} alt="User" className="w-full h-full object-cover" />
-        </div>
-      </div>
-
-      <div className="flex gap-6">
-        {/* Left menu */}
-        <div className="w-72 bg-white border border-gray-200 rounded-2xl p-6 flex flex-col items-center shadow-sm">
-          <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
-            <img src={avatar} alt="User Avatar" className="w-full h-full object-cover" />
-          </div>
-          <h2 className="text-lg font-semibold text-gray-800">
-            {formData.firstName} {formData.lastName}
-          </h2>
-          <p className="text-sm text-gray-500 mb-6">{formData.email}</p>
-
-          <div className="w-full space-y-2">
-            <button
-              onClick={() => setActiveTab("personal")}
-              className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm ${
-                activeTab === "personal"
-                  ? "bg-black text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <FiUser className="text-lg" /> Personal Info
-            </button>
-
-            <button
-              onClick={() => setActiveTab("password")}
-              className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm ${
-                activeTab === "password"
-                  ? "bg-black text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <FiLock className="text-lg" /> Change Password
-            </button>
-
-            <button
-              onClick={() => setActiveTab("about")}
-              className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm ${
-                activeTab === "about"
-                  ? "bg-black text-white"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <FiInfo className="text-lg" /> About Us
-            </button>
-
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <FiLogOut className="text-lg" /> Logout
-            </button>
+      {/* White content container */}
+      <div className="bg-white h-[567px] rounded-2xl p-6 overflow-auto ">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-lg font-semibold text-gray-800">Settings</h1>
+          <div className="w-9 h-9 rounded-full overflow-hidden border">
+            <img src={avatar} alt="User" className="w-full h-full object-cover" />
           </div>
         </div>
 
-        {/* Right content */}
-        <div className="flex-1 bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
-          {activeTab === "personal" && (
-            <>
-              <h2 className="text-lg font-semibold text-gray-800 mb-6">
-                Personal Info
-              </h2>
+        <div className="flex gap-6">
+          {/* Left menu */}
+          <div className="w-72 bg-white border border-gray-200 rounded-2xl p-6 flex flex-col items-center shadow-sm">
+            <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
+              <img src={avatar} alt="User Avatar" className="w-full h-full object-cover" />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-800">
+              {formData.firstName} {formData.lastName}
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">{formData.email}</p>
+
+            <div className="w-full space-y-2">
+              <button
+                onClick={() => setActiveTab("personal")}
+                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm ${
+                  activeTab === "personal"
+                    ? "bg-black text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <FiUser className="text-lg" /> Personal Info
+              </button>
+
+              <button
+                onClick={() => setActiveTab("password")}
+                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm ${
+                  activeTab === "password"
+                    ? "bg-black text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <FiLock className="text-lg" /> Change Password
+              </button>
+
+              <button
+                onClick={() => setActiveTab("about")}
+                className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm ${
+                  activeTab === "about"
+                    ? "bg-black text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <FiInfo className="text-lg" /> About Us
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100"
+              >
+                <FiLogOut className="text-lg" /> Logout
+              </button>
+            </div>
+          </div>
+
+          {/* Right content */}
+          <div className="flex-1 bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
+            {activeTab === "personal" && (
               <form onSubmit={handleUpdate} className="grid grid-cols-2 gap-6">
-                {/* Form fields remain exactly the same */}
                 <div>
                   <label className="block text-sm text-gray-600 mb-2">First name</label>
                   <input
@@ -204,29 +201,29 @@ function Settings() {
                   </button>
                 </div>
               </form>
-            </>
-          )}
+            )}
 
-          {activeTab === "password" && (
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-6">
-                Change Password
-              </h2>
-              <p className="text-gray-600 text-sm">
-                This section allows users to update their passwords.
-              </p>
-            </div>
-          )}
+            {activeTab === "password" && (
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800 mb-6">
+                  Change Password
+                </h2>
+                <p className="text-gray-600 text-sm">
+                  This section allows users to update their passwords.
+                </p>
+              </div>
+            )}
 
-          {activeTab === "about" && (
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-6">About Us</h2>
-              <p className="text-gray-600 text-sm">
-                REBS HR System is a comprehensive employee management platform
-                built for efficiency and user-friendliness.
-              </p>
-            </div>
-          )}
+            {activeTab === "about" && (
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800 mb-6">About Us</h2>
+                <p className="text-gray-600 text-sm">
+                  REBS HR System is a comprehensive employee management platform
+                  built for efficiency and user-friendliness.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </DashboardLayout>

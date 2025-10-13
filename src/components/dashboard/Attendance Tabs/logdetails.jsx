@@ -35,7 +35,6 @@ const LogDetails = () => {
 
   const { connectionStatus, log: websocketLogs } = useWebSocket();
 
-  // Generate 30 days dynamically starting from today
   const CALENDAR_DAYS = Array.from({ length: 30 }, (_, i) => {
     const dateObj = dayjs().add(i, "day");
     return {
@@ -116,13 +115,14 @@ const LogDetails = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-100 rounded-b-2xl">
-      <h2 className="font-semibold text-xl"> Log Details</h2>
+    <div className="p-4 sm:p-6 bg-gray-100 rounded-b-2xl w-full lg:w-[1020px]">
+      <h2 className="font-semibold text-lg sm:text-xl">Log Details</h2>
+
       {/* Calendar */}
-      <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-4 py-3 overflow-hidden">
+      <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 sm:px-4 py-2 sm:py-3 overflow-hidden">
         <button
           onClick={() => scroll("left")}
-          className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-gray-100"
+          className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-gray-200 shrink-0"
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -130,26 +130,30 @@ const LogDetails = () => {
           <Icon icon="solar:calendar-date-bold" className="w-5 h-5" />
         </div>
 
-        <div ref={scrollRef} className="flex gap-2 overflow-x-hidden scrollbar-hide flex-1">
+        <div
+          ref={scrollRef}
+          className="flex gap-2 overflow-x-auto scrollbar-hide flex-1"
+        >
           {CALENDAR_DAYS.map((item, idx) => (
             <button
               key={idx}
               onClick={() => setSelectedDate(item.fullDate)}
-              className={`flex flex-col items-center justify-center w-[75px] h-[55px] rounded-xl text-xs font-medium transition-all duration-200 flex-shrink-0 ${
-                dayjs(selectedDate).format("YYYY-MM-DD") === dayjs(item.fullDate).format("YYYY-MM-DD")
+              className={`flex flex-col items-center justify-center w-[60px] sm:w-[75px] h-[50px] sm:h-[55px] rounded-xl text-xs font-medium transition-all duration-200 flex-shrink-0 ${
+                dayjs(selectedDate).format("YYYY-MM-DD") ===
+                dayjs(item.fullDate).format("YYYY-MM-DD")
                   ? "bg-black text-white"
                   : "bg-white text-gray-800 border-2 border-gray-100 hover:border-gray-300"
               }`}
             >
-              <span className="text-[10px]">{item.day}</span>
-              <span className="text-[14px] font-bold mt-1">{item.date}</span>
+              <span className="text-[9px] sm:text-[10px]">{item.day}</span>
+              <span className="text-[12px] sm:text-[14px] font-bold mt-1">{item.date}</span>
             </button>
           ))}
         </div>
 
         <button
           onClick={() => scroll("right")}
-          className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-gray-100"
+          className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-gray-200 shrink-0"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -162,12 +166,16 @@ const LogDetails = () => {
         ) : error ? (
           <p className="p-4 text-red-600">Error: {JSON.stringify(error)}</p>
         ) : (
-          <table className="w-full text-sm rounded-lg overflow-hidden">
+          <table className=" text-sm rounded-lg overflow-hidden min-w-[600px] sm:min-w-full w-[900px]">
             <thead className="bg-white text-gray-500 text-left text-xs uppercase">
               <tr>
-                {["Name", "Device", "Time", "Distance", "Location", "Status"].map((col) => (
-                  <th key={col} className="px-4 py-3 font-medium">{col}</th>
-                ))}
+                {["Name", "Device", "Time", "Distance", "Location", "Status"].map(
+                  (col) => (
+                    <th key={col} className="px-3 sm:px-4 py-2 sm:py-3 font-medium">
+                      {col}
+                    </th>
+                  )
+                )}
               </tr>
             </thead>
             <tbody className="divide-y bg-white">
@@ -185,21 +193,29 @@ const LogDetails = () => {
 
                     return (
                       <tr key={att.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3">{att.name}</td>
-                        <td className="px-4 py-3">{att.location_info?.device || "Unknown"}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 sm:px-4 py-2 sm:py-3">{att.name}</td>
+                        <td className="px-3 sm:px-4 py-2 sm:py-3">
+                          {att.location_info?.device || "Unknown"}
+                        </td>
+                        <td className="px-3 sm:px-4 py-2 sm:py-3">
                           {combinedDateTime
-                            ? dayjs(combinedDateTime).format("h:mm A, MMMM D, YYYY")
+                            ? dayjs(combinedDateTime).format(
+                                "h:mm A, MMMM D, YYYY"
+                              )
                             : "-"}
                         </td>
-                        <td className="px-4 py-3">{att.distance || "Calculating..."} Km</td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 sm:px-4 py-2 sm:py-3">
+                          {att.distance || "Calculating..."} Km
+                        </td>
+                        <td className="px-3 sm:px-4 py-2 sm:py-3">
                           {!latitude || !longitude ? (
                             "-"
                           ) : isRevealed ? (
                             <div>
                               {isLoadingLocation ? (
-                                <span className="text-gray-400 animate-pulse">Loading location...</span>
+                                <span className="text-gray-400 animate-pulse">
+                                  Loading location...
+                                </span>
                               ) : (
                                 <>
                                   <span>{locations[att.id]}</span>
@@ -218,15 +234,17 @@ const LogDetails = () => {
                           ) : (
                             <button
                               className="text-blue-600 underline"
-                              onClick={() => handleSeeLocation(att.id, latitude, longitude)}
+                              onClick={() =>
+                                handleSeeLocation(att.id, latitude, longitude)
+                              }
                             >
                               See Location
                             </button>
                           )}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 sm:px-4 py-2 sm:py-3">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${
                               att.status === "IN"
                                 ? "bg-green-100 text-green-600"
                                 : "bg-red-100 text-red-600"

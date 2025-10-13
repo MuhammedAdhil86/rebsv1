@@ -4,19 +4,21 @@ import DatePicker from "../../ui/datepicker";
 
 function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
   return (
-    <div className="flex-1 grid grid-cols-12 gap-6 p-6 bg-gray-100">
+    <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 sm:p-6 bg-gray-100">
       {/* Left Section */}
-      <div className="col-span-9 flex flex-col gap-6">
+      <div className="lg:col-span-9 flex flex-col gap-6 w-full">
         <DatePicker CALENDAR_DAYS={CALENDAR_DAYS} />
         <EmployeeTableWrapper />
       </div>
 
       {/* Right Section */}
-      <div className="col-span-3 flex flex-col gap-6 mt-7">
-         {/* Attendance Summary */}
-        <div className="bg-white shadow rounded-lg p-4 border border-gray-100">
+      <div className="lg:col-span-3 flex flex-col gap-6 mt-2 sm:mt-4 lg:mt-7 w-full">
+        {/* Attendance Summary */}
+        <div className="bg-white shadow rounded-lg p-4 border border-gray-100 w-full">
           <div className="flex items-baseline gap-1 mb-4">
-            <p className="text-2xl font-bold text-[#1E2734]">{ATTENDANCE_DATA.total}</p>
+            <p className="text-2xl font-bold text-[#1E2734]">
+              {ATTENDANCE_DATA.total}
+            </p>
             <span className="text-sm text-gray-500">Attendance</span>
           </div>
 
@@ -39,41 +41,54 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
             ></div>
           </div>
 
-          <div className="grid grid-cols-4 gap-2 text-center text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm">
             <div className="flex flex-col items-center">
               <span className="text-gray-600 text-xs">Ontime</span>
               <div className="flex items-center gap-1 mt-1">
                 <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                <span className="font-semibold text-[#1E2734]">{ATTENDANCE_DATA.ontime}</span>
+                <span className="font-semibold text-[#1E2734]">
+                  {ATTENDANCE_DATA.ontime}
+                </span>
               </div>
             </div>
+
             <div className="flex flex-col items-center">
               <span className="text-gray-600 text-xs">Delay</span>
               <div className="flex items-center gap-1 mt-1">
                 <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-                <span className="font-semibold text-[#1E2734]">{ATTENDANCE_DATA.delay}</span>
+                <span className="font-semibold text-[#1E2734]">
+                  {ATTENDANCE_DATA.delay}
+                </span>
               </div>
             </div>
+
             <div className="flex flex-col items-center">
               <span className="text-gray-600 text-xs">Late</span>
               <div className="flex items-center gap-1 mt-1">
                 <span className="h-2 w-2 rounded-full bg-purple-500"></span>
-                <span className="font-semibold text-[#1E2734]">{ATTENDANCE_DATA.late}</span>
+                <span className="font-semibold text-[#1E2734]">
+                  {ATTENDANCE_DATA.late}
+                </span>
               </div>
             </div>
+
             <div className="flex flex-col items-center">
               <span className="text-gray-600 text-xs">Absent</span>
               <div className="flex items-center gap-1 mt-1">
                 <span className="h-2 w-2 rounded-full bg-red-500"></span>
-                <span className="font-semibold text-[#1E2734]">{ATTENDANCE_DATA.absent}</span>
+                <span className="font-semibold text-[#1E2734]">
+                  {ATTENDANCE_DATA.absent}
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-          {/* Leaves & Vacations */}
-        <div className="bg-white shadow rounded-lg p-4">
-          <h3 className="text-sm font-semibold mb-4">Leaves and Vacations</h3>
+        {/* Leaves & Vacations */}
+        <div className="bg-white shadow rounded-lg p-4 w-full">
+          <h3 className="text-sm font-semibold mb-4">
+            Leaves and Vacations
+          </h3>
           <ul className="space-y-3 text-sm">
             {[
               { name: "Vishnu", role: "UI/UX Designer", date: "Only Today" },
@@ -82,8 +97,11 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
               { name: "Greesham B", role: "UX/UI Designer", date: "14 Feb" },
               { name: "Rohith ER", role: "UX/UI Designer", date: "14 Feb" },
             ].map((leave, idx) => (
-              <li key={idx} className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
+              <li
+                key={idx}
+                className="flex justify-between items-center flex-wrap sm:flex-nowrap gap-2"
+              >
+                <div className="flex items-center gap-3 min-w-[150px]">
                   <img
                     src={`https://i.pravatar.cc/30?img=${idx + 10}`}
                     alt={leave.name}
@@ -106,7 +124,9 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
               </li>
             ))}
           </ul>
-          <button className="mt-4 text-xs text-blue-600">View all people</button>
+          <button className="mt-4 text-xs text-blue-600">
+            View all people
+          </button>
         </div>
       </div>
     </div>

@@ -7,7 +7,7 @@ import LeaveRequestes from "../components/tables/leaverequests";
 import DailyAttendance from "../components/tables/daily-attendance";
 import MusterRoll from "../components/tables/musterroll";
 
-function Dashboard({ userId, userName, onLogout }) {
+function DashboardUi({ userId, userName, onLogout }) {
   const [activeTab, setActiveTab] = useState("overview");
 
   const ATTENDANCE_DATA = { total: 134, ontime: 86, delay: 12, late: 9, absent: 21 };
@@ -43,40 +43,34 @@ function Dashboard({ userId, userName, onLogout }) {
 
   return (
     <DashboardLayout userId={userId} userName={userName} onLogout={onLogout}>
-      {/* Outer container keeps rounded corners */}
-      <div className="bg-white h-[567px] rounded-2xl shadow-lg overflow-hidden">
-        {/* Scrollable content without scrollbar */}
-        <div className="h-full overflow-y-auto p-6 scrollbar-none">
-          <DashboardHead
-            userName={userName}
-            ATTENDANCE_DATA={ATTENDANCE_DATA}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-          />
+<div className="bg-white">
+        <DashboardHead
+        userName={userName}
+        ATTENDANCE_DATA={ATTENDANCE_DATA}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
 
-          <div className="mt-6">
-            {activeTab === "overview" && (
-              <DashboardOverview
-                ATTENDANCE_DATA={ATTENDANCE_DATA}
-                getWidth={getWidth}
-                CALENDAR_DAYS={CALENDAR_DAYS}
-                EMPLOYEES={EMPLOYEES}
-                LEAVES={LEAVES}
-              />
-            )}
+      {activeTab === "overview" && (
+        <DashboardOverview
+          ATTENDANCE_DATA={ATTENDANCE_DATA}
+          getWidth={getWidth}
+          CALENDAR_DAYS={CALENDAR_DAYS}
+          EMPLOYEES={EMPLOYEES}
+          LEAVES={LEAVES}
+        />
+      )}
 
-            {activeTab === "logdetails" && (
-              <LogDetails CALENDAR_DAYS={CALENDAR_DAYS} EMPLOYEES={EMPLOYEES} />
-            )}
+      {activeTab === "logdetails" && (
+        <LogDetails CALENDAR_DAYS={CALENDAR_DAYS} EMPLOYEES={EMPLOYEES} />
+      )}
 
-            {activeTab === "leaverequests" && <LeaveRequestes />}
-            {activeTab === "dailyAttendance" && <DailyAttendance />}
-            {activeTab === "musterRoll" && <MusterRoll />}
-          </div>
-        </div>
-      </div>
+      {activeTab === "leaverequests" && <LeaveRequestes />}
+      {activeTab === "dailyAttendance" && <DailyAttendance />}
+      {activeTab === "musterRoll" && <MusterRoll />}
+</div>
     </DashboardLayout>
   );
 }
 
-export default Dashboard;
+export default DashboardUi;

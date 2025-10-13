@@ -135,7 +135,7 @@ function MusterRoll() {
   );
 
   return (
-    <div className="bg-gray-100 rounded-lg p-6">
+    <div className="bg-gray-100 rounded-lg p-4 w-[1020px]">
       {/* --- HEADER --- */}
       <div className="flex flex-col space-y-2 mb-6">
         {/* Top Row: Week/Month Filter, Month, Year, Download, Search */}
@@ -193,7 +193,7 @@ function MusterRoll() {
 
       {/* --- ATTENDANCE TABLE --- */}
       <div className="overflow-x-auto">
-        <table className="min-w-[1200px] w-full border-separate border-spacing-y-4">
+        <table className="min-w-[1300px] w-full border-separate border-spacing-y-4">
           {/* Table Header */}
           <thead className="bg-white">
             <tr>

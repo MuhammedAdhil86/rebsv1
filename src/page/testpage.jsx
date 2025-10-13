@@ -1,90 +1,155 @@
 import React, { useState, useEffect } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { getLogEntriesForDate } from "../service/logService";
+import axios from "axios";
 
 const LogPage = () => {
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [month, setMonth] = useState("");
+  const [year, setYear] = useState("");
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const fetchLogs = async (date) => {
-    setLoading(true);
-    setError(null);
+  // 🟢 API function (inline)
+  const fetchMusterRoll = async (month, year, user_id) => {
     try {
-      const data = await getLogEntriesForDate(date);
-      setLogs(data);
-    } catch (err) {
-      setError(err.response?.data || err.message || "Unknown error");
-      setLogs([]);
-    } finally {
-      setLoading(false);
+      const response = await axios.get(
+        `/admin/staff/workhours/${month}/${year}`
+      );
+      console.log("📦 Muster Roll Response:", response.data);
+      return response.data.data;
+    } catch (error) {
+      console.error("❌ Error fetching Employee Calendar:", error.message);
+      throw error;
     }
   };
 
+  // 🗓 Set default month/year when component mounts
   useEffect(() => {
-    fetchLogs(selectedDate);
-  }, [selectedDate]);
+    const currentDate = new Date();
+    const currentMonth = currentDate.toLocaleString("default", { month: "long" });
+    const currentYear = currentDate.getFullYear();
+    setMonth(currentMonth);
+    setYear(currentYear);
+  }, []);
 
-  if (loading) return <p className="p-4">Loading logs...</p>;
-  if (error) return <p className="p-4 text-red-600">Error: {JSON.stringify(error)}</p>;
+  // 🚀 Fetch data whenever month/year changes
+  useEffect(() => {
+    const getData = async () => {
+      if (!month || !year) return;
+      try {
+        setLoading(true);
+        const monthNumber = new Date(Date.parse(`${month} 1`)).getMonth() + 1;
+        const response = await fetchMusterRoll(monthNumber, year);
+        console.log("✅ API Data:", response);
+        setData(response);
+      } catch (error) {
+        console.error("❌ Error fetching Muster Roll:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getData();
+  }, [month, year]);
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow">
-      <h2 className="text-2xl font-semibold mb-4">Staff Logs</h2>
+    <div className="p-6 bg-gray-50 min-h-screen font-poppins">
+      {/* Header */}
+      <h1 className="text-2xl font-semibold mb-6 text-gray-800">
+        Log Page (Muster Roll API Integration)
+      </h1>
 
-      {/* Date picker */}
-      <div className="mb-4">
-        <label className="mr-2 font-medium">Select Date:</label>
-        <DatePicker
-          selected={selectedDate}
-          onChange={(date) => setSelectedDate(date)}
-          dateFormat="yyyy-MM-dd"
-          className="border p-2 rounded"
-        />
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 mb-6">
+        {/* Month Selector */}
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Month</label>
+          <select
+            className="border border-gray-300 rounded-lg px-3 py-1 text-sm bg-white"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+          >
+            {[
+              "January","February","March","April","May","June",
+              "July","August","September","October","November","December",
+            ].map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Year Selector */}
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Year</label>
+          <select
+            className="border border-gray-300 rounded-lg px-3 py-1 text-sm bg-white"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+          >
+            {[2023, 2024, 2025].map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Logs table */}
-      <div className="overflow-x-auto">
-        <table className="w-full border border-gray-200 rounded-lg">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-2 border-b">ID</th>
-              <th className="px-4 py-2 border-b">Name</th>
-              <th className="px-4 py-2 border-b">Role</th>
-              <th className="px-4 py-2 border-b">Device</th>
-              <th className="px-4 py-2 border-b">Time</th>
-              <th className="px-4 py-2 border-b">Location</th>
-              <th className="px-4 py-2 border-b">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((log) =>
-              log.attendance?.map((att) => (
-                <tr key={att.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 border-b">{att.id}</td>
-                  <td className="px-4 py-2 border-b">{att.name}</td>
-                  <td className="px-4 py-2 border-b">{att.role || "Employee"}</td>
-                  <td className="px-4 py-2 border-b">{att.location_info?.device || "Unknown"}</td>
-                  <td className="px-4 py-2 border-b">
-                    {att.time ? new Date(att.time).toLocaleString() : "-"}
-                  </td>
-                  <td className="px-4 py-2 border-b">{att.location_info?.name || "Unknown"}</td>
-                  <td className="px-4 py-2 border-b">{att.status === "IN" ? "Login" : "Logout"}</td>
+      {/* Loader */}
+      {loading && (
+        <div className="text-gray-600 text-sm">Fetching Muster Roll data...</div>
+      )}
+
+      {/* Data Table */}
+      {!loading && data?.length > 0 && (
+        <div className="bg-white rounded-xl shadow-md p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Muster Roll Data for {month} {year}
+            </h2>
+            <span className="text-sm text-gray-500">
+              Showing {data.length} records
+            </span>
+          </div>
+
+          <div className="overflow-x-auto border rounded-lg">
+            <table className="min-w-full border-collapse">
+              <thead className="bg-gray-100 border-b">
+                <tr>
+                  <th className="px-3 py-2 text-left text-sm font-semibold text-gray-700 border-r">
+                    Employee Name
+                  </th>
+                  <th className="px-3 py-2 text-left text-sm font-semibold text-gray-700">
+                    Raw Data (preview)
+                  </th>
                 </tr>
-              ))
-            )}
-            {logs.length === 0 && (
-              <tr>
-                <td colSpan="7" className="text-center py-4 text-gray-500">
-                  No logs found for selected date.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {data.map((emp, index) => (
+                  <tr
+                    key={index}
+                    className="border-b hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-3 py-2 text-sm font-medium text-gray-800 border-r">
+                      {emp.user_name || "Unknown"}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-gray-600 font-mono whitespace-pre-wrap">
+                      {JSON.stringify(emp, null, 2).slice(0, 150)}...
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* No Data */}
+      {!loading && data?.length === 0 && (
+        <div className="text-gray-500 text-sm mt-4">
+          No data found for {month} {year}.
+        </div>
+      )}
     </div>
   );
 };

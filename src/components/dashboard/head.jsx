@@ -1,7 +1,6 @@
 import React from "react";
 
 function DashboardHead({ userName, ATTENDANCE_DATA, activeTab, setActiveTab }) {
-  // Default values
   const attendance = ATTENDANCE_DATA || {
     total: 0,
     ontime: 0,
@@ -13,41 +12,39 @@ function DashboardHead({ userName, ATTENDANCE_DATA, activeTab, setActiveTab }) {
   };
 
   return (
-    <>
+    <div className="bg-white">
+
       {/* Title */}
-      <div className="ml-6 mt-4">
-        <p className="text-2xl font-semibold">{userName} Admin’s Dashboard</p>
-        <p className="text-[13px] text-gray-400">
+      <div className="ml-4 sm:ml-6 mt-4">
+        <p className="text-xl sm:text-2xl font-semibold">{userName} Admin’s Dashboard</p>
+        <p className="text-[12px] sm:text-[13px] text-gray-400">
           Track and manage all details here
         </p>
       </div>
 
       {/* Top Action Buttons */}
-      <div className="flex gap-2 justify-end px-6 mt-4">
+      <div className="flex flex-col sm:flex-row gap-2 justify-end px-4 sm:px-6 mt-4">
         {/* Toggle Group */}
         <div className="inline-flex rounded-lg bg-gray-100 p-1">
-          <button className="px-4 py-1.5 text-sm rounded-md font-medium text-gray-700 hover:bg-white">
+          <button className="px-3 sm:px-4 py-1.5 text-sm sm:text-sm rounded-md font-medium text-gray-700 hover:bg-white">
             Yesterday
           </button>
-          <button className="px-4 py-1.5 text-sm rounded-md font-medium bg-white shadow text-black">
+          <button className="px-3 sm:px-4 py-1.5 text-sm sm:text-sm rounded-md font-medium bg-white shadow text-black">
             Today
           </button>
         </div>
 
-        <button className="px-4 py-2 text-sm rounded-lg border bg-black text-white">
+        <button className="px-3 sm:px-4 py-2 text-sm rounded-lg border bg-black text-white">
           + Create Announcement
         </button>
-        <button className="px-4 py-2 text-sm rounded-lg border bg-black text-white">
+        <button className="px-3 sm:px-4 py-2 text-sm rounded-lg border bg-black text-white">
           + Add Leave
         </button>
       </div>
 
       {/* KPI Cards */}
-      <section
-        className="grid grid-cols-4 gap-4 p-6"
-        style={{ width: "860px", height: "86px" }}
-      >
-        {[
+      <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 sm:p-6">
+        {[ 
           { label: "Total Employees", value: "134", bg: "#EBFDEF" },
           { label: "Total Present", value: "120", bg: "#E8EFF9" },
           { label: "On Leave", value: "14", bg: "#FFEFE7" },
@@ -59,72 +56,37 @@ function DashboardHead({ userName, ATTENDANCE_DATA, activeTab, setActiveTab }) {
             style={{ backgroundColor: card.bg }}
           >
             <p className="text-gray-500 text-sm">{card.label}</p>
-            <h2 className="text-xl font-semibold">{card.value}</h2>
+            <h2 className="text-lg sm:text-xl font-semibold">{card.value}</h2>
           </div>
         ))}
       </section>
 
       {/* Attendance Tabs */}
-      <section className="bg-white mt-6">
-        <div className="border-b flex gap-6 px-6 pt-4 text-sm text-gray-600">
-          <button
-            onClick={() => setActiveTab("overview")}
-            className={`pb-2 ${
-              activeTab === "overview"
-                ? "border-b-2 border-black font-semibold text-black"
-                : ""
-            }`}
-          >
-            Attendance Overview
-          </button>
-
-          <button
-            onClick={() => setActiveTab("logdetails")}
-            className={`pb-2 ${
-              activeTab === "logdetails"
-                ? "border-b-2 border-black font-semibold text-black"
-                : ""
-            }`}
-          >
-            Log Details
-          </button>
-
-          <button
-            onClick={() => setActiveTab("leaverequests")}
-            className={`pb-2 ${
-              activeTab === "leaverequests"
-                ? "border-b-2 border-black font-semibold text-black"
-                : ""
-            }`}
-          >
-            Leave Requests
-          </button>
-
-          <button
-            onClick={() => setActiveTab("dailyAttendance")}
-            className={`pb-2 ${
-              activeTab === "dailyAttendance"
-                ? "border-b-2 border-black font-semibold text-black"
-                : ""
-            }`}
-          >
-            Daily Attendance
-          </button>
-
-          {/* ✅ New Muster Roll tab */}
-          <button
-            onClick={() => setActiveTab("musterRoll")}
-            className={`pb-2 ${
-              activeTab === "musterRoll"
-                ? "border-b-2 border-black font-semibold text-black"
-                : ""
-            }`}
-          >
-            Muster Roll
-          </button>
+      <section className="bg-white mt-4 sm:mt-6">
+        <div className="border-b flex flex-wrap gap-4 sm:gap-6 px-4 sm:px-6 pt-4 text-sm text-gray-600">
+          {[
+            { label: "Attendance Overview", key: "overview" },
+            { label: "Log Details", key: "logdetails" },
+            { label: "Leave Requests", key: "leaverequests" },
+            { label: "Daily Attendance", key: "dailyAttendance" },
+            { label: "Muster Roll", key: "musterRoll" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`pb-2 whitespace-nowrap ${
+                activeTab === tab.key
+                  ? "border-b-2 border-black font-semibold text-black"
+                  : ""
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </section>
-    </>
+
+    </div>
   );
 }
 

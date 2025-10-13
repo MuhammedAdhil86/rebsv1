@@ -1,22 +1,27 @@
 import React, { useState } from "react";
-import SideBar from "./SideBar";
-import Settings from "./Settings";
+import SideBar from "../components/sidebar";
 
-function DashboardLayout({ user, userId }) {
+function DashboardLayout({ userName, onLogout, children }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen bg-black">
+      {/* Sidebar stays black and constant */}
       <SideBar
-        userId={userId}
-        userData={user}
+        userData={{ name: userName }}
         isCollapsed={isCollapsed}
         toggleSidebar={toggleSidebar}
       />
-      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? "ml-16" : "ml-[255px]"}`}>
-        <Settings />
+
+      {/* Main content container */}
+      <div
+        className={`flex-1 transition-all duration-300 p-4 ${
+          isCollapsed ? "ml-16" : "ml-[2px]"
+        }`}
+      >
+        {children} {/* Pages will render here */}
       </div>
     </div>
   );

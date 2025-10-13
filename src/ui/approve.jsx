@@ -24,6 +24,17 @@ const getDateRangeArray = (startDate, endDate) => {
   return dates;
 };
 
+// Get all dates of the month for a given date
+const getAllMonthDates = (date) => {
+  if (!date) return [];
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = d.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  return getDateRangeArray(firstDay, lastDay);
+};
+
 const LeaveRequestApprove = ({ user, onClose }) => {
   const { updateLeaveStatus } = useLeaveStore();
   const [status, setStatus] = useState(null);
@@ -52,13 +63,9 @@ const LeaveRequestApprove = ({ user, onClose }) => {
 
   const totalDays = leaveDates.length;
 
-  const isWithinLeaveRange = (date) => {
-    if (!firstLeaveDate || !endLeaveDate) return false;
-    const day = dayjs(date);
-    return (
-      day.isAfter(dayjs(firstLeaveDate).subtract(1, "day")) &&
-      day.isBefore(dayjs(endLeaveDate).add(1, "day"))
-    );
+  const isLeaveDay = (date) => {
+    const leave = leaveDates.find((l) => dayjs(l.date).isSame(dayjs(date), "day"));
+    return leave ? true : false;
   };
 
   const isHalfDay = (date) => {
@@ -89,15 +96,18 @@ const LeaveRequestApprove = ({ user, onClose }) => {
   const toggleDrawer = (open) => setDrawerOpen(open);
 
   const isSuperAdmin = currentUser && currentUser.user_type === "Super admin";
-  const shouldShowApprovalButtons = isSuperAdmin || user.manager_approval_status === "Approved";
+  const shouldShowApprovalButtons =
+    isSuperAdmin || user.manager_approval_status === "Approved";
 
-  // Generate array of leave dates for calendar
-  const calendarDates = firstLeaveDate && endLeaveDate ? getDateRangeArray(firstLeaveDate, endLeaveDate) : [];
+  // Generate calendar dates for the full month
+  const calendarDates = firstLeaveDate ? getAllMonthDates(firstLeaveDate) : [];
 
   return (
     <div className="max-w-md font-poppins mx-auto mt-4">
       {/* Header */}
-      <div className="pb-3 text-black font-semibold text-lg">Leave Request Approval</div>
+      <div className="pb-3 text-black font-semibold text-lg">
+        Leave Request Approval
+      </div>
 
       {/* User Info */}
       <div className="p-3 bg-white border border-gray-300 rounded-lg mb-6">
@@ -117,7 +127,9 @@ const LeaveRequestApprove = ({ user, onClose }) => {
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <p className="text-sm font-medium text-gray-600">Date</p>
-            <p className="text-sm text-black">{firstLeaveDate ? formatDate(firstLeaveDate) : "N/A"}</p>
+            <p className="text-sm text-black">
+              {firstLeaveDate ? formatDate(firstLeaveDate) : "N/A"}
+            </p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-600">Leave type</p>
@@ -133,11 +145,18 @@ const LeaveRequestApprove = ({ user, onClose }) => {
 
         {/* Manager Approval */}
         <div className="mb-4">
-          <p className="text-sm font-medium text-gray-600">Manager Approval Status</p>
-          <p className={`text-sm font-medium ${
-            user.manager_approval_status === "Approved" ? "text-green-600" :
-            user.manager_approval_status === "Rejected" ? "text-red-600" : "text-yellow-600"
-          }`}>
+          <p className="text-sm font-medium text-gray-600">
+            Manager Approval Status
+          </p>
+          <p
+            className={`text-sm font-medium ${
+              user.manager_approval_status === "Approved"
+                ? "text-green-600"
+                : user.manager_approval_status === "Rejected"
+                ? "text-red-600"
+                : "text-yellow-600"
+            }`}
+          >
             {user.manager_approval_status}
           </p>
           {user.manager_remarks && (
@@ -172,13 +191,12 @@ const LeaveRequestApprove = ({ user, onClose }) => {
               >
                 Approve
               </button>
-                            <button
+              <button
                 onClick={handleReject}
                 className="flex-1 py-2 px-4 border font-semibold border-yellow-400 text-yellow-400 rounded-xl hover:bg-yellow-50 transition duration-200"
               >
                 Cancel
               </button>
-              
             </div>
           </>
         )}
@@ -208,13 +226,17 @@ const LeaveRequestApprove = ({ user, onClose }) => {
       <div className="p-3 border border-gray-300 rounded-lg flex">
         <div className="w-3/4 grid grid-cols-7 gap-1">
           {calendarDates.map((date, idx) => {
-            const isLeave = isWithinLeaveRange(date);
+            const isLeave = isLeaveDay(date);
             const isHalf = isHalfDay(date);
             return (
               <div
                 key={idx}
                 className={`h-8 w-8 flex items-center justify-center rounded-full ${
-                  isHalf ? "bg-lime-500 text-white" : isLeave ? "bg-black text-white" : "bg-gray-100 text-black"
+                  isHalf
+                    ? "bg-lime-500 text-white"
+                    : isLeave
+                    ? "bg-black text-white"
+                    : "bg-gray-100 text-black"
                 }`}
               >
                 {date.getDate()}
@@ -225,10 +247,16 @@ const LeaveRequestApprove = ({ user, onClose }) => {
 
         <div className="w-1/4 flex flex-col space-y-4 ml-4">
           <div className="bg-gray-100 p-2 text-xs font-semibold rounded-lg">
-            Start Date: <span className="text-black">{firstLeaveDate ? formatDate(firstLeaveDate) : "N/A"}</span>
+            Start Date:{" "}
+            <span className="text-black">
+              {firstLeaveDate ? formatDate(firstLeaveDate) : "N/A"}
+            </span>
           </div>
           <div className="bg-gray-100 p-2 text-xs font-semibold rounded-lg">
-            End Date: <span className="text-black">{endLeaveDate ? formatDate(endLeaveDate) : "N/A"}</span>
+            End Date:{" "}
+            <span className="text-black">
+              {endLeaveDate ? formatDate(endLeaveDate) : "N/A"}
+            </span>
           </div>
           <div className="bg-black text-center text-xs font-semibold p-2 rounded-lg text-white">
             Total Days: {totalDays}
