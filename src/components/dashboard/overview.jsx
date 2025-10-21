@@ -4,24 +4,26 @@ import DatePicker from "../../ui/datepicker";
 import { fetchBarAttendance } from "../../service/employeeService"; // ✅ API import
 
 function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
+  // Selected date state
+  const [selectedDate, setSelectedDate] = useState(CALENDAR_DAYS[0] || new Date());
+
   const [attendanceData, setAttendanceData] = useState([]);
   const [totalAttendance, setTotalAttendance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ✅ Fetch attendance bar data from API on first load and whenever CALENDAR_DAYS changes
+  // ✅ Fetch attendance bar data whenever selectedDate changes
   useEffect(() => {
     const loadBarData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Pass CALENDAR_DAYS to API if required
-        const response = await fetchBarAttendance(CALENDAR_DAYS);
+        // Pass the selected date to the API if it supports it
+        const response = await fetchBarAttendance(selectedDate);
 
         if (response && response.data) {
           const rawData = response.data;
 
-          // Default colors for statuses
           const statusColors = {
             Ontime: "bg-green-500",
             Delay: "bg-blue-500",
@@ -30,7 +32,6 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
             "Early Check-in": "bg-gray-400",
           };
 
-          // Normalize data so every status exists
           const normalized = Object.keys(statusColors).map((status) => ({
             status,
             count: rawData.find((item) => item.status === status)?.count || 0,
@@ -51,7 +52,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
     };
 
     loadBarData();
-  }, [CALENDAR_DAYS]); // 🔹 Add CALENDAR_DAYS as dependency
+  }, [selectedDate]); // ✅ Re-run effect whenever date changes
 
   // ✅ Helper to calculate width dynamically
   const getBarWidth = (count) => {
@@ -63,18 +64,21 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
     <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 sm:p-6 bg-gray-100">
       {/* Left Section */}
       <div className="lg:col-span-9 flex flex-col gap-6 w-full">
-        <DatePicker CALENDAR_DAYS={CALENDAR_DAYS} />
+        <DatePicker
+          CALENDAR_DAYS={CALENDAR_DAYS}
+          selectedDate={selectedDate}
+          onChange={setSelectedDate} // Update selected date
+        />
         <EmployeeTableWrapper />
       </div>
 
       {/* Right Section */}
       <div className="lg:col-span-3 flex flex-col gap-6 mt-2 sm:mt-4 lg:mt-7 w-full">
+
         {/* Attendance Summary */}
         <div className="bg-white shadow rounded-lg p-4 border border-gray-100 w-full">
           <div className="flex items-baseline gap-1 mb-4">
-            <p className="text-2xl font-bold text-[#1E2734]">
-              {totalAttendance}
-            </p>
+            <p className="text-2xl font-bold text-[#1E2734]">{totalAttendance}</p>
             <span className="text-sm text-gray-500">Attendance</span>
           </div>
 
@@ -92,9 +96,9 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
                   return (
                     <div
                       key={idx}
-                      className={`${item.color} ${
-                        isFirst ? "rounded-l-full" : ""
-                      } ${isLast ? "rounded-r-full" : ""}`}
+                      className={`${item.color} ${isFirst ? "rounded-l-full" : ""} ${
+                        isLast ? "rounded-r-full" : ""
+                      }`}
                       style={{ width: getBarWidth(item.count) }}
                     ></div>
                   );
@@ -104,17 +108,13 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
               {/* Top 4 Summary Items */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm mb-3">
                 {attendanceData
-                  .filter((item) =>
-                    ["Ontime", "Delay", "Late", "Absent"].includes(item.status)
-                  )
+                  .filter((item) => ["Ontime", "Delay", "Late", "Absent"].includes(item.status))
                   .map((item, idx) => (
                     <div key={idx} className="flex flex-col items-center">
                       <span className="text-gray-600 text-xs">{item.status}</span>
                       <div className="flex items-center gap-1 mt-1">
                         <span className={`h-2 w-2 rounded-full ${item.color}`}></span>
-                        <span className="font-semibold text-[#1E2734]">
-                          {item.count}
-                        </span>
+                        <span className="font-semibold text-[#1E2734]">{item.count}</span>
                       </div>
                     </div>
                   ))}
@@ -127,11 +127,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
                     <span className="h-2.5 w-2.5 rounded-full bg-gray-400"></span>
                     <span className="text-gray-600 text-xs">Early Check-in</span>
                     <span className="font-semibold text-[#1E2734] ml-1">
-                      {
-                        attendanceData.find(
-                          (item) => item.status === "Early Check-in"
-                        )?.count
-                      }
+                      {attendanceData.find((item) => item.status === "Early Check-in")?.count}
                     </span>
                   </div>
                 </div>
