@@ -47,7 +47,7 @@ function LeaveRequestes() {
   }, [leaves, filterStatus, searchQuery]);
 
   return (
-    <div className="flex-1 grid grid-cols-1 gap-4 p-2 sm:p-4 bg-gray-100 rounded-b-2xl w-full max-w-[1020px] mx-auto">
+    <div className="flex-1 grid grid-cols-1 gap-4  sm:p-4 bg-gray-100 rounded-b-2xl w-full  mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
         <h3 className="text-lg font-semibold">Leave Requests</h3>
@@ -86,7 +86,7 @@ function LeaveRequestes() {
 
       {/* Table */}
       <div className="overflow-x-auto rounded-lg shadow-sm bg-white">
-        <table className="min-w-full text-sm border-collapse">
+        <table className="w-full text-sm border-collapse">
           <thead className="bg-white text-gray-500 text-left text-xs uppercase">
             <tr>
               {[
@@ -100,7 +100,10 @@ function LeaveRequestes() {
                 "Status",
                 "Action",
               ].map((col) => (
-                <th key={col} className="px-2 sm:px-4 py-2 font-medium whitespace-nowrap">
+                <th
+                  key={col}
+                  className="px-2 sm:px-4 py-2 font-medium whitespace-nowrap"
+                >
                   <div className="flex items-center gap-1">
                     {col}
                     <span className="flex flex-col">
@@ -112,7 +115,7 @@ function LeaveRequestes() {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y bg-white text-center align-middle">
+          <tbody className="divide-y bg-white text-center align-middle text-[12px]">
             {loading ? (
               <tr>
                 <td colSpan="9" className="py-6 text-gray-500">
@@ -134,7 +137,9 @@ function LeaveRequestes() {
             ) : (
               filteredLeaves.map((req, idx) => (
                 <tr key={req.leave_ref_no || idx} className="hover:bg-gray-50">
-                  <td className="px-2 sm:px-4 py-2 flex justify-center items-center">{req.name || "Unknown"}</td>
+                  <td className="px-2 sm:px-4 py-2 flex justify-center items-center">
+                    {req.name || "Unknown"}
+                  </td>
                   <td className="px-2 sm:px-4 py-2">{req.designation || "-"}</td>
                   <td className="px-2 sm:px-4 py-2">
                     {req.applied_on

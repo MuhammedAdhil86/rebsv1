@@ -45,10 +45,10 @@ function Dashboard({ userId, userName, onLogout }) {
 
   return (
     <DashboardLayout userId={userId} userName={userName} onLogout={onLogout}>
-      {/* White rounded content container */}
-      <div className="h-full flex flex-col">
+      {/* Remove parent padding/margin */}
+      <div className="h-full flex flex-col w-full m-0 p-0">
         {/* Scrollable internal content */}
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        <div className="flex-1 overflow-y-auto w-full m-0 p-0 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           {/* Dashboard Header */}
           <DashboardHead
             userName={userName}
@@ -58,7 +58,7 @@ function Dashboard({ userId, userName, onLogout }) {
           />
 
           {/* Page Content Area */}
-          <div className="mt-6 flex flex-col gap-6">
+          <div className="mt-6 flex flex-col gap-6 w-full m-0 p-0">
             {activeTab === "overview" && (
               <DashboardOverview
                 ATTENDANCE_DATA={ATTENDANCE_DATA}

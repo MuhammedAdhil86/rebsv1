@@ -13,12 +13,12 @@ function DailyAttendance() {
   ];
 
   return (
-    <section className="bg-gray-100 rounded-xl shadow-sm overflow-x-auto p-2 sm:p-4 w-full max-w-[1020px] mx-auto">
+    <section className="bg-gray-100 rounded-xl shadow-sm overflow-x-auto p-2 sm:p-4 w-full max-w-[1280px] mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-3">
-        <h3 className="text-lg font-semibold">Muster Roll</h3>
+        <h3 className="text-lg font-semibold">Daily </h3>
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="flex items-center gap-2 border px-2 py-1 rounded-lg bg-gray-50 text-sm flex-1 sm:flex-none">
+          <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-gray-50 text-sm flex-1 sm:flex-none">
             <input
               type="text"
               placeholder="Search"
@@ -30,12 +30,22 @@ function DailyAttendance() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm border-collapse">
+      <div className="overflow-x-auto rounded-lg shadow-sm bg-white">
+        <table className="w-full text-sm border-collapse">
           <thead className="bg-white text-gray-500 text-left text-xs uppercase">
             <tr>
-              {["Name", "Designation", "Check in - out", "Device", "Working Hours", "Status"].map((col) => (
-                <th key={col} className="px-2 sm:px-3 py-1 sm:py-2 font-medium">
+              {[
+                "Name",
+                "Designation",
+                "Check in - out",
+                "Device",
+                "Working Hours",
+                "Status",
+              ].map((col) => (
+                <th
+                  key={col}
+                  className="px-2 sm:px-4 py-2 font-medium whitespace-nowrap"
+                >
                   <div className="flex items-center gap-1">
                     {col}
                     <span className="flex flex-col">
@@ -48,22 +58,22 @@ function DailyAttendance() {
             </tr>
           </thead>
 
-          <tbody className="bg-white divide-y">
+          <tbody className="bg-white divide-y text-center align-middle">
             {musterData.map((row, idx) => (
               <tr key={idx} className="hover:bg-gray-50">
-                <td className="px-2 sm:px-3 py-1 sm:py-2 flex items-center gap-2">
+                <td className="px-2 sm:px-4 py-2 flex items-center gap-2 justify-center sm:justify-start">
                   <img
                     src={`https://i.pravatar.cc/40?img=${idx + 30}`}
                     alt={row.name}
                     className="w-8 h-8 rounded-full"
                   />
-                  {row.name}
+                  <span>{row.name}</span>
                 </td>
-                <td className="px-2 sm:px-3 py-1 sm:py-2">{row.designation}</td>
-                <td className="px-2 sm:px-3 py-1 sm:py-2">{row.check}</td>
-                <td className="px-2 sm:px-3 py-1 sm:py-2">{row.device}</td>
-                <td className="px-2 sm:px-3 py-1 sm:py-2">{row.workingHours}</td>
-                <td className="px-2 sm:px-3 py-1 sm:py-2">
+                <td className="px-2 sm:px-4 py-2">{row.designation}</td>
+                <td className="px-2 sm:px-4 py-2">{row.check}</td>
+                <td className="px-2 sm:px-4 py-2">{row.device}</td>
+                <td className="px-2 sm:px-4 py-2">{row.workingHours}</td>
+                <td className="px-2 sm:px-4 py-2">
                   <span
                     className={`w-[85px] text-center px-2 py-1 rounded-full text-xs font-medium ${
                       row.status === "On Time"

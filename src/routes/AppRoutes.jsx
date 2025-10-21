@@ -12,6 +12,9 @@ import WorkFromHome from "../page/workfromhome";
 import Settings from "../page/settings";
 import LogPage from "../page/testpage";
 import ManageEmployees from "../page/manageemployee";
+import EmployeeDtails from "../page/employeedetails";
+import EmployeeProfileStaticUI from "../page/employeedetails";
+import EmployeeProfile from "../page/employeedetails";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ element: Element }) => {
@@ -40,6 +43,8 @@ function AppRoutes() {
       <Route path="/settings" element={<ProtectedRoute element={Settings} />} />
       <Route path="/manageemployee" element={<ProtectedRoute element={ManageEmployees} />} />
       <Route path="/test" element={<ProtectedRoute element={LogPage} />} />
+<Route path="/details/:id" element={<ProtectedRoute element={EmployeeProfile} />} />
+
       {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
 
       {/* Catch-all redirect to login */}
