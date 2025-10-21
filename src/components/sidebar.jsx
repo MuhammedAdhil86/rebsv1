@@ -99,7 +99,7 @@ function SideBar({ userData, isCollapsed, toggleSidebar }) {
           </div>
           <button
             onClick={toggleSidebar}
-            className="p-1  rounded transition-colors"
+            className="p-1 rounded transition-colors"
           >
             <Icon
               icon="flowbite:bars-from-left-outline"
@@ -110,68 +110,54 @@ function SideBar({ userData, isCollapsed, toggleSidebar }) {
           </button>
         </div>
 
-{/* Profile Section */}
-<div className="mt-1 flex flex-col items-center">
-  <div
-    onClick={toggleProfile}
-    className={`flex items-center justify-center rounded-lg transition-colors duration-300 cursor-pointer
-      ${isCollapsed ? "w-12 h-12 bg-[#111827] hover:bg-gray-700" : "w-[90%] px-4 h-14"}
-      ${!isCollapsed && (isProfileOpen ? "bg-gray-600" : "bg-gray-800 hover:bg-gray-600")}`}
-  >
-    {/* Always show profile image */}
-    <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
+        {/* Profile Section */}
+        <div className="mt-1 flex flex-col items-center">
+          <div
+            onClick={toggleProfile}
+            className={`flex items-center justify-center rounded-lg transition-colors duration-300 cursor-pointer
+              ${isCollapsed ? "w-12 h-12 bg-[#111827] hover:bg-gray-700" : "w-[90%] px-4 h-14"}
+              ${!isCollapsed && (isProfileOpen ? "bg-gray-600" : "bg-gray-800 hover:bg-gray-600")}`}
+          >
+            <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
+            {!isCollapsed && (
+              <div className="flex-1 text-left ml-3">
+                <span className="block text-sm">{displayName}</span>
+                <span className="block text-xs text-gray-400">{userData?.user_type || "Admin"}</span>
+              </div>
+            )}
+            {!isCollapsed && (
+              <div className="ml-2 transition-transform duration-300">
+                <Icon
+                  icon="mdi:chevron-down"
+                  className={`w-5 h-5 text-gray-400 ${isProfileOpen ? "rotate-180" : ""}`}
+                />
+              </div>
+            )}
+          </div>
 
-    {/* Show name and role only when expanded */}
-    {!isCollapsed && (
-      <div className="flex-1 text-left ml-3">
-        <span className="block text-sm">{displayName}</span>
-        <span className="block text-xs text-gray-400">{userData?.user_type || "Admin"}</span>
-      </div>
-    )}
+          {/* Profile Dropdown */}
+          {!isCollapsed && isProfileOpen && (
+            <div className="mt-2 w-[90%] bg-[#1C2526] rounded-lg flex flex-col space-y-1 px-2 py-1">
+              {/* Settings Link */}
+              <Link
+                to="/settings"
+                className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
+              >
+                <Settings size={20} />
+                <span className="text-sm flex-1 text-left">Settings</span>
+              </Link>
 
-    {/* Chevron down arrow */}
-    {!isCollapsed && (
-      <div className="ml-2 transition-transform duration-300">
-        <Icon
-          icon="mdi:chevron-down"
-          className={`w-5 h-5 text-gray-400 ${isProfileOpen ? "rotate-180" : ""}`}
-        />
-      </div>
-    )}
-
-    {/* Settings icon only when expanded */}
-    {!isCollapsed && (
-      <div className="relative flex items-center justify-center ml-2">
-        <Link to="/settings">
-          <Settings className="w-5 h-5 text-gray-400 cursor-pointer hover:text-white" />
-        </Link>
-        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[8px] flex items-center justify-center rounded-full border border-black">
-          8
-        </span>
-      </div>
-    )}
-  </div>
-
-  {/* ✅ Important Profile Dropdown */}
-  {!isCollapsed && isProfileOpen && (
-    <div className="mt-2 w-[90%] bg-[#1C2526] rounded-lg flex flex-col space-y-1 px-2 py-1">
-      <Link
-        to={`/u/${userData?.id}/settings`}
-        className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
-      >
-        <Settings size={20} />
-        <span className="text-sm flex-1 text-left">Settings</span>
-      </Link>
-      <button
-        onClick={() => alert("Logout logic here")}
-        className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
-      >
-        <span className="text-sm flex-1 text-left">Logout</span>
-      </button>
-    </div>
-  )}
-</div>
-
+              {/* Logout Button with icon */}
+              <button
+                onClick={() => alert("Logout logic here")}
+                className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
+              >
+                <Icon icon="material-symbols:logout" width="20" height="20" />
+                <span className="text-sm flex-1 text-left">Logout</span>
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Sidebar Menu */}
         <nav className="flex-1 flex flex-col justify-start mt-5 overflow-y-auto">

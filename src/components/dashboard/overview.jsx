@@ -9,13 +9,14 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ✅ Fetch attendance bar data from API
+  // ✅ Fetch attendance bar data from API on first load and whenever CALENDAR_DAYS changes
   useEffect(() => {
     const loadBarData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetchBarAttendance();
+        // Pass CALENDAR_DAYS to API if required
+        const response = await fetchBarAttendance(CALENDAR_DAYS);
 
         if (response && response.data) {
           const rawData = response.data;
@@ -50,7 +51,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
     };
 
     loadBarData();
-  }, []);
+  }, [CALENDAR_DAYS]); // 🔹 Add CALENDAR_DAYS as dependency
 
   // ✅ Helper to calculate width dynamically
   const getBarWidth = (count) => {
@@ -68,7 +69,6 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
 
       {/* Right Section */}
       <div className="lg:col-span-3 flex flex-col gap-6 mt-2 sm:mt-4 lg:mt-7 w-full">
-
         {/* Attendance Summary */}
         <div className="bg-white shadow rounded-lg p-4 border border-gray-100 w-full">
           <div className="flex items-baseline gap-1 mb-4">
@@ -78,7 +78,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
             <span className="text-sm text-gray-500">Attendance</span>
           </div>
 
-          {/* ✅ Dynamic Progress Bar */}
+          {/* Dynamic Progress Bar */}
           {isLoading ? (
             <p className="text-gray-500 text-sm mb-3">Loading attendance data...</p>
           ) : error ? (
@@ -120,7 +120,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
                   ))}
               </div>
 
-              {/* 🔹 Early Check-in Row (bottom, horizontal) */}
+              {/* Early Check-in Row */}
               {attendanceData.find((item) => item.status === "Early Check-in") && (
                 <div className="flex justify-start">
                   <div className="flex items-center gap-2 text-sm">
