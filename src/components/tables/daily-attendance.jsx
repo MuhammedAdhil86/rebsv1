@@ -1,98 +1,257 @@
-import React from "react";
-import { Search, ChevronUp, ChevronDown } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Search, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { fetchDailyAttendance } from "../../service/employeeService"; // ✅ use from service
 
 function DailyAttendance() {
-  const musterData = [
-    { name: "Aswin Lal", designation: "Designer", check: "9:00 AM - 12:00 PM", device: "Samsung(SM-S356B)", workingHours: "9:10:23 hours", status: "On Time" },
-    { name: "Aleena Eldhose", designation: "Senior Developer", check: "9:00 AM - 0:00 PM", device: "Nothing(AIN44)", workingHours: "9:10:23 hours", status: "On Time" },
-    { name: "Greeshma B", designation: "Junior Developer", check: "9:40 AM - 12:00 PM", device: "Nothing(AIN44)", workingHours: "9:10:23 hours", status: "On Time" },
-    { name: "Gokul S", designation: "Backend Developer", check: "9:00 AM - 12:00 PM", device: "Samsung(SM-S356B)", workingHours: "9:10:23 hours", status: "Half Day" },
-    { name: "Alwin Gigi", designation: "Backend Developer", check: "9:00 AM - 12:00 PM", device: "Samsung(SM-S356B)", workingHours: "9:10:23 hours", status: "Late" },
-    { name: "Hridaya S B", designation: "Junior Developer", check: "9:00 AM - 12:00 PM", device: "Samsung(SM-S356B)", workingHours: "9:10:23 hours", status: "On Time" },
-    { name: "Gokul S", designation: "Backend Developer", check: "9:00 AM - 12:00 PM", device: "Nothing(AIN44)", workingHours: "9:10:23 hours", status: "On Time" },
-  ];
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  });
+
+  // ✅ Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  // ✅ Fetch attendance data
+  const fetchAttendanceData = async (date) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchDailyAttendance(date);
+      const transformed = data.map((item) => ({
+        user_name: item.user_name || "N/A",
+        designation: item.designation || "N/A",
+        check: `${item.checkin || "N/A"} - ${item.checkout || "N/A"}`,
+        device: item.device || "N/A",
+        workingHours: item.working_hours || "0:00:00",
+        status: item.status || "Absent",
+        avatar: item.image || `https://i.pravatar.cc/40?u=${item.user_id}`,
+      }));
+
+      setAttendanceData(transformed);
+      setFilteredData(transformed);
+      setCurrentPage(1);
+    } catch (err) {
+      setError("Failed to load attendance data");
+      setAttendanceData([]);
+      setFilteredData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAttendanceData(selectedDate);
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredData(attendanceData);
+    } else {
+      const lower = searchQuery.toLowerCase();
+      const filtered = attendanceData.filter(
+        (item) =>
+          item.user_name.toLowerCase().includes(lower) ||
+          item.designation.toLowerCase().includes(lower) ||
+          item.device.toLowerCase().includes(lower) ||
+          item.status.toLowerCase().includes(lower)
+      );
+      setFilteredData(filtered);
+      setCurrentPage(1);
+    }
+  }, [searchQuery, attendanceData]);
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "On Time":
+        return "bg-green-100 text-green-600";
+      case "Late":
+        return "bg-blue-100 text-blue-600";
+      case "Half Day":
+        return "bg-purple-100 text-purple-600";
+      case "Check In Missed":
+        return "bg-red-100 text-red-600";
+      case "Absent":
+        return "bg-red-200 text-red-700";
+      default:
+        return "bg-gray-100 text-gray-600";
+    }
+  };
+
+  // ✅ Pagination logic
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
 
   return (
-    <section className="bg-gray-100 rounded-xl shadow-sm overflow-x-auto p-2 sm:p-4 w-full max-w-[1280px] mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-3">
-        <h3 className="text-lg font-semibold">Daily </h3>
+    <section className="bg-gray-100 p-5 w-full max-w-[1280px] mx-auto rounded-xl font-[Poppins]">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
+        <h3 className="text-xl font-semibold text-gray-800 tracking-wide">
+          Daily Attendance
+        </h3>
+
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-gray-50 text-sm flex-1 sm:flex-none">
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="border px-3 py-2 rounded-lg bg-white text-sm font-medium shadow-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+          />
+
+          <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-gray-50 text-sm flex-1 sm:flex-none shadow-sm">
             <input
               type="text"
               placeholder="Search"
-              className="bg-transparent text-gray-600 w-full focus:outline-none text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent text-gray-700 w-full focus:outline-none text-sm"
             />
             <Search className="w-4 h-4 text-gray-400" />
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-lg shadow-sm bg-white">
-        <table className="w-full text-sm border-collapse">
-          <thead className="bg-white text-gray-500 text-left text-xs uppercase">
-            <tr>
-              {[
-                "Name",
-                "Designation",
-                "Check in - out",
-                "Device",
-                "Working Hours",
-                "Status",
-              ].map((col) => (
-                <th
-                  key={col}
-                  className="px-2 sm:px-4 py-2 font-medium whitespace-nowrap"
-                >
-                  <div className="flex items-center gap-1">
-                    {col}
-                    <span className="flex flex-col">
-                      <ChevronUp className="w-3 h-3 -mb-1 text-gray-300" />
-                      <ChevronDown className="w-3 h-3 text-gray-300" />
-                    </span>
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+          {error}
+        </div>
+      )}
 
-          <tbody className="bg-white divide-y text-center align-middle">
-            {musterData.map((row, idx) => (
-              <tr key={idx} className="hover:bg-gray-50">
-                <td className="px-2 sm:px-4 py-2 flex items-center gap-2 justify-center sm:justify-start">
-                  <img
-                    src={`https://i.pravatar.cc/40?img=${idx + 30}`}
-                    alt={row.name}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <span>{row.name}</span>
-                </td>
-                <td className="px-2 sm:px-4 py-2">{row.designation}</td>
-                <td className="px-2 sm:px-4 py-2">{row.check}</td>
-                <td className="px-2 sm:px-4 py-2">{row.device}</td>
-                <td className="px-2 sm:px-4 py-2">{row.workingHours}</td>
-                <td className="px-2 sm:px-4 py-2">
-                  <span
-                    className={`w-[85px] text-center px-2 py-1 rounded-full text-xs font-medium ${
-                      row.status === "On Time"
-                        ? "bg-green-100 text-green-600"
-                        : row.status === "Late"
-                        ? "bg-blue-100 text-blue-600"
-                        : row.status === "Half Day"
-                        ? "bg-purple-100 text-purple-600"
-                        : "bg-red-100 text-red-600"
-                    }`}
+      {/* Loading */}
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-lg shadow-sm bg-white">
+          <table className="w-full border-collapse rounded-lg overflow-hidden">
+            <thead className="bg-gray-50 text-gray-700 uppercase text-[13.5px] font-semibold">
+              <tr>
+                {[
+                  "Name",
+                  "Designation",
+                  "Check in - out",
+                  "Device",
+                  "Working Hours",
+                  "Status",
+                ].map((col) => (
+                  <th
+                    key={col}
+                    className="px-6 py-3 text-center border-b border-gray-200 whitespace-nowrap"
                   >
-                    {row.status}
-                  </span>
-                </td>
+                    {col}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+
+            <tbody>
+              {paginatedData.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="6"
+                    className="px-4 py-8 text-center text-gray-500 text-[13px]"
+                  >
+                    No attendance records found
+                  </td>
+                </tr>
+              ) : (
+                paginatedData.map((row, idx) => (
+                  <tr
+                    key={idx}
+                    className="hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+                  >
+                    <td className="px-6 py-3 flex items-center gap-3 text-[12px] text-gray-800 text-left">
+                      <img
+                        src={row.avatar}
+                        alt={row.user_name}
+                        className="w-8 h-8 rounded-full object-cover border"
+                      />
+                      <span className="font-medium">{row.user_name}</span>
+                    </td>
+                    <td className="px-6 py-3 text-[12px] text-gray-700 text-center">
+                      {row.designation}
+                    </td>
+                    <td className="px-6 py-3 text-[12px] text-gray-700 text-center">
+                      {row.check}
+                    </td>
+                    <td className="px-6 py-3 text-[12px] text-gray-700 text-center">
+                      {row.device}
+                    </td>
+                    <td className="px-6 py-3 text-[12px] text-gray-700 text-center">
+                      {row.workingHours}
+                    </td>
+                    <td className="px-6 py-3 text-[12px] text-gray-700 text-center">
+                      <span
+                        className={`inline-block w-[85px] text-center px-2 py-1 rounded-full text-[11.5px] font-medium ${getStatusColor(
+                          row.status
+                        )}`}
+                      >
+                        {row.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+
+            {/* ✅ Pagination Row Inside Table */}
+            {filteredData.length > itemsPerPage && (
+              <tfoot>
+                <tr>
+                  <td colSpan="6" className="px-6 py-3 text-right border-t">
+                    <div className="flex justify-end items-center gap-3">
+                      <button
+                        onClick={handlePrevPage}
+                        disabled={currentPage === 1}
+                        className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md ${
+                          currentPage === 1
+                            ? "text-gray-400 cursor-not-allowed"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        Prev
+                      </button>
+
+                      <span className="text-sm font-medium text-gray-700">
+                        Page {currentPage} of {totalPages}
+                      </span>
+
+                      <button
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages}
+                        className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md ${
+                          currentPage === totalPages
+                            ? "text-gray-400 cursor-not-allowed"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        Next
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      )}
     </section>
   );
 }

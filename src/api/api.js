@@ -218,3 +218,17 @@ export const getAttachments = "/staff/admin/document/get/{uuid}"
 export const getPlatforms = "/admin/platform/get"
 export const getVacancies = "/company/vaccancy/get"
 export const addVacancies = "/company/vaccancy/add"
+
+// Employee Basic Info
+export const updateBasicInfo = (id) => `/staff/updatebasicinfo/${id}`;
+
+// Employee Work Info
+export const getWorkInformations = (id) => `/staff/workinfo/${id}`;
+export const updateWorkInformations = (id) => `/staff/updateworkinfo/${id}`;
+
+
+// Attendance
+export const getDailyAttendance = "/admin/attendance/musterroll";
+
+// Consolidated Data
+export const getConsolidatedData = "/admin/staff/consolidated";

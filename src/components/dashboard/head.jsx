@@ -45,9 +45,9 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
   }
 
   return (
-    <div className="w-full m-0 p-0 ">
+    <div className="w-full m-0 p-0">
       {/* Top Header */}
-      <div className="flex justify-between items-center w-full  sm:px-6 ">
+      <div className="flex justify-between items-center w-full sm:px-6">
         <div>
           <p className="text-sm text-gray-600">
             Hi, <span className="font-semibold">{userName}</span>, welcome back!
@@ -67,30 +67,32 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
         </div>
       </div>
 
-      {/* Dashboard Title */}
-      <div className="w-full  sm:px-6 mt-2">
-        <p className="text-lg sm:text-2xl">{userName} Admin’s Dashboard</p>
-        <p className="text-[10px] sm:text-[13px] text-gray-400">
-          Track and manage all details here
-        </p>
-      </div>
+      {/* Dashboard Title + Top Action Buttons */}
+      <div className="w-full sm:px-6 mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-lg sm:text-2xl">{userName} Admin’s Dashboard</p>
+          <p className="text-[10px] sm:text-[13px] text-gray-400">
+            Track and manage all details here
+          </p>
+        </div>
 
-      {/* Top Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-2 justify-end w-full px-4 sm:px-6 mt-4">
-        <div className="inline-flex rounded-lg bg-gray-100 p-1">
-          <button className="px-3 sm:px-4 py-1.5 text-sm rounded-md font-medium text-gray-700 hover:bg-white">
-            Yesterday
+        {/* Top Action Buttons */}
+        <div className="flex flex-wrap gap-2">
+          <div className="inline-flex rounded-xl bg-gray-100 p-1">
+            <button className="px-3 sm:px-4 py-1.5 text-sm rounded-md font-medium text-gray-700 hover:bg-white">
+              Yesterday
+            </button>
+            <button className="px-3 sm:px-4 py-1.5 text-sm rounded-lg font-medium bg-white shadow text-black">
+              Today
+            </button>
+          </div>
+          <button className="px-3 sm:px-4 py-2 text-sm rounded-lg border bg-black text-white">
+            + Create Announcement
           </button>
-          <button className="px-3 sm:px-4 py-1.5 text-sm rounded-md font-medium bg-white shadow text-black">
-            Today
+          <button className="px-3 sm:px-4 py-2 text-sm rounded-lg border bg-black text-white">
+            + Add Leave
           </button>
         </div>
-        <button className="px-3 sm:px-4 py-2 text-sm rounded-lg border bg-black text-white">
-          + Create Announcement
-        </button>
-        <button className="px-3 sm:px-4 py-2 text-sm rounded-lg border bg-black text-white">
-          + Add Leave
-        </button>
       </div>
 
       {/* KPI Cards */}
@@ -103,7 +105,7 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
         ].map((card, idx) => (
           <div key={idx} className="shadow rounded-lg p-3" style={{ backgroundColor: card.bg }}>
             <p className="text-gray-500 text-sm">{card.label}</p>
-            <h2 className="text-lg sm:text-xl font-semibold">{card.value}</h2>
+            <h2 className="text-lg sm:text-xl font-medium">{card.value}</h2>
           </div>
         ))}
       </section>

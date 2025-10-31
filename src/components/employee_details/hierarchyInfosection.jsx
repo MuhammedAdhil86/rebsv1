@@ -1,143 +1,130 @@
-import React, { useCallback, useState, useEffect } from "react";
-import axiosInstance from "../../service/axiosinstance";
-import { getValue } from "../../utils/formatHelpers";
-import toast, { Toaster } from "react-hot-toast";
+import React, { useState, useEffect } from "react";
+import { Icon } from "@iconify/react";
 import useEmployeeStore from "../../store/employeeStore";
+import axiosInstance from "../../service/axiosinstance";
+import toast, { Toaster } from "react-hot-toast";
 
-const HierarchyInfoSection = ({
-  SectionHeader,
-  isEditMode,
-  editableSections,
-  handleSectionSubmit,
-  handleInputChange,
-}) => {
+export default function HierarchyInfoSection() {
   const { selectedEmployee, setSelectedEmployee } = useEmployeeStore();
-  const employee = selectedEmployee;
-
-  // --- Local editable state ---
-  const [localEdits, setLocalEdits] = useState({
-    manager: getValue(employee?.manager),
-    team: getValue(employee?.team),
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    reporting_manager_id: selectedEmployee?.reporting_manager_id || "",
+    reporting_manager: selectedEmployee?.reporting_manager || "",
   });
+  const [reportingManagers, setReportingManagers] = useState([]);
 
-  // --- Sync with selected employee ---
   useEffect(() => {
-    setLocalEdits({
-      manager: getValue(employee?.manager),
-      team: getValue(employee?.team),
-    });
-  }, [employee]);
-
-  // --- Handle input changes locally ---
-  const handleLocalChange = useCallback((field, value) => {
-    setLocalEdits((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  }, []);
-
-  // --- Submit hierarchy info update ---
-  const submitHierarchyUpdate = useCallback(async () => {
-    try {
-      if (!employee?.id) {
-        toast.error("Employee ID not found.");
-        return;
+    const fetchManagers = async () => {
+      try {
+        const response = await axiosInstance.get("/master/staff");
+        setReportingManagers(response.data.data);
+      } catch (error) {
+        console.error("Error fetching reporting staff:", error);
       }
+    };
 
-      const updatedData = {
-        manager: localEdits.manager || "",
-        team: localEdits.team || "",
-      };
+    if (isEditing) {
+      fetchManagers();
+    }
+  }, [isEditing]);
 
+  if (!selectedEmployee) {
+    return <p className="p-4 text-gray-500">Loading hierarchy info...</p>;
+  }
+
+  const handleChange = (key, value) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSave = async () => {
+    if (!formData.reporting_manager_id) {
+      toast.error("Please select a reporting manager");
+      return;
+    }
+
+    try {
       await axiosInstance.put(
-        `/staff/updatehierarchyinfo/${employee.id}`,
-        updatedData
+        `/staff/updatehierarchyinfo/${selectedEmployee.id}`,
+        { reporting_manager_id: formData.reporting_manager_id }
       );
 
-      // Update employee store
       setSelectedEmployee({
-        ...employee,
-        ...updatedData,
+        ...selectedEmployee,
+        reporting_manager: formData.reporting_manager,
+        reporting_manager_id: formData.reporting_manager_id,
       });
 
-      toast.success("Hierarchy information updated successfully!");
-
-      // Update parent handlers
-      handleInputChange("hierarchyInfo", "manager", updatedData.manager);
-      handleInputChange("hierarchyInfo", "team", updatedData.team);
-
-      handleSectionSubmit("hierarchyInfo");
+      toast.success("Hierarchy updated successfully!");
+      setIsEditing(false);
     } catch (error) {
+      toast.error("Failed to update hierarchy");
       console.error(error);
-      toast.error("Error updating hierarchy information.");
     }
-  }, [
-    employee,
-    localEdits,
-    setSelectedEmployee,
-    handleInputChange,
-    handleSectionSubmit,
-  ]);
+  };
 
-  // --- FieldRow reusable component ---
-  const FieldRow = useCallback(
-    ({ label, value, isEditable, field, type = "text" }) => (
-      <div className="flex justify-between items-center py-3 border-b border-gray-100">
-        <span className="text-[12px] font-medium text-gray-700">{label}</span>
-        {isEditable ? (
-          <input
-            key={`${field}-${employee?.id}`}
-            type={type}
-            value={value || ""}
-            onChange={(e) => handleLocalChange(field, e.target.value)}
-            className="text-sm text-gray-900 text-right bg-transparent border-none outline-none focus:bg-gray-50 px-2 py-1 rounded"
-          />
-        ) : (
-          <span className="text-[12px] text-gray-900 font-medium">
-            {value || "-"}
-          </span>
-        )}
-      </div>
-    ),
-    [handleLocalChange, employee?.id]
-  );
-
-  if (!employee) return null;
+  const data = [
+    { label: "Reporting Manager", key: "reporting_manager" },
+    { label: "Reporting Manager ID", key: "reporting_manager_id" },
+  ];
 
   return (
-    <div className="bg-white rounded-lg">
-      <SectionHeader title="Hierarchy Information" sectionKey="hierarchyInfo" />
-
-      <div className="mx-4 pt-2 pl-2 pr-2">
-        <div className="bg-white rounded-lg">
-          <FieldRow
-            label="Manager"
-            value={localEdits.manager}
-            isEditable={isEditMode && editableSections.hierarchyInfo}
-            field="manager"
-          />
-          <FieldRow
-            label="Team"
-            value={localEdits.team}
-            isEditable={isEditMode && editableSections.hierarchyInfo}
-            field="team"
+    <div className="bg-white p-4 rounded-xl shadow-sm border w-full max-w-md mx-auto">
+      <Toaster />
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-semibold text-gray-800">Hierarchy Information</h3>
+        <div className="flex items-center gap-2">
+          {isEditing && (
+            <button
+              onClick={handleSave}
+              className="text-sm text-blue-600 font-medium hover:underline"
+            >
+              Save
+            </button>
+          )}
+          <Icon
+            icon="basil:edit-outline"
+            className={`w-5 h-5 cursor-pointer ${isEditing ? "text-black" : "text-gray-400"}`}
+            onClick={() => setIsEditing((prev) => !prev)}
           />
         </div>
       </div>
 
-      {isEditMode && editableSections.hierarchyInfo && (
-        <div className="mx-4 mt-4 flex justify-start">
-          <button
-            onClick={submitHierarchyUpdate}
-            className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-colors mb-3 mr-5"
-          >
-            Submit
-          </button>
-          <Toaster />
+      <div className="text-sm space-y-1">
+        {/* Reporting Manager */}
+        <div className="flex justify-between border-b border-gray-100 py-1">
+          <span className="text-gray-500">Reporting Manager</span>
+          <span className="font-medium text-gray-800">
+            {isEditing ? (
+              <select
+                value={formData.reporting_manager_id}
+                onChange={(e) => {
+                  const manager = reportingManagers.find((m) => m.id === e.target.value);
+                  handleChange("reporting_manager_id", e.target.value);
+                  handleChange("reporting_manager", manager?.name || "");
+                }}
+                className="border border-gray-300 rounded px-1 py-0.5 text-gray-800"
+              >
+                <option value="">Select Manager</option>
+                {reportingManagers.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              formData.reporting_manager || "-"
+            )}
+          </span>
         </div>
-      )}
+
+        {/* Reporting Manager ID */}
+        <div className="flex justify-between border-b border-gray-100 py-1">
+          <span className="text-gray-500">Reporting Manager ID</span>
+          <span className="font-medium text-gray-800">
+            {formData.reporting_manager_id || "-"}
+          </span>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default HierarchyInfoSection;
+}

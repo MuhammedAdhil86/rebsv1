@@ -1,7 +1,10 @@
 import React from "react";
 import { Search, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // ✅ Import navigation hook
 
 function MusterRoll() {
+  const navigate = useNavigate(); // ✅ React Router navigation
+
   const ATTENDANCE_DATA = [
     {
       name: "Vishnu",
@@ -60,41 +63,69 @@ function MusterRoll() {
   return (
     <div className="bg-gray-100 rounded-lg p-4 w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
-        <h2 className="text-xl font-semibold text-gray-800">Muster Roll</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-3">
+        <h2
+          className="text-xl text-gray-800 font-[Poppins]"
+          style={{ fontWeight: 500 }}
+        >
+          Muster Roll
+        </h2>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-          {/* Filters, Month, Year, Download */}
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 w-full sm:w-auto">
+          {/* Filters, Month, Year, Download, Consolidated */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* Filter Button */}
             <div className="relative group">
-              <button className="border rounded-lg px-3 py-2 text-sm flex items-center bg-white hover:bg-gray-50">
+              <button className="border rounded-md px-2.5 py-1.5 text-xs flex items-center bg-white hover:bg-gray-50">
                 Filter
-                <ChevronDown className="w-4 h-4 ml-1 text-gray-500" />
+                <ChevronDown className="w-3.5 h-3.5 ml-1 text-gray-500" />
               </button>
               <div className="absolute mt-1 bg-white border rounded-lg shadow-lg z-50 hidden group-hover:block">
-                {["Week 1", "Week 2", "Week 3", "Week 4", "Monthly"].map((label) => (
-                  <div key={label} className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100">{label}</div>
-                ))}
+                {["Week 1", "Week 2", "Week 3", "Week 4", "Monthly"].map(
+                  (label) => (
+                    <div
+                      key={label}
+                      className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100"
+                    >
+                      {label}
+                    </div>
+                  )
+                )}
               </div>
             </div>
 
-            <div className="border rounded-lg px-3 py-2 text-sm flex items-center bg-white hover:bg-gray-50 cursor-pointer">
+            {/* Month & Year Selectors */}
+            <div className="border rounded-md px-2.5 py-1.5 text-xs flex items-center bg-white hover:bg-gray-50 cursor-pointer">
               September
-              <ChevronDown className="w-4 h-4 ml-1 text-gray-500" />
+              <ChevronDown className="w-3.5 h-3.5 ml-1 text-gray-500" />
             </div>
 
-            <div className="border rounded-lg px-3 py-2 text-sm flex items-center bg-white hover:bg-gray-50 cursor-pointer">
+            <div className="border rounded-md px-2.5 py-1.5 text-xs flex items-center bg-white hover:bg-gray-50 cursor-pointer">
               2025
-              <ChevronDown className="w-4 h-4 ml-1 text-gray-500" />
+              <ChevronDown className="w-3.5 h-3.5 ml-1 text-gray-500" />
             </div>
 
-            <button className="bg-black text-white px-4 py-2 rounded-lg text-sm flex items-center font-medium hover:bg-gray-800">
-              <Download className="w-5 h-5 mr-2" /> Download
+            {/* ✅ Download Button */}
+            <button className="bg-black text-white px-3 py-1.5 rounded-md text-xs flex items-center font-medium hover:bg-gray-800">
+              <Download className="w-4 h-4 mr-1" /> Download
             </button>
 
-            <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-gray-50 text-sm w-full sm:w-auto">
-              <input type="text" placeholder="Search" className="bg-transparent w-full focus:outline-none text-sm" />
-              <Search className="w-4 h-4 text-gray-400" />
+            {/* ✅ Consolidated Data Button */}
+            <button
+              onClick={() => navigate("/consoildate")} // ✅ Navigation on click
+              className="border border-gray-300 bg-black text-white px-3 py-1.5 rounded-md text-xs flex items-center font-medium hover:bg-gray-950"
+            >
+              Consolidated Data
+            </button>
+
+            {/* Search Box */}
+            <div className="flex items-center gap-1.5 border px-2 py-1.5 rounded-md bg-gray-50 text-xs w-36 sm:w-40">
+              <input
+                type="text"
+                placeholder="Search"
+                className="bg-transparent w-full focus:outline-none text-xs"
+              />
+              <Search className="w-3.5 h-3.5 text-gray-400" />
             </div>
           </div>
         </div>
@@ -109,7 +140,11 @@ function MusterRoll() {
               {dayHeaders.map((day, idx) => (
                 <th
                   key={idx}
-                  className={`px-3 py-3 text-center text-xs font-medium uppercase tracking-wider ${day.includes("(Today)") ? "text-black font-bold" : "text-gray-500"}`}
+                  className={`px-3 py-3 text-center text-xs font-medium uppercase tracking-wider ${
+                    day.includes("(Today)")
+                      ? "text-black font-bold"
+                      : "text-gray-500"
+                  }`}
                 >
                   {day}
                 </th>
@@ -120,7 +155,11 @@ function MusterRoll() {
             {ATTENDANCE_DATA.map((employee, empIdx) => (
               <tr key={empIdx} className="hover:bg-gray-50">
                 <td className="px-4 py-3 sticky left-0 bg-white text-left w-40 sm:w-56 border-r border-gray-100 flex items-center gap-3">
-                  <img src={employee.avatar} alt={employee.name} className="w-10 h-10 rounded-full" />
+                  <img
+                    src={employee.avatar}
+                    alt={employee.name}
+                    className="w-10 h-10 rounded-full"
+                  />
                   <div>
                     <p className="font-semibold">{employee.name}</p>
                     <p className="text-xs text-gray-500">{employee.role}</p>
@@ -130,17 +169,33 @@ function MusterRoll() {
                 {employee.daily.map((dayData, dayIdx) => (
                   <td
                     key={dayIdx}
-                    className={`text-center text-sm border-r border-gray-100 last:border-r-0 ${dayData.today ? "bg-gray-100" : ""} ${dayData.off ? "bg-gray-50" : "bg-white"}`}
+                    className={`text-center text-sm border-r border-gray-100 last:border-r-0 ${
+                      dayData.today ? "bg-gray-100" : ""
+                    } ${dayData.off ? "bg-gray-50" : "bg-white"}`}
                   >
                     {dayData.off ? (
-                      <div className="text-gray-400 text-xs py-10">Weekly off</div>
+                      <div className="text-gray-400 text-xs py-10">
+                        Weekly off
+                      </div>
                     ) : (
-                      <div className={`flex flex-col items-center justify-center py-2 ${dayData.today ? "space-y-1.5" : "space-y-1"}`}>
-                        <span className={`px-3 py-0.5 rounded text-[10px] tracking-wider ${getStatusClasses(dayData.status)}`}>
+                      <div
+                        className={`flex flex-col items-center justify-center py-2 ${
+                          dayData.today ? "space-y-1.5" : "space-y-1"
+                        }`}
+                      >
+                        <span
+                          className={`px-3 py-0.5 rounded text-[10px] tracking-wider ${getStatusClasses(
+                            dayData.status
+                          )}`}
+                        >
                           {dayData.status.toUpperCase()}
                         </span>
-                        <span className="text-xs text-gray-700">Work hours</span>
-                        <span className="text-xs font-medium text-gray-900">{dayData.workHours}</span>
+                        <span className="text-xs text-gray-700">
+                          Work hours
+                        </span>
+                        <span className="text-xs font-medium text-gray-900">
+                          {dayData.workHours}
+                        </span>
                       </div>
                     )}
                   </td>

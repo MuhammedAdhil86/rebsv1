@@ -2,21 +2,36 @@ import React, { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Settings } from "lucide-react";
 import { Icon } from "@iconify/react";
-import avatar from "../assets/img/avatar.svg";
 import rebsLogo from "../assets/img/Picture1.png";
+import { useAuthStore } from "../store/authStore"; // Zustand store
 
-function SideBar({ userData, isCollapsed, toggleSidebar }) {
+function SideBar({ isCollapsed, toggleSidebar }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
   const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
 
-  const firstName = userData?.first_name || "";
-  const lastName = userData?.last_name || "";
-  const nickName = userData?.nick_name ? `(${userData.nick_name})` : "";
-  const displayName = `${firstName} ${lastName} ${nickName}`.trim() || userData?.name || "Admin";
+  // Get user from Zustand store
+  const user = useAuthStore((state) => state.user);
 
+  // Display name
+  const firstName = user?.first_name || "";
+  const lastName = user?.last_name || "";
+  const nickName = user?.nick_name ? `(${user.nick_name})` : "";
+  const displayName =
+    `${firstName} ${lastName} ${nickName}`.trim() || user?.name || "Admin";
+
+  // Avatar
+  const avatarUrl = user?.avatar || "/assets/img/avatar.svg";
+
+  // Slugify username for URL
+  const userId = user?.id || "";
+  const userNameSlug = user
+    ? `${user.first_name}-${user.last_name}`.toLowerCase().replace(/\s+/g, "-")
+    : "user";
+
+  // Icons
   const icons = {
     hr: <Icon icon="si:dashboard-line" width="20" />,
     muster: <Icon icon="mynaui:table" width="20" />,
@@ -32,32 +47,33 @@ function SideBar({ userData, isCollapsed, toggleSidebar }) {
     interview: <Icon icon="mage:message-conversation" width="20" />,
   };
 
+  // Menu items with ID + username in path
   const menuItems = [
     {
       section: "HUMAN RESOURCES",
       items: [
         { title: "Attendance", path: `/dashboard`, icon: icons.hr },
-        { title: "Muster Roll", path: `/u/${userData?.id}/musteroll`, icon: icons.muster },
-        { title: "Events", path: `/u/${userData?.id}/events`, icon: icons.events },
-        { title: "Payroll", path: `/u/${userData?.id}/payroll`, icon: icons.payroll },
-        { title: "Reports", path: `/u/${userData?.id}/reports`, icon: icons.reports },
-        { title: "Asset Manager", path: `/u/${userData?.id}/assetmanager`, icon: icons.asset },
+        { title: "Muster Roll", path: userId ? `/u/${userId}/${userNameSlug}/musteroll` : "#", icon: icons.muster },
+        { title: "Events", path: userId ? `/u/${userId}/${userNameSlug}/events` : "#", icon: icons.events },
+        { title: "Payroll", path: userId ? `/u/${userId}/${userNameSlug}/payroll` : "#", icon: icons.payroll },
+        { title: "Reports", path: userId ? `/u/${userId}/${userNameSlug}/reports` : "#", icon: icons.reports },
+        { title: "Asset Manager", path: userId ? `/u/${userId}/${userNameSlug}/assetmanager` : "#", icon: icons.asset },
         { title: "Manage Employees", path: `/manageemployee`, icon: icons.manageEmployees },
-        { title: "Work From Home", path: `/u/${userData?.id}/workfromhome`, icon: icons.workfromhome },
+        { title: "Work From Home", path: userId ? `/u/${userId}/${userNameSlug}/workfromhome` : "#", icon: icons.workfromhome },
       ],
     },
     {
       section: "ONBOARDING",
       items: [
-        { title: "Organization", path: `manageempl`, icon: icons.organisationonboard },
-        { title: "Employee", path: `/u/${userData?.id}/employeeOnboard`, icon: icons.employeeOnboard },
+        { title: "Organization", path: `/manageempl`, icon: icons.organisationonboard },
+        { title: "Employee", path:  `/employeeonboarding`, icon: icons.employeeOnboard },
       ],
     },
     {
       section: "HIRING PROCESS",
       items: [
-        { title: "Job Creation", path: `/u/${userData?.id}/jobcreation`, icon: icons.Hiring },
-        { title: "Interview Process", path: `/u/${userData?.id}/interviewprocess`, icon: icons.interview },
+        { title: "Job Creation", path: userId ? `/u/${userId}/${userNameSlug}/jobcreation` : "#", icon: icons.Hiring },
+        { title: "Interview Process", path: userId ? `/u/${userId}/${userNameSlug}/interviewprocess` : "#", icon: icons.interview },
       ],
     },
   ];
@@ -66,7 +82,7 @@ function SideBar({ userData, isCollapsed, toggleSidebar }) {
     <>
       {/* Mobile Hamburger */}
       <button
-        className="md:hidden p-2 fixed top-4 left-4 z-50 bg-gray-800 rounded "
+        className="md:hidden p-2 fixed top-4 left-4 z-50 bg-gray-800 rounded"
         onClick={toggleMobileSidebar}
       >
         <Icon icon="flowbite:bars-from-left-outline" width="24" height="24" />
@@ -88,7 +104,7 @@ function SideBar({ userData, isCollapsed, toggleSidebar }) {
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         {/* Logo + Toggle */}
-        <div className="flex justify-between items-center p-4 ">
+        <div className="flex justify-between items-center p-4">
           <div className="flex items-center gap-2">
             <img
               src={rebsLogo}
@@ -97,10 +113,7 @@ function SideBar({ userData, isCollapsed, toggleSidebar }) {
             />
             {!isCollapsed && <span className="text-white text-lg font-normal">REBS HR</span>}
           </div>
-          <button
-            onClick={toggleSidebar}
-            className="p-1 rounded transition-colors"
-          >
+          <button onClick={toggleSidebar} className="p-1 rounded transition-colors">
             <Icon
               icon="flowbite:bars-from-left-outline"
               width="24"
@@ -118,11 +131,11 @@ function SideBar({ userData, isCollapsed, toggleSidebar }) {
               ${isCollapsed ? "w-12 h-12 bg-[#111827] hover:bg-gray-700" : "w-[90%] px-4 h-14"}
               ${!isCollapsed && (isProfileOpen ? "bg-gray-600" : "bg-gray-800 hover:bg-gray-600")}`}
           >
-            <img src={avatar} alt="Avatar" className="w-8 h-8 rounded-full" />
+            <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full" />
             {!isCollapsed && (
               <div className="flex-1 text-left ml-3">
                 <span className="block text-sm">{displayName}</span>
-                <span className="block text-xs text-gray-400">{userData?.user_type || "Admin"}</span>
+                <span className="block text-xs text-gray-400">{user?.user_type || "Admin"}</span>
               </div>
             )}
             {!isCollapsed && (
@@ -138,7 +151,6 @@ function SideBar({ userData, isCollapsed, toggleSidebar }) {
           {/* Profile Dropdown */}
           {!isCollapsed && isProfileOpen && (
             <div className="mt-2 w-[90%] bg-[#1C2526] rounded-lg flex flex-col space-y-1 px-2 py-1">
-              {/* Settings Link */}
               <Link
                 to="/settings"
                 className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
@@ -147,7 +159,6 @@ function SideBar({ userData, isCollapsed, toggleSidebar }) {
                 <span className="text-sm flex-1 text-left">Settings</span>
               </Link>
 
-              {/* Logout Button with icon */}
               <button
                 onClick={() => alert("Logout logic here")}
                 className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"

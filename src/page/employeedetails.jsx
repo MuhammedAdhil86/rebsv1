@@ -1,183 +1,289 @@
-import React, { useState } from "react";
-import { ArrowLeft, Bell } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Bell, X } from "lucide-react";
+import { Icon } from "@iconify/react";
 import DashboardLayout from "../ui/pagelayout";
 import avatar from "../assets/img/avatar.svg";
+import { deleteEmployee } from "../service/employeeService";
+import toast, { Toaster } from "react-hot-toast";
+
+// Zustand store
+import useEmployeeStore from "../store/employeeStore";
+
+// ✅ Import tab components
+import PersonalInfoTab from "../components/profiledetailstabs/personal_info_tab.jsx";
+import AttachmentsTab from "../components/profiledetailstabs/attachment_tab.jsx";
+
 
 export default function EmployeeProfile() {
-  const [activeTab, setActiveTab] = useState("Personal Info"); // ✅ Default selected tab
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("Personal Info");
+  const [statusUpdating, setStatusUpdating] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
 
-  const employee = {
-    firstName: "Riyas",
-    lastName: "Muhammad",
-    email: "riyas@gmail.com",
-    phone: "+91 9207208965",
-    salary: "2,50,000",
-    employeeId: "1000434",
-    branch: "Head Office",
-    department: "Design",
-    role: "CEO & Founder",
-    joiningDate: "May 10, 2025",
-    experience: "1 Year",
-    accountName: "Riyas Muhammad",
-    ifsc: "38464837",
-    branchBank: "Panampilly Nagar",
-    accountNo: "29267264568",
-    bankName: "Kotak Mahindra",
-    workPhone: "+91 9584848484",
-    dob: "22 December 1995",
-    age: "28",
-    gender: "Male",
-    maritalStatus: "Not specified",
+  const { selectedEmployee, fetchEmployeeById } = useEmployeeStore();
+
+  // Fetch employee data
+  useEffect(() => {
+    if (id) fetchEmployeeById(id).catch((err) => console.error(err));
+  }, [id, fetchEmployeeById]);
+
+  if (!selectedEmployee)
+    return <p className="p-6 text-gray-600">Loading employee...</p>;
+
+  const isActive =
+    selectedEmployee.is_active === true ||
+    selectedEmployee.is_active === "true";
+
+  // ✅ Toggle activation/deactivation
+  const toggleStatus = async () => {
+    try {
+      setStatusUpdating(true);
+      const token = localStorage.getItem("authToken");
+      const newStatus = !isActive;
+
+      const response = await fetch(
+        `${API_BASE_URL}/staff/toggle-activate/${selectedEmployee.uuid}?activate=${newStatus}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update status");
+
+      toast.success(
+        `Employee ${newStatus ? "activated" : "deactivated"} successfully!`
+      );
+      await fetchEmployeeById(selectedEmployee.id);
+    } catch (err) {
+      toast.error(`Status update failed: ${err.message}`);
+    } finally {
+      setStatusUpdating(false);
+    }
   };
 
-  const sections = [
-    {
-      title: "Basic Information",
-      data: [
-        { label: "First Name", value: employee.firstName },
-        { label: "Last Name", value: employee.lastName },
-        { label: "Email Address", value: employee.email },
-        { label: "Contact Number", value: employee.phone },
-        { label: "Salary", value: employee.salary },
-        { label: "Employee ID", value: employee.employeeId },
-      ],
-    },
-    {
-      title: "Work Information",
-      data: [
-        { label: "Branch", value: employee.branch },
-        { label: "Department", value: employee.department },
-        { label: "Role", value: employee.role },
-        { label: "Joining Date", value: employee.joiningDate },
-        { label: "Experience", value: employee.experience },
-      ],
-    },
-    {
-      title: "Bank Information",
-      data: [
-        { label: "Account Holder", value: employee.accountName },
-        { label: "IFSC Code", value: employee.ifsc },
-        { label: "Branch", value: employee.branchBank },
-        { label: "Account Number", value: employee.accountNo },
-        { label: "Bank Name", value: employee.bankName },
-      ],
-    },
-    {
-      title: "Personal Details",
-      data: [
-        { label: "Date of Birth", value: employee.dob },
-        { label: "Age", value: employee.age },
-        { label: "Gender", value: employee.gender },
-        { label: "Marital Status", value: employee.maritalStatus },
-      ],
-    },
-    {
-      title: "Contact Details",
-      data: [{ label: "Work Phone", value: employee.workPhone }],
-    },
+  // ✅ Delete Employee
+  const handleDelete = async () => {
+    if (!deleteReason.trim()) {
+      toast.error("Please provide a reason for deletion");
+      return;
+    }
+
+    try {
+      await deleteEmployee(selectedEmployee.id, deleteReason);
+      toast.success("Employee deleted successfully", { duration: 3000 });
+      setShowDeleteModal(false);
+      setTimeout(() => navigate("/manageemployee"), 3000);
+    } catch (err) {
+      toast.error("Failed to delete employee");
+      console.error(err);
+    }
+  };
+
+  // ✅ Sidebar Tabs
+  const sidebarTabs = [
+    { name: "Personal Info", icon: "proicons:person" },
+    { name: "Activities", icon: "solar:graph-outline" },
+    { name: "Attachments", icon: "subway:pin" },
+    { name: "Manage Shift", icon: "ic:twotone-manage-history" },
+    { name: "Privilege", icon: "carbon:ibm-knowledge-catalog-premium" },
+    { name: "Share", icon: "fluent:share-16-regular" },
   ];
 
   return (
-    <DashboardLayout userName={employee.firstName}>
-      {/* ✅ Header Section */}
-      <header className="flex items-center justify-between bg-white px-6 py-3 border-b shadow-sm rounded-xl mb-4">
-        {/* Left side */}
-        <div className="flex items-center gap-3">
-          <button className="flex items-center text-sm text-gray-600 hover:text-gray-800">
-            <ArrowLeft size={16} className="mr-1" />
-            Back
-          </button>
-          <h1 className="text-lg font-semibold text-gray-800">Employee Profile</h1>
-        </div>
-
-        {/* Right side */}
-        <div className="flex items-center gap-4">
-          <button className="p-2 rounded-full hover:bg-gray-100">
-            <Bell size={20} className="text-gray-600" />
-          </button>
-          <img
-            src={avatar}
-            alt="User Avatar"
-            className="w-8 h-8 rounded-full border"
-          />
-        </div>
-      </header>
-
-      {/* Main Layout */}
-      <div className="flex gap-3 p-1 bg-gray-50 min-h-[700px]">
-        {/* Left Sidebar */}
-        <aside className="w-60 bg-white border rounded-2xl p-6 flex flex-col items-center">
-          <div className="w-24 h-24 rounded-full overflow-hidden mb-4">
+    <DashboardLayout userName={selectedEmployee.first_name}>
+      <Toaster position="top-right" reverseOrder={false} />
+      <div className="bg-[#f9fafb]">
+        {/* Header */}
+        <header className="flex items-center justify-between bg-white px-6 py-3 border-b shadow-sm rounded-xl mb-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center text-sm text-gray-600 hover:text-gray-800"
+            >
+              <ArrowLeft size={16} className="mr-1" />
+              Back
+            </button>
+            <h1 className="text-lg text-gray-800">Employee Profile</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <button className="p-2 rounded-full hover:bg-gray-100">
+              <Bell size={20} className="text-gray-600" />
+            </button>
             <img
-              src={avatar}
-              alt="Employee Avatar"
-              className="w-full h-full object-cover"
+              src={selectedEmployee.profile_image || avatar}
+              alt="User Avatar"
+              className="w-8 h-8 rounded-full border object-cover"
             />
           </div>
-          <h2 className="text-lg font-semibold text-gray-800">
-            {employee.firstName} {employee.lastName}
-          </h2>
-          <p className="text-sm text-gray-500 mb-6">{employee.email}</p>
-          <span className="px-2 py-1 text-xs rounded-full bg-green-500 text-white">
-            Active
-          </span>
+        </header>
 
-          {/* ✅ Sidebar Tabs */}
-          <div className="w-full mt-6 space-y-2">
-            {[
-              "Personal Info",
-              "Activities",
-              "Attachments",
-              "Manage Shift",
-              "Privilege",
-              "Salary",
-            ].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
-                  activeTab === tab
-                    ? "bg-gray-100 font-medium"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-            <button className="w-full text-left px-4 py-2 rounded-md text-red-500 hover:bg-red-50">
-              Delete User
-            </button>
-          </div>
-        </aside>
-
-        {/* Right Main Content */}
-        <main className="flex-1 grid grid-cols-2 gap-4">
-          {sections.map((section) => (
-            <div
-              key={section.title}
-              className={`bg-white p-4 rounded-xl shadow-sm border ${
-                section.title === "Work Information" ? "min-h-[220px]" : ""
+        {/* Layout */}
+        <div className="flex gap-3 p-1 min-h-[700px]">
+          {/* ✅ Sidebar */}
+          <aside className="sticky top-4 self-start h-fit w-60 bg-white border rounded-2xl p-6 flex flex-col items-center shadow-sm relative ">
+            <span
+              className={`absolute top-2 right-2 px-2 py-1 text-xs rounded flex items-center gap-1 ${
+                isActive
+                  ? "bg-green-100 text-green-600"
+                  : "bg-red-100 text-red-500"
               }`}
             >
-              <h3 className="font-semibold text-gray-800 mb-2">
-                {section.title}
-              </h3>
-              <div className="text-sm space-y-1">
-                {section.data.map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex justify-between border-b border-gray-100 py-1"
-                  >
-                    <span className="text-gray-500">{item.label}</span>
-                    <span className="font-medium text-gray-800">
-                      {item.value}
-                    </span>
-                  </div>
-                ))}
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  isActive ? "bg-green-500" : "bg-red-500"
+                }`}
+              ></span>
+              {isActive ? "Active" : "Deactivated"}
+            </span>
+
+            {/* Avatar */}
+            <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border mt-4">
+              <img
+                src={selectedEmployee.image || avatar}
+                alt="Employee Avatar"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <h2 className="text-sm font-semibold text-gray-800 text-center">
+              {selectedEmployee.first_name} {selectedEmployee.last_name}
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">
+              {selectedEmployee.email}
+            </p>
+
+            {/* Tabs */}
+            <div className="w-full mt-6 space-y-2">
+              {sidebarTabs.map((tab) => (
+                <button
+                  key={tab.name}
+                  onClick={() => setActiveTab(tab.name)}
+                  className={`flex items-center gap-2 w-full text-left px-4 py-2 rounded-md transition-colors ${
+                    activeTab === tab.name
+                      ? "bg-[#181818] text-white"
+                      : "text-black hover:bg-gray-100"
+                  }`}
+                >
+                  <Icon
+                    icon={tab.icon}
+                    width="18"
+                    height="18"
+                    className={`${
+                      activeTab === tab.name ? "text-white" : "text-gray-600"
+                    }`}
+                  />
+                  <span>{tab.name}</span>
+                </button>
+              ))}
+
+              {/* Delete */}
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="flex items-center gap-2 w-full text-left px-4 py-2 rounded-md text-red-500 hover:bg-red-50"
+              >
+                <Icon icon="fluent:delete-20-regular" width="18" height="18" />
+                <span>Delete User</span>
+              </button>
+            </div>
+          </aside>
+
+          {/* ✅ Main Content */}
+          <main className="flex-1 overflow-y-auto max-h-[85vh] pr-2">
+            {activeTab === "Status Update" ? (
+              <div className="p-6 bg-white rounded-xl shadow-md flex flex-col items-start gap-4">
+                <h2 className="text-lg font-semibold">Update Status</h2>
+                <p>
+                  Current Status:{" "}
+                  <span className={isActive ? "text-green-600" : "text-red-600"}>
+                    {isActive ? "Active" : "Deactivated"}
+                  </span>
+                </p>
+                <button
+                  onClick={toggleStatus}
+                  disabled={statusUpdating}
+                  className={`px-4 py-2 rounded-md text-white ${
+                    isActive
+                      ? "bg-red-600 hover:bg-red-700"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
+                >
+                  {isActive ? "Deactivate" : "Activate"}
+                </button>
+              </div>
+            ) : activeTab === "Personal Info" ? (
+              <PersonalInfoTab employee={selectedEmployee} />
+            ) : activeTab === "Attachments" ? (
+              <AttachmentsTab
+                attachments={[
+                  {
+                    name: "Resume 2024.pdf",
+                    category: "Uploaded Resume",
+                    addedOn: "2025-05-13",
+                    url: "/files/resume2024.pdf",
+                  },
+                  {
+                    name: "Resume 2024.pdf",
+                    category: "Uploaded Resume",
+                    addedOn: "2025-05-13",
+                    url: "/files/resume2024-copy.pdf",
+                  },
+                ]}
+              />
+            ) : (
+              <div className="p-6 bg-white rounded-xl shadow-md text-gray-500">
+                {activeTab} content coming soon...
+              </div>
+            )}
+          </main>
+        </div>
+
+        {/* ✅ Delete Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-[400px] shadow-lg relative">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+              >
+                <X size={18} />
+              </button>
+              <h2 className="text-lg font-semibold mb-2 text-gray-800">
+                Confirm Deletion
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Please enter a reason for deleting this employee.
+              </p>
+              <textarea
+                className="w-full border rounded-md p-2 text-sm mb-4"
+                rows={3}
+                placeholder="Reason for deletion..."
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+              ></textarea>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 text-sm border rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  Confirm Delete
+                </button>
               </div>
             </div>
-          ))}
-        </main>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

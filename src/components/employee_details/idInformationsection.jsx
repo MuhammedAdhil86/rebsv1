@@ -1,148 +1,130 @@
-import React, { useCallback, useState, useEffect } from "react";
-import axiosInstance from "../../service/axiosinstance";
-import { getValue } from "../../utils/formatHelpers";
-import toast, { Toaster } from "react-hot-toast";
+import React, { useState, useEffect, useCallback } from "react";
+import { Icon } from "@iconify/react";
 import useEmployeeStore from "../../store/employeeStore";
+import axiosInstance from "../../service/axiosinstance";
+import toast, { Toaster } from "react-hot-toast";
 
-const IdInformationSection = ({
-  SectionHeader,
-  isEditMode,
-  editableSections,
-  handleSectionSubmit,
-  handleInputChange,
-}) => {
+export default function IdInformationSection() {
   const { selectedEmployee, setSelectedEmployee } = useEmployeeStore();
-  const employee = selectedEmployee;
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState(null);
 
-  // --- Local editable state ---
-  const [localEdits, setLocalEdits] = useState({
-    uan: getValue(employee?.uan),
-    pan: getValue(employee?.pan),
-    aadhar: getValue(employee?.aadhar),
-  });
-
-  // --- Sync with selected employee ---
+  // ✅ Initialize form data
   useEffect(() => {
-    setLocalEdits({
-      uan: getValue(employee?.uan),
-      pan: getValue(employee?.pan),
-      aadhar: getValue(employee?.aadhar),
-    });
-  }, [employee]);
+    if (selectedEmployee) {
+      setFormData({
+        uan: selectedEmployee.uan || "",
+        pan: selectedEmployee.pan || "",
+        aadhar: selectedEmployee.aadhar || "",
+      });
+    }
+  }, [selectedEmployee]);
 
-  // --- Handle local input change ---
-  const handleLocalChange = useCallback((field, value) => {
-    setLocalEdits((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  // ✅ Handle input changes
+  const handleChange = useCallback((key, value) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  // --- Submit update to backend ---
-  const submitIdInfoUpdate = useCallback(async () => {
+  // ✅ Save handler (PUT request)
+  const handleSave = useCallback(async () => {
+    if (!formData || !selectedEmployee?.id) return;
+
+    const payload = {
+      uan: formData.uan || "",
+      pan: formData.pan || "",
+      aadhar: formData.aadhar || "",
+    };
+
     try {
-      if (!employee?.id) {
-        toast.error("Employee ID not found.");
-        return;
-      }
+      setLoading(true);
+      const res = await axiosInstance.put(
+        `/staff/updateidinfo/${selectedEmployee.id}`,
+        payload
+      );
 
-      const updatedData = {
-        uan: localEdits.uan || "",
-        pan: localEdits.pan || "",
-        aadhar: localEdits.aadhar || "",
-      };
+      console.log("✅ ID info updated:", res.data);
 
-      await axiosInstance.put(`/staff/updateidinfo/${employee.id}`, updatedData);
-
-      // update store
-      setSelectedEmployee({
-        ...employee,
-        ...updatedData,
-      });
+      // Update local store
+      setSelectedEmployee({ ...selectedEmployee, ...payload });
 
       toast.success("ID information updated successfully!");
-
-      // propagate changes upward
-      handleInputChange("idInformation", "uan", updatedData.uan);
-      handleInputChange("idInformation", "pan", updatedData.pan);
-      handleInputChange("idInformation", "aadhar", updatedData.aadhar);
-
-      handleSectionSubmit("idInformation");
+      setIsEditing(false);
     } catch (error) {
-      console.error(error);
-      toast.error("Error updating ID information.");
+      console.error("❌ Error updating ID info:", error);
+      toast.error("Failed to update ID information.");
+    } finally {
+      setLoading(false);
     }
-  }, [
-    employee,
-    localEdits,
-    setSelectedEmployee,
-    handleInputChange,
-    handleSectionSubmit,
-  ]);
+  }, [formData, selectedEmployee, setSelectedEmployee]);
 
-  // --- Field Row reusable ---
-  const FieldRow = useCallback(
-    ({ label, value, isEditable, field, type = "text" }) => (
-      <div className="flex justify-between items-center py-3 border-b border-gray-100">
-        <span className="text-[12px] font-medium text-gray-700">{label}</span>
-        {isEditable ? (
-          <input
-            key={`${field}-${employee?.id}`}
-            type={type}
-            value={value || ""}
-            onChange={(e) => handleLocalChange(field, e.target.value)}
-            className="text-sm text-gray-900 text-right bg-transparent border-none outline-none focus:bg-gray-50 px-2 py-1 rounded"
-          />
-        ) : (
-          <span className="text-[12px] text-gray-900 font-medium">{value || "-"}</span>
-        )}
-      </div>
-    ),
-    [handleLocalChange, employee?.id]
-  );
+  if (!formData)
+    return <p className="p-4 text-gray-500">Loading ID information...</p>;
 
-  if (!employee) return null;
+  // ✅ Reusable field list
+  const idFields = [
+    { label: "UAN", key: "uan" },
+    { label: "PAN", key: "pan" },
+    { label: "Aadhar Number", key: "aadhar" },
+  ];
 
   return (
-    <div className="bg-white rounded-lg">
-      <SectionHeader title="ID Information" sectionKey="idInformation" />
-
-      <div className="mx-4 pt-2 pl-2 pr-2">
-        <div className="bg-white rounded-lg">
-          <FieldRow
-            label="UAN"
-            value={localEdits.uan}
-            isEditable={isEditMode && editableSections.idInformation}
-            field="uan"
-          />
-          <FieldRow
-            label="PAN"
-            value={localEdits.pan}
-            isEditable={isEditMode && editableSections.idInformation}
-            field="pan"
-          />
-          <FieldRow
-            label="Aadhar"
-            value={localEdits.aadhar}
-            isEditable={isEditMode && editableSections.idInformation}
-            field="aadhar"
+    <div className="bg-white p-4 rounded-xl shadow-sm border w-full max-w-md mx-auto">
+      {/* 🔹 Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-gray-800 text-lg">ID Information</h3>
+        <div className="flex items-center gap-2">
+          {isEditing && (
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className={`text-sm text-blue-600 font-medium hover:underline ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {loading ? "Saving..." : "Save"}
+            </button>
+          )}
+          <Icon
+            icon="basil:edit-outline"
+            className="w-5 h-5 text-gray-400 cursor-pointer"
+            onClick={() => setIsEditing((prev) => !prev)}
+            title={isEditing ? "Cancel edit" : "Edit"}
           />
         </div>
       </div>
 
-      {isEditMode && editableSections.idInformation && (
-        <div className="mx-4 mt-4 flex justify-start">
-          <button
-            onClick={submitIdInfoUpdate}
-            className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-colors mb-3 mr-5"
-          >
-            Submit
-          </button>
-          <Toaster />
-        </div>
-      )}
+      {/* 🔹 Field Rows */}
+      <div className="text-sm space-y-2">
+        {idFields.map((field) => {
+          const value = formData[field.key];
+          const displayValue =
+            value === null || value === undefined || value.trim() === ""
+              ? "N/A"
+              : value;
+
+          return (
+            <div
+              key={field.key}
+              className="flex justify-between border-b border-gray-100 py-2 items-center"
+            >
+              <span className="text-gray-500">{field.label}</span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={formData[field.key] || ""}
+                  onChange={(e) => handleChange(field.key, e.target.value)}
+                  className="border border-gray-300 rounded px-2 py-1 text-gray-800 w-full max-w-[160px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              ) : (
+                <span className="text-gray-800">{displayValue}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <Toaster />
     </div>
   );
-};
-
-export default IdInformationSection;
+}

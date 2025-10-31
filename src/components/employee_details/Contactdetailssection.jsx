@@ -1,158 +1,137 @@
-import React, { useCallback, useState, useEffect } from "react";
-import axiosInstance from "../../service/axiosinstance";
-import { getValue } from "../../utils/formatHelpers";
-import toast, { Toaster } from "react-hot-toast";
+import React, { useState, useEffect, useCallback } from "react";
+import { Icon } from "@iconify/react";
 import useEmployeeStore from "../../store/employeeStore";
+import axiosInstance from "../../service/axiosinstance";
+import toast, { Toaster } from "react-hot-toast";
 
-const ContactDetailsSection = ({
-  SectionHeader,
-  EditableInput,
-  isEditMode,
-  editableSections,
-  handleSectionSubmit,
-  handleInputChange,
-}) => {
+export default function ContactInfoSection() {
   const { selectedEmployee, setSelectedEmployee } = useEmployeeStore();
-  const employee = selectedEmployee;
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({});
 
-  // Local state for form edits
-  const [localEdits, setLocalEdits] = useState({
-    address: getValue(employee?.present_address),
-    city: getValue(employee?.city),
-    state: getValue(employee?.state),
-    zip_code: getValue(employee?.zip_code),
-  });
-
-  // Sync with store when employee changes
+  // ✅ Initialize form data when employee changes
   useEffect(() => {
-    setLocalEdits({
-      address: getValue(employee?.present_address),
-      city: getValue(employee?.city),
-      state: getValue(employee?.state),
-      zip_code: getValue(employee?.zip_code),
-    });
-  }, [employee]);
+    if (selectedEmployee) {
+      setFormData({
+        work_phone: selectedEmployee.work_phone || "",
+        personal_mobile: selectedEmployee.ph_no || "",
+        extension_number: selectedEmployee.extension_number || "",
+        personal_email: selectedEmployee.personal_email || "",
+        seating_location: selectedEmployee.seating_location || "",
+        tags: selectedEmployee.tags || "",
+        present_address: selectedEmployee.present_address || "",
+        permanant_address: selectedEmployee.permanant_address || "",
+      });
+    }
+  }, [selectedEmployee]);
 
-  // Handle field changes
-  const handleLocalChange = useCallback((field, value) => {
-    setLocalEdits((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  // ✅ All fields configuration
+  const contactFields = [
+    { label: "Work Phone", key: "work_phone" },
+    { label: "Personal Mobile", key: "personal_mobile" },
+    { label: "Extension Number", key: "extension_number" },
+    { label: "Personal Email", key: "personal_email" },
+    { label: "Seating Location", key: "seating_location" },
+    { label: "Tags", key: "tags" },
+    { label: "Present Address", key: "present_address" },
+    { label: "Permanent Address", key: "permanant_address" },
+  ];
+
+  // ✅ Handle form change
+  const handleChange = useCallback((key, value) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  // Submit update API call
-  const submitContactUpdate = useCallback(async () => {
+  // ✅ Save data to backend
+  const handleSave = useCallback(async () => {
+    if (!formData || !selectedEmployee?.id) return;
+
+    const sanitizedData = Object.fromEntries(
+      Object.entries(formData).map(([k, v]) => [k, v === "Not specified" ? "" : v])
+    );
+
+    const apiUrl = `/staff/updatecontactinfo/${selectedEmployee.id}`;
+
     try {
-      if (!employee?.id) {
-        toast.error("Employee ID not found.");
-        return;
-      }
+      setLoading(true);
+      console.log("📤 Sending contact update:", sanitizedData);
 
-      const updatedData = {
-        present_address: localEdits.address || "",
-        city: localEdits.city || "",
-        state: localEdits.state || "",
-        zip_code: localEdits.zip_code || "",
-      };
-
-      await axiosInstance.put(`/staff/updatecontactinfo/${employee.id}`, updatedData);
+      const response = await axiosInstance.put(apiUrl, sanitizedData);
+      console.log("✅ Contact info updated:", response.data);
 
       // Update global store
-      setSelectedEmployee({
-        ...employee,
-        ...updatedData,
-      });
-
+      setSelectedEmployee({ ...selectedEmployee, ...sanitizedData });
       toast.success("Contact details updated successfully!");
-
-      // Update parent edit handlers
-      handleInputChange("contactDetails", "present_address", updatedData.present_address);
-      handleInputChange("contactDetails", "city", updatedData.city);
-      handleInputChange("contactDetails", "state", updatedData.state);
-      handleInputChange("contactDetails", "zip_code", updatedData.zip_code);
-
-      handleSectionSubmit("contactDetails");
+      setIsEditing(false);
     } catch (error) {
-      console.error(error);
-      toast.error("Error updating contact details.");
+      console.error("❌ Error updating contact information:", error);
+      toast.error("Failed to update contact information. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  }, [
-    localEdits,
-    employee,
-    setSelectedEmployee,
-    handleInputChange,
-    handleSectionSubmit,
-  ]);
+  }, [formData, selectedEmployee, setSelectedEmployee]);
 
-  const FieldRow = useCallback(
-    ({ label, value, isEditable, type = "text", field }) => (
-      <div className="flex justify-between items-center py-3 border-b border-gray-100">
-        <span className="text-[12px] font-medium text-gray-700">{label}</span>
-        {isEditable ? (
-          <input
-            key={`${field}-${employee?.id}`}
-            type={type}
-            value={value || ""}
-            onChange={(e) => handleLocalChange(field, e.target.value)}
-            className="text-sm text-gray-900 text-right bg-transparent border-none outline-none focus:bg-gray-50 px-2 py-1 rounded"
-          />
-        ) : (
-          <span className="text-[12px] text-gray-900 font-medium">{value || "-"}</span>
-        )}
-      </div>
-    ),
-    [handleLocalChange, employee?.id]
-  );
+  if (!formData)
+    return <p className="p-4 text-gray-500">Loading contact info...</p>;
 
-  if (!employee) return null;
-
+  // ✅ UI
   return (
-    <div className="bg-white rounded-lg">
-      <SectionHeader title="Contact Details" sectionKey="contactDetails" />
-
-      <div className="mx-4 pt-2 pl-2 pr-2">
-        <div className="bg-white rounded-lg">
-          <FieldRow
-            label="Address"
-            value={localEdits.address}
-            isEditable={isEditMode && editableSections.contactDetails}
-            field="address"
-          />
-          <FieldRow
-            label="City"
-            value={localEdits.city}
-            isEditable={isEditMode && editableSections.contactDetails}
-            field="city"
-          />
-          <FieldRow
-            label="State"
-            value={localEdits.state}
-            isEditable={isEditMode && editableSections.contactDetails}
-            field="state"
-          />
-          <FieldRow
-            label="Zip Code"
-            value={localEdits.zip_code}
-            isEditable={isEditMode && editableSections.contactDetails}
-            field="zip_code"
+    <div className="bg-white p-4 rounded-xl shadow-sm border w-full max-w-md mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-gray-800 text-lg">Contact Details</h3>
+        <div className="flex items-center gap-2">
+          {isEditing && (
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="text-sm text-blue-600 font-medium hover:underline"
+            >
+              {loading ? "Saving..." : "Save"}
+            </button>
+          )}
+          <Icon
+            icon="basil:edit-outline"
+            className="w-5 h-5 text-gray-400 cursor-pointer"
+            onClick={() => setIsEditing((prev) => !prev)}
           />
         </div>
       </div>
 
-      {isEditMode && editableSections.contactDetails && (
-        <div className="mx-4 mt-4 flex justify-start">
-          <button
-            onClick={submitContactUpdate}
-            className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-colors mb-3 mr-5"
-          >
-            Submit
-          </button>
-          <Toaster />
-        </div>
-      )}
+      {/* Fields */}
+      <div className="text-sm space-y-2">
+        {contactFields.map((field) => {
+          const value = formData[field.key];
+          const displayValue =
+            value === null || value === undefined || value.trim() === ""
+              ? "N/A"
+              : value;
+
+          return (
+            <div
+              key={field.key}
+              className="flex justify-between border-b border-gray-100 py-2"
+            >
+              <span className="text-gray-500">{field.label}</span>
+              <span className="text-gray-800 min-w-0 break-words text-right">
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData[field.key] || ""}
+                    onChange={(e) => handleChange(field.key, e.target.value)}
+                    className="border border-gray-300 rounded px-2 py-1 text-gray-800 w-full max-w-[160px]"
+                  />
+                ) : (
+                  displayValue
+                )}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <Toaster />
     </div>
   );
-};
-
-export default ContactDetailsSection;
+}

@@ -61,7 +61,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
   };
 
   return (
-    <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 sm:p-6 bg-gray-100">
+    <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 sm:p-2 bg-gray-50">
       {/* Left Section */}
       <div className="lg:col-span-9 flex flex-col gap-6 w-full">
         <DatePicker
@@ -76,7 +76,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
       <div className="lg:col-span-3 flex flex-col gap-6 mt-2 sm:mt-4 lg:mt-7 w-full">
 
         {/* Attendance Summary */}
-        <div className="bg-white shadow rounded-lg p-4 border border-gray-100 w-full">
+        <div className="bg-white shadow rounded-xl p-4 border border-gray-100 w-full">
           <div className="flex items-baseline gap-1 mb-4">
             <p className="text-2xl font-bold text-[#1E2734]">{totalAttendance}</p>
             <span className="text-sm text-gray-500">Attendance</span>

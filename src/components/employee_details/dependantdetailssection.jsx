@@ -1,147 +1,145 @@
-import React, { useCallback, useState, useEffect } from "react";
-import axiosInstance from "../../service/axiosinstance";
-import { getValue } from "../../utils/formatHelpers";
+import React, { useState, useEffect } from "react";
+import { Icon } from "@iconify/react";
 import toast, { Toaster } from "react-hot-toast";
-import useEmployeeStore from "../../store/employeeStore";
+import axiosInstance from "../../service/axiosinstance";
 
-const DependantDetailsSection = ({
-  SectionHeader,
-  isEditMode,
-  editableSections,
-  handleSectionSubmit,
-  handleInputChange,
-}) => {
-  const { selectedEmployee, setSelectedEmployee } = useEmployeeStore();
-  const employee = selectedEmployee;
-
-  // --- Local state for editable values ---
-  const [localEdits, setLocalEdits] = useState({
-    dependant_name: getValue(employee?.dependant_name),
-    dependant_relation: getValue(employee?.dependant_relation),
-    dependant_date_of_birth: getValue(employee?.dependant_date_of_birth?.split("T")[0]),
+const DependantDetailsSection = ({ employee, setEmployee }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    dependant_name: "",
+    dependant_relation: "",
+    dependant_date_of_birth: "",
   });
 
-  // --- Update local state when employee changes ---
+  // Initialize formData when employee changes
   useEffect(() => {
-    setLocalEdits({
-      dependant_name: getValue(employee?.dependant_name),
-      dependant_relation: getValue(employee?.dependant_relation),
-      dependant_date_of_birth: getValue(employee?.dependant_date_of_birth?.split("T")[0]),
-    });
+    if (employee) {
+      setFormData({
+        dependant_name: employee.dependant_name || "",
+        dependant_relation: employee.dependant_relation || "",
+        dependant_date_of_birth: employee.dependant_date_of_birth
+          ? employee.dependant_date_of_birth.split("T")[0]
+          : "",
+      });
+    }
   }, [employee]);
 
-  // --- Handle field change locally ---
-  const handleLocalChange = useCallback((field, value) => {
-    setLocalEdits((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  }, []);
+  const handleChange = (key, value) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
 
-  // --- Submit dependant details update ---
-  const submitDependantUpdate = useCallback(async () => {
+  const handleSave = async () => {
+    if (!employee) return;
+
+    // Validate date
+    if (!formData.dependant_date_of_birth) {
+      toast.error("Please enter a valid date of birth.");
+      return;
+    }
+    const date = new Date(formData.dependant_date_of_birth);
+    if (isNaN(date)) {
+      toast.error("Invalid date format.");
+      return;
+    }
+
+    const payload = {
+      dependant_name: formData.dependant_name.trim() || "",
+      dependant_relation: formData.dependant_relation.trim() || "",
+      dependant_date_of_birth: date.toISOString(),
+    };
+
     try {
-      if (!employee?.id) {
-        toast.error("Employee ID not found.");
-        return;
-      }
-
-      const updatedData = {
-        dependant_name: localEdits.dependant_name || "",
-        dependant_relation: localEdits.dependant_relation || "",
-        dependant_date_of_birth: localEdits.dependant_date_of_birth || "",
-      };
-
-      await axiosInstance.put(`/staff/updatedependantdetails/${employee.id}`, updatedData);
-
-      // Update the global store
-      setSelectedEmployee({
-        ...employee,
-        ...updatedData,
-      });
-
+      setLoading(true);
+      await axiosInstance.put(`/staff/updatedependantinfo/${employee.id}`, payload);
       toast.success("Dependant details updated successfully!");
 
-      // Update parent handlers
-      handleInputChange("dependantDetails", "dependant_name", updatedData.dependant_name);
-      handleInputChange("dependantDetails", "dependant_relation", updatedData.dependant_relation);
-      handleInputChange("dependantDetails", "dependant_date_of_birth", updatedData.dependant_date_of_birth);
+      // Update local employee state
+      if (setEmployee) {
+        setEmployee({ ...employee, ...payload });
+      }
 
-      handleSectionSubmit("dependantDetails");
+      setIsEditing(false);
     } catch (error) {
       console.error(error);
-      toast.error("Error updating dependant details.");
+      toast.error("Failed to update dependant details.");
+    } finally {
+      setLoading(false);
     }
-  }, [
-    localEdits,
-    employee,
-    setSelectedEmployee,
-    handleInputChange,
-    handleSectionSubmit,
-  ]);
-
-  // --- UI Field Row (Reusable) ---
-  const FieldRow = useCallback(
-    ({ label, value, isEditable, type = "text", field }) => (
-      <div className="flex justify-between items-center py-3 border-b border-gray-100">
-        <span className="text-[12px] font-medium text-gray-700">{label}</span>
-        {isEditable ? (
-          <input
-            key={`${field}-${employee?.id}`}
-            type={type}
-            value={value || ""}
-            onChange={(e) => handleLocalChange(field, e.target.value)}
-            className="text-sm text-gray-900 text-right bg-transparent border-none outline-none focus:bg-gray-50 px-2 py-1 rounded"
-          />
-        ) : (
-          <span className="text-[12px] text-gray-900 font-medium">{value || "-"}</span>
-        )}
-      </div>
-    ),
-    [handleLocalChange, employee?.id]
-  );
-
-  if (!employee) return null;
+  };
 
   return (
-    <div className="bg-white rounded-lg">
-      <SectionHeader title="Dependant Details" sectionKey="dependantDetails" />
-
-      <div className="mx-4 pt-2 pl-2 pr-2">
-        <div className="bg-white rounded-lg">
-          <FieldRow
-            label="Dependant Name"
-            value={localEdits.dependant_name}
-            isEditable={isEditMode && editableSections.dependantDetails}
-            field="dependant_name"
-          />
-          <FieldRow
-            label="Relation"
-            value={localEdits.dependant_relation}
-            isEditable={isEditMode && editableSections.dependantDetails}
-            field="dependant_relation"
-          />
-          <FieldRow
-            label="Date of Birth"
-            value={localEdits.dependant_date_of_birth}
-            isEditable={isEditMode && editableSections.dependantDetails}
-            type="date"
-            field="dependant_date_of_birth"
+    <div className="bg-white p-4 rounded-xl shadow-sm border w-full max-w-2xl mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-semibold text-gray-800">Dependant Details</h3>
+        <div className="flex items-center gap-2">
+          {isEditing && (
+            <button
+              className={`text-sm text-blue-600 hover:underline ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+              onClick={handleSave}
+              disabled={loading}
+            >
+              {loading ? "Saving..." : "Save"}
+            </button>
+          )}
+          <Icon
+            icon="basil:edit-outline"
+            className="w-5 h-5 text-gray-400 cursor-pointer"
+            title={isEditing ? "Cancel edit" : "Edit"}
+            onClick={() => setIsEditing((prev) => !prev)}
           />
         </div>
       </div>
 
-      {isEditMode && editableSections.dependantDetails && (
-        <div className="mx-4 mt-4 flex justify-start">
-          <button
-            onClick={submitDependantUpdate}
-            className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition-colors mb-3 mr-5"
-          >
-            Submit
-          </button>
-          <Toaster />
+      {/* Fields */}
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between border-b border-gray-100 py-1">
+          <span className="text-gray-500">Name</span>
+          {isEditing ? (
+            <input
+              type="text"
+              value={formData.dependant_name}
+              onChange={(e) => handleChange("dependant_name", e.target.value)}
+              className="border border-gray-300 rounded px-2 py-1 w-full max-w-[180px]"
+            />
+          ) : (
+            <span className="text-gray-800 font-medium">{formData.dependant_name || "Not specified"}</span>
+          )}
         </div>
-      )}
+
+        <div className="flex justify-between border-b border-gray-100 py-1">
+          <span className="text-gray-500">Relation</span>
+          {isEditing ? (
+            <input
+              type="text"
+              value={formData.dependant_relation}
+              onChange={(e) => handleChange("dependant_relation", e.target.value)}
+              className="border border-gray-300 rounded px-2 py-1 w-full max-w-[180px]"
+            />
+          ) : (
+            <span className="text-gray-800 font-medium">{formData.dependant_relation || "Not specified"}</span>
+          )}
+        </div>
+
+        <div className="flex justify-between border-b border-gray-100 py-1">
+          <span className="text-gray-500">Date of Birth</span>
+          {isEditing ? (
+            <input
+              type="date"
+              value={formData.dependant_date_of_birth}
+              onChange={(e) => handleChange("dependant_date_of_birth", e.target.value)}
+              className="border border-gray-300 rounded px-2 py-1 w-full max-w-[180px]"
+            />
+          ) : (
+            <span className="text-gray-800 font-medium">
+              {formData.dependant_date_of_birth || "Not specified"}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <Toaster />
     </div>
   );
 };
