@@ -10,14 +10,14 @@ import toast, { Toaster } from "react-hot-toast";
 // Zustand store
 import useEmployeeStore from "../store/employeeStore";
 
-// ✅ Import tab components
+// Tab components
 import PersonalInfoTab from "../components/profiledetailstabs/personal_info_tab.jsx";
 import AttachmentsTab from "../components/profiledetailstabs/attachment_tab.jsx";
-
 
 export default function EmployeeProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState("Personal Info");
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -37,7 +37,7 @@ export default function EmployeeProfile() {
     selectedEmployee.is_active === true ||
     selectedEmployee.is_active === "true";
 
-  // ✅ Toggle activation/deactivation
+  // Toggle activation/deactivation
   const toggleStatus = async () => {
     try {
       setStatusUpdating(true);
@@ -68,7 +68,7 @@ export default function EmployeeProfile() {
     }
   };
 
-  // ✅ Delete Employee
+  // Delete Employee
   const handleDelete = async () => {
     if (!deleteReason.trim()) {
       toast.error("Please provide a reason for deletion");
@@ -86,7 +86,7 @@ export default function EmployeeProfile() {
     }
   };
 
-  // ✅ Sidebar Tabs
+  // Sidebar Tabs — all now point to "/shift"
   const sidebarTabs = [
     { name: "Personal Info", icon: "proicons:person" },
     { name: "Activities", icon: "solar:graph-outline" },
@@ -99,7 +99,8 @@ export default function EmployeeProfile() {
   return (
     <DashboardLayout userName={selectedEmployee.first_name}>
       <Toaster position="top-right" reverseOrder={false} />
-      <div className="bg-[#f9fafb]">
+
+      <div className="bg-[#f9fafb] min-h-screen">
         {/* Header */}
         <header className="flex items-center justify-between bg-white px-6 py-3 border-b shadow-sm rounded-xl mb-4">
           <div className="flex items-center gap-3">
@@ -126,8 +127,8 @@ export default function EmployeeProfile() {
 
         {/* Layout */}
         <div className="flex gap-3 p-1 min-h-[700px]">
-          {/* ✅ Sidebar */}
-          <aside className="sticky top-4 self-start h-fit w-60 bg-white border rounded-2xl p-6 flex flex-col items-center shadow-sm relative ">
+          {/* Sidebar */}
+          <aside className="sticky top-4 self-start h-fit w-60 bg-white border rounded-2xl p-6 flex flex-col items-center shadow-sm relative">
             <span
               className={`absolute top-2 right-2 px-2 py-1 text-xs rounded flex items-center gap-1 ${
                 isActive
@@ -164,7 +165,10 @@ export default function EmployeeProfile() {
               {sidebarTabs.map((tab) => (
                 <button
                   key={tab.name}
-                  onClick={() => setActiveTab(tab.name)}
+                  onClick={() => {
+                    navigate("/shift"); // ✅ all tabs now go to /shift
+                    setActiveTab(tab.name);
+                  }}
                   className={`flex items-center gap-2 w-full text-left px-4 py-2 rounded-md transition-colors ${
                     activeTab === tab.name
                       ? "bg-[#181818] text-white"
@@ -194,14 +198,16 @@ export default function EmployeeProfile() {
             </div>
           </aside>
 
-          {/* ✅ Main Content */}
+          {/* Main Content */}
           <main className="flex-1 overflow-y-auto max-h-[85vh] pr-2">
             {activeTab === "Status Update" ? (
               <div className="p-6 bg-white rounded-xl shadow-md flex flex-col items-start gap-4">
                 <h2 className="text-lg font-semibold">Update Status</h2>
                 <p>
                   Current Status:{" "}
-                  <span className={isActive ? "text-green-600" : "text-red-600"}>
+                  <span
+                    className={isActive ? "text-green-600" : "text-red-600"}
+                  >
                     {isActive ? "Active" : "Deactivated"}
                   </span>
                 </p>
@@ -244,7 +250,7 @@ export default function EmployeeProfile() {
           </main>
         </div>
 
-        {/* ✅ Delete Modal */}
+        {/* Delete Modal */}
         {showDeleteModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl p-6 w-[400px] shadow-lg relative">

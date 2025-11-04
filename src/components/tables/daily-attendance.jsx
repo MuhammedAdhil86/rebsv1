@@ -96,10 +96,10 @@ function DailyAttendance() {
   };
 
   return (
-    <section className="bg-gray-100 p-5 w-full max-w-[1280px] mx-auto rounded-xl font-[Poppins]">
+    <section className="bg-[#f9fafb] p-5 w-full max-w-[1280px] mx-auto rounded-xl font-[Poppins]">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
-        <h3 className="text-xl font-semibold text-gray-800 tracking-wide">
+        <h3 className="text-xl font-medium text-gray-800 tracking-wide">
           Daily Attendance
         </h3>
 
@@ -119,7 +119,7 @@ function DailyAttendance() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent text-gray-700 w-full focus:outline-none text-sm"
             />
-            <Search className="w-4 h-4 text-gray-400" />
+            <Search className="w-4 h-4 bg-white" />
           </div>
         </div>
       </div>
@@ -139,7 +139,7 @@ function DailyAttendance() {
       ) : (
         <div className="overflow-x-auto rounded-lg shadow-sm bg-white">
           <table className="w-full border-collapse rounded-lg overflow-hidden">
-            <thead className="bg-gray-50 text-gray-700 uppercase text-[13.5px] font-semibold">
+            <thead className="bg-white text-gray-700 uppercase text-[13.5px] font-normal">
               <tr>
                 {[
                   "Name",
@@ -151,7 +151,7 @@ function DailyAttendance() {
                 ].map((col) => (
                   <th
                     key={col}
-                    className="px-6 py-3 text-center border-b border-gray-200 whitespace-nowrap"
+                    className="px-6 py-3 text-center border-b border-gray-200 whitespace-nowrap font-normal"
                   >
                     {col}
                   </th>

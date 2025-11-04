@@ -17,6 +17,7 @@ import EmployeeProfileStaticUI from "../page/employeedetails";
 import EmployeeProfile from "../page/employeedetails";
 import EmployeeOnboarding from "../page/exployeeonbording";
 import ConsolidatedData from "../components/tables/consoildate";
+import ManageEmployeeShifts from "../page/manageemployeeshift";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ element: Element }) => {
@@ -48,6 +49,7 @@ function AppRoutes() {
       <Route path="/test" element={<ProtectedRoute element={LogPage} />} />
 <Route path="/details/:id" element={<ProtectedRoute element={EmployeeProfile} />} />
 <Route path="/consoildate" element={<ProtectedRoute element={ConsolidatedData} />} />
+<Route path="/shift" element={<ProtectedRoute element={ManageEmployeeShifts} />} />
 
       {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
 

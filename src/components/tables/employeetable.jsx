@@ -42,7 +42,7 @@ function EmployeeTable({ employees }) {
   }, [employees, searchTerm]);
 
   return (
-    <section className="bg-gray-100 p-4 rounded-2xl overflow-x-auto">
+    <section className=" p-4 rounded-2xl overflow-x-auto">
       {/* Title & Search */}
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium">Employee List</h3>

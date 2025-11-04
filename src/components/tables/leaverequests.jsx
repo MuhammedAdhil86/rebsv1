@@ -60,10 +60,10 @@ function LeaveRequestes() {
   ];
 
   return (
-    <div className="flex-1 grid grid-cols-1 gap-4 sm:p-4 bg-gray-100 rounded-xl w-full mx-auto">
+    <div className="flex-1 grid grid-cols-1 gap-4 sm:p-4 bg-[#f9fafb] rounded-xl w-full mx-auto">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
-        <h3 className="text-lg font-semibold">Leave Requests</h3>
+        <h3 className="text-lg font-medium">Leave Requests</h3>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
           {/* Filter Buttons */}
           <div className="flex flex-wrap items-center gap-2">

@@ -61,7 +61,7 @@ function MusterRoll() {
   );
 
   return (
-    <div className="bg-gray-100 rounded-lg p-4 w-full">
+    <div className="bg-[#f9fafb] rounded-lg p-4 w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-3">
         <h2

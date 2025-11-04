@@ -105,14 +105,14 @@ const LeaveRequestApprove = ({ user, onClose }) => {
   return (
     <div className="max-w-md font-poppins mx-auto mt-4">
       {/* Header */}
-      <div className="pb-3 text-black font-semibold text-lg">
+      <div className="pb-3 text-black font-medium text-lg">
         Leave Request Approval
       </div>
 
       {/* User Info */}
       <div className="p-3 bg-white border border-gray-300 rounded-lg mb-6">
         <div className="mb-4 flex items-center space-x-4">
-          <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-xl font-bold text-gray-600">
+          <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-xl font-medium text-gray-600">
             {user.name && user.name.charAt(0)}
           </div>
           <div>

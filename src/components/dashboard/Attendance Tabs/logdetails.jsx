@@ -115,12 +115,12 @@ const LogDetails = () => {
   };
 
   return (
-    <div className="flex-1 grid grid-cols-1 gap-4 p-2 sm:p-4 bg-gray-100 rounded-b-2xl w-full max-w-[1020px] mx-auto">
+    <div className="flex-1 grid grid-cols-1 gap-4  sm:p-4 bg-[#f9fafb] rounded-b-2xl w-full  mx-auto">
       {/* Header */}
-      <h2 className="font-semibold text-lg sm:text-xl mb-2">Log Details</h2>
+      <h2 className="font-medium text-lg sm:text-xl ">Log Info</h2>
 
       {/* Calendar */}
-      <div className="flex items-center gap-1 bg-gray-100 rounded-xl px-2 py-1 overflow-hidden">
+      <div className="flex items-center gap-1 bg-[#f9fafb] rounded-xl px-2 py-1 overflow-hidden">
         <button onClick={() => scroll("left")} className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-gray-200 shrink-0">
           <ChevronLeft className="w-3.5 h-3.5" />
         </button>

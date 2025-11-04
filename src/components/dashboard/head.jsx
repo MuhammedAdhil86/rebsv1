@@ -45,9 +45,9 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
   }
 
   return (
-    <div className="w-full m-0 p-0">
+    <div className="w-full  bg-white">
       {/* Top Header */}
-      <div className="flex justify-between items-center w-full sm:px-6">
+      <div className="flex justify-between items-center w-full sm:px-6 pt-3 pb-3">
         <div>
           <p className="text-sm text-gray-600">
             Hi, <span className="font-semibold">{userName}</span>, welcome back!
