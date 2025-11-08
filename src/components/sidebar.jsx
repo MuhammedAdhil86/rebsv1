@@ -18,9 +18,9 @@ function SideBar({ isCollapsed, toggleSidebar }) {
   // Display name
   const firstName = user?.first_name || "";
   const lastName = user?.last_name || "";
-  const nickName = user?.nick_name ? `(${user.nick_name})` : "";
+
   const displayName =
-    `${firstName} ${lastName} ${nickName}`.trim() || user?.name || "Admin";
+    `${firstName} ${lastName} `.trim() || user?.name || "Admin";
 
   // Avatar
   const avatarUrl = user?.avatar || "/assets/img/avatar.svg";
@@ -40,11 +40,18 @@ function SideBar({ isCollapsed, toggleSidebar }) {
     reports: <Icon icon="iconoir:reports" width="20" />,
     asset: <Icon icon="fluent:web-asset-16-regular" width="20" />,
     manageEmployees: <Icon icon="clarity:employee-group-line" width="20" />,
-    workfromhome: <Icon icon="material-symbols-light:home-work-outline-rounded" width="20" />,
+    workfromhome: (
+      <Icon
+        icon="material-symbols-light:home-work-outline-rounded"
+        width="20"
+      />
+    ),
     organisationonboard: <Icon icon="octicon:organization-24" width="20" />,
     employeeOnboard: <Icon icon="clarity:employee-line" width="20" />,
     Hiring: <Icon icon="hugeicons:job-link" width="20" />,
     interview: <Icon icon="mage:message-conversation" width="20" />,
+    // ✅ Added proper Manage Shift icon
+    manageShift: <Icon icon="ic:twotone-manage-history" width="20" />,
   };
 
   // Menu items with ID + username in path
@@ -53,27 +60,85 @@ function SideBar({ isCollapsed, toggleSidebar }) {
       section: "HUMAN RESOURCES",
       items: [
         { title: "Attendance", path: `/dashboard`, icon: icons.hr },
-        { title: "Muster Roll", path: userId ? `/u/${userId}/${userNameSlug}/musteroll` : "#", icon: icons.muster },
-        { title: "Events", path: userId ? `/u/${userId}/${userNameSlug}/events` : "#", icon: icons.events },
-        { title: "Payroll", path: userId ? `/u/${userId}/${userNameSlug}/payroll` : "#", icon: icons.payroll },
-        { title: "Reports", path: userId ? `/u/${userId}/${userNameSlug}/reports` : "#", icon: icons.reports },
-        { title: "Asset Manager", path: userId ? `/u/${userId}/${userNameSlug}/assetmanager` : "#", icon: icons.asset },
-        { title: "Manage Employees", path: `/manageemployee`, icon: icons.manageEmployees },
-        { title: "Work From Home", path: userId ? `/u/${userId}/${userNameSlug}/workfromhome` : "#", icon: icons.workfromhome },
+        {
+          title: "Muster Roll",
+          path: userId
+            ? `/u/${userId}/${userNameSlug}/musteroll`
+            : "#",
+          icon: icons.muster,
+        },
+        {
+          title: "Events",
+          path: userId ? `/u/${userId}/${userNameSlug}/events` : "#",
+          icon: icons.events,
+        },
+        {
+          title: "Payroll",
+          path: userId ? `/u/${userId}/${userNameSlug}/payroll` : "#",
+          icon: icons.payroll,
+        },
+        // ✅ Fixed syntax here
+        { title: "Manage Shift", path: `/shift`, icon: icons.manageShift },
+        {
+          title: "Reports",
+          path: userId ? `/u/${userId}/${userNameSlug}/reports` : "#",
+          icon: icons.reports,
+        },
+        {
+          title: "Asset Manager",
+          path: userId
+            ? `/u/${userId}/${userNameSlug}/assetmanager`
+            : "#",
+          icon: icons.asset,
+        },
+        {
+          title: "Manage Employees",
+          path: `/manageemployee`,
+          icon: icons.manageEmployees,
+        },
+        {
+          title: "Work From Home",
+          path: userId
+            ? `/u/${userId}/${userNameSlug}/workfromhome`
+            : "#",
+          icon: icons.workfromhome,
+        },
       ],
     },
     {
       section: "ONBOARDING",
       items: [
-        { title: "Organization", path: `/manageempl`, icon: icons.organisationonboard },
-        { title: "Employee", path:  `/employeeonboarding`, icon: icons.employeeOnboard },
+{
+  title: "Organization",
+  path: "/onboarding",
+  icon: icons.organisationonboard,
+},
+
+
+        {
+          title: "Employee",
+          path: `/employeeonboarding`,
+          icon: icons.employeeOnboard,
+        },
       ],
     },
     {
       section: "HIRING PROCESS",
       items: [
-        { title: "Job Creation", path: userId ? `/u/${userId}/${userNameSlug}/jobcreation` : "#", icon: icons.Hiring },
-        { title: "Interview Process", path: userId ? `/u/${userId}/${userNameSlug}/interviewprocess` : "#", icon: icons.interview },
+        {
+          title: "Job Creation",
+          path: userId
+            ? `/u/${userId}/${userNameSlug}/jobcreation`
+            : "#",
+          icon: icons.Hiring,
+        },
+        {
+          title: "Interview Process",
+          path: userId
+            ? `/u/${userId}/${userNameSlug}/interviewprocess`
+            : "#",
+          icon: icons.interview,
+        },
       ],
     },
   ];
@@ -111,9 +176,14 @@ function SideBar({ isCollapsed, toggleSidebar }) {
               alt="Logo"
               className={`${isCollapsed ? "hidden" : "block"} h-8 w-8`}
             />
-            {!isCollapsed && <span className="text-white text-lg font-normal">REBS HR</span>}
+            {!isCollapsed && (
+              <span className="text-white text-lg font-normal">REBS HR</span>
+            )}
           </div>
-          <button onClick={toggleSidebar} className="p-1 rounded transition-colors">
+          <button
+            onClick={toggleSidebar}
+            className="p-1 rounded transition-colors"
+          >
             <Icon
               icon="flowbite:bars-from-left-outline"
               width="24"
@@ -135,14 +205,18 @@ function SideBar({ isCollapsed, toggleSidebar }) {
             {!isCollapsed && (
               <div className="flex-1 text-left ml-3">
                 <span className="block text-sm">{displayName}</span>
-                <span className="block text-xs text-gray-400">{user?.user_type || "Admin"}</span>
+                <span className="block text-xs text-gray-400">
+                  {user?.user_type || "Admin"}
+                </span>
               </div>
             )}
             {!isCollapsed && (
               <div className="ml-2 transition-transform duration-300">
                 <Icon
                   icon="mdi:chevron-down"
-                  className={`w-5 h-5 text-gray-400 ${isProfileOpen ? "rotate-180" : ""}`}
+                  className={`w-5 h-5 text-gray-400 ${
+                    isProfileOpen ? "rotate-180" : ""
+                  }`}
                 />
               </div>
             )}
@@ -175,7 +249,9 @@ function SideBar({ isCollapsed, toggleSidebar }) {
           {menuItems.map((menu, index) => (
             <div key={index} className="px-4 mb-2">
               {!isCollapsed && (
-                <p className="text-gray-400 text-xs mb-1 px-2 tracking-wider">{menu.section}</p>
+                <p className="text-gray-400 text-xs mb-1 px-2 tracking-wider">
+                  {menu.section}
+                </p>
               )}
               {menu.items.map((item, idx) => (
                 <NavLink
@@ -191,7 +267,9 @@ function SideBar({ isCollapsed, toggleSidebar }) {
                   style={{ width: isCollapsed ? "6%" : "90%" }}
                 >
                   <span className="flex-shrink-0">{item.icon}</span>
-                  {!isCollapsed && <span className="flex-1 text-left">{item.title}</span>}
+                  {!isCollapsed && (
+                    <span className="flex-1 text-left">{item.title}</span>
+                  )}
                 </NavLink>
               ))}
             </div>

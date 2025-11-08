@@ -6,7 +6,7 @@ import {
   FiClock,
   FiUserX,
   FiMenu,
-  FiEdit, // Changed from FiEdit2 to match the new icon
+  FiEdit,
 } from "react-icons/fi";
 
 // ---------------- MOCK DATA ----------------
@@ -39,34 +39,36 @@ const peopleList = [
 ];
 
 const donutChartData = [
-  { color: "#8B5CF6", percentage: 40, label: "Morning Shift" }, // Purple
-  { color: "#F87171", percentage: 30, label: "Evening Shift" }, // Salmon/Coral
-  { color: "#38BDF8", percentage: 30, label: "Night Shift" }, // Cyan
+  { color: "#8B5CF6", percentage: 40, label: "Morning Shift" },
+  { color: "#F87171", percentage: 30, label: "Evening Shift" },
+  { color: "#38BDF8", percentage: 30, label: "Night Shift" },
 ];
 
 // ---------------- SUB COMPONENTS ----------------
-
 const StatCard = ({ title, value, icon, iconBg, bg }) => (
   <div
-    className={`flex items-center gap-4 px-5 py-4 rounded-xl shadow-sm ${bg} min-w-[200px]`}
+    className={`flex items-center gap-4 px-4 py-3 rounded-md shadow-sm ${bg} w-[199px]`}
   >
-    <div className={`p-3 rounded-full ${iconBg}`}>
-      {React.cloneElement(icon, { className: "w-6 h-6 text-black" })}
+    <div className={`p-2 rounded-full bg-black `}>
+      {React.cloneElement(icon, { className: "w-6 h-6 text-white" })}
     </div>
     <div>
-      <div className="text-sm text-gray-500 font-medium">{title}</div>
-      <div className="text-2xl font-semibold text-gray-900">{value}</div>
+      <div className="text-[13px] text-gray-500 font-normal font-[Poppins]">
+        {title}
+      </div>
+      <div className="text-xl font-semibold text-gray-900">{value}</div>
     </div>
   </div>
 );
 
+
 const PersonRow = ({ person }) => (
-  <div className="flex items-center justify-between py-2 border-b last:border-b-0">
+  <div className="flex items-center justify-between py-1 border-b last:border-b-0">
     <div className="flex items-center gap-3">
       <img
         src={avatar}
         alt={person.name}
-        className="w-8 h-8 rounded-full object-cover"
+        className="w-7 h-7 rounded-full object-cover"
       />
       <div>
         <div className="text-[15px] font-medium text-gray-800 font-[Poppins]">
@@ -82,8 +84,8 @@ const PersonRow = ({ person }) => (
 );
 
 const MorningShiftCard = () => (
-  <div className="bg-white rounded-xl p-4 shadow-sm">
-    <div className="flex justify-between items-start mb-3">
+  <div className="bg-white rounded-xl p-3 shadow-sm w-full max-w-[340px] mx-auto">
+    <div className="flex justify-between items-start mb-2">
       <div>
         <div className="text-base font-semibold text-gray-800">
           Morning Shift
@@ -93,12 +95,12 @@ const MorningShiftCard = () => (
         20 Staffs
       </div>
     </div>
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       {peopleList.map((p) => (
         <PersonRow key={p.id} person={p} />
       ))}
     </div>
-    <div className="mt-3 text-right">
+    <div className="mt-2 text-right">
       <a href="#" className="text-xs text-blue-600 hover:underline font-medium">
         View all people
       </a>
@@ -150,47 +152,39 @@ const RegularShiftPolicyCard = () => (
     </div>
   </div>
 );
-// ---------- UPDATED ShiftRulesCard ----------
+
 const ShiftRulesCard = () => (
   <div className="bg-white rounded-xl p-4 shadow-sm font-[Poppins]">
-    {/* ---------- Header ---------- */}
     <div className="flex justify-between items-center pb-3 mb-3 border-b border-gray-200">
       <div className="text-base font-medium text-gray-800">
         Shift Rules and Conditions
       </div>
-      <button className="text-gray-700 flex items-center gap-2 text-sm ">
+      <button className="text-gray-700 flex items-center gap-2 text-sm">
         <FiEdit size={18} /> Edit
       </button>
     </div>
 
     <div className="space-y-4">
-      {/* ✅ Top rule info section — single line layout with bottom border */}
- <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-normal pb-3 border-b border-gray-200 pt-5 font-[Poppins]">
-  <div className="flex items-center gap-2">
-    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
-    <span className="text-gray-600 font-[Poppins]">Effective Date :</span>
-    <span className="text-gray-800 font-[Poppins]">
-      01 Jan 2025 - 31 Dec 2025
-    </span>
-  </div>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-normal pb-3 border-b border-gray-200 pt-5 font-[Poppins]">
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
+          <span className="text-gray-600">Effective Date :</span>
+          <span className="text-gray-800">01 Jan 2025 - 31 Dec 2025</span>
+        </div>
 
-  <div className="flex items-center gap-2">
-    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
-    <span className="text-gray-600 font-[Poppins]">Regularization :</span>
-    <span className="text-gray-800 font-[Poppins]">04 / Month</span>
-  </div>
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
+          <span className="text-gray-600">Regularization :</span>
+          <span className="text-gray-800">04 / Month</span>
+        </div>
 
-  <div className="flex items-center gap-2">
-    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
-    <span className="text-gray-600 font-[Poppins]">
-      Attendance Policy Count :
-    </span>
-    <span className="text-gray-800 font-[Poppins]">01 Policy</span>
-  </div>
-</div>
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
+          <span className="text-gray-600">Attendance Policy Count :</span>
+          <span className="text-gray-800">01 Policy</span>
+        </div>
+      </div>
 
-
-      {/* 🔥 Bottom colorful section — unchanged */}
       <div className="space-y-2 pt-1 text-sm font-medium">
         <div className="grid grid-cols-3 items-center">
           <span className="text-green-500">04</span>
@@ -214,29 +208,37 @@ const ShiftRulesCard = () => (
   </div>
 );
 
-// ------------------------------------------
-
 const ShiftDonutChart = () => {
-  const circumference = 2 * Math.PI * 40; // 2 * pi * radius (radius is 40)
-  let accumulatedOffset = 0;
+  // Updated data to match the new image's colors and estimated percentages
+  const donutChartData = [
+    { color: "#8A79F6", percentage: 48, label: "Morning Shift" }, // Adjusted purple
+    { color: "#FD9589", percentage: 35, label: "Evening Shift" }, // Adjusted reddish-orange
+    { color: "#54D1DD", percentage: 17, label: "Night Shift" },   // Adjusted teal/blue
+  ];
+
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
+  let accumulatedOffset = 0; // Starts from the top
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center">
-      <div className="relative w-56 h-56">
-        <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+      <div className="relative w-[250px] h-[250px]">
+        <svg
+          viewBox="0 0 100 100"
+          className="w-full h-full transform -rotate-90" // Rotates the SVG for segments to start at the top
+        >
           {donutChartData.map((item, index) => {
-            const strokeDasharray = `${
-              (item.percentage / 100) * circumference
-            } ${circumference}`;
+            const arcLength = (item.percentage / 100) * circumference;
+            const strokeDasharray = `${arcLength} ${circumference}`;
             const strokeDashoffset = -accumulatedOffset;
-            accumulatedOffset += (item.percentage / 100) * circumference;
+            accumulatedOffset += arcLength;
 
             return (
               <circle
                 key={index}
                 cx="50"
                 cy="50"
-                r="40"
+                r={radius}
                 fill="transparent"
                 stroke={item.color}
                 strokeWidth="18"
@@ -247,21 +249,29 @@ const ShiftDonutChart = () => {
             );
           })}
         </svg>
+
+        {/* Center number remains "60" as in the image */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-4xl font-bold text-gray-800">60</span>
+          <span className="text-[20px] font-bold text-black">60</span>
         </div>
       </div>
-      <div className="flex justify-center gap-4 mt-4">
-        {donutChartData.map((item) => (
-          <div key={item.label} className="flex items-center gap-1.5 text-xs">
-            <span
-              className="w-2.5 h-2.5 rounded-full"
-              style={{ backgroundColor: item.color }}
-            />
-            <span className="text-gray-600">{item.label}</span>
-          </div>
-        ))}
-      </div>
+
+   {/* Legend below the chart, now using the adjusted colors */}
+<div className="flex justify-center gap-4 mt-3 flex-nowrap whitespace-nowrap">
+  {donutChartData.map((item) => (
+    <div
+      key={item.label}
+      className="flex items-center gap-1.5 font-[Poppins] text-[12px] font-normal"
+    >
+      <span
+        className="w-2.5 h-2.5 rounded-full"
+        style={{ backgroundColor: item.color }}
+      ></span>
+      <span className="text-gray-600">{item.label}</span>
+    </div>
+  ))}
+</div>
+
     </div>
   );
 };
@@ -275,29 +285,15 @@ const ShiftRatioCard = () => {
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm">
-      <div className="text-sm font-semibold text-gray-800 mb-3">
-        Shift Ratio
-      </div>
+      <div className="text-sm font-semibold text-gray-800 mb-3">Shift Ratio</div>
       <div className="text-lg font-bold text-gray-900 mb-3">
         {total} <span className="text-sm text-gray-500">Attendance</span>
       </div>
       <div className="h-2 w-full flex rounded-full overflow-hidden">
-        <div
-          className="h-full bg-green-400" // Online
-          style={{ width: `${onlinePerc}%` }}
-        />
-        <div
-          className="h-full bg-cyan-400" // Delay
-          style={{ width: `${delayPerc}%` }}
-        />
-        <div
-          className="h-full bg-blue-600" // Late
-          style={{ width: `${latePerc}%` }}
-        />
-        <div
-          className="h-full bg-pink-500" // Absent
-          style={{ width: `${absentPerc}%` }}
-        />
+        <div className="h-full bg-green-400" style={{ width: `${onlinePerc}%` }} />
+        <div className="h-full bg-cyan-400" style={{ width: `${delayPerc}%` }} />
+        <div className="h-full bg-blue-600" style={{ width: `${latePerc}%` }} />
+        <div className="h-full bg-pink-500" style={{ width: `${absentPerc}%` }} />
       </div>
       <div className="flex items-center justify-between gap-4 mt-3 text-xs text-gray-500">
         <div className="flex items-center gap-1">
@@ -339,8 +335,8 @@ const ShiftRatioCard = () => {
 export default function ShiftOverview() {
   return (
     <div className="min-h-screen bg-[#f9fafb] p-6">
-      <div className="flex justify-between items-center mb-5">
-        <div className="flex gap-4">
+      <div className="flex justify-between items-center mb-5 flex-wrap gap-3">
+        <div className="flex flex-wrap gap-4 justify-start w-full md:w-auto">
           <StatCard
             title="Total Employees"
             value={overviewStats.totalEmployees}
@@ -361,17 +357,18 @@ export default function ShiftOverview() {
             icon={<FiUserX />}
             bg="bg-[#FFEFE7]"
             iconBg="bg-white"
-          
           />
         </div>
-        <div className="flex gap-3">
-          <button className="bg-white text-black px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 shadow-sm border border-gray-200">
-            <FiPlus size={16} /> Create Shift
-          </button>
-          <button className="bg-black text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 shadow-sm">
-            <FiPlus size={16} /> Create Attendance policy
-          </button>
-        </div>
+
+   <div className="flex gap-2">
+  <button className="bg-white text-black px-2.5 py-1.5 rounded-full text-[12px] font-medium flex items-center gap-1.5 shadow-sm border border-gray-200">
+    <FiPlus size={14} /> Create Shift
+  </button>
+  <button className="bg-black text-white px-3 py-1.5 rounded-full text-[12px] font-medium flex items-center gap-1.5 shadow-sm">
+    <FiPlus size={14} /> Create Attendance Policy
+  </button>
+</div>
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -384,7 +381,6 @@ export default function ShiftOverview() {
         {/* ---------- Column 2 ---------- */}
         <div className="space-y-5">
           <MorningShiftCard />
-          {/* This now uses the updated component */}
           <ShiftRulesCard />
         </div>
 
