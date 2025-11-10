@@ -12,16 +12,16 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch dashboard data
+  // ✅ Fetch dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         const data = await dashboardService.getDashboardData();
         setDashboardData(data || {});
-        setLoading(false);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError("Failed to load dashboard data");
+      } finally {
         setLoading(false);
       }
     };
@@ -38,21 +38,19 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-40 w-full">
+      <div className="flex justify-center items-center h-40 w-full text-red-500">
         {error}
       </div>
     );
   }
 
   return (
-    <div className="w-full  bg-white">
-      {/* Top Header */}
+    <div className="w-full bg-white">
+      {/* ---------------- HEADER ---------------- */}
       <div className="flex justify-between items-center w-full sm:px-6 pt-3 pb-3">
-        <div>
-          <p className="text-sm text-gray-600">
-            Hi, <span className="font-semibold">{userName}</span>, welcome back!
-          </p>
-        </div>
+        <p className="text-sm text-gray-600">
+          Hi, <span className="font-semibold">{userName}</span>, welcome back!
+        </p>
         <div className="flex items-center gap-3">
           <button className="p-2 rounded-full hover:bg-gray-100">
             <Icon icon="hugeicons:notification-02" className="w-5 h-5 text-gray-600" />
@@ -67,7 +65,7 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
         </div>
       </div>
 
-      {/* Dashboard Title + Top Action Buttons */}
+      {/* ---------------- DASHBOARD TITLE ---------------- */}
       <div className="w-full sm:px-6 mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <p className="text-lg sm:text-2xl">{userName} Admin’s Dashboard</p>
@@ -95,22 +93,56 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* ---------------- KPI CARDS ---------------- */}
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full px-4 sm:px-6 mt-4">
         {[
-          { label: "Total Employees", value: dashboardData.total_staff || "0", bg: "#EBFDEF" },
-          { label: "Total Present", value: dashboardData.present_today || "0", bg: "#E8EFF9" },
-          { label: "On Leave", value: dashboardData.on_leave || "0", bg: "#FFEFE7" },
-          { label: "Happiness Rate", value: dashboardData.happiness_rate || "0%", bg: "#FFFBDB" },
+          {
+            label: "Total Employees",
+            value: dashboardData.total_staff || "0",
+            bg: "#EBFDEF",
+            icon: "famicons:people-outline",
+          },
+          {
+            label: "Total Present",
+            value: dashboardData.present_today || "0",
+            bg: "#E8EFF9",
+            icon: "mdi:account-tick-outline",
+          },
+          {
+            label: "On Leave",
+            value: dashboardData.on_leave || "0",
+            bg: "#FFEFE7",
+            icon: "fluent-mdl2:leave-user",
+          },
+          {
+            label: "Happiness Rate",
+            value: dashboardData.happiness_rate || "0%",
+            bg: "#FFFBDB",
+            icon: "cil:smile",
+          },
         ].map((card, idx) => (
-          <div key={idx} className="shadow rounded-lg p-3" style={{ backgroundColor: card.bg }}>
-            <p className="text-gray-500 text-sm">{card.label}</p>
-            <h2 className="text-lg sm:text-xl font-medium">{card.value}</h2>
+          <div
+            key={idx}
+            className="shadow rounded-lg p-3 flex items-center gap-3 transition-all duration-200 hover:shadow-md hover:scale-[1.01]"
+            style={{ backgroundColor: card.bg }}
+          >
+            {/* Left Icon with Black Background */}
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-black text-white shadow-sm">
+              <Icon icon={card.icon} className="w-5 h-5" />
+            </div>
+
+            {/* Text */}
+            <div>
+              <p className="text-gray-500 text-xs sm:text-sm">{card.label}</p>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
+                {card.value}
+              </h2>
+            </div>
           </div>
         ))}
       </section>
 
-      {/* Attendance Tabs */}
+      {/* ---------------- ATTENDANCE TABS ---------------- */}
       <section className="bg-white mt-4 sm:mt-6 w-full px-4 sm:px-6">
         <div className="border-b flex flex-wrap gap-4 sm:gap-6 pt-4 text-sm text-gray-600">
           {[
@@ -124,7 +156,9 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`pb-2 whitespace-nowrap ${
-                activeTab === tab.key ? "border-b-2 border-black font-semibold text-black" : ""
+                activeTab === tab.key
+                  ? "border-b-2 border-black font-medium text-black"
+                  : ""
               }`}
             >
               {tab.label}

@@ -12,26 +12,20 @@ function SideBar({ isCollapsed, toggleSidebar }) {
   const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
   const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
 
-  // Get user from Zustand store
   const user = useAuthStore((state) => state.user);
 
-  // Display name
   const firstName = user?.first_name || "";
   const lastName = user?.last_name || "";
-
   const displayName =
-    `${firstName} ${lastName} `.trim() || user?.name || "Admin";
+    `${firstName} ${lastName}`.trim() || user?.name || "Admin";
 
-  // Avatar
-  const avatarUrl = user?.avatar || "/assets/img/avatar.svg";
+  const avatarUrl = user?.image || "/assets/img/avatar.svg";
 
-  // Slugify username for URL
   const userId = user?.id || "";
   const userNameSlug = user
     ? `${user.first_name}-${user.last_name}`.toLowerCase().replace(/\s+/g, "-")
     : "user";
 
-  // Icons
   const icons = {
     hr: <Icon icon="si:dashboard-line" width="20" />,
     muster: <Icon icon="mynaui:table" width="20" />,
@@ -40,105 +34,41 @@ function SideBar({ isCollapsed, toggleSidebar }) {
     reports: <Icon icon="iconoir:reports" width="20" />,
     asset: <Icon icon="fluent:web-asset-16-regular" width="20" />,
     manageEmployees: <Icon icon="clarity:employee-group-line" width="20" />,
-    workfromhome: (
-      <Icon
-        icon="material-symbols-light:home-work-outline-rounded"
-        width="20"
-      />
-    ),
+    workfromhome: <Icon icon="material-symbols-light:home-work-outline-rounded" width="20" />,
     organisationonboard: <Icon icon="octicon:organization-24" width="20" />,
     employeeOnboard: <Icon icon="clarity:employee-line" width="20" />,
     Hiring: <Icon icon="hugeicons:job-link" width="20" />,
     interview: <Icon icon="mage:message-conversation" width="20" />,
-    // ✅ Added proper Manage Shift icon
     manageShift: <Icon icon="ic:twotone-manage-history" width="20" />,
   };
 
-  // Menu items with ID + username in path
   const menuItems = [
     {
       section: "HUMAN RESOURCES",
       items: [
         { title: "Attendance", path: `/dashboard`, icon: icons.hr },
-        {
-          title: "Muster Roll",
-          path: userId
-            ? `/u/${userId}/${userNameSlug}/musteroll`
-            : "#",
-          icon: icons.muster,
-        },
-        {
-          title: "Events",
-          path: userId ? `/u/${userId}/${userNameSlug}/events` : "#",
-          icon: icons.events,
-        },
-        {
-          title: "Payroll",
-          path: userId ? `/u/${userId}/${userNameSlug}/payroll` : "#",
-          icon: icons.payroll,
-        },
-        // ✅ Fixed syntax here
+        { title: "Muster Roll", path: userId ? `/u/${userId}/${userNameSlug}/musteroll` : "#", icon: icons.muster },
+        { title: "Events", path: userId ? `/u/${userId}/${userNameSlug}/events` : "#", icon: icons.events },
+        { title: "Payroll", path: userId ? `/u/${userId}/${userNameSlug}/payroll` : "#", icon: icons.payroll },
         { title: "Manage Shift", path: `/shift`, icon: icons.manageShift },
-        {
-          title: "Reports",
-          path: userId ? `/u/${userId}/${userNameSlug}/reports` : "#",
-          icon: icons.reports,
-        },
-        {
-          title: "Asset Manager",
-          path: userId
-            ? `/u/${userId}/${userNameSlug}/assetmanager`
-            : "#",
-          icon: icons.asset,
-        },
-        {
-          title: "Manage Employees",
-          path: `/manageemployee`,
-          icon: icons.manageEmployees,
-        },
-        {
-          title: "Work From Home",
-          path: userId
-            ? `/u/${userId}/${userNameSlug}/workfromhome`
-            : "#",
-          icon: icons.workfromhome,
-        },
+        { title: "Reports", path: userId ? `/u/${userId}/${userNameSlug}/reports` : "#", icon: icons.reports },
+        { title: "Asset Manager", path: userId ? `/u/${userId}/${userNameSlug}/assetmanager` : "#", icon: icons.asset },
+        { title: "Manage Employees", path: `/manageemployee`, icon: icons.manageEmployees },
+        { title: "Work From Home", path: userId ? `/u/${userId}/${userNameSlug}/workfromhome` : "#", icon: icons.workfromhome },
       ],
     },
     {
       section: "ONBOARDING",
       items: [
-{
-  title: "Organization",
-  path: "/onboarding",
-  icon: icons.organisationonboard,
-},
-
-
-        {
-          title: "Employee",
-          path: `/employeeonboarding`,
-          icon: icons.employeeOnboard,
-        },
+        { title: "Organization", path: "/onboarding", icon: icons.organisationonboard },
+        { title: "Employee", path: `/employeeonboarding`, icon: icons.employeeOnboard },
       ],
     },
     {
       section: "HIRING PROCESS",
       items: [
-        {
-          title: "Job Creation",
-          path: userId
-            ? `/u/${userId}/${userNameSlug}/jobcreation`
-            : "#",
-          icon: icons.Hiring,
-        },
-        {
-          title: "Interview Process",
-          path: userId
-            ? `/u/${userId}/${userNameSlug}/interviewprocess`
-            : "#",
-          icon: icons.interview,
-        },
+        { title: "Job Creation", path: userId ? `/u/${userId}/${userNameSlug}/jobcreation` : "#", icon: icons.Hiring },
+        { title: "Interview Process", path: userId ? `/u/${userId}/${userNameSlug}/interviewprocess` : "#", icon: icons.interview },
       ],
     },
   ];
@@ -193,14 +123,15 @@ function SideBar({ isCollapsed, toggleSidebar }) {
           </button>
         </div>
 
-        {/* Profile Section */}
+        {/* Profile Section - always show avatar */}
         <div className="mt-1 flex flex-col items-center">
           <div
             onClick={toggleProfile}
             className={`flex items-center justify-center rounded-lg transition-colors duration-300 cursor-pointer
-              ${isCollapsed ? "w-12 h-12 bg-[#111827] hover:bg-gray-700" : "w-[90%] px-4 h-14"}
+              ${isCollapsed ? "w-12 h-12" : "w-[90%] px-4 h-14"}
               ${!isCollapsed && (isProfileOpen ? "bg-gray-600" : "bg-gray-800 hover:bg-gray-600")}`}
           >
+            {/* Avatar always visible */}
             <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full" />
             {!isCollapsed && (
               <div className="flex-1 text-left ml-3">
@@ -214,9 +145,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
               <div className="ml-2 transition-transform duration-300">
                 <Icon
                   icon="mdi:chevron-down"
-                  className={`w-5 h-5 text-gray-400 ${
-                    isProfileOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-5 h-5 text-gray-400 ${isProfileOpen ? "rotate-180" : ""}`}
                 />
               </div>
             )}
@@ -234,7 +163,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
               </Link>
 
               <button
-                onClick={() => alert("Logout logic here")}
+                onClick={() => alert('Logout logic here')}
                 className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
               >
                 <Icon icon="material-symbols:logout" width="20" height="20" />
@@ -244,8 +173,8 @@ function SideBar({ isCollapsed, toggleSidebar }) {
           )}
         </div>
 
-        {/* Sidebar Menu */}
-        <nav className="flex-1 flex flex-col justify-start mt-5 overflow-y-auto">
+        {/* Sidebar Menu — scrollable with hidden scrollbar */}
+        <nav className="flex-1 flex flex-col justify-start mt-5 overflow-y-auto scrollbar-hide">
           {menuItems.map((menu, index) => (
             <div key={index} className="px-4 mb-2">
               {!isCollapsed && (
@@ -275,6 +204,17 @@ function SideBar({ isCollapsed, toggleSidebar }) {
             </div>
           ))}
         </nav>
+
+        {/* CSS for hiding scrollbar */}
+        <style>{`
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}</style>
       </div>
     </>
   );

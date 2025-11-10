@@ -1,26 +1,22 @@
 import React, { useState, useEffect } from "react";
 import EmployeeTableWrapper from "../../ui/employeetablewrapper";
 import DatePicker from "../../ui/datepicker";
-import { fetchBarAttendance } from "../../service/employeeService"; // ✅ API import
+import { fetchBarAttendance } from "../../service/employeeService";
 
 function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
-  // Selected date state
   const [selectedDate, setSelectedDate] = useState(CALENDAR_DAYS[0] || new Date());
-
   const [attendanceData, setAttendanceData] = useState([]);
   const [totalAttendance, setTotalAttendance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ✅ Fetch attendance bar data whenever selectedDate changes
+  // ✅ Fetch attendance data when date changes
   useEffect(() => {
     const loadBarData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Pass the selected date to the API if it supports it
         const response = await fetchBarAttendance(selectedDate);
-
         if (response && response.data) {
           const rawData = response.data;
 
@@ -39,7 +35,6 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
           }));
 
           const total = normalized.reduce((sum, item) => sum + item.count, 0);
-
           setAttendanceData(normalized);
           setTotalAttendance(total);
         }
@@ -50,30 +45,28 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
         setIsLoading(false);
       }
     };
-
     loadBarData();
-  }, [selectedDate]); // ✅ Re-run effect whenever date changes
+  }, [selectedDate]);
 
-  // ✅ Helper to calculate width dynamically
   const getBarWidth = (count) => {
     if (totalAttendance === 0) return "0%";
     return `${(count / totalAttendance) * 100}%`;
   };
 
   return (
-    <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 sm:p-2 bg-gray-50">
+    <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-2 p-3 bg-gray-50">
       {/* Left Section */}
-      <div className="lg:col-span-9 flex flex-col gap-6 w-full">
+      <div className="lg:col-span-9 flex flex-col gap-1 w-full">
         <DatePicker
           CALENDAR_DAYS={CALENDAR_DAYS}
           selectedDate={selectedDate}
-          onChange={setSelectedDate} // Update selected date
+          onChange={setSelectedDate}
         />
         <EmployeeTableWrapper />
       </div>
 
       {/* Right Section */}
-      <div className="lg:col-span-3 flex flex-col gap-6 mt-2 sm:mt-4 lg:mt-7 w-full">
+      <div className="lg:col-span-3 flex flex-col gap-3 w-full">
 
         {/* Attendance Summary */}
         <div className="bg-white shadow rounded-xl p-4 border border-gray-100 w-full">
@@ -82,13 +75,13 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
             <span className="text-sm text-gray-500">Attendance</span>
           </div>
 
-          {/* Dynamic Progress Bar */}
           {isLoading ? (
             <p className="text-gray-500 text-sm mb-3">Loading attendance data...</p>
           ) : error ? (
             <p className="text-red-500 text-sm mb-3">{error}</p>
           ) : (
             <>
+              {/* Bar */}
               <div className="flex w-full h-2.5 rounded-full overflow-hidden mb-6 gap-1">
                 {attendanceData.map((item, idx) => {
                   const isFirst = idx === 0;
@@ -105,10 +98,12 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
                 })}
               </div>
 
-              {/* Top 4 Summary Items */}
+              {/* Summary */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm mb-3">
                 {attendanceData
-                  .filter((item) => ["Ontime", "Delay", "Late", "Absent"].includes(item.status))
+                  .filter((item) =>
+                    ["Ontime", "Delay", "Late", "Absent"].includes(item.status)
+                  )
                   .map((item, idx) => (
                     <div key={idx} className="flex flex-col items-center">
                       <span className="text-gray-600 text-xs">{item.status}</span>
@@ -120,7 +115,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
                   ))}
               </div>
 
-              {/* Early Check-in Row */}
+              {/* Early Check-in */}
               {attendanceData.find((item) => item.status === "Early Check-in") && (
                 <div className="flex justify-start">
                   <div className="flex items-center gap-2 text-sm">
@@ -135,47 +130,63 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
             </>
           )}
         </div>
+{/* Leaves & Vacations */}
+<div className="bg-white shadow rounded-lg p-3 w-full">
+  <h3 className="text-sm font-medium mb-4">Leaves and Vacations</h3>
 
-        {/* Leaves & Vacations */}
-        <div className="bg-white shadow rounded-lg p-4 w-full">
-          <h3 className="text-sm font-semibold mb-4">Leaves and Vacations</h3>
-          <ul className="space-y-3 text-sm">
-            {[
-              { name: "Vishnu", role: "UI/UX Designer", date: "Only Today" },
-              { name: "Aswin Lal", role: "Designer", date: "14 Feb" },
-              { name: "Aleena Edhose", role: "Sr UX Designer", date: "8 Feb to 10 Feb" },
-              { name: "Greesham B", role: "UX/UI Designer", date: "14 Feb" },
-              { name: "Rohith ER", role: "UX/UI Designer", date: "14 Feb" },
-            ].map((leave, idx) => (
-              <li
-                key={idx}
-                className="flex justify-between items-center flex-wrap sm:flex-nowrap gap-2"
-              >
-                <div className="flex items-center gap-3 min-w-[150px]">
-                  <img
-                    src={`https://i.pravatar.cc/30?img=${idx + 10}`}
-                    alt={leave.name}
-                    className="w-7 h-7 rounded-full"
-                  />
-                  <div>
-                    <p className="font-medium text-gray-800">{leave.name}</p>
-                    <p className="text-xs text-gray-400">{leave.role}</p>
-                  </div>
-                </div>
-                <span
-                  className={`text-xs ${
-                    leave.date === "Only Today"
-                      ? "text-orange-500 font-semibold"
-                      : "text-gray-500"
-                  }`}
-                >
-                  {leave.date}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <button className="mt-4 text-xs text-blue-600">View all people</button>
+  <ul className="space-y-3 text-sm h-[270px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+    {[
+      { name: "Vishnu", role: "UI/UX Designer", date: "Only Today" },
+      { name: "Aswin Lal", role: "Designer", date: "14 Feb" },
+      {
+        name: "Aleena Edhose ",
+        role: "Sr UX Designer",
+        date: "8 Feb to 10 Feb",
+      },
+      { name: "Greesham B", role: "UX/UI Designer", date: "14 Feb" },
+      {name: "Rohith" , role:"Golang developer" , date: "14jan"}
+    ].map((leave, idx) => (
+      <li
+        key={idx}
+        className="flex justify-between items-center gap-2 pb-1 last:pb-0"
+      >
+        {/* Left side — avatar + name + role */}
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <img
+            src={`https://i.pravatar.cc/40?img=${idx + 10}`}
+            alt={leave.name}
+            className="w-8 h-8 rounded-full flex-shrink-0"
+          />
+          <div className="truncate">
+            {/* Name — truncated + tooltip */}
+            <p
+              className="font-[400] text-gray-800 text-[13px] font-['Poppins'] truncate"
+              title={leave.name} // ✅ shows full name on hover
+            >
+              {leave.name}
+            </p>
+            {/* Role / Designation */}
+            <p className="text-[11px] font-[400] font-['Poppins'] text-gray-500 truncate">
+              {leave.role}
+            </p>
+          </div>
         </div>
+
+        {/* Right side — Leave date with special color */}
+        <span className="whitespace-nowrap font-[400] text-[11px] font-['Poppins'] text-[#FF000499]">
+          {leave.date}
+        </span>
+      </li>
+    ))}
+  </ul>
+
+<button className=" font-['Poppins'] text-[13px] font-medium text-[#4F4C91] hover:underline">
+  View all people
+</button>
+
+</div>
+
+
       </div>
     </div>
   );

@@ -47,8 +47,8 @@ function Dashboard({ userId, userName, onLogout }) {
     <DashboardLayout userId={userId} userName={userName} onLogout={onLogout}>
       {/* Remove parent padding/margin */}
       <div className="h-full flex flex-col w-full m-0 p-0">
-        {/* Scrollable internal content */}
-        <div className="flex-1 overflow-y-auto w-full m-0 p-0 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        {/* Scrollable internal content with hidden scrollbar */}
+        <div className="flex-1 overflow-y-auto w-full m-0 p-0 scrollbar-hide">
           {/* Dashboard Header */}
           <DashboardHead
             userName={userName}
@@ -77,6 +77,17 @@ function Dashboard({ userId, userName, onLogout }) {
           </div>
         </div>
       </div>
+
+      {/* Hidden scrollbar CSS */}
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none; /* Chrome, Safari, Opera */
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;     /* Firefox */
+        }
+      `}</style>
     </DashboardLayout>
   );
 }
