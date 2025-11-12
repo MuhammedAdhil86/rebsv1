@@ -47,7 +47,7 @@ const donutChartData = [
 // ---------------- SUB COMPONENTS ----------------
 const StatCard = ({ title, value, icon, iconBg, bg }) => (
   <div
-    className={`flex items-center gap-4 px-4 py-3 rounded-md shadow-sm ${bg} w-[199px]`}
+    className={`flex items-center gap-4 px-4 py-3 rounded-md shadow-sm ${bg} w-[215px]`}
   >
     <div className={`p-2 rounded-full bg-black `}>
       {React.cloneElement(icon, { className: "w-6 h-6 text-white" })}
@@ -154,7 +154,7 @@ const RegularShiftPolicyCard = () => (
 );
 
 const ShiftRulesCard = () => (
-  <div className="bg-white rounded-xl p-4 shadow-sm font-[Poppins]">
+  <div className="bg-white rounded-xl p-4 pb-8 shadow-sm font-[Poppins]">
     <div className="flex justify-between items-center pb-3 mb-3 border-b border-gray-200">
       <div className="text-base font-medium text-gray-800">
         Shift Rules and Conditions

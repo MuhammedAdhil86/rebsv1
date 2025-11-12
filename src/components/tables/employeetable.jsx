@@ -43,21 +43,28 @@ function EmployeeTable({ employees }) {
 
   return (
     <section className="p-2 rounded-2xl overflow-x-auto overflow-y-visible relative">
-      {/* Title & Search */}
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-lg font-medium">Employee List</h3>
-   <div className="flex items-center gap-2 border px-3 py-2 rounded-xl bg-white text-sm">
-  <input
-    type="text"
-    placeholder="Search"
-    value={searchTerm}
-    onChange={handleSearchChange}
-    className="bg-white w-full focus:outline-none text-sm text-gray-600 px-2 py-1 rounded"
-  />
-  <Search className="w-4 h-4 text-gray-400" />
+{/* Title & Search */}
+<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
+  <h3 className="text-lg sm:text-xl font-medium text-gray-800">
+    Employee List
+  </h3>
+
+  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+    {/* Search */}
+    <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm shadow-sm mt-2 sm:mt-0 w-full sm:w-auto">
+      <input
+        type="text"
+        placeholder="Search"
+        value={searchTerm}
+        onChange={handleSearchChange}
+        className="bg-transparent text-gray-600 w-full focus:outline-none text-sm bg-white"
+      />
+      <Search className="w-4 h-4 text-gray-400" />
+    </div>
+  </div>
 </div>
 
-      </div>
+
 
       {/* Header Table */}
       <table

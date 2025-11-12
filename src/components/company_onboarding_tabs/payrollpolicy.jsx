@@ -26,18 +26,19 @@ const ManagePayrollPolicy = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-1 text-xs rounded-md border font-medium transition-all ${
-                  activeTab === tab.id
-                    ? "bg-black text-white border-black"
-                    : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                }`}
+                className={`px-3 h-[40px] text-xs rounded-md border font-medium transition-all flex items-center justify-center
+                  ${
+                    activeTab === tab.id
+                      ? "bg-black text-white border-black"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
 
-          <button className="flex items-center gap-1 px-3 py-1.5 bg-black text-white text-xs rounded-md hover:bg-gray-800 transition font-medium">
+          <button className="flex items-center justify-center gap-1 px-3 h-[40px] bg-black text-white text-xs rounded-md hover:bg-gray-800 transition font-medium">
             <Icon icon="mdi:plus" className="text-sm" />
             Create New
           </button>
@@ -47,7 +48,7 @@ const ManagePayrollPolicy = () => {
         <div>
           {activeTab === "salary-template" && <SalaryTemplate />}
           {activeTab === "salary-components" && <SalaryComponents />}
-          {activeTab === "statutory-components" && <StatutoryComponents />} {/* ✅ Updated */}
+          {activeTab === "statutory-components" && <StatutoryComponents />}
           {activeTab === "payment-schedules" && (
             <div className="text-gray-500 py-4">Payment Schedules Tab Content</div>
           )}

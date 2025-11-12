@@ -54,7 +54,8 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
   };
 
   return (
-    <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-2 p-3 bg-gray-50">
+<div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-2 px-3 bg-gray-50">
+
       {/* Left Section */}
       <div className="lg:col-span-9 flex flex-col gap-1 w-full">
         <DatePicker
@@ -68,68 +69,65 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
       {/* Right Section */}
       <div className="lg:col-span-3 flex flex-col gap-3 w-full">
 
-        {/* Attendance Summary */}
-        <div className="bg-white shadow rounded-xl p-4 border border-gray-100 w-full">
-          <div className="flex items-baseline gap-1 mb-4">
-            <p className="text-2xl font-bold text-[#1E2734]">{totalAttendance}</p>
-            <span className="text-sm text-gray-500">Attendance</span>
-          </div>
+      {/* Attendance Summary */}
+<div className="bg-white shadow rounded-xl p-4 border border-gray-100 w-full">
+  <div className="flex items-baseline gap-1 mb-4">
+    <p className="text-2xl font-bold text-[#1E2734]">{totalAttendance}</p>
+    <span className="text-sm text-gray-500">Attendance</span>
+  </div>
 
-          {isLoading ? (
-            <p className="text-gray-500 text-sm mb-3">Loading attendance data...</p>
-          ) : error ? (
-            <p className="text-red-500 text-sm mb-3">{error}</p>
-          ) : (
-            <>
-              {/* Bar */}
-              <div className="flex w-full h-2.5 rounded-full overflow-hidden mb-6 gap-1">
-                {attendanceData.map((item, idx) => {
-                  const isFirst = idx === 0;
-                  const isLast = idx === attendanceData.length - 1;
-                  return (
-                    <div
-                      key={idx}
-                      className={`${item.color} ${isFirst ? "rounded-l-full" : ""} ${
-                        isLast ? "rounded-r-full" : ""
-                      }`}
-                      style={{ width: getBarWidth(item.count) }}
-                    ></div>
-                  );
-                })}
-              </div>
-
-              {/* Summary */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm mb-3">
-                {attendanceData
-                  .filter((item) =>
-                    ["Ontime", "Delay", "Late", "Absent"].includes(item.status)
-                  )
-                  .map((item, idx) => (
-                    <div key={idx} className="flex flex-col items-center">
-                      <span className="text-gray-600 text-xs">{item.status}</span>
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className={`h-2 w-2 rounded-full ${item.color}`}></span>
-                        <span className="font-semibold text-[#1E2734]">{item.count}</span>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-
-              {/* Early Check-in */}
-              {attendanceData.find((item) => item.status === "Early Check-in") && (
-                <div className="flex justify-start">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="h-2.5 w-2.5 rounded-full bg-gray-400"></span>
-                    <span className="text-gray-600 text-xs">Early Check-in</span>
-                    <span className="font-semibold text-[#1E2734] ml-1">
-                      {attendanceData.find((item) => item.status === "Early Check-in")?.count}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+  {isLoading ? (
+    <p className="text-gray-500 text-sm mb-3">Loading attendance data...</p>
+  ) : error ? (
+    <p className="text-red-500 text-sm mb-3">{error}</p>
+  ) : (
+    <>
+      {/* Bar */}
+      <div className="relative w-full h-2.5 bg-gray-100 rounded-full overflow-hidden mb-6">
+        <div className="flex w-full h-full">
+          {attendanceData.map((item, idx) => (
+            <div
+              key={idx}
+              className={`${item.color} h-full`}
+              style={{ width: getBarWidth(item.count) }}
+            ></div>
+          ))}
         </div>
+      </div>
+
+      {/* Summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm mb-3">
+        {attendanceData
+          .filter((item) =>
+            ["Ontime", "Delay", "Late", "Absent"].includes(item.status)
+          )
+          .map((item, idx) => (
+            <div key={idx} className="flex flex-col items-center">
+              <span className="text-gray-600 text-xs">{item.status}</span>
+              <div className="flex items-center gap-1 mt-1">
+                <span className={`h-2 w-2 rounded-full ${item.color}`}></span>
+                <span className="font-semibold text-[#1E2734]">{item.count}</span>
+              </div>
+            </div>
+          ))}
+      </div>
+
+      {/* Early Check-in */}
+      {attendanceData.find((item) => item.status === "Early Check-in") && (
+        <div className="flex justify-start ml-3">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="h-2.5 w-2.5 rounded-full bg-gray-400"></span>
+            <span className="text-gray-600 text-xs">Early Check-in</span>
+            <span className="font-semibold text-[#1E2734] ml-1">
+              {attendanceData.find((item) => item.status === "Early Check-in")?.count}
+            </span>
+          </div>
+        </div>
+      )}
+    </>
+  )}
+</div>
+
 {/* Leaves & Vacations */}
 <div className="bg-white shadow rounded-lg p-3 w-full">
   <h3 className="text-sm font-medium mb-4">Leaves and Vacations</h3>

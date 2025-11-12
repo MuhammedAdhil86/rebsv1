@@ -96,9 +96,9 @@ function DailyAttendance() {
   };
 
   return (
-    <section className="bg-[#f9fafb] p-5 w-full max-w-[1280px] mx-auto rounded-xl font-[Poppins]">
+    <section className="bg-[#f9fafb] px-3 py-3 w-full max-w-[1280px] mx-auto rounded-xl font-[Poppins]">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-3">
         <h3 className="text-xl font-medium text-gray-800 tracking-wide">
           Daily Attendance
         </h3>
@@ -111,15 +111,15 @@ function DailyAttendance() {
             className="border px-3 py-2 rounded-lg bg-white text-sm font-medium shadow-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
           />
 
-          <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-gray-50 text-sm flex-1 sm:flex-none shadow-sm">
+          <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm flex-1 sm:flex-none shadow-sm">
             <input
               type="text"
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent text-gray-700 w-full focus:outline-none text-sm"
+              className="bg-transparent text-gray-700 w-full focus:outline-none text-sm bg-white"
             />
-            <Search className="w-4 h-4 bg-white" />
+            <Search className="w-4 h-4 bg-gray-50" />
           </div>
         </div>
       </div>

@@ -10,7 +10,7 @@ function LeaveRequestes() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // 10 items per page
+  const itemsPerPage = 10;
   const token = localStorage.getItem("authToken");
 
   useEffect(() => {
@@ -40,7 +40,6 @@ function LeaveRequestes() {
     return filtered;
   }, [leaves, filterStatus, searchQuery]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredLeaves.length / itemsPerPage);
   const paginatedLeaves = filteredLeaves.slice(
     (currentPage - 1) * itemsPerPage,
@@ -48,24 +47,26 @@ function LeaveRequestes() {
   );
 
   const columns = [
-    { key: "name", label: "Name", width: 120 },
+    { key: "name", label: "Name", width: 200 }, // more flexible
     { key: "designation", label: "Designation", width: 120 },
     { key: "applied_on", label: "Applied On", width: 120 },
     { key: "no_of_days", label: "Total Days", width: 80 },
     { key: "reason", label: "Reason", width: 150 },
-    { key: "remarks", label: "Remark", width: 120 },
+    { key: "remarks", label: "Remark", width: 100 }, // reduced width
     { key: "type", label: "Leave Type", width: 120 },
     { key: "status", label: "Status", width: 100 },
     { key: "action", label: "Action", width: 80 },
   ];
 
   return (
-    <div className="flex-1 grid grid-cols-1 gap-4 sm:p-4 bg-[#f9fafb] rounded-xl w-full mx-auto">
+    <div className="flex-1 grid grid-cols-1 gap-4 px-4 pb-4 bg-[#f9fafb] rounded-xl w-full mx-auto">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
-        <h3 className="text-lg font-medium">Leave Requests</h3>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ">
+<h3 className="text-lg sm:text-xl font-medium text-gray-800">
+  Leave Requests
+</h3>
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-          {/* Filter Buttons */}
           <div className="flex flex-wrap items-center gap-2">
             {["All", "Pending", "Approved", "Rejected"].map((status) => (
               <button
@@ -81,24 +82,25 @@ function LeaveRequestes() {
               </button>
             ))}
           </div>
+
           {/* Search */}
-          <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-gray-50 text-sm mt-2 sm:mt-0 w-full sm:w-auto">
+          <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm mt-2 sm:mt-0 w-full sm:w-auto">
             <input
               type="text"
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                setCurrentPage(1); // Reset page on search
+                setCurrentPage(1);
               }}
-              className="bg-transparent text-gray-600 w-full focus:outline-none text-sm"
+              className="bg-transparent text-gray-600 w-full focus:outline-none text-sm bg-white"
             />
             <Search className="w-4 h-4 text-gray-400" />
           </div>
         </div>
       </div>
 
-      {/* Table Header Card */}
+      {/* Table Header */}
       <div className="overflow-x-auto w-full rounded-xl shadow-sm bg-white">
         <table className="w-full table-fixed border-collapse rounded-xl" style={{ fontSize: "12.5px" }}>
           <thead className="bg-white text-gray-500 uppercase py-3">
@@ -119,25 +121,28 @@ function LeaveRequestes() {
         </table>
       </div>
 
-      {/* Table Body Card */}
-      <div className="overflow-x-auto w-full rounded-xl shadow-sm bg-white ">
-        <table className="w-full table-fixed border-collapse rounded-xl" style={{ fontSize: "12.5px" }}>
+      {/* Table Body */}
+      <div className="overflow-x-auto w-full rounded-xl shadow-sm bg-white">
+        <table
+          className="w-full table-fixed border-collapse border-separate"
+          style={{ fontSize: "12.5px", borderSpacing: "0 20px" }}
+        >
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={columns.length} className="py-6 text-gray-500 text-center">
+                <td colSpan={columns.length} className="py-6 text-gray-500 text-center bg-white rounded-xl">
                   Loading leave requests...
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={columns.length} className="py-6 text-red-600 text-center">
+                <td colSpan={columns.length} className="py-6 text-red-600 text-center bg-white rounded-xl">
                   Error: {error}
                 </td>
               </tr>
             ) : paginatedLeaves.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="py-6 text-gray-500 text-center">
+                <td colSpan={columns.length} className="py-6 text-gray-500 text-center bg-white rounded-xl">
                   No leave requests found.
                 </td>
               </tr>
@@ -145,23 +150,48 @@ function LeaveRequestes() {
               paginatedLeaves.map((req, idx) => (
                 <tr
                   key={req.leave_ref_no || idx}
-                  className={`hover:bg-gray-50 ${
-                    idx === paginatedLeaves.length - 1 ? "rounded-b-xl" : ""
-                  }`}
+                  className="bg-white hover:bg-gray-50 shadow-sm transition-all duration-150 rounded-xl"
                 >
-                  <td className="px-4 py-2">{req.name || "Unknown"}</td>
-                  <td className="px-4 py-2">{req.designation || "-"}</td>
-                  <td className="px-4 py-2">{req.applied_on ? new Date(req.applied_on).toLocaleDateString("en-GB") : "—"}</td>
-                  <td className="px-4 py-2">{req.no_of_days || "-"}</td>
-                  <td className="px-4 py-2">{req.reason || "—"}</td>
-                  <td className="px-4 py-2">{req.remarks || "NA"}</td>
-                  <td className="px-4 py-2">{req.type || "—"}</td>
+              <td
+  className="px-4 py-2 truncate max-w-[60px]" 
+  title={req.name || "Unknown"} // Tooltip shows full name
+>
+  <div className="flex items-center gap-2 min-w-[120px]">
+    <img
+      src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJFYyBlkZfPY6Jb_BDM0gAW2jdMCFsYWxgeQ&s"
+      alt="profile"
+      className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+    />
+    <span className="truncate text-gray-700 font-medium max-w-[60px]" title={req.name}>
+      {req.name || "Unknown"}
+    </span>
+  </div>
+</td>
+
+
+                  <td className="px-4 py-2 truncate max-w-[120px]" title={req.designation || "-"}>
+                    {req.designation || "-"}
+                  </td>
                   <td className="px-4 py-2">
+                    {req.applied_on ? new Date(req.applied_on).toLocaleDateString("en-GB") : "—"}
+                  </td>
+                  <td className="px-4 py-2">{req.no_of_days || "-"}</td>
+                  <td className="px-4 py-2 truncate max-w-[150px]" title={req.reason || "—"}>
+                    {req.reason || "—"}
+                  </td>
+                  <td className="px-4 py-2 truncate max-w-[100px]" title={req.remarks || "NA"}>
+                    {req.remarks || "NA"}
+                  </td>
+                  <td className="px-4 py-2">{req.type || "—"}</td>
+
+                  {/* Status pill with three dots */}
+                  <td className="px-4 py-2 max-w-[100px]">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      title={req.status}
+                      className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap overflow-hidden text-ellipsis inline-block max-w-[100px] text-center ${
                         req.status === "Approved"
                           ? "bg-green-100 text-green-600"
-                          : req.status.includes("Pending")
+                          : req.status?.includes("Pending")
                           ? "bg-orange-100 text-orange-600"
                           : "bg-red-100 text-red-600"
                       }`}
@@ -169,6 +199,7 @@ function LeaveRequestes() {
                       {req.status}
                     </span>
                   </td>
+
                   <td className="px-4 py-2 text-center">
                     <button
                       onClick={() => {
@@ -185,33 +216,6 @@ function LeaveRequestes() {
             )}
           </tbody>
         </table>
-
-        {/* Pagination */}
-        {filteredLeaves.length > itemsPerPage && (
-          <div className="flex justify-between items-center px-4 py-2 border-t text-sm text-gray-600">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              className={`px-3 py-1 rounded-lg border hover:bg-gray-100 transition ${
-                currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              Previous
-            </button>
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              className={`px-3 py-1 rounded-lg border hover:bg-gray-100 transition ${
-                currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              Next
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Drawer */}
