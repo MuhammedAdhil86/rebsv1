@@ -38,10 +38,13 @@ const ManagePayrollPolicy = () => {
             ))}
           </div>
 
-          <button className="flex items-center justify-center gap-1 px-3 h-[40px] bg-black text-white text-xs rounded-md hover:bg-gray-800 transition font-medium">
-            <Icon icon="mdi:plus" className="text-sm" />
-            Create New
-          </button>
+          {/* Only show "Create New" for Salary Components */}
+          {activeTab === "salary-components" && (
+            <button className="flex items-center justify-center gap-1 px-3 h-[40px] bg-black text-white text-xs rounded-md hover:bg-gray-800 transition font-medium">
+              <Icon icon="mdi:plus" className="text-sm" />
+              Create New
+            </button>
+          )}
         </div>
 
         {/* Tab Content */}

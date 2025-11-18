@@ -71,7 +71,7 @@ const OrganizationOnboarding = () => {
           )}
           {activeTab === "payroll" && (
             <h2 className="font-[Poppins] font-medium text-[20px] text-gray-800 mb-2">
-              Payroll Policy
+             Manage Payroll Policy
             </h2>
           )}
         </div>
