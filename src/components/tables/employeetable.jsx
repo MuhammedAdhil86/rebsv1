@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 function EmployeeTable({ employees }) {
-  const rowsPerPage = 5;
+  const rowsPerPage = 6; // updated to 6 rows per page
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [colWidths, setColWidths] = useState([]);
@@ -53,9 +53,7 @@ function EmployeeTable({ employees }) {
 
       {/* Header & Search */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
-<h3 className="text-base font-medium text-gray-800">Employee List</h3>
-
-
+        <h3 className="text-base font-medium text-gray-800">Employee List</h3>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm shadow-sm mt-2 sm:mt-0 w-full sm:w-auto">
             <input
@@ -73,7 +71,7 @@ function EmployeeTable({ employees }) {
       {/* Header Table */}
       <div className="overflow-x-auto w-full">
         <table className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl" ref={headerRef}>
-          <thead className="bg-white text-gray-600  text-[12.5px] rounded-xl">
+          <thead className="bg-white text-gray-600 text-[12.5px] rounded-xl">
             <tr>
               {["Employee", "Designation", "Mobile", "Branch", "Shift", "Status"].map((col, idx) => (
                 <th
@@ -93,11 +91,11 @@ function EmployeeTable({ employees }) {
 
       {/* Body Table */}
       <div className="overflow-x-auto w-full">
-        <table className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl">
-          <tbody className="divide-y divide-gray-100 text-gray-800 font-poppins">
+        <table className="w-full min-w-[600px] text-[11px] bg-white border-separate border-spacing-0 rounded-2xl">
+          <tbody className="divide-y divide-gray-100 text-gray-800 font-poppins text-[11px]">
             {currentEmployees.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-8 text-gray-500">No data available</td>
+                <td colSpan={6} className="text-center py-4 text-gray-500">No data available</td>
               </tr>
             ) : (
               currentEmployees.map((emp, idx) => (
@@ -106,7 +104,7 @@ function EmployeeTable({ employees }) {
                   {/* Name */}
                   <td
                     data-label="Employee"
-                    className="px-4 pt-5 pb-5 relative group"
+                    className="px-4 py-3 relative group"
                     style={{
                       width: colWidths[0] ? `${colWidths[0]}px` : "auto",
                       whiteSpace: "nowrap",
@@ -120,8 +118,6 @@ function EmployeeTable({ employees }) {
                         alt={emp.name}
                         className="w-7 h-7 rounded-full"
                       />
-
-                      {/* truncated text ref */}
                       <span
                         className="block truncate max-w-[120px]"
                         ref={(el) => (emp._nameRef = el)}
@@ -129,8 +125,6 @@ function EmployeeTable({ employees }) {
                         {emp.name}
                       </span>
                     </div>
-
-                    {/* Tooltip only if truncated */}
                     {isTruncated(emp._nameRef) && (
                       <span className="absolute hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded shadow-lg z-50 top-0 left-0 whitespace-nowrap -translate-y-full">
                         {emp.name}
@@ -141,7 +135,7 @@ function EmployeeTable({ employees }) {
                   {/* Designation */}
                   <td
                     data-label="Designation"
-                    className="px-4 pt-4 pb-4 relative group"
+                    className="px-4 py-3 relative group"
                     style={{
                       width: colWidths[1] ? `${colWidths[1]}px` : "auto",
                       whiteSpace: "nowrap",
@@ -155,7 +149,6 @@ function EmployeeTable({ employees }) {
                     >
                       {emp.designationname?.String}
                     </span>
-
                     {isTruncated(emp._desigRef) && (
                       <span className="absolute hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded shadow-lg z-50 top-0 left-0 whitespace-nowrap -translate-y-full">
                         {emp.designationname?.String}
@@ -164,22 +157,22 @@ function EmployeeTable({ employees }) {
                   </td>
 
                   {/* Mobile */}
-                  <td className="px-4 pt-4 pb-4 truncate max-w-[120px]" style={{ width: colWidths[2] }}>
+                  <td className="px-4 py-3 truncate max-w-[120px]" style={{ width: colWidths[2] }}>
                     {emp.ph_no}
                   </td>
 
                   {/* Branch */}
-                  <td className="px-4 pt-4 pb-4 truncate max-w-[120px]" style={{ width: colWidths[3] }}>
+                  <td className="px-4 py-3 truncate max-w-[120px]" style={{ width: colWidths[3] }}>
                     {emp.branch?.String || "Head Office"}
                   </td>
 
                   {/* Shift */}
-                  <td className="px-4 pt-4 pb-4" style={{ width: colWidths[4] }}>
+                  <td className="px-4 py-3" style={{ width: colWidths[4] }}>
                     {emp.shift || "Day Shift"}
                   </td>
 
                   {/* Status */}
-                  <td className="px-4 pt-5 pb-5" style={{ width: colWidths[5] }}>
+                  <td className="px-4 py-3" style={{ width: colWidths[5] }}>
                     <span
                       className={`px-4 py-1 w-[85px] text-center rounded-full text-[12.5px] font-poppins ${
                         emp.status === "Online"

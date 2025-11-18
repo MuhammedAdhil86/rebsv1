@@ -96,10 +96,10 @@ function DailyAttendance() {
   };
 
   return (
-    <section className="bg-[#f9fafb] px-3 py-3 w-full max-w-[1280px] mx-auto rounded-xl font-[Poppins]">
+    <section className="bg-[#f9fafb] px-3  w-full max-w-[1280px] mx-auto rounded-xl font-[Poppins]">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-3">
-        <h3 className="text-xl font-medium text-gray-800 tracking-wide">
+        <h3 className="text-base font-medium text-gray-800tracking-wide">
           Daily Attendance
         </h3>
 

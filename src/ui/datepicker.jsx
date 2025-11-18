@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Icon } from "@iconify/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import DatePickerLib from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import useEmployeeStore from "../store/employeeStore";
@@ -10,22 +11,23 @@ function DatePicker() {
   const [showCalendar, setShowCalendar] = useState(false);
   const scrollRef = useRef(null);
   const { setSelectedDay } = useEmployeeStore();
-  const VISIBLE_COUNT = 8;
+
+  const BUTTON_WIDTH = 75; // width of each date button
+  const BUTTON_GAP = 8; // gap between buttons
+  const VISIBLE_COUNT = 8; // visible buttons
 
   useEffect(() => {
     const today = new Date();
     const days = [];
-
     for (let i = 0; i < 30; i++) {
       const d = new Date();
       d.setDate(today.getDate() - i);
       days.push({
-        day: d.toLocaleDateString("en-US", { weekday: "long" }),
+        day: d.toLocaleDateString("en-US", { weekday: "long" }), // full day name
         date: d.getDate(),
         fullDate: d,
       });
     }
-
     setCalendarDays(days);
     const formatted = days[0].fullDate.toISOString().split("T")[0];
     setSelectedDay(formatted);
@@ -47,60 +49,92 @@ function DatePicker() {
     const idx = calendarDays.findIndex(
       (d) => d.fullDate.toISOString().split("T")[0] === selected
     );
-
     if (idx !== -1) {
       setSelectedIndex(idx);
       setSelectedDay(selected);
-      const button = scrollRef.current?.querySelectorAll("button")[idx];
-      if (button) button.scrollIntoView({ behavior: "smooth", inline: "center" });
+      scrollToIndex(idx);
     } else {
       alert("Date not in the past 30 days!");
     }
     setShowCalendar(false);
   };
 
+  const scrollToIndex = (idx) => {
+    const button = scrollRef.current?.querySelectorAll("button")[idx];
+    if (button) {
+      button.scrollIntoView({ behavior: "smooth", inline: "start" });
+    }
+  };
+
+  const scrollLeft = () => {
+    scrollRef.current.scrollBy({
+      left: -(BUTTON_WIDTH + BUTTON_GAP) * VISIBLE_COUNT,
+      behavior: "smooth",
+    });
+  };
+
+  const scrollRight = () => {
+    scrollRef.current.scrollBy({
+      left: (BUTTON_WIDTH + BUTTON_GAP) * VISIBLE_COUNT,
+      behavior: "smooth",
+    });
+  };
+
   return (
-    <div className="relative flex items-center bg-[#f9fafb] rounded-xl overflow-hidden w-full">
+    <div className="relative flex items-center bg-[#f9fafb] rounded-xl overflow-hidden mr-2  py-1">
       {/* Calendar Icon */}
       <div
         onClick={handleCalendarIconClick}
-        className="flex items-center justify-center w-6 sm:w-8 md:w-10 h-6 sm:h-8 md:h-10 rounded-full flex-shrink-0 cursor-pointer"
+        className="flex items-center justify-center w-8 h-8 rounded-full cursor-pointer flex-shrink-0 "
       >
-        <Icon
-          icon="solar:calendar-linear"
-          className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-black"
-        />
+        <Icon icon="solar:calendar-linear" className="w-5 h-5 text-black" />
       </div>
 
-      {/* Date List (scrollable but fixed UI) */}
+      {/* Left Chevron */}
+      <button
+        onClick={scrollLeft}
+        className="flex items-center justify-center flex-shrink-0 px-1"
+      >
+        <ChevronLeft className="w-5 h-5 text-gray-600" />
+      </button>
+
+      {/* Date Strip */}
       <div
         ref={scrollRef}
-        className="flex gap-[7px] overflow-x-auto flex-1 px-[4px] scrollbar-hide"
+        className="flex gap-2 overflow-x-auto flex-1 scrollbar-hide "
       >
         {calendarDays.map((item, idx) => (
           <button
             key={idx}
             onClick={() => handleDateClick(item, idx)}
-            className={`flex flex-col items-center justify-center text-center rounded-lg transition-colors duration-200 flex-shrink-0
+            className={`flex flex-col items-center justify-center text-center rounded-lg transition-colors duration-200 flex-shrink-0 
               ${
                 idx === selectedIndex
                   ? "bg-black text-white"
                   : "bg-white text-gray-800 border border-gray-200 hover:border-gray-300"
               }
-              w-[60px] h-[55px] sm:w-[65px] sm:h-[60px] md:w-[87px] md:h-[65px]
+              w-[75px] h-[60px]
             `}
           >
-            <span className="font-poppins font-normal text-[10px] sm:text-[11px] md:text-[12px] leading-none">
-              {item.day}
+            <span className="font-poppins font-normal text-[10px] leading-none">
+              {item.day} {/* full day name */}
             </span>
-            <span className="font-semibold text-[16px] sm:text-[18px] md:text-[20px] leading-none mt-[4px]">
+            <span className="font-semibold text-[16px] leading-none mt-1">
               {item.date}
             </span>
           </button>
         ))}
       </div>
 
-      {/* Hidden Date Picker (absolute popup) */}
+      {/* Right Chevron */}
+      <button
+        onClick={scrollRight}
+        className="flex items-center justify-center flex-shrink-0 px-1"
+      >
+        <ChevronRight className="w-5 h-5 text-gray-600 " />
+      </button>
+
+      {/* Black & White Date Picker */}
       {showCalendar && (
         <div className="absolute top-full left-0 mt-2 z-50 bg-white shadow-lg rounded-lg p-2">
           <DatePickerLib
@@ -110,9 +144,13 @@ function DatePicker() {
                 : new Date()
             }
             onChange={handleCalendarChange}
-            maxDate={new Date()} // ✅ prevents future dates
-            minDate={new Date(new Date().setDate(new Date().getDate() - 29))} // only past 30 days
+            maxDate={new Date()}
+            minDate={new Date(new Date().setDate(new Date().getDate() - 29))}
             inline
+            calendarClassName="bg-white text-black border border-gray-300 rounded-lg"
+            dayClassName={() =>
+              "hover:bg-black hover:text-white transition-colors rounded"
+            }
           />
         </div>
       )}

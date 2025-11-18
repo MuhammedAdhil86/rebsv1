@@ -62,7 +62,7 @@ function LeaveRequestes() {
     <div className="flex-1 grid grid-cols-1 gap-4 px-4 pb-4 bg-[#f9fafb] rounded-xl w-full mx-auto">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ">
-<h3 className="text-lg sm:text-xl font-medium text-gray-800">
+<h3 className="text-base font-medium text-gray-800">
   Leave Requests
 </h3>
 

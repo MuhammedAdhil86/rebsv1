@@ -61,11 +61,11 @@ function MusterRoll() {
   );
 
   return (
-    <div className="bg-[#f9fafb] rounded-lg p-4 w-full">
+<div className="bg-[#f9fafb] rounded-lg pt-0 px-4 pb-4 w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-3">
         <h2
-          className="text-xl text-gray-800 font-[Poppins]"
+          className="text-base font-medium text-gray-800 font-[Poppins]"
           style={{ fontWeight: 500 }}
         >
           Muster Roll

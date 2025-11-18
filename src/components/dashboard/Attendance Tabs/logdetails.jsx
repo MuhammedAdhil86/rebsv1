@@ -151,7 +151,7 @@ const LogDetails = () => {
       </div>
 {/* Title & Search */}
 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ">
-  <h3 className="text-lg sm:text-xl font-medium text-gray-800">
+  <h3 className="text-base font-medium text-gray-800">
     Log Info
   </h3>
 

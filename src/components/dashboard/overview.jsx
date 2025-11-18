@@ -72,7 +72,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
       {/* Attendance Summary */}
 <div className="bg-white shadow rounded-xl p-4 border border-gray-100 w-full">
   <div className="flex items-baseline gap-1 mb-4">
-    <p className="text-2xl font-bold text-[#1E2734]">{totalAttendance}</p>
+    <p className="text-2xl font-semibold text-[#1E2734]">{totalAttendance}</p>
     <span className="text-sm text-gray-500">Attendance</span>
   </div>
 
@@ -130,7 +130,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
 
 {/* Leaves & Vacations */}
 <div className="bg-white shadow rounded-lg p-3 w-full">
-  <h3 className="text-sm font-medium mb-4">Leaves and Vacations</h3>
+  <h3 className="text-xs font-medium mb-4">Leaves and Vacations</h3>
 
   <ul className="space-y-3 text-sm h-[270px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
     {[

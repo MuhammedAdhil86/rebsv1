@@ -3,6 +3,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import mainImage from "../assets/img/rebs_login.png";
+import logoImage from "../assets/img/Picture1.png"; // <-- Add your logo here
 import { useAuthStore } from "../store/authStore";
 import { UserLogin } from "../repos/userRepo";
 
@@ -58,7 +59,7 @@ export default function LoginUI() {
         localStorage.removeItem("rememberEmail");
       }
 
-     toast.success("Login Successful!", { duration: 3000 });
+      toast.success("Login Successful!", { duration: 3000 });
       navigate("/dashboard");
     } catch (err) {
       console.error("Full Axios error:", err);
@@ -76,7 +77,6 @@ export default function LoginUI() {
 
   return (
     <div className="w-full h-screen bg-black overflow-hidden flex relative">
-
       <div className="flex w-full h-full">
         {/* Left - Slides */}
         <div className="relative h-full overflow-hidden" style={{ width: "55%" }}>
@@ -113,6 +113,13 @@ export default function LoginUI() {
           <div className="bg-white w-full h-full flex flex-col">
             <div className="flex-grow flex justify-center items-center px-6 md:px-8 lg:px-12">
               <div className="w-full max-w-md transform scale-90 p-6">
+                
+{/* Logo - Adjusted to move 5px to the left */}
+<div className="mb-4 flex justify-start relative -left-[5px]">
+  <img src={logoImage} alt="Logo" className="w-12 h-12 object-contain" />
+</div>
+
+
                 <div className="text-start mb-6">
                   <h1 className="text-3xl font-normal text-black mb-1">Welcome back,</h1>
                   <h1 className="text-3xl font-normal text-black mb-2">Admin</h1>
