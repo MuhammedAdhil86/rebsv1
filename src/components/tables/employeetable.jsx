@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 function EmployeeTable({ employees }) {
   const rowsPerPage = 5;
@@ -180,7 +180,7 @@ function EmployeeTable({ employees }) {
                   {/* Status */}
                   <td className="px-4 pt-5 pb-5" style={{ width: colWidths[5] }}>
                     <span
-                      className={`px-3 py-1 w-[85px] text-center rounded-full text-[12.5px] font-medium ${
+                      className={`px-3 py-1 w-[85px] text-center rounded-full text-[12.5px] font-poppins ${
                         emp.status === "Online"
                           ? "bg-green-100 text-green-600"
                           : emp.status === "Absent"
@@ -206,8 +206,20 @@ function EmployeeTable({ employees }) {
                       Showing {startIdx + 1}-{Math.min(endIdx, filteredEmployees.length)} of {filteredEmployees.length}
                     </span>
                     <div className="flex gap-2">
-                      <button onClick={handlePrev} disabled={currentPage === 1} className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50 text-sm">Previous</button>
-                      <button onClick={handleNext} disabled={currentPage === totalPages} className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50 text-sm">Next</button>
+                      <button
+                        onClick={handlePrev}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded disabled:opacity-50 hover:bg-gray-300 transition"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={handleNext}
+                        disabled={currentPage === totalPages}
+                        className="p-2 rounded disabled:opacity-50 hover:bg-gray-300 transition"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </td>

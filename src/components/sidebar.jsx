@@ -174,9 +174,9 @@ function SideBar({ isCollapsed, toggleSidebar }) {
         </div>
 
         {/* Sidebar Menu — scrollable with hidden scrollbar */}
-        <nav className="flex-1 flex flex-col justify-start mt-5 overflow-y-auto scrollbar-hide">
+        <nav className="flex-1 flex flex-col justify-start mt-7 overflow-y-auto scrollbar-hide">
           {menuItems.map((menu, index) => (
-         <div key={index} className="px-4 mb-2 space-y-3">
+         <div key={index} className="px-4 mb-2 space-y-2">
   {!isCollapsed && (
     <p className="text-gray-400 text-xs mb-1 px-2 tracking-wider">
       {menu.section}
