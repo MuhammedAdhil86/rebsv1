@@ -141,7 +141,7 @@ function EmployeeTable({ employees }) {
                   {/* Designation */}
                   <td
                     data-label="Designation"
-                    className="px-4 pt-5 pb-5 relative group"
+                    className="px-4 pt-4 pb-4 relative group"
                     style={{
                       width: colWidths[1] ? `${colWidths[1]}px` : "auto",
                       whiteSpace: "nowrap",
@@ -164,24 +164,24 @@ function EmployeeTable({ employees }) {
                   </td>
 
                   {/* Mobile */}
-                  <td className="px-4 pt-5 pb-5 truncate max-w-[120px]" style={{ width: colWidths[2] }}>
+                  <td className="px-4 pt-4 pb-4 truncate max-w-[120px]" style={{ width: colWidths[2] }}>
                     {emp.ph_no}
                   </td>
 
                   {/* Branch */}
-                  <td className="px-4 pt-5 pb-5 truncate max-w-[120px]" style={{ width: colWidths[3] }}>
+                  <td className="px-4 pt-4 pb-4 truncate max-w-[120px]" style={{ width: colWidths[3] }}>
                     {emp.branch?.String || "Head Office"}
                   </td>
 
                   {/* Shift */}
-                  <td className="px-4 pt-5 pb-5" style={{ width: colWidths[4] }}>
+                  <td className="px-4 pt-4 pb-4" style={{ width: colWidths[4] }}>
                     {emp.shift || "Day Shift"}
                   </td>
 
                   {/* Status */}
                   <td className="px-4 pt-5 pb-5" style={{ width: colWidths[5] }}>
                     <span
-                      className={`px-3 py-1 w-[85px] text-center rounded-full text-[12.5px] font-poppins ${
+                      className={`px-4 py-1 w-[85px] text-center rounded-full text-[12.5px] font-poppins ${
                         emp.status === "Online"
                           ? "bg-green-100 text-green-600"
                           : emp.status === "Absent"

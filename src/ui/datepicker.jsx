@@ -67,8 +67,8 @@ function DatePicker() {
         className="flex items-center justify-center w-6 sm:w-8 md:w-10 h-6 sm:h-8 md:h-10 rounded-full flex-shrink-0 cursor-pointer"
       >
         <Icon
-          icon="solar:calendar-date-bold"
-          className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-gray-600"
+          icon="solar:calendar-linear"
+          className="w-4 sm:w-5 md:w-6 h-4 sm:h-5 md:h-6 text-black"
         />
       </div>
 
@@ -78,26 +78,25 @@ function DatePicker() {
         className="flex gap-[7px] overflow-x-auto flex-1 px-[4px] scrollbar-hide"
       >
         {calendarDays.map((item, idx) => (
-      <button
-  key={idx}
-  onClick={() => handleDateClick(item, idx)}
-  className={`flex flex-col items-center justify-center text-center rounded-lg transition-colors duration-200 flex-shrink-0
-    ${
-      idx === selectedIndex
-        ? "bg-black text-white"
-        : "bg-white text-gray-800 border border-gray-200 hover:border-gray-300"
-    }
-    w-[60px] h-[55px] sm:w-[65px] sm:h-[60px] md:w-[87px] md:h-[65px]
-  `}
->
-  <span className="font-poppins font-normal text-[10px] sm:text-[11px] md:text-[12px] leading-none">
-    {item.day}
-  </span>
-  <span className="font-semibold text-[16px] sm:text-[18px] md:text-[20px] leading-none mt-[4px]">
-    {item.date}
-  </span>
-</button>
-
+          <button
+            key={idx}
+            onClick={() => handleDateClick(item, idx)}
+            className={`flex flex-col items-center justify-center text-center rounded-lg transition-colors duration-200 flex-shrink-0
+              ${
+                idx === selectedIndex
+                  ? "bg-black text-white"
+                  : "bg-white text-gray-800 border border-gray-200 hover:border-gray-300"
+              }
+              w-[60px] h-[55px] sm:w-[65px] sm:h-[60px] md:w-[87px] md:h-[65px]
+            `}
+          >
+            <span className="font-poppins font-normal text-[10px] sm:text-[11px] md:text-[12px] leading-none">
+              {item.day}
+            </span>
+            <span className="font-semibold text-[16px] sm:text-[18px] md:text-[20px] leading-none mt-[4px]">
+              {item.date}
+            </span>
+          </button>
         ))}
       </div>
 
