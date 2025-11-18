@@ -76,14 +76,7 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
 
         {/* Top Action Buttons */}
         <div className="flex flex-wrap gap-2">
-          <div className="inline-flex rounded-xl bg-gray-100 p-1">
-            <button className="px-3 sm:px-4 py-1.5 text-sm rounded-md font-medium text-gray-700 hover:bg-white">
-              Yesterday
-            </button>
-            <button className="px-3 sm:px-4 py-1.5 text-sm rounded-lg font-medium bg-white shadow text-black">
-              Today
-            </button>
-          </div>
+   
           <button className="px-3 sm:px-4 py-2 text-sm rounded-lg border bg-black text-white">
             + Create Announcement
           </button>
