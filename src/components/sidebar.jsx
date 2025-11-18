@@ -176,32 +176,33 @@ function SideBar({ isCollapsed, toggleSidebar }) {
         {/* Sidebar Menu — scrollable with hidden scrollbar */}
         <nav className="flex-1 flex flex-col justify-start mt-5 overflow-y-auto scrollbar-hide">
           {menuItems.map((menu, index) => (
-            <div key={index} className="px-4 mb-2">
-              {!isCollapsed && (
-                <p className="text-gray-400 text-xs mb-1 px-2 tracking-wider">
-                  {menu.section}
-                </p>
-              )}
-              {menu.items.map((item, idx) => (
-                <NavLink
-                  key={idx}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `h-[40px] flex items-center space-x-3 px-3 rounded-lg transition-all duration-200 text-sm ${
-                      isActive
-                        ? "bg-[#1C2526] text-white font-light"
-                        : "text-neutral-600 hover:text-white hover:bg-gray-800"
-                    }`
-                  }
-                  style={{ width: isCollapsed ? "6%" : "90%" }}
-                >
-                  <span className="flex-shrink-0">{item.icon}</span>
-                  {!isCollapsed && (
-                    <span className="flex-1 text-left">{item.title}</span>
-                  )}
-                </NavLink>
-              ))}
-            </div>
+         <div key={index} className="px-4 mb-2 space-y-3">
+  {!isCollapsed && (
+    <p className="text-gray-400 text-xs mb-1 px-2 tracking-wider">
+      {menu.section}
+    </p>
+  )}
+  {menu.items.map((item, idx) => (
+    <NavLink
+      key={idx}
+      to={item.path}
+      className={({ isActive }) =>
+        `h-[40px] flex items-center space-x-3 px-3 rounded-lg transition-all duration-200 text-sm ${
+          isActive
+            ? "bg-[#1C2526] text-white font-light"
+            : "text-neutral-600 hover:text-white hover:bg-gray-800"
+        }`
+      }
+      style={{ width: isCollapsed ? "6%" : "90%" }}
+    >
+      <span className="flex-shrink-0">{item.icon}</span>
+      {!isCollapsed && (
+        <span className="flex-1 text-left">{item.title}</span>
+      )}
+    </NavLink>
+  ))}
+</div>
+
           ))}
         </nav>
 
