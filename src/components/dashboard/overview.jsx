@@ -164,7 +164,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
               {leave.name}
             </p>
             {/* Role / Designation */}
-            <p className="text-[11px] font-[400] font-['Poppins'] text-gray-500 truncate">
+            <p className="text-[10px] font-[400] font-['Poppins'] text-gray-500 truncate">
               {leave.role}
             </p>
           </div>
@@ -178,7 +178,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
     ))}
   </ul>
 
-<button className=" font-['Poppins'] text-[13px] font-medium text-[#4F4C91] hover:underline">
+<button className=" font-['Poppins'] text-[11px] font-medium text-[#4F4C91] hover:underline">
   View all people
 </button>
 

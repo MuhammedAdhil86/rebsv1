@@ -53,7 +53,8 @@ function EmployeeTable({ employees }) {
 
       {/* Header & Search */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
-        <h3 className="text-lg sm:text-xl font-medium text-gray-800">Employee List</h3>
+<h3 className="text-base font-medium text-gray-800">Employee List</h3>
+
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm shadow-sm mt-2 sm:mt-0 w-full sm:w-auto">
@@ -72,12 +73,12 @@ function EmployeeTable({ employees }) {
       {/* Header Table */}
       <div className="overflow-x-auto w-full">
         <table className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl" ref={headerRef}>
-          <thead className="bg-white text-gray-600 uppercase text-[12.5px] rounded-xl">
+          <thead className="bg-white text-gray-600  text-[12.5px] rounded-xl">
             <tr>
               {["Employee", "Designation", "Mobile", "Branch", "Shift", "Status"].map((col, idx) => (
                 <th
                   key={col}
-                  className="px-8 py-3 font-light text-gray-700 whitespace-nowrap text-left align-middle rounded-xl"
+                  className="px-8 py-3 font-medium text-gray-700 whitespace-nowrap text-left align-middle rounded-xl"
                   style={{ width: colWidths[idx] ? `${colWidths[idx]}px` : "auto" }}
                 >
                   {col}

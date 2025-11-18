@@ -75,15 +75,15 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
         </div>
 
         {/* Top Action Buttons */}
-        <div className="flex flex-wrap gap-2">
-   
-          <button className="px-3 sm:px-4 py-2 text-sm rounded-lg border bg-black text-white">
-            + Create Announcement
-          </button>
-          <button className="px-3 sm:px-4 py-2 text-sm rounded-lg border bg-black text-white">
-            + Add Leave
-          </button>
-        </div>
+ <div className="flex flex-wrap gap-2">
+  <button className="px-3 sm:px-4 py-2 text-xs rounded-lg border bg-black text-white font-poppins font-normal">
+    + Create Announcement
+  </button>
+  <button className="px-3 sm:px-4 py-2 text-xs rounded-lg border bg-black text-white font-poppins font-normal">
+    + Add Leave
+  </button>
+</div>
+
       </div>
 
       {/* ---------------- KPI CARDS ---------------- */}
@@ -135,30 +135,30 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
         ))}
       </section>
 
-      {/* ---------------- ATTENDANCE TABS ---------------- */}
-      <section className="bg-white mt-4 sm:mt-6 w-full px-4 sm:px-6">
-        <div className="border-b flex flex-wrap gap-4 sm:gap-6 pt-4 text-sm text-gray-600">
-          {[
-            { label: "Attendance Overview", key: "overview" },
-            { label: "Log Details", key: "logdetails" },
-            { label: "Leave Requests", key: "leaverequests" },
-            { label: "Daily Attendance", key: "dailyAttendance" },
-            { label: "Muster Roll", key: "musterRoll" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`pb-2 whitespace-nowrap ${
-                activeTab === tab.key
-                  ? "border-b-2 border-black font-medium text-black"
-                  : ""
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </section>
+   <section className="bg-white mt-4 sm:mt-6 w-full px-4 sm:px-6">
+  <div className="border-b flex flex-wrap gap-4 sm:gap-6 pt-4 text-sm">
+    {[
+      { label: "Attendance Overview", key: "overview" },
+      { label: "Log Details", key: "logdetails" },
+      { label: "Leave Requests", key: "leaverequests" },
+      { label: "Daily Attendance", key: "dailyAttendance" },
+      { label: "Muster Roll", key: "musterRoll" },
+    ].map((tab) => (
+      <button
+        key={tab.key}
+        onClick={() => setActiveTab(tab.key)}
+        className={`pb-2 whitespace-nowrap ${
+          activeTab === tab.key
+            ? "border-b-2 border-black font-medium text-black"
+            : "text-[#AFAFAF]"
+        }`}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+</section>
+
     </div>
   );
 }

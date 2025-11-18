@@ -93,7 +93,7 @@ function DatePicker() {
   <span className="font-poppins font-normal text-[10px] sm:text-[11px] md:text-[12px] leading-none">
     {item.day}
   </span>
-  <span className="font-semibold text-[16px] sm:text-[18px] md:text-[20px] leading-none mt-[3px]">
+  <span className="font-semibold text-[16px] sm:text-[18px] md:text-[20px] leading-none mt-[4px]">
     {item.date}
   </span>
 </button>
