@@ -26,9 +26,7 @@ function LeaveRequestes() {
     if (filterStatus !== "All") {
       arr = arr.filter((req) => {
         const st = req.status?.toLowerCase() ?? "";
-        if (filterStatus === "Pending") {
-          return st.includes("pending");
-        }
+        if (filterStatus === "Pending") return st.includes("pending");
         return st === filterStatus.toLowerCase();
       });
     }
@@ -44,11 +42,7 @@ function LeaveRequestes() {
       });
     }
 
-    arr.sort((a, b) => {
-      const da = new Date(a.applied_on);
-      const db = new Date(b.applied_on);
-      return db - da;
-    });
+    arr.sort((a, b) => new Date(b.applied_on) - new Date(a.applied_on));
 
     return arr;
   }, [leaves, filterStatus, searchQuery]);
@@ -68,7 +62,7 @@ function LeaveRequestes() {
       width: 160,
       render: (val, row) => {
         const name = val ?? "";
-        const shortName = name.length > 5 ? name.substring(0, 5) + "…" : name;
+        const shortName = name.length > 8 ? name.substring(0, 8) + "…" : name; // Changed to 8 letters
         return (
           <div className="flex items-center gap-2">
             <img
@@ -79,10 +73,7 @@ function LeaveRequestes() {
               alt="avatar"
               className="w-7 h-7 rounded-full object-cover"
             />
-            <span
-              className="truncate max-w-[70px]"
-              title={name}
-            >
+            <span className="truncate max-w-[70px]" title={name}>
               {shortName}
             </span>
           </div>
@@ -97,10 +88,7 @@ function LeaveRequestes() {
         const des = val ?? "";
         const shortDes = des.length > 12 ? des.substring(0, 12) + "…" : des;
         return (
-          <span
-            className="truncate block max-w-[120px]"
-            title={des}
-          >
+          <span className="truncate block max-w-[120px]" title={des}>
             {shortDes}
           </span>
         );
@@ -156,7 +144,7 @@ function LeaveRequestes() {
             title={status}
             className={`px-3 py-1 rounded-full text-xs font-normal font-poppins whitespace-nowrap overflow-hidden inline-block max-w-[100px] text-center ${getStatusColor(
               status
-            )}`} // font-medium → font-normal font-poppins
+            )}`}
           >
             {shortStatus}
           </span>
@@ -173,9 +161,10 @@ function LeaveRequestes() {
             setSelectedLeave(row);
             setDrawerOpen(true);
           }}
-          className="text-green-600 hover:text-green-800 font-medium underline"
+          className="text-gray-600 hover:text-gray-800"
         >
-          View
+          {/* Three-dot icon */}
+          <span className="text-xl">⋯</span>
         </button>
       ),
     },
@@ -194,7 +183,7 @@ function LeaveRequestes() {
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
-                className={`px-3 py-1.5 rounded-lg text-sm  border transition ${
+                className={`px-3 py-1.5 rounded-lg text-sm border transition ${
                   filterStatus === status
                     ? "bg-black text-white border-black"
                     : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -222,12 +211,18 @@ function LeaveRequestes() {
         </div>
       </div>
 
-      {/* Table */}
-      <UniversalTable
-        columns={columns}
-        data={filteredLeaves}
-        rowsPerPage={10}
-      />
+      {/* Table / Loader */}
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin" />
+        </div>
+      ) : (
+        <UniversalTable
+          columns={columns}
+          data={filteredLeaves}
+          rowsPerPage={10}
+        />
+      )}
 
       {/* Drawer */}
       {drawerOpen && (
@@ -251,10 +246,7 @@ function LeaveRequestes() {
         </div>
       )}
 
-      {/* Optional Messages */}
-      {loading && (
-        <div className="text-center py-2 text-gray-500">Loading leave requests...</div>
-      )}
+      {/* Error */}
       {error && (
         <div className="text-center py-2 text-red-600">Error: {error}</div>
       )}

@@ -96,37 +96,30 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
                 </div>
               </div>
 
-              {/* Summary */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm mb-3">
+              {/* Summary (Updated) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-sm ">
                 {attendanceData
                   .filter((item) =>
-                    ["On time", "Delay", "Late", "Absent"].includes(item.status)
+                    ["On time", "Delay", "Late", "Absent", "Early Check-in"].includes(item.status)
                   )
                   .map((item, idx) => (
                     <div key={idx} className="flex flex-col items-center">
-                      <span className="text-gray-600 text-xs">
-                        {item.status === "On time" ? "Ontime" : item.status}
+                      {/* Status text: 11px, Poppins Regular */}
+                      <span className="text-[11px] font-[400] font-['Poppins'] text-gray-600">
+                        {item.status === "On time"
+                          ? "Ontime"
+                          : item.status === "Early Check-in"
+                          ? "Early"
+                          : item.status}
                       </span>
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className={`h-2 w-2 rounded-full ${item.color}`}></span>
+                      <div className="flex items-center gap-1 ">
+                        {/* All color circles same size */}
+                        <span className={`h-2.5 w-2.5 rounded-full ${item.color}`}></span>
                         <span className="font-semibold text-[#1E2734]">{item.count}</span>
                       </div>
                     </div>
                   ))}
               </div>
-
-              {/* Early Check-in */}
-              {attendanceData.find((item) => item.status === "Early Check-in") && (
-                <div className="flex justify-start ml-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="h-2.5 w-2.5 rounded-full bg-gray-400"></span>
-                    <span className="text-gray-600 text-xs">Early Check-in</span>
-                    <span className="font-semibold text-[#1E2734] ml-1">
-                      {attendanceData.find((item) => item.status === "Early Check-in")?.count}
-                    </span>
-                  </div>
-                </div>
-              )}
             </>
           )}
         </div>
@@ -136,7 +129,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
           <h3 className="text-xs font-medium mb-4">Leaves and Vacations</h3>
 
           <ul className="space-y-3 text-sm h-[270px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-            {[
+            {[ 
               { name: "Vishnu", role: "UI/UX Designer", date: "Only Today" },
               { name: "Aswin Lal", role: "Designer", date: "14 Feb" },
               { name: "Aleena Edhose ", role: "Sr UX Designer", date: "8 Feb to 10 Feb" },
@@ -175,7 +168,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
             ))}
           </ul>
 
-          <button className=" font-['Poppins'] text-[11px] font-medium text-[#4F4C91] hover:underline">
+          <button className="font-['Poppins'] text-[11px] font-medium text-[#4F4C91] hover:underline">
             View all people
           </button>
         </div>

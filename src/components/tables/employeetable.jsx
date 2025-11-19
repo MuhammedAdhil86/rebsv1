@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 
-function EmployeeTable({ employees }) {
-  const rowsPerPage = 6; // updated to 6 rows per page
+function EmployeeTable({ employees, loading }) {
+  const rowsPerPage = 6;
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [colWidths, setColWidths] = useState([]);
   const headerRef = useRef(null);
+  const [hoverText, setHoverText] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-  // Detect if text is truncated
-  const isTruncated = (el) => {
-    if (!el) return false;
-    return el.scrollWidth > el.clientWidth;
-  };
+  const isTruncated = (el) => el && el.scrollWidth > el.clientWidth;
 
   const filteredEmployees = employees.filter((emp) => {
     const term = searchTerm.toLowerCase();
@@ -32,7 +30,6 @@ function EmployeeTable({ employees }) {
 
   const handlePrev = () => currentPage > 1 && setCurrentPage(currentPage - 1);
   const handleNext = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
-
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
@@ -68,160 +65,177 @@ function EmployeeTable({ employees }) {
         </div>
       </div>
 
-      {/* Header Table */}
-      <div className="overflow-x-auto w-full">
-        <table className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl" ref={headerRef}>
-          <thead className="bg-white text-gray-600 text-[12.5px] rounded-xl">
-            <tr>
-              {["Employee", "Designation", "Mobile", "Branch", "Shift", "Status"].map((col, idx) => (
-                <th
-                  key={col}
-                  className="px-8 py-3 font-medium text-gray-700 whitespace-nowrap text-left align-middle rounded-xl"
-                  style={{ width: colWidths[idx] ? `${colWidths[idx]}px` : "auto" }}
-                >
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-        </table>
-      </div>
-
-      <div className="h-2" />
-
-      {/* Body Table */}
-      <div className="overflow-x-auto w-full">
-        <table className="w-full min-w-[600px] text-[11px] bg-white border-separate border-spacing-0 rounded-2xl">
-          <tbody className="divide-y divide-gray-100 text-gray-800 font-poppins text-[11px]">
-            {currentEmployees.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center py-4 text-gray-500">No data available</td>
-              </tr>
-            ) : (
-              currentEmployees.map((emp, idx) => (
-                <tr key={idx} className="hover:bg-gray-50 align-middle">
-
-                  {/* Name */}
-                  <td
-                    data-label="Employee"
-                    className="px-4 py-3 relative group"
-                    style={{
-                      width: colWidths[0] ? `${colWidths[0]}px` : "auto",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={`https://i.pravatar.cc/40?img=${startIdx + idx + 1}`}
-                        alt={emp.name}
-                        className="w-7 h-7 rounded-full"
-                      />
-                      <span
-                        className="block truncate max-w-[120px]"
-                        ref={(el) => (emp._nameRef = el)}
+      {/* Loader */}
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin" />
+        </div>
+      ) : (
+        <>
+          {/* Header Table */}
+          <div className="overflow-x-auto w-full">
+            <table
+              className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl"
+              ref={headerRef}
+            >
+              <thead className="bg-white text-gray-600 text-[12.5px] rounded-xl">
+                <tr>
+                  {["Employee", "Designation", "Mobile", "Branch", "Shift", "Status"].map(
+                    (col, idx) => (
+                      <th
+                        key={col}
+                        className="px-8 py-3 font-medium text-gray-700 whitespace-nowrap text-left align-middle rounded-xl"
+                        style={{ width: colWidths[idx] ? `${colWidths[idx]}px` : "auto" }}
                       >
-                        {emp.name}
-                      </span>
-                    </div>
-                    {isTruncated(emp._nameRef) && (
-                      <span className="absolute hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded shadow-lg z-50 top-0 left-0 whitespace-nowrap -translate-y-full">
-                        {emp.name}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Designation */}
-                  <td
-                    data-label="Designation"
-                    className="px-4 py-3 relative group"
-                    style={{
-                      width: colWidths[1] ? `${colWidths[1]}px` : "auto",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    <span
-                      className="truncate block max-w-[120px]"
-                      ref={(el) => (emp._desigRef = el)}
-                    >
-                      {emp.designationname?.String}
-                    </span>
-                    {isTruncated(emp._desigRef) && (
-                      <span className="absolute hidden group-hover:block bg-black text-white text-xs px-2 py-1 rounded shadow-lg z-50 top-0 left-0 whitespace-nowrap -translate-y-full">
-                        {emp.designationname?.String}
-                      </span>
-                    )}
-                  </td>
-
-                  {/* Mobile */}
-                  <td className="px-4 py-3 truncate max-w-[120px]" style={{ width: colWidths[2] }}>
-                    {emp.ph_no}
-                  </td>
-
-                  {/* Branch */}
-                  <td className="px-4 py-3 truncate max-w-[120px]" style={{ width: colWidths[3] }}>
-                    {emp.branch?.String || "Head Office"}
-                  </td>
-
-                  {/* Shift */}
-                  <td className="px-4 py-3" style={{ width: colWidths[4] }}>
-                    {emp.shift || "Day Shift"}
-                  </td>
-
-                  {/* Status */}
-                  <td className="px-4 py-3" style={{ width: colWidths[5] }}>
-                    <span
-                      className={`px-4 py-1 w-[85px] text-center rounded-full text-[12.5px] font-poppins ${
-                        emp.status === "Online"
-                          ? "bg-green-100 text-green-600"
-                          : emp.status === "Absent"
-                          ? "bg-red-100 text-red-600"
-                          : emp.status === "Late"
-                          ? "bg-purple-100 text-purple-600"
-                          : "bg-blue-100 text-blue-600"
-                      }`}
-                    >
-                      {emp.status}
-                    </span>
-                  </td>
+                        {col}
+                      </th>
+                    )
+                  )}
                 </tr>
-              ))
-            )}
+              </thead>
+            </table>
+          </div>
 
-            {/* Pagination */}
-            {filteredEmployees.length > 0 && (
-              <tr>
-                <td colSpan={6}>
-                  <div className="flex flex-col sm:flex-row justify-between items-center gap-2 px-4 py-3 text-[12.5px] rounded-b-2xl">
-                    <span className="text-gray-500">
-                      Showing {startIdx + 1}-{Math.min(endIdx, filteredEmployees.length)} of {filteredEmployees.length}
-                    </span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handlePrev}
-                        disabled={currentPage === 1}
-                        className="p-2 rounded disabled:opacity-50 hover:bg-gray-300 transition"
+          <div className="h-2" />
+
+          {/* Body Table */}
+          <div className="overflow-x-auto w-full">
+            <table className="w-full min-w-[600px] text-[11px] bg-white border-separate border-spacing-0 rounded-2xl">
+              <tbody className="divide-y divide-gray-100 text-gray-800 font-poppins text-[11px]">
+                {currentEmployees.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-4 text-gray-500">
+                      No data available
+                    </td>
+                  </tr>
+                ) : (
+                  currentEmployees.map((emp, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50 align-middle">
+
+                      {/* Name */}
+                      <td
+                        data-label="Employee"
+                        className="px-4 py-3 relative group"
+                        style={{ width: colWidths[0] ? `${colWidths[0]}px` : "auto" }}
+                        onMouseEnter={(e) => {
+                          if (isTruncated(emp._nameRef)) {
+                            const rect = e.target.getBoundingClientRect();
+                            setTooltipPos({ x: rect.left, y: rect.top - 28 });
+                            setHoverText(emp.name);
+                          }
+                        }}
+                        onMouseLeave={() => setHoverText(null)}
                       >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={handleNext}
-                        disabled={currentPage === totalPages}
-                        className="p-2 rounded disabled:opacity-50 hover:bg-gray-300 transition"
+                        <div className="flex items-center gap-2">
+                          <img
+                            src={`https://i.pravatar.cc/40?img=${startIdx + idx + 1}`}
+                            alt={emp.name}
+                            className="w-7 h-7 rounded-full"
+                          />
+                          <span className="block truncate max-w-[120px]" ref={(el) => (emp._nameRef = el)}>
+                            {emp.name}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Designation */}
+                      <td
+                        data-label="Designation"
+                        className="px-4 py-3 relative group"
+                        style={{ width: colWidths[1] ? `${colWidths[1]}px` : "auto" }}
+                        onMouseEnter={(e) => {
+                          if (isTruncated(emp._desigRef)) {
+                            const rect = e.target.getBoundingClientRect();
+                            setTooltipPos({ x: rect.left, y: rect.top - 28 });
+                            setHoverText(emp.designationname?.String);
+                          }
+                        }}
+                        onMouseLeave={() => setHoverText(null)}
                       >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                        <span className="truncate block max-w-[120px]" ref={(el) => (emp._desigRef = el)}>
+                          {emp.designationname?.String}
+                        </span>
+                      </td>
+
+                      {/* Mobile */}
+                      <td className="px-4 py-3 truncate max-w-[120px]" style={{ width: colWidths[2] }}>
+                        {emp.ph_no}
+                      </td>
+
+                      {/* Branch */}
+                      <td className="px-4 py-3 truncate max-w-[120px]" style={{ width: colWidths[3] }}>
+                        {emp.branch?.String || "Head Office"}
+                      </td>
+
+                      {/* Shift */}
+                      <td className="px-4 py-3" style={{ width: colWidths[4] }}>
+                        {emp.shift || "Day Shift"}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-4 py-3" style={{ width: colWidths[5] }}>
+                        <span
+                          className={`px-4 py-1 w-[85px] text-center rounded-full text-[12.5px] font-poppins ${
+                            emp.status === "Online"
+                              ? "bg-green-100 text-green-600"
+                              : emp.status === "Absent"
+                              ? "bg-red-100 text-red-600"
+                              : emp.status === "Late"
+                              ? "bg-purple-100 text-purple-600"
+                              : "bg-blue-100 text-blue-600"
+                          }`}
+                        >
+                          {emp.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+
+                {/* Pagination */}
+                {filteredEmployees.length > 0 && (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="flex flex-col sm:flex-row justify-between items-center gap-2 px-4 py-3 text-[12.5px] rounded-b-2xl">
+                        <span className="text-gray-500">
+                          Showing {startIdx + 1}-{Math.min(endIdx, filteredEmployees.length)} of{" "}
+                          {filteredEmployees.length}
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handlePrev}
+                            disabled={currentPage === 1}
+                            className="p-2 rounded disabled:opacity-50 hover:bg-gray-300 transition"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={handleNext}
+                            disabled={currentPage === totalPages}
+                            className="p-2 rounded disabled:opacity-50 hover:bg-gray-300 transition"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Tooltip for truncated text */}
+      {hoverText && (
+        <div
+          className="fixed px-2 py-1 bg-black text-white text-xs rounded shadow-lg z-[999999]"
+          style={{ top: tooltipPos.y, left: tooltipPos.x }}
+        >
+          {hoverText}
+        </div>
+      )}
 
       {/* Mobile View */}
       <style jsx>{`

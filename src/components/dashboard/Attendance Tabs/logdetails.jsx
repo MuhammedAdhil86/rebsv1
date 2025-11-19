@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import dayjs from "dayjs";
-import { Icon } from "@iconify/react";
 import { Search } from "lucide-react";
 import useWebSocket from "../../../Hooks/useWebsocket";
 import MapModal from "../../../utils/mapmodel";
 import { getLogEntriesForDate } from "../../../service/logService";
 import UniversalTable from "../../../ui/universal_table";
-import { createPortal } from "react-dom";
 
 const getPlaceName = async (latitude, longitude) => {
   if (!latitude || !longitude) return "-";
@@ -33,19 +31,8 @@ const LogDetails = () => {
   const [loadingLocations, setLoadingLocations] = useState({});
   const [mapModal, setMapModal] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [hoverText, setHoverText] = useState(null);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
   const { log: websocketLogs } = useWebSocket();
-
-  const CALENDAR_DAYS = Array.from({ length: 30 }, (_, i) => {
-    const dateObj = dayjs().subtract(i, "day");
-    return {
-      day: dateObj.format("dddd"),
-      date: dateObj.format("DD"),
-      fullDate: dateObj.toDate(),
-    };
-  });
 
   const mergeLogs = useCallback((historical, websocket) => {
     const map = new Map();
@@ -117,41 +104,50 @@ const LogDetails = () => {
     });
   };
 
-  const tableData = logs.flatMap((log) =>
-    log.attendance?.map((att) => {
-      const combinedDateTime =
-        log.date && att.time
-          ? `${log.date.split("T")[0]}T${att.time.split("T")[1]}`
-          : null;
+  const tableData = logs
+    .flatMap((log) =>
+      log.attendance?.map((att) => {
+        const combinedDateTime =
+          log.date && att.time
+            ? `${log.date.split("T")[0]}T${att.time.split("T")[1]}`
+            : null;
 
-      const { latitude, longitude } = att.location_info || {};
+        const { latitude, longitude } = att.location_info || {};
 
-      return {
-        id: att.id,
-        name: att.name,
-        device: att.location_info?.device || "Unknown",
-        time: combinedDateTime
-          ? dayjs(combinedDateTime).format("h:mm A, MMM D, YYYY")
-          : "-",
-        distance: att.distance ? `${att.distance} Km` : "Calculating...",
-        location: {
-          latitude,
-          longitude,
-          revealed: revealed[att.id],
-          loading: loadingLocations[att.id],
-          text: locations[att.id],
-          att,
-        },
-        status: att.status,
-      };
-    })
-  ).filter(Boolean)
+        return {
+          id: att.id,
+          name: att.name,
+          device: att.location_info?.device || "Unknown",
+          time: combinedDateTime
+            ? dayjs(combinedDateTime).format("h:mm A, MMM D, YYYY")
+            : "-",
+          distance: att.distance ? `${att.distance} Km` : "Calculating...",
+          location: {
+            latitude,
+            longitude,
+            revealed: revealed[att.id],
+            loading: loadingLocations[att.id],
+            text: locations[att.id],
+            att,
+          },
+          status: att.status,
+        };
+      })
+    )
+    .filter(Boolean)
     .filter((row) => row.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const getStatusColor = (status) =>
-    status === "IN"
-      ? "bg-green-100 text-green-600"
-      : "bg-red-100 text-red-600";
+    status === "IN" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600";
+
+  const MarqueeCell = ({ text, children }) => (
+    <div className="relative w-[140px] overflow-hidden">
+      <div className="absolute top-0 left-0 whitespace-nowrap hover:animate-marquee">
+        {text}
+      </div>
+      {children}
+    </div>
+  );
 
   const columns = [
     {
@@ -159,25 +155,21 @@ const LogDetails = () => {
       key: "name",
       width: 180,
       render: (val) => {
-        const shortVal = val.length > 10 ? val.substring(0, 10) + "…" : val;
+        const shortVal = val.length > 13 ? val.substring(0, 13) + "…" : val;
         return (
-          <div
-            className="flex items-center gap-2 cursor-default relative"
-            onMouseEnter={(e) => {
-              if (val.length > 10) {
-                const rect = e.target.getBoundingClientRect();
-                setTooltipPos({ x: rect.left + 10, y: rect.top - 35 });
-                setHoverText(val);
-              }
-            }}
-            onMouseLeave={() => setHoverText(null)}
-          >
+          <div className="flex items-center gap-2">
             <img
               src={`https://i.pravatar.cc/40?u=${val}`}
               alt={val}
               className="w-8 h-8 rounded-full object-cover border"
             />
-            <span className="truncate max-w-[120px]">{shortVal}</span>
+            {val.length > 13 ? (
+              <div className="overflow-hidden max-w-[140px]">
+                <div className="whitespace-nowrap hover:animate-marquee">{val}</div>
+              </div>
+            ) : (
+              <span className="truncate max-w-[140px]">{val}</span>
+            )}
           </div>
         );
       },
@@ -192,10 +184,14 @@ const LogDetails = () => {
       render: (val) => {
         if (!val.latitude || !val.longitude) return "-";
         if (val.revealed) {
-          if (val.loading) return <span className="text-gray-400 animate-pulse">Loading...</span>;
+          if (val.loading)
+            return <span className="text-gray-400 animate-pulse">Loading...</span>;
+          const locText = val.text || "-";
           return (
             <div className="flex flex-col">
-              <span className="truncate max-w-[180px]" title={val.text}>{val.text}</span>
+              <div className="overflow-hidden max-w-[180px]">
+                <div className="whitespace-nowrap hover:animate-marquee">{locText}</div>
+              </div>
               <button
                 className="text-blue-600 underline mt-1"
                 onClick={() =>
@@ -223,9 +219,7 @@ const LogDetails = () => {
       width: 100,
       render: (val) => (
         <span
-          className={`px-2 py-1 rounded-full text-[12.5px] font-medium ${getStatusColor(
-            val
-          )}`}
+          className={`px-2 py-1 rounded-full text-[12.5px] font-normal ${getStatusColor(val)}`}
         >
           {val === "IN" ? "Login" : "Logout"}
         </span>
@@ -236,11 +230,9 @@ const LogDetails = () => {
   return (
     <>
       <section className="bg-[#f9fafb] px-4 w-full max-w-[1280px] mx-auto rounded-xl font-[Poppins]">
-
-        {/* Calendar + Search */}
+        {/* Search */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
           <h3 className="text-base font-medium text-gray-800">Log Info</h3>
-
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
             <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm w-full sm:w-auto">
               <input
@@ -275,20 +267,6 @@ const LogDetails = () => {
         )}
       </section>
 
-      {hoverText &&
-        createPortal(
-          <div
-            className="fixed px-2 py-1 bg-black text-white text-xs rounded shadow-lg z-[999999]"
-            style={{
-              top: tooltipPos.y,
-              left: tooltipPos.x,
-            }}
-          >
-            {hoverText}
-          </div>,
-          document.body
-        )}
-
       {mapModal && (
         <MapModal
           latitude={mapModal.latitude}
@@ -298,6 +276,17 @@ const LogDetails = () => {
           onClose={() => setMapModal(null)}
         />
       )}
+
+      {/* Add marquee animation */}
+      <style jsx>{`
+        @keyframes marquee {
+          0% { transform: translateX(0%); }
+          100% { transform: translateX(-100%); }
+        }
+        .hover\\:animate-marquee:hover {
+          animation: marquee 5s linear infinite;
+        }
+      `}</style>
     </>
   );
 };

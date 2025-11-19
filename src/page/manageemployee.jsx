@@ -2,12 +2,14 @@ import React, { useEffect, useState, useRef } from "react";
 import DashboardLayout from "../ui/pagelayout";
 import avatar from "../assets/img/avatar.svg";
 import { FiBell, FiSearch, FiPlus, FiMoreHorizontal } from "react-icons/fi";
-import { ChevronDown, Shield, UserCheck, UserX, Trash2, MoreVertical } from "lucide-react";
+import { ChevronDown, Shield, UserCheck, UserX, Trash2 } from "lucide-react";
 import { Icon } from "@iconify/react";
 import { useNavigate } from "react-router-dom";
 import useEmployeeStore from "../store/employeeStore";
+import UniversalTable from "../ui/universal_table";
+import { MoreVertical } from "lucide-react";
 
-const API_BASE_URL = "https://agnostically-bonniest-patrice.ngrok-free.dev"; // 🔗 Backend URL
+const API_BASE_URL = "https://rebs-hr-cwhyx.ondigitalocean.app/";
 
 const TABS = [
   { key: "all", label: "All Employees" },
@@ -85,7 +87,6 @@ function ManageEmployees() {
     navigate(`/details/${row.id}`);
   };
 
-  // ✅ Bulk Activate / Deactivate
   const bulkUpdateStatus = async (activate) => {
     if (selectedRows.length === 0) return;
     try {
@@ -117,7 +118,6 @@ function ManageEmployees() {
   const handleDeactivateUser = () => bulkUpdateStatus(false);
   const handleAddPrivilege = () => alert("Add Privilege");
 
-  // ✅ Show delete confirmation modal
   const handleDelete = () => {
     if (selectedRows.length === 0) {
       alert("Please select at least one employee to delete.");
@@ -126,7 +126,6 @@ function ManageEmployees() {
     setShowDeleteConfirm(true);
   };
 
-  // ✅ Confirm & perform bulk delete (fixed logic)
   const confirmBulkDelete = async () => {
     try {
       setIsDeleting(true);
@@ -139,7 +138,7 @@ function ManageEmployees() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          user_uuids: selectedRows, // ✅ FIXED: send UUIDs, not IDs
+          user_uuids: selectedRows,
           reason: deleteReason || "Deleted by admin",
         }),
       });
@@ -165,7 +164,7 @@ function ManageEmployees() {
   const renderEmployeeCard = (emp) => (
     <div
       key={emp.id}
-      className="bg-white rounded-2xl flex flex-col justify-between h-full transition hover:shadow-md"
+      className="bg-white rounded-2xl flex flex-col justify-between h-full transition hover:shadow-md p-4"
     >
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center space-x-4">
@@ -183,9 +182,7 @@ function ManageEmployees() {
                 : "bg-red-100 text-red-700"
             }`}
           >
-            {emp.is_active === true || emp.is_active === "true"
-              ? "Active"
-              : "Inactive"}
+            {emp.is_active === true || emp.is_active === "true" ? "Active" : "Inactive"}
           </span>
           <button
             onClick={() => navigate(`/details/${emp.id}`)}
@@ -195,32 +192,152 @@ function ManageEmployees() {
           </button>
         </div>
       </div>
+
       <div>
-        <h3 className="text-sm font-semibold text-gray-800">
+        <h3 className="text-[12px] font-semibold text-gray-800">
           {emp.first_name} {emp.last_name}
         </h3>
-        <p className="text-xs text-gray-500">{emp.designation}</p>
+        <p className="text-[9px] text-gray-500">{emp.designation}</p>
       </div>
-      <div className="flex flex-col space-y-2 text-sm text-gray-600 bg-gray-100 p-3 rounded-lg mt-2">
+
+      <div className="flex flex-col space-y-2 text-gray-600 bg-gray-100 p-3 rounded-lg mt-2">
         <div className="flex justify-between">
-          <span className="text-gray-700">Department</span>
-          <span className="text-gray-700">Date of Joining</span>
+          <span className="text-[9px] text-gray-700">Department</span>
+          <span className="text-[9px] text-gray-700">Date of Joining</span>
         </div>
         <div className="flex justify-between">
-          <span>{emp.department}</span>
-          <span>{formatDate(emp.date_of_join)}</span>
+          <span className="text-[10px] font-medium text-black">{emp.department}</span>
+          <span className="text-[10px] font-medium text-black">{formatDate(emp.date_of_join)}</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <Icon icon="solar:phone-linear" className="text-gray-600 w-4 h-4" />
+        <div className="flex items-center space-x-2 text-[10px] text-black">
+          <Icon icon="solar:phone-linear" className="text-black w-4 h-4" />
           <span>{emp.ph_no}</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <Icon icon="mage:email" className="text-gray-600 w-4 h-4" />
+        <div className="flex items-center space-x-2 text-[10px] text-black">
+          <Icon icon="mage:email" className="text-black w-4 h-4" />
           <span>{emp.email}</span>
         </div>
       </div>
     </div>
   );
+
+const tableColumns = [
+  {
+    key: "select",
+    label: "",
+    render: (_, row) => (
+      <input
+        type="checkbox"
+        className="h-4 w-4 rounded border-gray-300 text-blue-600"
+        checked={selectedRows.includes(row.uuid)}
+        onChange={(e) => handleSelectRow(e, row.uuid)}
+      />
+    ),
+  },
+  {
+    key: "name",
+    label: "Name",
+    render: (_, row) => {
+      const fullName = `${row.first_name || ""} ${row.last_name || ""}`.trim() || "N/A";
+      return (
+        <div
+          className="flex items-center gap-2"
+          title={fullName} // tooltip on hover
+        >
+          <img
+            src={row.image || avatar}
+            alt={row.first_name || "avatar"}
+            className="w-6 h-6 rounded-full object-cover"
+          />
+          <span className="truncate max-w-[15ch]">{fullName}</span> {/* Increased name width */}
+        </div>
+      );
+    },
+  },
+  {
+    key: "designation",
+    label: "Designation",
+    render: (_, row) => {
+      const designation = row.designation || "N/A";
+      return (
+        <div
+          className="truncate max-w-[12ch] text-center mx-auto"
+          title={designation} // full text on hover
+        >
+          {designation}
+        </div>
+      );
+    },
+  },
+  {
+    key: "date_of_join",
+    label: "Date of Joining",
+    render: (_, row) => (row.date_of_join ? formatDate(row.date_of_join) : "N/A"),
+  },
+  {
+    key: "department",
+    label: "Department",
+    render: (_, row) => {
+      const department = row.department || "N/A";
+      return (
+        <div
+          className="truncate max-w-[16ch] text-center mx-auto"
+          title={department}
+        >
+          {department}
+        </div>
+      );
+    },
+  },
+  {
+    key: "branch",
+    label: "Branch",
+    render: (_, row) => {
+      const branch = row.branch || "HeadOffice";
+      return (
+        <div
+          className="truncate max-w-[16ch] text-center mx-auto"
+          title={branch}
+        >
+          {branch}
+        </div>
+      );
+    },
+  },
+  {
+    key: "ph_no",
+    label: "Mobile",
+    render: (_, row) => row.ph_no || "N/A",
+  },
+  {
+    key: "status",
+    label: "Status",
+    render: (_, row) => (
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          row.is_active === false || row.is_active === "false"
+            ? "bg-red-100 text-red-800"
+            : "bg-green-100 text-green-800"
+        }`}
+      >
+        {row.is_active === false || row.is_active === "false" ? "Inactive" : "Active"}
+      </span>
+    ),
+  },
+  {
+    key: "actions",
+    label: "",
+    render: (_, row) => (
+      <button
+        onClick={() => navigate(`/details/${row.id}`)}
+        className="text-gray-400 hover:text-gray-600"
+      >
+        <MoreVertical size={16} />
+      </button>
+    ),
+  },
+];
+
 
   return (
     <DashboardLayout>
@@ -365,108 +482,21 @@ function ManageEmployees() {
               )}
             </div>
           ) : (
-            <div className="w-full overflow-x-auto">
-              <div className="min-w-full">
-                <div className="border-b border-gray-200 bg-gray-50">
-                  <div className="grid grid-cols-12 items-center py-3 text-sm font-medium text-gray-500">
-                    <div className="pl-4 col-span-1 flex items-center">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600"
-                        onChange={handleSelectAll}
-                        checked={
-                          selectedRows.length === filteredData.length &&
-                          filteredData.length > 0
-                        }
-                      />
-                    </div>
-                    <div className="col-span-2">Name</div>
-                    <div className="col-span-2">Designation</div>
-                    <div className="col-span-2">Date of Joining</div>
-                    <div className="col-span-1 px-2">Department</div>
-                    <div className="col-span-1 px-2 ml-4">Branch</div>
-                    <div className="col-span-1 ml-5">Mobile</div>
-                    <div className="col-span-1 ml-12">Status</div>
-                    <div className="col-span-1"></div>
-                  </div>
-                </div>
-                <div className="bg-white text-[2px]">
-                  {filteredData.map((row, index) => (
-                    <div
-                      key={row.id || index}
-                      className={`grid grid-cols-12 items-center py-3 text-sm border-b border-gray-200 hover:bg-gray-50 cursor-pointer ${
-                        selectedRows.includes(row.uuid) ? "bg-blue-50" : ""
-                      }`}
-                      onClick={() => handleRowClick(row)}
-                    >
-                      <div className="pl-4 col-span-1 flex items-center">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-gray-300 text-blue-600"
-                          checked={selectedRows.includes(row.uuid)}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => handleSelectRow(e, row.uuid)}
-                        />
-                      </div>
-                      <div className="font-medium text-gray-900 flex items-center col-span-2">
-                        {row.first_name || "N/A"} {row.last_name || "N/A"}
-                      </div>
-                      <div className="text-gray-700 col-span-2">
-                        {row.designation || "N/A"}
-                      </div>
-                      <div className="text-gray-700 col-span-2">
-                        {row.date_of_join ? formatDate(row.date_of_join) : "N/A"}
-                      </div>
-                      <div className="text-gray-700 col-span-1 px-2">
-                        {row.department || "N/A"}
-                      </div>
-                      <div className="text-gray-700 col-span-1 px-2 ml-6">
-                        {row.branch || "N/A"}
-                      </div>
-                      <div className="text-gray-700 col-span-1">
-                        {row.ph_no || "N/A"}
-                      </div>
-                      <div className="col-span-1 ml-2">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-9 ${
-                            row.is_active === false || row.is_active === "false"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-green-100 text-green-800"
-                          }`}
-                        >
-                          {row.is_active === false || row.is_active === "false"
-                            ? "Inactive"
-                            : "Active"}
-                        </span>
-                      </div>
-                      <div className="flex justify-center pr-4 col-span-1 ml-10">
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <MoreVertical size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            // ✅ UniversalTable integration for table view
+            <UniversalTable columns={tableColumns} data={filteredData} rowsPerPage={6} />
           )}
         </div>
       </div>
 
-      {/* ✅ Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-[400px] p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">
-              Confirm Delete
-            </h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Confirm Delete</h2>
             <p className="text-sm text-gray-600 mb-4">
               Are you sure you want to permanently delete
-              <span className="font-medium text-gray-900">
-                {" "}
-                {selectedRows.length} employee(s)
-              </span>
-              ? This action cannot be undone.
+              <span className="font-medium text-gray-900"> {selectedRows.length} employee(s)</span>?
+              This action cannot be undone.
             </p>
 
             <label className="block text-sm font-medium text-gray-700 mb-1">

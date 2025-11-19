@@ -8,7 +8,7 @@ function DailyAttendance() {
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [hoverName, setHoverName] = useState(null);
+  const [hoverText, setHoverText] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -78,33 +78,55 @@ function DailyAttendance() {
 
         return (
           <div
-            className="flex items-center gap-3 text-left cursor-default relative"
+            className="flex items-center gap-3 text-left cursor-default relative font-[Poppins] font-normal"
             onMouseEnter={(e) => {
               if (value.length > 7) {
                 const rect = e.target.getBoundingClientRect();
                 setTooltipPos({ x: rect.left + 10, y: rect.top - 35 });
-                setHoverName(value);
+                setHoverText(value);
               }
             }}
-            onMouseLeave={() => setHoverName(null)}
+            onMouseLeave={() => setHoverText(null)}
           >
             <img
               src={row.avatar}
               className="w-8 h-8 rounded-full object-cover border"
             />
-            <span className="font-medium text-[12px]">{shortName}</span>
+            <span className=" text-[12px]">{shortName}</span>
           </div>
         );
       },
       headerClassName: "text-left",
       cellClassName: "text-left",
     },
+    {
+      label: "Designation",
+      key: "designation",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (value) => {
+        const shortDesignation = value.length > 18 ? value.substring(0, 18) + "…" : value;
 
-    { label: "Designation", key: "designation", headerClassName: "text-right", cellClassName: "text-right" },
+        return (
+          <div
+            className="relative cursor-default"
+            onMouseEnter={(e) => {
+              if (value.length > 18) {
+                const rect = e.target.getBoundingClientRect();
+                setTooltipPos({ x: rect.left, y: rect.top - 30 });
+                setHoverText(value);
+              }
+            }}
+            onMouseLeave={() => setHoverText(null)}
+          >
+            {shortDesignation}
+          </div>
+        );
+      },
+    },
     { label: "Check in - out", key: "check", headerClassName: "text-right", cellClassName: "text-right" },
     { label: "Device", key: "device", headerClassName: "text-right", cellClassName: "text-right" },
     { label: "Working Hours", key: "workingHours", headerClassName: "text-left", cellClassName: "text-left" },
-
     {
       label: "Status",
       key: "status",
@@ -112,7 +134,7 @@ function DailyAttendance() {
       cellClassName: "text-right",
       render: (val) => (
         <span
-          className={`inline-block w-full text-center px-2 py-1 rounded-full text-[12px] font-medium ${getStatusColor(
+          className={`inline-block w-full text-center px-2 py-1 rounded-full text-[12px] font-[Poppins] font-normal ${getStatusColor(
             val
           )}`}
         >
@@ -124,9 +146,7 @@ function DailyAttendance() {
 
   return (
     <>
-      {/* 🔥 NOW EVERYTHING IS INSIDE ONE DIV 🔥 */}
-      <section className="bg-[#f9fafb] px-4  w-full max-w-[1280px] mx-auto rounded-xl font-[Poppins]">
-
+      <section className="bg-[#f9fafb] px-4 w-full max-w-[1280px] mx-auto rounded-xl font-[Poppins]">
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ">
           <h3 className="text-base font-medium text-gray-800">
@@ -134,7 +154,6 @@ function DailyAttendance() {
           </h3>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-
             {/* Search */}
             <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm mt-2 sm:mt-0 w-full sm:w-auto">
               <input
@@ -147,8 +166,13 @@ function DailyAttendance() {
               <Search className="w-4 h-4 text-gray-400" />
             </div>
 
-            {/* DATE */}
-         
+            {/* DATE PICKER */}
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="border px-3 py-2 rounded-lg text-sm mt-2 sm:mt-0"
+            />
           </div>
         </div>
 
@@ -176,8 +200,8 @@ function DailyAttendance() {
         )}
       </section>
 
-      {/* TOOLTIP (ALWAYS ON TOP) */}
-      {hoverName &&
+      {/* TOOLTIP */}
+      {hoverText &&
         createPortal(
           <div
             className="fixed px-2 py-1 bg-black text-white text-xs rounded shadow-lg z-[999999]"
@@ -186,7 +210,7 @@ function DailyAttendance() {
               left: tooltipPos.x,
             }}
           >
-            {hoverName}
+            {hoverText}
           </div>,
           document.body
         )}
