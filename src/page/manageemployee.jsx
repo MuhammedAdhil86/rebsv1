@@ -197,13 +197,13 @@ function ManageEmployees() {
         <h3 className="text-[12px] font-semibold text-gray-800">
           {emp.first_name} {emp.last_name}
         </h3>
-        <p className="text-[9px] text-gray-500">{emp.designation}</p>
+        <p className="text-[10px] text-gray-500">{emp.designation}</p>
       </div>
 
       <div className="flex flex-col space-y-2 text-gray-600 bg-gray-100 p-3 rounded-lg mt-2">
         <div className="flex justify-between">
-          <span className="text-[9px] text-gray-700">Department</span>
-          <span className="text-[9px] text-gray-700">Date of Joining</span>
+          <span className="text-[10px] text-gray-700">Department</span>
+          <span className="text-[10px] text-gray-700">Date of Joining</span>
         </div>
         <div className="flex justify-between">
           <span className="text-[10px] font-medium text-black">{emp.department}</span>

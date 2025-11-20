@@ -10,7 +10,6 @@ export default function BankInfoSection() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(null);
 
-  // Initialize formData from store
   useEffect(() => {
     if (selectedEmployee) {
       setFormData({
@@ -38,32 +37,20 @@ export default function BankInfoSection() {
   const handleSave = async () => {
     if (!formData || !selectedEmployee?.id) return;
 
-    const payload = {
-      account_holder_name: formData.account_holder_name || "",
-      ifsc: formData.ifsc || "",
-      bank_branch: formData.bank_branch || "",
-      account_number: formData.account_number || "",
-      bank_name: formData.bank_name || "",
-    };
-
     try {
       setLoading(true);
-      console.log("🔹 PUT Payload:", payload);
+      const payload = { ...formData };
 
-      const response = await axiosInstance.put(
+      await axiosInstance.put(
         `/staff/updatebankinfo/${selectedEmployee.id}`,
         payload
       );
 
-      console.log("✅ Response:", response.data);
-
-      // Update employee store
       setSelectedEmployee({ ...selectedEmployee, ...payload });
-
       toast.success("Bank information updated successfully!");
       setIsEditing(false);
     } catch (error) {
-      console.error("❌ Error updating bank info:", error);
+      console.error("Error updating bank info:", error);
       toast.error("Failed to update bank information.");
     } finally {
       setLoading(false);
@@ -74,10 +61,10 @@ export default function BankInfoSection() {
     return <p className="p-4 text-gray-500">Loading bank info...</p>;
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border w-full max-w-md mx-auto">
+    <div className="bg-white p-4 rounded-xl shadow-sm border w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-800 text-lg">
+        <h3 className="font-semibold text-gray-800 text-[14px]">
           Bank Information
         </h3>
         <div className="flex items-center gap-2">
@@ -106,21 +93,24 @@ export default function BankInfoSection() {
         {data.map((item) => (
           <div
             key={item.key}
-            className="flex justify-between border-b border-gray-100 py-2 items-center"
+            className="flex justify-between items-start border-b border-gray-100 py-2"
           >
-            <span className="text-gray-500">{item.label}</span>
-            {isEditing ? (
-              <input
-                type="text"
-                value={formData[item.key] || ""}
-                onChange={(e) => handleChange(item.key, e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1 text-gray-800 w-full max-w-[160px] focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            ) : (
-              <span className="font-medium text-gray-800 break-words max-w-[160px] text-right">
-                {formData[item.key] || "-"}
-              </span>
-            )}
+            {/* Label */}
+            <span className="text-gray-500 text-[12px]">{item.label}</span>
+
+            {/* Value or Input */}
+            <span className="font-medium text-gray-800 min-w-0 break-words text-[13px]">
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={formData[item.key] || ""}
+                  onChange={(e) => handleChange(item.key, e.target.value)}
+                  className="border border-gray-300 rounded px-2 py-1 text-gray-800 w-full max-w-[160px]"
+                />
+              ) : (
+                formData[item.key] || "-"
+              )}
+            </span>
           </div>
         ))}
       </div>

@@ -175,7 +175,7 @@ function EmployeeTable({ employees, loading }) {
                       {/* Status */}
                       <td className="px-4 py-3" style={{ width: colWidths[5] }}>
                         <span
-                          className={`px-4 py-1 w-[85px] text-center rounded-full text-[12.5px] font-poppins ${
+                          className={`px-4 py-2 w-[85px] text-center rounded-full text-[12.5px] font-poppins ${
                             emp.status === "Online"
                               ? "bg-green-100 text-green-600"
                               : emp.status === "Absent"
@@ -238,15 +238,17 @@ function EmployeeTable({ employees, loading }) {
       )}
 
       {/* Mobile View */}
-      <style jsx>{`
-        @media (max-width: 640px) {
-          table, thead, tbody, th, td, tr { display: block; }
-          thead tr { display: none; }
-          tbody tr { margin-bottom: 1rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem; }
-          tbody td { display: flex; justify-content: space-between; padding: 0.25rem 0.5rem; }
-          tbody td::before { content: attr(data-label); font-weight: 500; color: #6b7280; }
-        }
-      `}</style>
+      <style>
+        {`
+          @media (max-width: 640px) {
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { display: none; }
+            tbody tr { margin-bottom: 1rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem; }
+            tbody td { display: flex; justify-content: space-between; padding: 0.25rem 0.5rem; }
+            tbody td::before { content: attr(data-label); font-weight: 500; color: #6b7280; }
+          }
+        `}
+      </style>
     </section>
   );
 }

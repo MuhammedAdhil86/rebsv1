@@ -61,10 +61,11 @@ export default function BasicInfoSection() {
   if (!formData) return <p>Loading...</p>;
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border w-full max-w-md mx-auto">
+<div className="bg-white p-4 rounded-xl shadow-sm border w-full">
+
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-800 text-lg">Basic Information</h3>
+        <h3 className="font-semibold text-gray-800 text-[14px]">Basic Information</h3>
         <div className="flex items-center gap-2">
           {isEditing && (
             <button
@@ -90,8 +91,8 @@ export default function BasicInfoSection() {
             key={item.key}
             className="flex justify-between items-start border-b border-gray-100 py-2"
           >
-            <span className="text-gray-500">{item.label}</span>
-            <span className="font-medium text-gray-800 min-w-0 break-words">
+            <span className="text-gray-500 text-[12px]">{item.label}</span>
+            <span className="font-medium text-gray-800 min-w-0 break-words text-[13px]">
               {isEditing && item.key !== "uuid" ? (
                 <input
                   type={item.key === "basic_salary" ? "number" : "text"}

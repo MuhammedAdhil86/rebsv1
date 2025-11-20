@@ -1,33 +1,30 @@
-import React from "react";
+import React, { useState } from "react";
 import { Search, ChevronDown, ChevronUp, Download } from "lucide-react";
-import { useNavigate } from "react-router-dom"; // ✅ Import navigation hook
+import { useNavigate } from "react-router-dom";
 
 function MusterRoll() {
-  const navigate = useNavigate(); // ✅ React Router navigation
+  const navigate = useNavigate();
 
   const ATTENDANCE_DATA = [
     {
       name: "Vishnu",
       role: "UI/UX Designer",
       avatar: "https://i.pravatar.cc/30?img=1",
-      daily: [
-        { status: "On Time", workHours: "09:23:05" },
-        { status: "On Time", workHours: "09:23:05" },
-        { status: "On Time", workHours: "09:23:05" },
-        { status: "On Time", workHours: "09:23:05" },
-        { status: "On Time", workHours: "09:23:05", today: true },
-        { status: "On Time", workHours: "09:23:05" },
-        { status: "Weekly off", off: true },
-        { status: "Weekly off", off: true },
-      ],
+      daily: Array.from({ length: 31 }, (_, i) => {
+        // Example: generate a month's data
+        const statusOptions = ["On Time", "Late", "Absent", "Sick Leave"];
+        return {
+          status: statusOptions[i % statusOptions.length],
+          workHours: "09:00:00",
+        };
+      }),
     },
-    // ... other employees
+    // Add more employees as needed
   ];
 
   const getStatusClasses = (status) => {
     switch (status) {
       case "On Time":
-      case "Holt Day":
         return "bg-green-100 text-green-600";
       case "Absent":
         return "bg-red-100 text-red-600";
@@ -42,11 +39,28 @@ function MusterRoll() {
     }
   };
 
-  const VISIBLE_DAYS = 8;
-  const dayHeaders = Array.from({ length: VISIBLE_DAYS }, (_, i) => {
-    const day = i + 1;
-    return day === 5 ? `${day}(Today)` : `${day < 10 ? "0" : ""}${day}`;
-  });
+  const WEEKS = ["Week 1", "Week 2", "Week 3", "Week 4"];
+  const [selectedWeek, setSelectedWeek] = useState("Week 1");
+
+  // Calculate 8 days: today is 5th day (index 4)
+  const getWeekDays = (week) => {
+    const today = new Date();
+    const startOffset = (WEEKS.indexOf(week)) * -7; // shift by week
+    const days = [];
+    for (let i = 0; i < 8; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + startOffset + i - 4); // 5th day is today
+      days.push(d.getDate()); // just day number
+    }
+    return days;
+  };
+
+  const [weekDays, setWeekDays] = useState(getWeekDays(selectedWeek));
+
+  const handleWeekChange = (week) => {
+    setSelectedWeek(week);
+    setWeekDays(getWeekDays(week));
+  };
 
   const TableHeaderItem = ({ children }) => (
     <th className="px-4 py-3 sticky left-0 bg-white font-medium text-gray-500 text-left text-xs uppercase tracking-wider w-40 sm:w-56">
@@ -61,58 +75,42 @@ function MusterRoll() {
   );
 
   return (
-<div className="bg-[#f9fafb] rounded-lg pt-0 px-4 pb-4 w-full">
+    <div className="bg-[#f9fafb] rounded-lg pt-0 px-4 pb-4 w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-3">
-        <h2
-          className="text-base font-medium text-gray-800 font-[Poppins]"
-          style={{ fontWeight: 500 }}
-        >
+        <h2 className="text-base font-medium text-gray-800 font-[Poppins]">
           Muster Roll
         </h2>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 w-full sm:w-auto">
-          {/* Filters, Month, Year, Download, Consolidated */}
           <div className="flex flex-wrap items-center gap-1.5">
-            {/* Filter Button */}
+            {/* Week Filter */}
             <div className="relative group">
               <button className="border rounded-md px-2.5 py-1.5 text-xs flex items-center bg-white hover:bg-gray-50">
-                Filter
+                {selectedWeek}
                 <ChevronDown className="w-3.5 h-3.5 ml-1 text-gray-500" />
               </button>
               <div className="absolute mt-1 bg-white border rounded-lg shadow-lg z-50 hidden group-hover:block">
-                {["Week 1", "Week 2", "Week 3", "Week 4", "Monthly"].map(
-                  (label) => (
-                    <div
-                      key={label}
-                      className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100"
-                    >
-                      {label}
-                    </div>
-                  )
-                )}
+                {WEEKS.map((week) => (
+                  <div
+                    key={week}
+                    className="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleWeekChange(week)}
+                  >
+                    {week}
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Month & Year Selectors */}
-            <div className="border rounded-md px-2.5 py-1.5 text-xs flex items-center bg-white hover:bg-gray-50 cursor-pointer">
-              September
-              <ChevronDown className="w-3.5 h-3.5 ml-1 text-gray-500" />
-            </div>
-
-            <div className="border rounded-md px-2.5 py-1.5 text-xs flex items-center bg-white hover:bg-gray-50 cursor-pointer">
-              2025
-              <ChevronDown className="w-3.5 h-3.5 ml-1 text-gray-500" />
-            </div>
-
-            {/* ✅ Download Button */}
+            {/* Download Button */}
             <button className="bg-black text-white px-3 py-1.5 rounded-md text-xs flex items-center font-medium hover:bg-gray-800">
               <Download className="w-4 h-4 mr-1" /> Download
             </button>
 
-            {/* ✅ Consolidated Data Button */}
+            {/* Consolidated Data Button */}
             <button
-              onClick={() => navigate("/consoildate")} // ✅ Navigation on click
+              onClick={() => navigate("/consoildate")}
               className="border border-gray-300 bg-black text-white px-3 py-1.5 rounded-md text-xs flex items-center font-medium hover:bg-gray-950"
             >
               Consolidated Data
@@ -137,16 +135,14 @@ function MusterRoll() {
           <thead className="bg-white text-gray-500 text-left text-xs uppercase">
             <tr>
               <TableHeaderItem>Name</TableHeaderItem>
-              {dayHeaders.map((day, idx) => (
+              {weekDays.map((day, idx) => (
                 <th
                   key={idx}
                   className={`px-3 py-3 text-center text-xs font-medium uppercase tracking-wider ${
-                    day.includes("(Today)")
-                      ? "text-black font-bold"
-                      : "text-gray-500"
+                    idx === 4 ? "text-black font-bold" : "text-gray-500"
                   }`}
                 >
-                  {day}
+                  {day === weekDays[4] ? `${day}(Today)` : day}
                 </th>
               ))}
             </tr>
@@ -166,21 +162,24 @@ function MusterRoll() {
                   </div>
                 </td>
 
-                {employee.daily.map((dayData, dayIdx) => (
-                  <td
-                    key={dayIdx}
-                    className={`text-center text-sm border-r border-gray-100 last:border-r-0 ${
-                      dayData.today ? "bg-gray-100" : ""
-                    } ${dayData.off ? "bg-gray-50" : "bg-white"}`}
-                  >
-                    {dayData.off ? (
-                      <div className="text-gray-400 text-xs py-10">
-                        Weekly off
-                      </div>
-                    ) : (
+                {weekDays.map((day, idx) => {
+                  const attendanceIndex =
+                    new Date().getDate() - 4 + idx + WEEKS.indexOf(selectedWeek) * -7;
+                  const dayData = employee.daily[attendanceIndex] || {
+                    status: "N/A",
+                    workHours: "0",
+                  };
+
+                  return (
+                    <td
+                      key={idx}
+                      className={`text-center text-sm border-r border-gray-100 last:border-r-0 ${
+                        idx === 4 ? "bg-gray-100" : "bg-white"
+                      }`}
+                    >
                       <div
                         className={`flex flex-col items-center justify-center py-2 ${
-                          dayData.today ? "space-y-1.5" : "space-y-1"
+                          idx === 4 ? "space-y-1.5" : "space-y-1"
                         }`}
                       >
                         <span
@@ -190,16 +189,14 @@ function MusterRoll() {
                         >
                           {dayData.status.toUpperCase()}
                         </span>
-                        <span className="text-xs text-gray-700">
-                          Work hours
-                        </span>
+                        <span className="text-xs text-gray-700">Work hours</span>
                         <span className="text-xs font-medium text-gray-900">
                           {dayData.workHours}
                         </span>
                       </div>
-                    )}
-                  </td>
-                ))}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

@@ -23,9 +23,7 @@ export default function HierarchyInfoSection() {
       }
     };
 
-    if (isEditing) {
-      fetchManagers();
-    }
+    if (isEditing) fetchManagers();
   }, [isEditing]);
 
   if (!selectedEmployee) {
@@ -62,16 +60,12 @@ export default function HierarchyInfoSection() {
     }
   };
 
-  const data = [
-    { label: "Reporting Manager", key: "reporting_manager" },
-    { label: "Reporting Manager ID", key: "reporting_manager_id" },
-  ];
-
   return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border w-full max-w-md mx-auto">
+    <div className="bg-white p-4 rounded-xl shadow-sm border w-full">
       <Toaster />
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-gray-800">Hierarchy Information</h3>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-gray-800 text-[14px]">Hierarchy Information</h3>
         <div className="flex items-center gap-2">
           {isEditing && (
             <button
@@ -89,20 +83,21 @@ export default function HierarchyInfoSection() {
         </div>
       </div>
 
-      <div className="text-sm space-y-1">
+      {/* Fields */}
+      <div className="space-y-2">
         {/* Reporting Manager */}
-        <div className="flex justify-between border-b border-gray-100 py-1">
-          <span className="text-gray-500">Reporting Manager</span>
-          <span className="font-medium text-gray-800">
+        <div className="flex justify-between items-center border-b border-gray-100 py-2">
+          <span className="text-gray-500 text-[12px]">Reporting Manager</span>
+          <span className="text-gray-800 text-[13px] flex-1 min-w-0 text-right">
             {isEditing ? (
               <select
                 value={formData.reporting_manager_id}
                 onChange={(e) => {
-                  const manager = reportingManagers.find((m) => m.id === e.target.value);
+                  const manager = reportingManagers.find((m) => String(m.id) === e.target.value);
                   handleChange("reporting_manager_id", e.target.value);
                   handleChange("reporting_manager", manager?.name || "");
                 }}
-                className="border border-gray-300 rounded px-1 py-0.5 text-gray-800"
+                className="border border-gray-300 rounded px-2 py-1 text-gray-800 text-[13px] w-full flex-1 min-w-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value="">Select Manager</option>
                 {reportingManagers.map((m) => (
@@ -118,9 +113,9 @@ export default function HierarchyInfoSection() {
         </div>
 
         {/* Reporting Manager ID */}
-        <div className="flex justify-between border-b border-gray-100 py-1">
-          <span className="text-gray-500">Reporting Manager ID</span>
-          <span className="font-medium text-gray-800">
+        <div className="flex justify-between items-center border-b border-gray-100 py-2">
+          <span className="text-gray-500 text-[12px]">Reporting Manager ID</span>
+          <span className="text-gray-800 text-[13px] flex-1 min-w-0 text-right">
             {formData.reporting_manager_id || "-"}
           </span>
         </div>

@@ -134,7 +134,7 @@ function DailyAttendance() {
       cellClassName: "text-right",
       render: (val) => (
         <span
-          className={`inline-block w-full text-center px-2 py-1 rounded-full text-[12px] font-[Poppins] font-normal ${getStatusColor(
+          className={`inline-block w-full text-center px-3 py-1.5 rounded-full text-[12px] font-[Poppins] font-normal ${getStatusColor(
             val
           )}`}
         >

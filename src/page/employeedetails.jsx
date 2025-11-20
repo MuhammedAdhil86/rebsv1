@@ -25,17 +25,13 @@ export default function EmployeeProfile() {
 
   const { selectedEmployee, fetchEmployeeById } = useEmployeeStore();
 
-  // Fetch employee data
+  // Fetch employee data on mount
   useEffect(() => {
     if (id) fetchEmployeeById(id).catch((err) => console.error(err));
   }, [id, fetchEmployeeById]);
 
-  if (!selectedEmployee)
-    return <p className="p-6 text-gray-600">Loading employee...</p>;
-
   const isActive =
-    selectedEmployee.is_active === true ||
-    selectedEmployee.is_active === "true";
+    selectedEmployee?.is_active === true || selectedEmployee?.is_active === "true";
 
   // Toggle activation/deactivation
   const toggleStatus = async () => {
@@ -86,7 +82,7 @@ export default function EmployeeProfile() {
     }
   };
 
-  // Sidebar Tabs — all now point to "/shift"
+  // Sidebar Tabs
   const sidebarTabs = [
     { name: "Personal Info", icon: "proicons:person" },
     { name: "Activities", icon: "solar:graph-outline" },
@@ -97,7 +93,7 @@ export default function EmployeeProfile() {
   ];
 
   return (
-    <DashboardLayout userName={selectedEmployee.first_name}>
+    <DashboardLayout userName={selectedEmployee?.first_name || "Employee"}>
       <Toaster position="top-right" reverseOrder={false} />
 
       <div className="bg-[#f9fafb] min-h-screen">
@@ -118,7 +114,7 @@ export default function EmployeeProfile() {
               <Bell size={20} className="text-gray-600" />
             </button>
             <img
-              src={selectedEmployee.profile_image || avatar}
+              src={selectedEmployee?.profile_image || avatar}
               alt="User Avatar"
               className="w-8 h-8 rounded-full border object-cover"
             />
@@ -131,9 +127,7 @@ export default function EmployeeProfile() {
           <aside className="sticky top-4 self-start h-fit w-60 bg-white border rounded-2xl p-6 flex flex-col items-center shadow-sm relative">
             <span
               className={`absolute top-2 right-2 px-2 py-1 text-xs rounded flex items-center gap-1 ${
-                isActive
-                  ? "bg-green-100 text-green-600"
-                  : "bg-red-100 text-red-500"
+                isActive ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
               }`}
             >
               <span
@@ -147,28 +141,25 @@ export default function EmployeeProfile() {
             {/* Avatar */}
             <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border mt-4">
               <img
-                src={selectedEmployee.image || avatar}
+                src={selectedEmployee?.image || avatar}
                 alt="Employee Avatar"
                 className="w-full h-full object-cover"
               />
             </div>
 
             <h2 className="text-sm font-semibold text-gray-800 text-center">
-              {selectedEmployee.first_name} {selectedEmployee.last_name}
+              {selectedEmployee?.first_name} {selectedEmployee?.last_name}
             </h2>
-            <p className="text-sm text-gray-500 mb-6">
-              {selectedEmployee.email}
+            <p className="text-[14px] text-gray-500 mb-6">
+              {selectedEmployee?.email || "-"}
             </p>
 
             {/* Tabs */}
-            <div className="w-full mt-6 space-y-2">
+            <div className="w-full mt-6 space-y-2 text-[14px]">
               {sidebarTabs.map((tab) => (
                 <button
                   key={tab.name}
-                  onClick={() => {
-                    navigate("/shift"); // ✅ all tabs now go to /shift
-                    setActiveTab(tab.name);
-                  }}
+                  onClick={() => setActiveTab(tab.name)}
                   className={`flex items-center gap-2 w-full text-left px-4 py-2 rounded-md transition-colors ${
                     activeTab === tab.name
                       ? "bg-[#181818] text-white"
@@ -198,8 +189,8 @@ export default function EmployeeProfile() {
             </div>
           </aside>
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-y-auto max-h-[85vh] pr-2">
+          {/* Main Content with per-component loading */}
+          <main className="flex-1 overflow-y-auto max-h-[85vh] pr-2 scrollbar-none">
             {activeTab === "Status Update" ? (
               <div className="p-6 bg-white rounded-xl shadow-md flex flex-col items-start gap-4">
                 <h2 className="text-lg font-semibold">Update Status</h2>
@@ -226,22 +217,7 @@ export default function EmployeeProfile() {
             ) : activeTab === "Personal Info" ? (
               <PersonalInfoTab employee={selectedEmployee} />
             ) : activeTab === "Attachments" ? (
-              <AttachmentsTab
-                attachments={[
-                  {
-                    name: "Resume 2024.pdf",
-                    category: "Uploaded Resume",
-                    addedOn: "2025-05-13",
-                    url: "/files/resume2024.pdf",
-                  },
-                  {
-                    name: "Resume 2024.pdf",
-                    category: "Uploaded Resume",
-                    addedOn: "2025-05-13",
-                    url: "/files/resume2024-copy.pdf",
-                  },
-                ]}
-              />
+              <AttachmentsTab employee={selectedEmployee} />
             ) : (
               <div className="p-6 bg-white rounded-xl shadow-md text-gray-500">
                 {activeTab} content coming soon...

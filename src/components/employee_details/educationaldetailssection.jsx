@@ -5,41 +5,60 @@ const EducationalDetailsSection = ({ employee }) => {
   const educationData = employee?.education_details || [];
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-gray-800">Educational Details</h3>
+    <div className="bg-white p-4 rounded-xl shadow-sm border w-full">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-gray-800 text-[14px]">Educational Details</h3>
         <Icon
           icon="basil:edit-outline"
           className="w-5 h-5 text-gray-400 cursor-pointer"
         />
       </div>
 
-      <div className="space-y-6">
+      {/* Education Records */}
+      <div className="space-y-4">
         {educationData.length === 0 ? (
-          <div className="text-gray-500 text-sm">No educational details available</div>
+          <div className="text-gray-500 text-[13px]">No educational details available</div>
         ) : (
           educationData.map((edu, index) => (
-            <div key={index} className="bg-white rounded-lg">
+            <div key={index} className="bg-white rounded-lg border p-2">
+              {/* Education Header if multiple entries */}
               {educationData.length > 1 && (
-                <div className="text-sm font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
+                <div className="text-[14px] font-semibold text-gray-800 mb-2 border-b border-gray-200 pb-1">
                   Education {index + 1}
                 </div>
               )}
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="text-[13px] font-medium text-gray-700">Institution</span>
-                <span className="text-[13px] text-gray-900 font-medium">{edu.institution_name}</span>
+
+              {/* Institution */}
+              <div className="flex justify-between items-center border-b border-gray-100 py-2">
+                <span className="text-gray-500 text-[12px]">Institution</span>
+                <span className="text-gray-800 text-[13px] flex-1 min-w-0 text-right">
+                  {edu.institution_name || "-"}
+                </span>
               </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="text-[13px] font-medium text-gray-700">Degree/Diploma</span>
-                <span className="text-[13px] text-gray-900 font-medium">{edu.degree}</span>
+
+              {/* Degree/Diploma */}
+              <div className="flex justify-between items-center border-b border-gray-100 py-2">
+                <span className="text-gray-500 text-[12px]">Degree/Diploma</span>
+                <span className="text-gray-800 text-[13px] flex-1 min-w-0 text-right">
+                  {edu.degree || "-"}
+                </span>
               </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="text-[13px] font-medium text-gray-700">Specialization</span>
-                <span className="text-[13px] text-gray-900 font-medium">{edu.specialisation}</span>
+
+              {/* Specialization */}
+              <div className="flex justify-between items-center border-b border-gray-100 py-2">
+                <span className="text-gray-500 text-[12px]">Specialization</span>
+                <span className="text-gray-800 text-[13px] flex-1 min-w-0 text-right">
+                  {edu.specialisation || "-"}
+                </span>
               </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="text-[13px] font-medium text-gray-700">Date of Completion</span>
-                <span className="text-[13px] text-gray-900 font-medium">{edu.date_of_completion}</span>
+
+              {/* Date of Completion */}
+              <div className="flex justify-between items-center py-2">
+                <span className="text-gray-500 text-[12px]">Date of Completion</span>
+                <span className="text-gray-800 text-[13px] flex-1 min-w-0 text-right">
+                  {edu.date_of_completion || "-"}
+                </span>
               </div>
             </div>
           ))

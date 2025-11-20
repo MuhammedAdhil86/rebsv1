@@ -1,14 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-  
 
-
+/* Base reset */
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
   background-color: black;
   overflow-x: hidden;
-  
+  overflow-y: hidden; /* hides vertical scrollbar */
+}
+
+/* Optional: hide scrollbars for specific elements */
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }

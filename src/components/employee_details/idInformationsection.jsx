@@ -10,7 +10,7 @@ export default function IdInformationSection() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(null);
 
-  // ✅ Initialize form data
+  // Initialize form data
   useEffect(() => {
     if (selectedEmployee) {
       setFormData({
@@ -21,12 +21,12 @@ export default function IdInformationSection() {
     }
   }, [selectedEmployee]);
 
-  // ✅ Handle input changes
+  // Handle input changes
   const handleChange = useCallback((key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  // ✅ Save handler (PUT request)
+  // Save handler (PUT request)
   const handleSave = useCallback(async () => {
     if (!formData || !selectedEmployee?.id) return;
 
@@ -38,12 +38,10 @@ export default function IdInformationSection() {
 
     try {
       setLoading(true);
-      const res = await axiosInstance.put(
+      await axiosInstance.put(
         `/staff/updateidinfo/${selectedEmployee.id}`,
         payload
       );
-
-      console.log("✅ ID info updated:", res.data);
 
       // Update local store
       setSelectedEmployee({ ...selectedEmployee, ...payload });
@@ -61,7 +59,7 @@ export default function IdInformationSection() {
   if (!formData)
     return <p className="p-4 text-gray-500">Loading ID information...</p>;
 
-  // ✅ Reusable field list
+  // Field configuration
   const idFields = [
     { label: "UAN", key: "uan" },
     { label: "PAN", key: "pan" },
@@ -69,10 +67,10 @@ export default function IdInformationSection() {
   ];
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border w-full max-w-md mx-auto">
-      {/* 🔹 Header */}
+    <div className="bg-white p-4 rounded-xl shadow-sm border w-full">
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-800 text-lg">ID Information</h3>
+        <h3 className="font-semibold text-gray-800 text-[14px]">ID Information</h3>
         <div className="flex items-center gap-2">
           {isEditing && (
             <button
@@ -94,8 +92,8 @@ export default function IdInformationSection() {
         </div>
       </div>
 
-      {/* 🔹 Field Rows */}
-      <div className="text-sm space-y-2">
+      {/* Field Rows */}
+      <div className="space-y-2">
         {idFields.map((field) => {
           const value = formData[field.key];
           const displayValue =
@@ -106,18 +104,23 @@ export default function IdInformationSection() {
           return (
             <div
               key={field.key}
-              className="flex justify-between border-b border-gray-100 py-2 items-center"
+              className="flex justify-between items-center border-b border-gray-100 py-2"
             >
-              <span className="text-gray-500">{field.label}</span>
+              {/* Label */}
+              <span className="text-gray-500 text-[12px]">{field.label}</span>
+
+              {/* Value or input */}
               {isEditing ? (
                 <input
                   type="text"
                   value={formData[field.key] || ""}
                   onChange={(e) => handleChange(field.key, e.target.value)}
-                  className="border border-gray-300 rounded px-2 py-1 text-gray-800 w-full max-w-[160px] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="border border-gray-300 rounded px-2 py-1 text-gray-800 text-[13px] flex-1 min-w-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               ) : (
-                <span className="text-gray-800">{displayValue}</span>
+                <span className="text-gray-800 text-[13px] break-words flex-1 min-w-0 text-right">
+                  {displayValue}
+                </span>
               )}
             </div>
           );
