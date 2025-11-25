@@ -4,7 +4,6 @@ import { ArrowLeft, Bell, X } from "lucide-react";
 import { Icon } from "@iconify/react";
 import DashboardLayout from "../ui/pagelayout";
 import avatar from "../assets/img/avatar.svg";
-import { deleteEmployee } from "../service/employeeService";
 import toast, { Toaster } from "react-hot-toast";
 
 // Zustand store
@@ -13,6 +12,9 @@ import useEmployeeStore from "../store/employeeStore";
 // Tab components
 import PersonalInfoTab from "../components/profiledetailstabs/personal_info_tab.jsx";
 import AttachmentsTab from "../components/profiledetailstabs/attachment_tab.jsx";
+
+// Axios instance
+import axiosInstance from "../service/axiosinstance.js";
 
 export default function EmployeeProfile() {
   const { id } = useParams();
@@ -31,40 +33,35 @@ export default function EmployeeProfile() {
   }, [id, fetchEmployeeById]);
 
   const isActive =
-    selectedEmployee?.is_active === true || selectedEmployee?.is_active === "true";
+    selectedEmployee?.is_active === true ||
+    selectedEmployee?.is_active === "true";
 
   // Toggle activation/deactivation
   const toggleStatus = async () => {
+    if (!selectedEmployee?.uuid) return;
+
     try {
       setStatusUpdating(true);
-      const token = localStorage.getItem("authToken");
       const newStatus = !isActive;
 
-      const response = await fetch(
-        `${API_BASE_URL}/staff/toggle-activate/${selectedEmployee.uuid}?activate=${newStatus}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      await axiosInstance.put(
+        `/staff/toggle-activate/${selectedEmployee.uuid}?activate=${newStatus}`
       );
-
-      if (!response.ok) throw new Error("Failed to update status");
 
       toast.success(
         `Employee ${newStatus ? "activated" : "deactivated"} successfully!`
       );
+
       await fetchEmployeeById(selectedEmployee.id);
     } catch (err) {
-      toast.error(`Status update failed: ${err.message}`);
+      toast.error(`Status update failed`);
+      console.error(err);
     } finally {
       setStatusUpdating(false);
     }
   };
 
-  // Delete Employee
+  // Delete Employee (NEW LOGIC)
   const handleDelete = async () => {
     if (!deleteReason.trim()) {
       toast.error("Please provide a reason for deletion");
@@ -72,17 +69,23 @@ export default function EmployeeProfile() {
     }
 
     try {
-      await deleteEmployee(selectedEmployee.id, deleteReason);
-      toast.success("Employee deleted successfully", { duration: 3000 });
+      // EXACT working API: DELETE /staff/delete/:uuid with body
+      await axiosInstance.delete(`/staff/delete/${selectedEmployee.uuid}`, {
+        data: { reason: deleteReason },
+        headers: { "Content-Type": "application/json" },
+      });
+
+      toast.success("Employee deleted successfully!", { duration: 3000 });
+
       setShowDeleteModal(false);
+
       setTimeout(() => navigate("/manageemployee"), 3000);
     } catch (err) {
       toast.error("Failed to delete employee");
-      console.error(err);
+      console.error("DELETE ERROR:", err);
     }
   };
 
-  // Sidebar Tabs
   const sidebarTabs = [
     { name: "Personal Info", icon: "proicons:person" },
     { name: "Activities", icon: "solar:graph-outline" },
@@ -127,7 +130,9 @@ export default function EmployeeProfile() {
           <aside className="sticky top-4 self-start h-fit w-60 bg-white border rounded-2xl p-6 flex flex-col items-center shadow-sm relative">
             <span
               className={`absolute top-2 right-2 px-2 py-1 text-xs rounded flex items-center gap-1 ${
-                isActive ? "bg-green-100 text-green-600" : "bg-red-100 text-red-500"
+                isActive
+                  ? "bg-green-100 text-green-600"
+                  : "bg-red-100 text-red-500"
               }`}
             >
               <span
@@ -189,16 +194,14 @@ export default function EmployeeProfile() {
             </div>
           </aside>
 
-          {/* Main Content with per-component loading */}
+          {/* Main Content */}
           <main className="flex-1 overflow-y-auto max-h-[85vh] pr-2 scrollbar-none">
-            {activeTab === "Status Update" ? (
+            {activeTab === "Activities" ? (
               <div className="p-6 bg-white rounded-xl shadow-md flex flex-col items-start gap-4">
                 <h2 className="text-lg font-semibold">Update Status</h2>
                 <p>
                   Current Status:{" "}
-                  <span
-                    className={isActive ? "text-green-600" : "text-red-600"}
-                  >
+                  <span className={isActive ? "text-green-600" : "text-red-600"}>
                     {isActive ? "Active" : "Deactivated"}
                   </span>
                 </p>
@@ -211,7 +214,11 @@ export default function EmployeeProfile() {
                       : "bg-green-600 hover:bg-green-700"
                   }`}
                 >
-                  {isActive ? "Deactivate" : "Activate"}
+                  {statusUpdating
+                    ? "Updating..."
+                    : isActive
+                    ? "Deactivate"
+                    : "Activate"}
                 </button>
               </div>
             ) : activeTab === "Personal Info" ? (

@@ -77,27 +77,50 @@ const useLeaveStore = create((set, get) => ({
   // -------------------------------
   // APPROVE / REJECT LEAVE
   // -------------------------------
-  updateLeaveStatus: async (leaveId, status, remarks) => {
+  updateLeaveStatus: async ({
+    leaveRefNo,
+    status,
+    remarks,
+    role = "admin",
+    lop = false,
+    dates = [],
+  }) => {
     try {
       const localUser = JSON.parse(localStorage.getItem("user"));
       const updated_by = localUser?.id || "2";
 
-      await axiosInstance.put(`/admin/leave/change-status/${leaveId}`, {
-        status,
-        updated_by,
-        remarks,
-      });
+      // Use new endpoints
+      const endpoint =
+        role === "manager"
+          ? `/manager/leave/change-status/${leaveRefNo}`
+          : `/admin/leave/change-status/${leaveRefNo}`;
 
-      // Update leave in state
+      // Prepare payload
+      const payload =
+        role === "admin"
+          ? { status, remarks, lop, dates, updated_by }
+          : { status, remarks, updated_by };
+
+      // Send PUT request
+      await axiosInstance.put(endpoint, payload);
+
+      // Update state
       set((state) => ({
         ...state,
         leaves: state.leaves.map((l) =>
-          l.leave_ref_no === leaveId ? { ...l, status, remarks } : l
+          l.leave_ref_no === leaveRefNo
+            ? {
+                ...l,
+                status,
+                remarks,
+                ...(role === "admin" ? { lop, dates } : {}),
+              }
+            : l
         ),
       }));
     } catch (error) {
       console.error("Error updating leave status:", error);
-      throw error; // propagate to UI
+      throw error;
     }
   },
 

@@ -30,7 +30,7 @@ export default function ManageEmployeeShifts() {
           <div className="bg-white shadow-sm w-full rounded-lg">
             {/* Header */}
             <div className="flex justify-between items-center px-5 py-3 border-b border-gray-200">
-              <h1 className="text-[15px] font-semibold text-gray-800">
+              <h1 className="text-[15px] font-medium text-gray-800">
                 Manage Employee Shift
               </h1>
               <div className="flex items-center gap-3">
@@ -47,7 +47,7 @@ export default function ManageEmployeeShifts() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-5 border-b border-gray-200 px-5 py-2">
+            <div className="flex gap-5   border-b border-gray-200 px-5 py-2">
               <TabButton
                 title="Shift Overview"
                 isActive={activeTab === "overview"}

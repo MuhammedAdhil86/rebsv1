@@ -140,15 +140,6 @@ const LogDetails = () => {
   const getStatusColor = (status) =>
     status === "IN" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600";
 
-  const MarqueeCell = ({ text, children }) => (
-    <div className="relative w-[140px] overflow-hidden">
-      <div className="absolute top-0 left-0 whitespace-nowrap hover:animate-marquee">
-        {text}
-      </div>
-      {children}
-    </div>
-  );
-
   const columns = [
     {
       label: "Name",
@@ -278,7 +269,7 @@ const LogDetails = () => {
       )}
 
       {/* Add marquee animation */}
-      <style jsx>{`
+      <style>{`
         @keyframes marquee {
           0% { transform: translateX(0%); }
           100% { transform: translateX(-100%); }

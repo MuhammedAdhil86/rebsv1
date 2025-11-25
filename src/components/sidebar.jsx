@@ -34,7 +34,12 @@ function SideBar({ isCollapsed, toggleSidebar }) {
     reports: <Icon icon="iconoir:reports" width="20" />,
     asset: <Icon icon="fluent:web-asset-16-regular" width="20" />,
     manageEmployees: <Icon icon="clarity:employee-group-line" width="20" />,
-    workfromhome: <Icon icon="material-symbols-light:home-work-outline-rounded" width="20" />,
+    workfromhome: (
+      <Icon
+        icon="material-symbols-light:home-work-outline-rounded"
+        width="20"
+      />
+    ),
     organisationonboard: <Icon icon="octicon:organization-24" width="20" />,
     employeeOnboard: <Icon icon="clarity:employee-line" width="20" />,
     Hiring: <Icon icon="hugeicons:job-link" width="20" />,
@@ -47,28 +52,69 @@ function SideBar({ isCollapsed, toggleSidebar }) {
       section: "HUMAN RESOURCES",
       items: [
         { title: "Attendance", path: `/dashboard`, icon: icons.hr },
-        { title: "Muster Roll", path: userId ? `/u/${userId}/${userNameSlug}/musteroll` : "#", icon: icons.muster },
-        { title: "Events", path: userId ? `/u/${userId}/${userNameSlug}/events` : "#", icon: icons.events },
-        { title: "Payroll", path: userId ? `/u/${userId}/${userNameSlug}/payroll` : "#", icon: icons.payroll },
+        {
+          title: "Muster Roll",
+          path: userId ? `/u/${userId}/${userNameSlug}/musteroll` : "#",
+          icon: icons.muster,
+        },
+        {
+          title: "Events",
+          path: userId ? `/u/${userId}/${userNameSlug}/events` : "#",
+          icon: icons.events,
+        },
+        {
+          title: "Payroll",
+          path: userId ? `/u/${userId}/${userNameSlug}/payroll` : "#",
+          icon: icons.payroll,
+        },
         { title: "Manage Shift", path: `/shift`, icon: icons.manageShift },
-        { title: "Reports", path: userId ? `/u/${userId}/${userNameSlug}/reports` : "#", icon: icons.reports },
-        { title: "Asset Manager", path: userId ? `/u/${userId}/${userNameSlug}/assetmanager` : "#", icon: icons.asset },
-        { title: "Manage Employees", path: `/manageemployee`, icon: icons.manageEmployees },
-        { title: "Work From Home", path: userId ? `/u/${userId}/${userNameSlug}/workfromhome` : "#", icon: icons.workfromhome },
+        { title: "Reports", path: "/reports", icon: icons.reports },
+
+        {
+          title: "Asset Manager",
+          path: userId ? `/u/${userId}/${userNameSlug}/assetmanager` : "#",
+          icon: icons.asset,
+        },
+        {
+          title: "Manage Employees",
+          path: `/manageemployee`,
+          icon: icons.manageEmployees,
+        },
+        {
+          title: "Work From Home",
+          path: userId ? `/u/${userId}/${userNameSlug}/workfromhome` : "#",
+          icon: icons.workfromhome,
+        },
       ],
     },
     {
       section: "ONBOARDING",
       items: [
-        { title: "Organization", path: "/onboarding", icon: icons.organisationonboard },
-        { title: "Employee", path: `/employeeonboarding`, icon: icons.employeeOnboard },
+        {
+          title: "Organization",
+          path: "/onboarding",
+          icon: icons.organisationonboard,
+        },
+        {
+          title: "Employee",
+          path: `/employeeonboarding`,
+          icon: icons.employeeOnboard,
+        },
       ],
     },
     {
       section: "HIRING PROCESS",
       items: [
-        { title: "Job Creation", path: userId ? `/u/${userId}/${userNameSlug}/jobcreation` : "#", icon: icons.Hiring },
-        { title: "Interview Process", path: userId ? `/u/${userId}/${userNameSlug}/interviewprocess` : "#", icon: icons.interview },
+        {
+          title: "Job Creation",
+          path: userId ? `/u/${userId}/${userNameSlug}/jobcreation` : "#",
+          icon: icons.Hiring,
+        },
+        {
+          title: "Interview Process",
+          path: userId ? `/u/${userId}/${userNameSlug}/interviewprocess` : "#",
+          icon: icons.interview,
+        },
       ],
     },
   ];
@@ -132,7 +178,11 @@ function SideBar({ isCollapsed, toggleSidebar }) {
               ${!isCollapsed && (isProfileOpen ? "bg-gray-600" : "bg-gray-800 hover:bg-gray-600")}`}
           >
             {/* Avatar always visible */}
-            <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full" />
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="w-8 h-8 rounded-full"
+            />
             {!isCollapsed && (
               <div className="flex-1 text-left ml-3">
                 <span className="block text-sm">{displayName}</span>
@@ -163,7 +213,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
               </Link>
 
               <button
-                onClick={() => alert('Logout logic here')}
+                onClick={() => alert("Logout logic here")}
                 className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
               >
                 <Icon icon="material-symbols:logout" width="20" height="20" />
@@ -176,33 +226,32 @@ function SideBar({ isCollapsed, toggleSidebar }) {
         {/* Sidebar Menu — scrollable with hidden scrollbar */}
         <nav className="flex-1 flex flex-col justify-start mt-7 overflow-y-auto scrollbar-hide">
           {menuItems.map((menu, index) => (
-         <div key={index} className="px-4 mb-2 space-y-2">
-  {!isCollapsed && (
-    <p className="text-gray-400 text-xs mb-1 px-2 tracking-wider">
-      {menu.section}
-    </p>
-  )}
-  {menu.items.map((item, idx) => (
-    <NavLink
-      key={idx}
-      to={item.path}
-      className={({ isActive }) =>
-        `h-[40px] flex items-center space-x-3 px-3 rounded-lg transition-all duration-200 text-sm ${
-          isActive
-            ? "bg-[#1C2526] text-white font-light"
-            : "text-neutral-600 hover:text-white hover:bg-gray-800"
-        }`
-      }
-      style={{ width: isCollapsed ? "6%" : "90%" }}
-    >
-      <span className="flex-shrink-0">{item.icon}</span>
-      {!isCollapsed && (
-        <span className="flex-1 text-left">{item.title}</span>
-      )}
-    </NavLink>
-  ))}
-</div>
-
+            <div key={index} className="px-4 mb-2 space-y-2">
+              {!isCollapsed && (
+                <p className="text-gray-400 text-xs mb-1 px-2 tracking-wider">
+                  {menu.section}
+                </p>
+              )}
+              {menu.items.map((item, idx) => (
+                <NavLink
+                  key={idx}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `h-[40px] flex items-center space-x-3 px-3 rounded-lg transition-all duration-200 text-sm ${
+                      isActive
+                        ? "bg-[#1C2526] text-white font-light"
+                        : "text-neutral-600 hover:text-white hover:bg-gray-800"
+                    }`
+                  }
+                  style={{ width: isCollapsed ? "6%" : "90%" }}
+                >
+                  <span className="flex-shrink-0">{item.icon}</span>
+                  {!isCollapsed && (
+                    <span className="flex-1 text-left">{item.title}</span>
+                  )}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
 

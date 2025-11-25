@@ -126,16 +126,24 @@ function EmployeeTable({ employees, loading }) {
                         }}
                         onMouseLeave={() => setHoverText(null)}
                       >
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={`https://i.pravatar.cc/40?img=${startIdx + idx + 1}`}
-                            alt={emp.name}
-                            className="w-7 h-7 rounded-full"
-                          />
-                          <span className="block truncate max-w-[120px]" ref={(el) => (emp._nameRef = el)}>
-                            {emp.name}
-                          </span>
-                        </div>
+                     <div className="flex items-center gap-2">
+  <img
+    src={emp.image || `https://i.pravatar.cc/40?img=${startIdx + idx + 1}`} // use API image or fallback
+    alt={emp.name}
+    className="w-7 h-7 rounded-full"
+    onError={(e) => {
+      e.target.onerror = null; // prevents infinite loop if fallback fails
+      e.target.src = `https://i.pravatar.cc/40?img=${startIdx + idx + 1}`; // fallback image
+    }}
+  />
+  <span
+    className="block truncate max-w-[120px]"
+    ref={(el) => (emp._nameRef = el)}
+  >
+    {emp.name}
+  </span>
+</div>
+
                       </td>
 
                       {/* Designation */}

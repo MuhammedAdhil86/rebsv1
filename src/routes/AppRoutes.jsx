@@ -19,6 +19,7 @@ import EmployeeOnboarding from "../page/exployeeonbording";
 import ConsolidatedData from "../components/tables/consoildate";
 import ManageEmployeeShifts from "../page/manageemployeeshift";
 import OrganizationOnboarding from "../page/organizationonboarding";
+import Reports from "../page/resports";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ element: Element }) => {
@@ -52,6 +53,7 @@ function AppRoutes() {
 <Route path="/consoildate" element={<ProtectedRoute element={ConsolidatedData} />} />
 <Route path="/shift" element={<ProtectedRoute element={ManageEmployeeShifts} />} />
 <Route path="/onboarding" element={<ProtectedRoute element={OrganizationOnboarding} />} />
+<Route path="/reports" element={<ProtectedRoute element={Reports} />} />
 
       {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
 

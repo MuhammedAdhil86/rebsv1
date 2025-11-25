@@ -41,6 +41,7 @@ const LeaveRequestApprove = ({ user, onClose }) => {
   const [note, setNote] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [selectedDates, setSelectedDates] = useState([]);
 
   useEffect(() => {
     try {
@@ -73,10 +74,29 @@ const LeaveRequestApprove = ({ user, onClose }) => {
     return leave && (leave.half_day === "true" || leave.half_day === true);
   };
 
+  const toggleDateSelection = (date) => {
+    const dateStr = dayjs(date).format("YYYY-MM-DD");
+    if (selectedDates.includes(dateStr)) {
+      setSelectedDates(selectedDates.filter((d) => d !== dateStr));
+    } else {
+      setSelectedDates([...selectedDates, dateStr]);
+    }
+  };
+
   const handleApprove = async () => {
+    if (selectedDates.length === 0) {
+      alert("Please select at least one date to approve.");
+      return;
+    }
     setStatus("Approved");
     try {
-      await updateLeaveStatus(user.leave_ref_no, "Approved", note);
+      await updateLeaveStatus({
+        leaveRefNo: user.leave_ref_no,
+        status: "Approved",
+        remarks: note,
+        role: currentUser.user_type === "Manager" ? "manager" : "admin",
+        dates: selectedDates,
+      });
       if (onClose) onClose();
     } catch (err) {
       console.error("Error approving leave:", err);
@@ -84,9 +104,19 @@ const LeaveRequestApprove = ({ user, onClose }) => {
   };
 
   const handleReject = async () => {
+    if (selectedDates.length === 0) {
+      alert("Please select at least one date to reject.");
+      return;
+    }
     setStatus("Rejected");
     try {
-      await updateLeaveStatus(user.leave_ref_no, "Rejected", note);
+      await updateLeaveStatus({
+        leaveRefNo: user.leave_ref_no,
+        status: "Rejected",
+        remarks: note,
+        role: currentUser.user_type === "Manager" ? "manager" : "admin",
+        dates: selectedDates,
+      });
       if (onClose) onClose();
     } catch (err) {
       console.error("Error rejecting leave:", err);
@@ -99,7 +129,6 @@ const LeaveRequestApprove = ({ user, onClose }) => {
   const shouldShowApprovalButtons =
     isSuperAdmin || user.manager_approval_status === "Approved";
 
-  // Generate calendar dates for the full month
   const calendarDates = firstLeaveDate ? getAllMonthDates(firstLeaveDate) : [];
 
   return (
@@ -126,18 +155,19 @@ const LeaveRequestApprove = ({ user, onClose }) => {
         {/* Dates & Type */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <p className="text-sm font-medium text-gray-600">Date</p>
+            <p className="text-sm font-medium text-gray-600">Start Date</p>
             <p className="text-sm text-black">
               {firstLeaveDate ? formatDate(firstLeaveDate) : "N/A"}
             </p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600">Leave type</p>
-            <p className="text-sm text-black">{user.type}</p>
+            <p className="text-sm font-medium text-gray-600">End Date</p>
+            <p className="text-sm text-black">
+              {endLeaveDate ? formatDate(endLeaveDate) : "N/A"}
+            </p>
           </div>
         </div>
 
-        {/* Reason */}
         <div className="mb-4">
           <p className="text-sm font-medium text-gray-600">Reason</p>
           <p className="text-sm text-black">{user.reason}</p>
@@ -192,7 +222,7 @@ const LeaveRequestApprove = ({ user, onClose }) => {
                 Approve
               </button>
               <button
-                onClick={handleReject}
+                onClick={() => onClose && onClose()}
                 className="flex-1 py-2 px-4 border font-semibold border-yellow-400 text-yellow-400 rounded-xl hover:bg-yellow-50 transition duration-200"
               >
                 Cancel
@@ -226,18 +256,24 @@ const LeaveRequestApprove = ({ user, onClose }) => {
       <div className="p-3 border border-gray-300 rounded-lg flex">
         <div className="w-3/4 grid grid-cols-7 gap-1">
           {calendarDates.map((date, idx) => {
+            const dateStr = dayjs(date).format("YYYY-MM-DD");
+            const isSelected = selectedDates.includes(dateStr);
             const isLeave = isLeaveDay(date);
             const isHalf = isHalfDay(date);
+
             return (
               <div
                 key={idx}
-                className={`h-8 w-8 flex items-center justify-center rounded-full ${
-                  isHalf
+                onClick={() => toggleDateSelection(date)}
+                className={`h-8 w-8 flex items-center justify-center rounded-full cursor-pointer
+                  ${isSelected
+                    ? "bg-blue-500 text-white"
+                    : isHalf
                     ? "bg-lime-500 text-white"
                     : isLeave
                     ? "bg-black text-white"
                     : "bg-gray-100 text-black"
-                }`}
+                  }`}
               >
                 {date.getDate()}
               </div>
@@ -246,18 +282,6 @@ const LeaveRequestApprove = ({ user, onClose }) => {
         </div>
 
         <div className="w-1/4 flex flex-col space-y-4 ml-4">
-          <div className="bg-gray-100 p-2 text-xs font-semibold rounded-lg">
-            Start Date:{" "}
-            <span className="text-black">
-              {firstLeaveDate ? formatDate(firstLeaveDate) : "N/A"}
-            </span>
-          </div>
-          <div className="bg-gray-100 p-2 text-xs font-semibold rounded-lg">
-            End Date:{" "}
-            <span className="text-black">
-              {endLeaveDate ? formatDate(endLeaveDate) : "N/A"}
-            </span>
-          </div>
           <div className="bg-black text-center text-xs font-semibold p-2 rounded-lg text-white">
             Total Days: {totalDays}
           </div>

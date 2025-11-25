@@ -56,30 +56,35 @@ function LeaveRequestes() {
 
   // Columns for UniversalTable
   const columns = [
-    {
-      key: "name",
-      label: "Name",
-      width: 160,
-      render: (val, row) => {
-        const name = val ?? "";
-        const shortName = name.length > 8 ? name.substring(0, 8) + "…" : name; // Changed to 8 letters
-        return (
-          <div className="flex items-center gap-2">
-            <img
-              src={
-                row.avatar ||
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJFYyBlkZfPY6Jb_BDM0gAW2jdMCFsYWxgeQ&s"
-              }
-              alt="avatar"
-              className="w-7 h-7 rounded-full object-cover"
-            />
-            <span className="truncate max-w-[70px]" title={name}>
-              {shortName}
-            </span>
-          </div>
-        );
-      },
-    },
+   {
+  key: "name",
+  label: "Name",
+  width: 160,
+  render: (val, row) => {
+    const name = val ?? "";
+    const shortName = name.length > 8 ? name.substring(0, 8) + "…" : name;
+
+    // Determine image source: use API image if available, otherwise fallback avatar
+    const imageSrc =
+      row.image && row.image.trim() !== ""
+        ? row.image
+        : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJFYyBlkZfPY6Jb_BDM0gAW2jdMCFsYWxgeQ&s";
+
+    return (
+      <div className="flex items-center gap-2">
+        <img
+          src={imageSrc}
+          alt="avatar"
+          className="w-7 h-7 rounded-full object-cover"
+        />
+        <span className="truncate max-w-[70px]" title={name}>
+          {shortName}
+        </span>
+      </div>
+    );
+  },
+}
+,
     {
       key: "designation",
       label: "Designation",

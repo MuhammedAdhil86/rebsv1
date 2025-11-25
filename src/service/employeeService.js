@@ -22,6 +22,7 @@ updateAdditionalInformation,
 updateContactInfo,
 updatePersonalInfo,
 getStaff,
+getEmployeeCalendar,
   getMaritalStatus// make sure you export this from your api.js
 } from "../api/api";
 import axiosInstance from "../service/axiosinstance";
@@ -42,7 +43,7 @@ export const getStaffDetails = async () => {
 export const fetchBarAttendance = async () => {
   try {
     const response = await axiosInstance.get("/admin/staff/getattendancestatus");
-    console.log("Bar attendance response:", response);
+
     return response.data;
   } catch (error) {
     console.error("Error fetching bar attendance:", error);
@@ -383,7 +384,7 @@ export const fetchDailyAttendance = async (date) => {
       `${getDailyAttendance}?date=${date}`
     );
 
-    console.log("✅ Daily attendance response:", response.data);
+ 
     return response.data.data;
   } catch (error) {
     if (error.response) {
@@ -396,5 +397,17 @@ export const fetchDailyAttendance = async (date) => {
       console.error("❌ Network error:", error.message);
     }
     throw error;
+  }
+};
+// Fetch employee attendance by month/year
+export const fetchEmployeeCalendar = async (month, year) => {
+  try {
+    // Replace placeholder with month
+    const url = getEmployeeCalendar.replace("{month}", month) + `/${year}`;
+    const response = await axiosInstance.get(url);
+    return response.data.data || [];
+  } catch (error) {
+    console.error("Error fetching employee calendar:", error);
+    return [];
   }
 };

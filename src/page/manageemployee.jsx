@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import useEmployeeStore from "../store/employeeStore";
 import UniversalTable from "../ui/universal_table";
 import { MoreVertical } from "lucide-react";
+import toast, { Toaster } from "react-hot-toast";
 
 const API_BASE_URL = "https://rebs-hr-cwhyx.ondigitalocean.app/";
 
@@ -105,22 +106,22 @@ function ManageEmployees() {
         throw new Error(text || "Failed to update users");
       }
 
-      alert(`Users ${activate ? "activated" : "deactivated"} successfully!`);
+      toast.success(`Users ${activate ? "activated" : "deactivated"} successfully!`);
       setSelectedRows([]);
       fetchEmployees();
     } catch (err) {
       console.error("Bulk update failed:", err);
-      alert(`Bulk update failed: ${err.message}`);
+      toast.error(`Bulk update failed: ${err.message}`);
     }
   };
 
   const handleActivateUser = () => bulkUpdateStatus(true);
   const handleDeactivateUser = () => bulkUpdateStatus(false);
-  const handleAddPrivilege = () => alert("Add Privilege");
+  const handleAddPrivilege = () => toast("Add Privilege clicked!");
 
   const handleDelete = () => {
     if (selectedRows.length === 0) {
-      alert("Please select at least one employee to delete.");
+      toast.error("Please select at least one employee to delete.");
       return;
     }
     setShowDeleteConfirm(true);
@@ -148,14 +149,14 @@ function ManageEmployees() {
         throw new Error(text || "Failed to delete employees");
       }
 
-      alert("Selected employees deleted successfully!");
+      toast.success("Selected employees deleted successfully!");
       setSelectedRows([]);
       setShowDeleteConfirm(false);
       setDeleteReason("");
       fetchEmployees();
     } catch (error) {
       console.error("Delete failed:", error);
-      alert(`Delete failed: ${error.message}`);
+      toast.error(`Delete failed: ${error.message}`);
     } finally {
       setIsDeleting(false);
     }
@@ -221,128 +222,116 @@ function ManageEmployees() {
     </div>
   );
 
-const tableColumns = [
-  {
-    key: "select",
-    label: "",
-    render: (_, row) => (
-      <input
-        type="checkbox"
-        className="h-4 w-4 rounded border-gray-300 text-blue-600"
-        checked={selectedRows.includes(row.uuid)}
-        onChange={(e) => handleSelectRow(e, row.uuid)}
-      />
-    ),
-  },
-  {
-    key: "name",
-    label: "Name",
-    render: (_, row) => {
-      const fullName = `${row.first_name || ""} ${row.last_name || ""}`.trim() || "N/A";
-      return (
-        <div
-          className="flex items-center gap-2"
-          title={fullName} // tooltip on hover
-        >
-          <img
-            src={row.image || avatar}
-            alt={row.first_name || "avatar"}
-            className="w-6 h-6 rounded-full object-cover"
-          />
-          <span className="truncate max-w-[15ch]">{fullName}</span> {/* Increased name width */}
-        </div>
-      );
+  const tableColumns = [
+    {
+      key: "select",
+      label: "",
+      render: (_, row) => (
+        <input
+          type="checkbox"
+          className="h-4 w-4 rounded border-gray-300 text-blue-600"
+          checked={selectedRows.includes(row.uuid)}
+          onChange={(e) => handleSelectRow(e, row.uuid)}
+        />
+      ),
     },
-  },
-  {
-    key: "designation",
-    label: "Designation",
-    render: (_, row) => {
-      const designation = row.designation || "N/A";
-      return (
-        <div
-          className="truncate max-w-[12ch] text-center mx-auto"
-          title={designation} // full text on hover
-        >
-          {designation}
-        </div>
-      );
+    {
+      key: "name",
+      label: "Name",
+      render: (_, row) => {
+        const fullName = `${row.first_name || ""} ${row.last_name || ""}`.trim() || "N/A";
+        return (
+          <div className="flex items-center gap-2" title={fullName}>
+            <img
+              src={row.image || avatar}
+              alt={row.first_name || "avatar"}
+              className="w-6 h-6 rounded-full object-cover"
+            />
+            <span className="truncate max-w-[15ch]">{fullName}</span>
+          </div>
+        );
+      },
     },
-  },
-  {
-    key: "date_of_join",
-    label: "Date of Joining",
-    render: (_, row) => (row.date_of_join ? formatDate(row.date_of_join) : "N/A"),
-  },
-  {
-    key: "department",
-    label: "Department",
-    render: (_, row) => {
-      const department = row.department || "N/A";
-      return (
-        <div
-          className="truncate max-w-[16ch] text-center mx-auto"
-          title={department}
-        >
-          {department}
-        </div>
-      );
+    {
+      key: "designation",
+      label: "Designation",
+      render: (_, row) => {
+        const designation = row.designation || "N/A";
+        return (
+          <div className="truncate max-w-[12ch] text-center mx-auto" title={designation}>
+            {designation}
+          </div>
+        );
+      },
     },
-  },
-  {
-    key: "branch",
-    label: "Branch",
-    render: (_, row) => {
-      const branch = row.branch || "HeadOffice";
-      return (
-        <div
-          className="truncate max-w-[16ch] text-center mx-auto"
-          title={branch}
-        >
-          {branch}
-        </div>
-      );
+    {
+      key: "date_of_join",
+      label: "Date of Joining",
+      render: (_, row) => (row.date_of_join ? formatDate(row.date_of_join) : "N/A"),
     },
-  },
-  {
-    key: "ph_no",
-    label: "Mobile",
-    render: (_, row) => row.ph_no || "N/A",
-  },
-  {
-    key: "status",
-    label: "Status",
-    render: (_, row) => (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          row.is_active === false || row.is_active === "false"
-            ? "bg-red-100 text-red-800"
-            : "bg-green-100 text-green-800"
-        }`}
-      >
-        {row.is_active === false || row.is_active === "false" ? "Inactive" : "Active"}
-      </span>
-    ),
-  },
-  {
-    key: "actions",
-    label: "",
-    render: (_, row) => (
-      <button
-        onClick={() => navigate(`/details/${row.id}`)}
-        className="text-gray-400 hover:text-gray-600"
-      >
-        <MoreVertical size={16} />
-      </button>
-    ),
-  },
-];
-
+    {
+      key: "department",
+      label: "Department",
+      render: (_, row) => {
+        const department = row.department || "N/A";
+        return (
+          <div className="truncate max-w-[16ch] text-center mx-auto" title={department}>
+            {department}
+          </div>
+        );
+      },
+    },
+    {
+      key: "branch",
+      label: "Branch",
+      render: (_, row) => {
+        const branch = row.branch || "HeadOffice";
+        return (
+          <div className="truncate max-w-[16ch] text-center mx-auto" title={branch}>
+            {branch}
+          </div>
+        );
+      },
+    },
+    {
+      key: "ph_no",
+      label: "Mobile",
+      render: (_, row) => row.ph_no || "N/A",
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (_, row) => (
+        <span
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            row.is_active === false || row.is_active === "false"
+              ? "bg-red-100 text-red-800"
+              : "bg-green-100 text-green-800"
+          }`}
+        >
+          {row.is_active === false || row.is_active === "false" ? "Inactive" : "Active"}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      label: "",
+      render: (_, row) => (
+        <button
+          onClick={() => navigate(`/details/${row.id}`)}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          <MoreVertical size={16} />
+        </button>
+      ),
+    },
+  ];
 
   return (
     <DashboardLayout>
+      <Toaster position="top-right" reverseOrder={false} />
       <div className="h-full flex flex-col">
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-1">
             <h1 className="text-xl font-semibold text-gray-800">Manage Employees</h1>
