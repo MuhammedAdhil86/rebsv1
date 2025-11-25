@@ -20,6 +20,7 @@ import ConsolidatedData from "../components/tables/consoildate";
 import ManageEmployeeShifts from "../page/manageemployeeshift";
 import OrganizationOnboarding from "../page/organizationonboarding";
 import Reports from "../page/resports";
+import JobCreation from "../page/jobcreation";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ element: Element }) => {
@@ -41,7 +42,7 @@ function AppRoutes() {
       <Route path="/forgetpass" element={<ForgotPasswordUI />} />
       <Route path="/otp" element={<OtpUi />} />
       <Route path="/newpassword" element={<NewPasswordUI />} />
-      <Route path="/workfromhome" element={<WorkFromHome />} />
+     
 
       {/* --- Protected Routes --- */}
       <Route path="/dashboard" element={<ProtectedRoute element={Dashboard} />} />
@@ -54,6 +55,8 @@ function AppRoutes() {
 <Route path="/shift" element={<ProtectedRoute element={ManageEmployeeShifts} />} />
 <Route path="/onboarding" element={<ProtectedRoute element={OrganizationOnboarding} />} />
 <Route path="/reports" element={<ProtectedRoute element={Reports} />} />
+<Route path="/job" element={<ProtectedRoute element={JobCreation} />} />
+<Route path="/workfromhome" element={<ProtectedRoute element={WorkFromHome} />} />
 
       {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
 

@@ -63,14 +63,15 @@ function UniversalTable({ columns, data, rowsPerPage = 6, searchTerm }) {
   const currentData = filteredData.slice(startIdx, endIdx);
 
   // Recalculate column widths after every render
-  useEffect(() => {
-    if (headerRef.current) {
-      const widths = Array.from(headerRef.current.querySelectorAll("th")).map(
-        (th) => th.offsetWidth
-      );
-      setColWidths(widths);
-    }
-  }, [columns, data, searchTerm, currentData]);
+useEffect(() => {
+  if (headerRef.current) {
+    const widths = Array.from(headerRef.current.querySelectorAll("th")).map(
+      (th) => th.offsetWidth
+    );
+    setColWidths(widths);
+  }
+}, [columns, data, searchTerm]);
+
 
   return (
     <section className="p-2 rounded-2xl overflow-x-auto w-full">

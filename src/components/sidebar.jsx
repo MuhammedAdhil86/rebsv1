@@ -82,7 +82,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
         },
         {
           title: "Work From Home",
-          path: userId ? `/u/${userId}/${userNameSlug}/workfromhome` : "#",
+          path:  `/workfromhome` ,
           icon: icons.workfromhome,
         },
       ],
@@ -107,7 +107,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
       items: [
         {
           title: "Job Creation",
-          path: userId ? `/u/${userId}/${userNameSlug}/jobcreation` : "#",
+          path: '/job',
           icon: icons.Hiring,
         },
         {
