@@ -100,7 +100,7 @@ function EmployeeTable({ employees, loading }) {
 
           {/* Body Table */}
           <div className="overflow-x-auto w-full">
-            <table className="w-full min-w-[600px] text-[11px] bg-white border-separate border-spacing-0 rounded-2xl">
+            <table className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl">
               <tbody className="divide-y divide-gray-100 text-gray-800 font-poppins text-[11px]">
                 {currentEmployees.length === 0 ? (
                   <tr>
@@ -183,7 +183,7 @@ function EmployeeTable({ employees, loading }) {
                       {/* Status */}
                       <td className="px-4 py-3" style={{ width: colWidths[5] }}>
                         <span
-                          className={`px-4 py-2 w-[85px] text-center rounded-full text-[12.5px] font-poppins ${
+                          className={`px-4 py-1 w-[85px] text-center rounded-full text-[12px] font-poppins ${
                             emp.status === "Online"
                               ? "bg-green-100 text-green-600"
                               : emp.status === "Absent"
