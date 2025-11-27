@@ -12,9 +12,9 @@ function DatePicker() {
   const scrollRef = useRef(null);
   const { setSelectedDay } = useEmployeeStore();
 
-  const BUTTON_WIDTH = 75; // width of each date button
-  const BUTTON_GAP = 8; // gap between buttons
-  const VISIBLE_COUNT = 8; // visible buttons
+  const BUTTON_WIDTH = 75;
+  const BUTTON_GAP = 8;
+  const VISIBLE_COUNT = 8;
 
   useEffect(() => {
     const today = new Date();
@@ -23,7 +23,8 @@ function DatePicker() {
       const d = new Date();
       d.setDate(today.getDate() - i);
       days.push({
-        day: d.toLocaleDateString("en-US", { weekday: "long" }), // full day name
+        // **ONLY CHANGE HERE → short weekday**
+        day: d.toLocaleDateString("en-US", { weekday: "short" }),
         date: d.getDate(),
         fullDate: d,
       });
@@ -81,7 +82,7 @@ function DatePicker() {
   };
 
   return (
-    <div className="relative flex items-center bg-[#f9fafb] rounded-xl overflow-hidden mr-2  py-1">
+    <div className="relative flex items-center bg-[#f9fafb] rounded-xl overflow-hidden mr-2 py-1">
       {/* Calendar Icon */}
       <div
         onClick={handleCalendarIconClick}
@@ -116,8 +117,8 @@ function DatePicker() {
               w-[75px] h-[60px]
             `}
           >
-            <span className="font-poppins font-normal text-[10px] leading-none">
-              {item.day} {/* full day name */}
+            <span className="font-poppins font-normal text-[12px] leading-none">
+              {item.day}
             </span>
             <span className="font-semibold text-[16px] leading-none mt-1">
               {item.date}

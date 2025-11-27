@@ -66,9 +66,10 @@ function UniversalTable({ columns, data, rowsPerPage = 6 }) {
 
       <div className="h-2" />
 
-      {/* Body table (YOUR REQUESTED CHANGE: fully rounded) */}
-      <table className="w-full min-w-[600px] text-[11px] bg-white border-separate border-spacing-0 rounded-2xl overflow-hidden">
+      {/* Body */}
+      <table className="w-full min-w-[600px] bg-white border-separate border-spacing-0 rounded-2xl overflow-hidden">
         <tbody className="divide-y divide-gray-100 text-gray-800">
+
           {currentData.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="text-center py-4 text-gray-500">
@@ -87,7 +88,8 @@ function UniversalTable({ columns, data, rowsPerPage = 6 }) {
                     <td
                       key={col.key}
                       data-label={col.label}
-                      className="px-4 py-3 truncate text-center align-middle relative"
+                      className="px-4 py-4 truncate text-center align-middle relative text-[12px]" 
+                      // ↑ TEXT SIZE UPDATED (12px)
                       style={{
                         width: colWidths[colIdx]
                           ? `${colWidths[colIdx]}px`

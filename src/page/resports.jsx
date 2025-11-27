@@ -4,7 +4,7 @@ import DashboardLayout from "../ui/pagelayout";
 import { Icon } from "@iconify/react";
 
 import AttendanceReports from "../components/reports_tab/attendance_reports";
-// You can create other tab components like ComplianceReports, MiscReports, etc.
+import LeaveReports from "../components/reports/leavereport";
 
 const avatar =
   "https://ui-avatars.com/api/?name=Admin&background=000000&color=ffffff";
@@ -16,12 +16,8 @@ export default function Reports() {
     switch (activeTab) {
       case "Attendance Reports":
         return <AttendanceReports />;
-      // case "Compliance Reports":
-      //   return <ComplianceReports />;
-      // case "Miscellaneous Reports":
-      //   return <MiscReports />;
-      // case "Insurance Details":
-      //   return <InsuranceDetails />;
+      case "Leave Reports": // ✅ Added
+        return <LeaveReports />;
       default:
         return null;
     }
@@ -50,9 +46,11 @@ export default function Reports() {
         <div className="flex gap-6 border-b border-gray-200 overflow-x-auto mb-2">
           {[
             "Attendance Reports",
+                
             "Compliance Reports",
             "Miscellaneous Reports",
             "Insurance Details",
+                "Leave Reports",   
           ].map((tab) => (
             <button
               key={tab}
