@@ -19,7 +19,6 @@ function LeaveRequestes() {
     connectWebSocket(token);
   }, [fetchLeaves, connectWebSocket, token]);
 
-  // Filter + search + sort
   const filteredLeaves = useMemo(() => {
     let arr = Array.isArray(leaves) ? [...leaves] : [];
 
@@ -47,44 +46,39 @@ function LeaveRequestes() {
     return arr;
   }, [leaves, filterStatus, searchQuery]);
 
-  // Status pill color
   const getStatusColor = (status) => {
     if (status === "Approved") return "bg-green-100 text-green-600";
     if (status?.toLowerCase().includes("pending")) return "bg-orange-100 text-orange-600";
     return "bg-red-100 text-red-600";
   };
 
-  // Columns for UniversalTable
   const columns = [
-   {
-  key: "name",
-  label: "Name",
-  width: 160,
-  render: (val, row) => {
-    const name = val ?? "";
-    const shortName = name.length > 8 ? name.substring(0, 8) + "…" : name;
+    {
+      key: "name",
+      label: "Name",
+      width: 160,
+      render: (val, row) => {
+        const name = val ?? "";
 
-    // Determine image source: use API image if available, otherwise fallback avatar
-    const imageSrc =
-      row.image && row.image.trim() !== ""
-        ? row.image
-        : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJFYyBlkZfPY6Jb_BDM0gAW2jdMCFsYWxgeQ&s";
+        const imageSrc =
+          row.image && row.image.trim() !== ""
+            ? row.image
+            : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJFYyBlkZfPY6Jb_BDM0gAW2jdMCFsYWxgeQ&s";
 
-    return (
-      <div className="flex items-center gap-2">
-        <img
-          src={imageSrc}
-          alt="avatar"
-          className="w-7 h-7 rounded-full object-cover"
-        />
-        <span className="truncate max-w-[70px]" title={name}>
-          {shortName}
-        </span>
-      </div>
-    );
-  },
-}
-,
+        return (
+          <div className="flex items-center gap-2">
+            <img
+              src={imageSrc}
+              alt="avatar"
+              className="w-7 h-7 rounded-full object-cover"
+            />
+            <span className="whitespace-nowrap" title={name}>
+              {name}
+            </span>
+          </div>
+        );
+      },
+    },
     {
       key: "designation",
       label: "Designation",
@@ -156,39 +150,22 @@ function LeaveRequestes() {
         );
       },
     },
-    {
-      key: "action",
-      label: "Action",
-      width: 80,
-      render: (_, row) => (
-        <button
-          onClick={() => {
-            setSelectedLeave(row);
-            setDrawerOpen(true);
-          }}
-          className="text-gray-600 hover:text-gray-800"
-        >
-          {/* Three-dot icon */}
-          <span className="text-xl">⋯</span>
-        </button>
-      ),
-    },
   ];
 
   return (
     <div className="flex-1 grid grid-cols-1 gap-4 px-4 pb-4 bg-[#f9fafb] rounded-xl w-full mx-auto">
-      {/* Header */}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h3 className="text-base font-medium text-gray-800">Leave Requests</h3>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-          {/* Filter Buttons */}
+
           <div className="flex flex-wrap items-center gap-2">
             {["All", "Pending", "Approved", "Rejected"].map((status) => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
-                className={`px-3 py-1.5 rounded-lg text-sm border transition ${
+                className={`px-3 sm:px-4 py-2 text-[12px] rounded-lg border transition ${
                   filterStatus === status
                     ? "bg-black text-white border-black"
                     : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -199,7 +176,6 @@ function LeaveRequestes() {
             ))}
           </div>
 
-          {/* Search */}
           <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm w-full sm:w-auto">
             <input
               type="text"
@@ -209,14 +185,13 @@ function LeaveRequestes() {
                 setSearchQuery(e.target.value);
                 setSelectedLeave(null);
               }}
-              className="bg-transparent text-gray-600 w-full focus:outline-none text-sm"
+              className="bg-transparent text-gray-600 w-full focus:outline-none text-sm placeholder:text-[12px]"
             />
             <Search className="w-4 h-4 text-gray-400" />
           </div>
         </div>
       </div>
 
-      {/* Table / Loader */}
       {loading ? (
         <div className="flex justify-center py-12">
           <div className="w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin" />
@@ -226,10 +201,13 @@ function LeaveRequestes() {
           columns={columns}
           data={filteredLeaves}
           rowsPerPage={10}
+          onRowClick={(row) => {
+            setSelectedLeave(row);
+            setDrawerOpen(true);
+          }}
         />
       )}
 
-      {/* Drawer */}
       {drawerOpen && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDrawerOpen(false)} />
@@ -251,7 +229,6 @@ function LeaveRequestes() {
         </div>
       )}
 
-      {/* Error */}
       {error && (
         <div className="text-center py-2 text-red-600">Error: {error}</div>
       )}
