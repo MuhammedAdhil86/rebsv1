@@ -101,7 +101,7 @@ function EmployeeTable({ employees, loading }) {
           {/* Body Table */}
           <div className="overflow-x-auto w-full">
             <table className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl">
-              <tbody className="divide-y divide-gray-100 text-gray-800 font-poppins text-[11px]">
+              <tbody className="divide-y divide-gray-100 text-gray-800 font-poppins text-[12px]">
                 {currentEmployees.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center py-4 text-gray-500">
