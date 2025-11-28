@@ -210,12 +210,12 @@ export default function AttendanceReports() {
             <option>2025</option>
           </select>
           <div className="relative w-[150px]">
-            <input type="date" className="border border-gray-300 bg-white rounded px-3 py-1 text-[13px] w-full pr-8" />
+            <input type="date" className="remove-default-icon border border-gray-300 bg-white rounded px-3 py-1 text-[13px] w-full pr-8" />
             <Icon icon="solar:calendar-linear" className="absolute right-2 top-1/2 -translate-y-1/2 text-black text-lg pointer-events-none" />
           </div>
           <span className="text-[13px] font-medium mx-1">to</span>
           <div className="relative w-[150px]">
-            <input type="date" className="border border-gray-300 bg-white rounded px-3 py-1 text-[13px] w-full pr-8" />
+            <input type="date" className=" remove-default-icon border  border-gray-300 bg-white rounded px-3 py-1 text-[13px] w-full pr-8" />
             <Icon icon="solar:calendar-linear" className="absolute right-2 top-1/2 -translate-y-1/2 text-black text-lg pointer-events-none" />
           </div>
           <button className="flex items-center px-4 py-1 bg-black text-white rounded text-[13px]">

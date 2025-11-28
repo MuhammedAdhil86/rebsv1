@@ -34,9 +34,9 @@ function LeaveRequestes() {
       const q = searchQuery.toLowerCase();
       arr = arr.filter((req) => {
         return (
-          (req.name?.toLowerCase().includes(q)) ||
-          (req.reason?.toLowerCase().includes(q)) ||
-          (req.type?.toLowerCase().includes(q))
+          req.name?.toLowerCase().includes(q) ||
+          req.reason?.toLowerCase().includes(q) ||
+          req.type?.toLowerCase().includes(q)
         );
       });
     }
@@ -58,8 +58,6 @@ function LeaveRequestes() {
       label: "Name",
       width: 160,
       render: (val, row) => {
-        const name = val ?? "";
-
         const imageSrc =
           row.image && row.image.trim() !== ""
             ? row.image
@@ -72,9 +70,7 @@ function LeaveRequestes() {
               alt="avatar"
               className="w-7 h-7 rounded-full object-cover"
             />
-            <span className="whitespace-nowrap" title={name}>
-              {name}
-            </span>
+            <span className="whitespace-nowrap">{val}</span>
           </div>
         );
       },
@@ -141,7 +137,7 @@ function LeaveRequestes() {
         return (
           <span
             title={status}
-            className={`px-3 py-1 rounded-full text-xs font-normal font-poppins whitespace-nowrap overflow-hidden inline-block max-w-[100px] text-center ${getStatusColor(
+            className={`px-3 py-1 rounded-full text-[11px] font-normal font-poppins whitespace-nowrap inline-block max-w-[100px] text-center ${getStatusColor(
               status
             )}`}
           >
@@ -197,15 +193,16 @@ function LeaveRequestes() {
           <div className="w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin" />
         </div>
       ) : (
-        <UniversalTable
-          columns={columns}
-          data={filteredLeaves}
-          rowsPerPage={10}
-          onRowClick={(row) => {
-            setSelectedLeave(row);
-            setDrawerOpen(true);
-          }}
-        />
+  <UniversalTable
+  columns={columns}
+  data={filteredLeaves}
+  rowsPerPage={10}
+  rowClickHandler={(row) => {
+    setSelectedLeave(row);
+    setDrawerOpen(true);
+  }}
+/>
+
       )}
 
       {drawerOpen && (

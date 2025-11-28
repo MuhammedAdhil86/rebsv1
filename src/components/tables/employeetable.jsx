@@ -28,10 +28,8 @@ function EmployeeTable({ employees, loading }) {
   const endIdx = startIdx + rowsPerPage;
   const currentEmployees = filteredEmployees.slice(startIdx, endIdx);
 
-  const handlePrev = () =>
-    currentPage > 1 && setCurrentPage(currentPage - 1);
-  const handleNext = () =>
-    currentPage < totalPages && setCurrentPage(currentPage + 1);
+  const handlePrev = () => currentPage > 1 && setCurrentPage(currentPage - 1);
+  const handleNext = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
@@ -40,9 +38,9 @@ function EmployeeTable({ employees, loading }) {
   // Sync header & body column widths
   useEffect(() => {
     if (headerRef.current) {
-      const widths = Array.from(
-        headerRef.current.querySelectorAll("th")
-      ).map((th) => th.offsetWidth);
+      const widths = Array.from(headerRef.current.querySelectorAll("th")).map(
+        (th) => th.offsetWidth
+      );
       setColWidths(widths);
     }
   }, [employees, searchTerm]);
@@ -53,17 +51,15 @@ function EmployeeTable({ employees, loading }) {
       {/* Header & Search */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-2">
         <h3 className="text-base font-medium text-gray-800">Employee List</h3>
-
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm shadow-sm mt-2 sm:mt-0 w-full sm:w-auto">
-        <input
-  type="text"
-  placeholder="Search"
-  value={searchTerm}
-  onChange={handleSearchChange}
-  className="bg-transparent text-gray-600 w-full focus:outline-none text-[12px] placeholder:text-[12px]"
-/>
-
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="bg-transparent text-gray-600 w-full focus:outline-none text-sm"
+            />
             <Search className="w-4 h-4 text-gray-400" />
           </div>
         </div>
@@ -84,26 +80,17 @@ function EmployeeTable({ employees, loading }) {
             >
               <thead className="bg-white text-gray-600 text-[12.5px] rounded-xl">
                 <tr>
-                  {[
-                    "Employee",
-                    "Designation",
-                    "Mobile",
-                    "Branch",
-                    "Shift",
-                    "Status",
-                  ].map((col, idx) => (
-                    <th
-                      key={col}
-                      className="px-8 py-3 font-medium text-gray-700 whitespace-nowrap text-left align-middle rounded-xl"
-                      style={{
-                        width: colWidths[idx]
-                          ? `${colWidths[idx]}px`
-                          : "auto",
-                      }}
-                    >
-                      {col}
-                    </th>
-                  ))}
+                  {["Employee", "Designation", "Mobile", "Branch", "Shift", "Status"].map(
+                    (col, idx) => (
+                      <th
+                        key={col}
+                        className="px-8 py-3 font-medium text-gray-700 whitespace-nowrap text-left align-middle rounded-xl"
+                        style={{ width: colWidths[idx] ? `${colWidths[idx]}px` : "auto" }}
+                      >
+                        {col}
+                      </th>
+                    )
+                  )}
                 </tr>
               </thead>
             </table>
@@ -114,42 +101,26 @@ function EmployeeTable({ employees, loading }) {
           {/* Body Table */}
           <div className="overflow-x-auto w-full">
             <table className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl">
-              <tbody className="divide-y divide-gray-100 text-gray-800 font-poppins text-[12px]">
-
+              <tbody className="text-gray-800 font-poppins text-[11px]">
                 {currentEmployees.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="text-center py-4 text-gray-500"
-                    >
+                  <tr className="border-b border-gray-300">
+                    <td colSpan={6} className="text-center py-4 text-gray-500">
                       No data available
                     </td>
                   </tr>
                 ) : (
                   currentEmployees.map((emp, idx) => (
-                    <tr
-                      key={idx}
-                      className="hover:bg-gray-50 align-middle"
-                    >
-
-                      {/* --- ROW CELLS — with UPDATED padding py-4 --- */}
+                    <tr key={idx} className="hover:bg-gray-50 align-middle border-b border-gray-300">
 
                       {/* Name */}
                       <td
                         data-label="Employee"
-                        className="px-4 py-4 relative group"
-                        style={{
-                          width: colWidths[0]
-                            ? `${colWidths[0]}px`
-                            : "auto",
-                        }}
+                        className="px-4 py-3 relative group border-b border-gray-300"
+                        style={{ width: colWidths[0] ? `${colWidths[0]}px` : "auto" }}
                         onMouseEnter={(e) => {
                           if (isTruncated(emp._nameRef)) {
                             const rect = e.target.getBoundingClientRect();
-                            setTooltipPos({
-                              x: rect.left,
-                              y: rect.top - 28,
-                            });
+                            setTooltipPos({ x: rect.left, y: rect.top - 28 });
                             setHoverText(emp.name);
                           }
                         }}
@@ -157,19 +128,12 @@ function EmployeeTable({ employees, loading }) {
                       >
                         <div className="flex items-center gap-2">
                           <img
-                            src={
-                              emp.image ||
-                              `https://i.pravatar.cc/40?img=${
-                                startIdx + idx + 1
-                              }`
-                            }
+                            src={emp.image || `https://i.pravatar.cc/40?img=${startIdx + idx + 1}`}
                             alt={emp.name}
                             className="w-7 h-7 rounded-full"
                             onError={(e) => {
                               e.target.onerror = null;
-                              e.target.src = `https://i.pravatar.cc/40?img=${
-                                startIdx + idx + 1
-                              }`;
+                              e.target.src = `https://i.pravatar.cc/40?img=${startIdx + idx + 1}`;
                             }}
                           />
                           <span
@@ -184,63 +148,41 @@ function EmployeeTable({ employees, loading }) {
                       {/* Designation */}
                       <td
                         data-label="Designation"
-                        className="px-4 py-4 relative group"
-                        style={{
-                          width: colWidths[1]
-                            ? `${colWidths[1]}px`
-                            : "auto",
-                        }}
+                        className="px-4 py-3 relative group border-b border-gray-300"
+                        style={{ width: colWidths[1] ? `${colWidths[1]}px` : "auto" }}
                         onMouseEnter={(e) => {
                           if (isTruncated(emp._desigRef)) {
                             const rect = e.target.getBoundingClientRect();
-                            setTooltipPos({
-                              x: rect.left,
-                              y: rect.top - 28,
-                            });
+                            setTooltipPos({ x: rect.left, y: rect.top - 28 });
                             setHoverText(emp.designationname?.String);
                           }
                         }}
                         onMouseLeave={() => setHoverText(null)}
                       >
-                        <span
-                          className="truncate block max-w-[120px]"
-                          ref={(el) => (emp._desigRef = el)}
-                        >
+                        <span className="truncate block max-w-[120px]" ref={(el) => (emp._desigRef = el)}>
                           {emp.designationname?.String}
                         </span>
                       </td>
 
                       {/* Mobile */}
-                      <td
-                        className="px-4 py-4 truncate max-w-[120px]"
-                        style={{ width: colWidths[2] }}
-                      >
+                      <td className="px-4 py-3 truncate max-w-[120px] border-b border-gray-300" style={{ width: colWidths[2] }}>
                         {emp.ph_no}
                       </td>
 
                       {/* Branch */}
-                      <td
-                        className="px-4 py-4 truncate max-w-[120px]"
-                        style={{ width: colWidths[3] }}
-                      >
+                      <td className="px-4 py-3 truncate max-w-[120px] border-b border-gray-300" style={{ width: colWidths[3] }}>
                         {emp.branch?.String || "Head Office"}
                       </td>
 
                       {/* Shift */}
-                      <td
-                        className="px-4 py-4"
-                        style={{ width: colWidths[4] }}
-                      >
+                      <td className="px-4 py-3 border-b border-gray-300" style={{ width: colWidths[4] }}>
                         {emp.shift || "Day Shift"}
                       </td>
 
                       {/* Status */}
-                      <td
-                        className="px-4 py-4"
-                        style={{ width: colWidths[5] }}
-                      >
+                      <td className="px-4 py-3 border-b border-gray-300" style={{ width: colWidths[5] }}>
                         <span
-                          className={`px-4 py-1 w-[85px] text-center rounded-full text-[12px] font-poppins ${
+                          className={`px-3 py-1 w-[85px] text-center rounded-full text-[12px] font-poppins ${
                             emp.status === "Online"
                               ? "bg-green-100 text-green-600"
                               : emp.status === "Absent"
@@ -263,9 +205,7 @@ function EmployeeTable({ employees, loading }) {
                     <td colSpan={6}>
                       <div className="flex flex-col sm:flex-row justify-between items-center gap-2 px-4 py-3 text-[12.5px] rounded-b-2xl">
                         <span className="text-gray-500">
-                          Showing {startIdx + 1}-
-                          {Math.min(endIdx, filteredEmployees.length)}{" "}
-                          of {filteredEmployees.length}
+                          Showing {startIdx + 1}-{Math.min(endIdx, filteredEmployees.length)} of {filteredEmployees.length}
                         </span>
                         <div className="flex gap-2">
                           <button
@@ -293,14 +233,11 @@ function EmployeeTable({ employees, loading }) {
         </>
       )}
 
-      {/* Tooltip */}
+      {/* Tooltip for truncated text */}
       {hoverText && (
         <div
           className="fixed px-2 py-1 bg-black text-white text-xs rounded shadow-lg z-[999999]"
-          style={{
-            top: tooltipPos.y,
-            left: tooltipPos.x,
-          }}
+          style={{ top: tooltipPos.y, left: tooltipPos.x }}
         >
           {hoverText}
         </div>
@@ -310,28 +247,11 @@ function EmployeeTable({ employees, loading }) {
       <style>
         {`
           @media (max-width: 640px) {
-            table, thead, tbody, th, td, tr {
-              display: block;
-            }
-            thead tr {
-              display: none;
-            }
-            tbody tr {
-              margin-bottom: 1rem;
-              border: 1px solid #e5e7eb;
-              border-radius: 0.5rem;
-              padding: 0.5rem;
-            }
-            tbody td {
-              display: flex;
-              justify-content: space-between;
-              padding: 0.25rem 0.5rem;
-            }
-            tbody td::before {
-              content: attr(data-label);
-              font-weight: 500;
-              color: #6b7280;
-            }
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { display: none; }
+            tbody tr { margin-bottom: 1rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem; }
+            tbody td { display: flex; justify-content: space-between; padding: 0.25rem 0.5rem; }
+            tbody td::before { content: attr(data-label); font-weight: 500; color: #6b7280; }
           }
         `}
       </style>

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 
-function UniversalTable({ columns, data, rowsPerPage = 6 }) {
+function UniversalTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [colWidths, setColWidths] = useState([]);
   const headerRef = useRef(null);
 
+  // Filter data based on search term
   const filteredData = data.filter((row) => {
     const term = searchTerm.toLowerCase();
     return columns.some((col) =>
@@ -14,11 +15,13 @@ function UniversalTable({ columns, data, rowsPerPage = 6 }) {
     );
   });
 
+  // Pagination calculations
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const startIdx = (currentPage - 1) * rowsPerPage;
   const endIdx = startIdx + rowsPerPage;
   const currentData = filteredData.slice(startIdx, endIdx);
 
+  // Calculate column widths for consistent sizing
   useEffect(() => {
     if (headerRef.current) {
       const widths = Array.from(headerRef.current.querySelectorAll("th")).map(
@@ -29,7 +32,7 @@ function UniversalTable({ columns, data, rowsPerPage = 6 }) {
   }, [data, searchTerm, columns]);
 
   return (
-    <section className="p-2 rounded-2xl overflow-x-auto relative z-[1] w-full">
+    <section className="p-1 rounded-2xl overflow-x-auto relative z-[1] w-full">
 
       {/* Header */}
       <table
@@ -48,7 +51,7 @@ function UniversalTable({ columns, data, rowsPerPage = 6 }) {
                     : idx === columns.length - 1
                     ? "rounded-tr-2xl"
                     : ""
-                }`}
+                } `}
                 style={{
                   width: colWidths[idx]
                     ? `${colWidths[idx]}px`
@@ -68,11 +71,10 @@ function UniversalTable({ columns, data, rowsPerPage = 6 }) {
 
       {/* Body */}
       <table className="w-full min-w-[600px] bg-white border-separate border-spacing-0 rounded-2xl overflow-hidden">
-        <tbody className="divide-y divide-gray-100 text-gray-800">
-
+        <tbody className="text-gray-800">
           {currentData.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="text-center py-4 text-gray-500">
+              <td colSpan={columns.length} className="text-center py-4 text-gray-500 border-b border-gray-300">
                 No data available
               </td>
             </tr>
@@ -80,7 +82,8 @@ function UniversalTable({ columns, data, rowsPerPage = 6 }) {
             currentData.map((row, rowIdx) => (
               <tr
                 key={rowIdx}
-                className="hover:bg-gray-50 text-center relative z-[0]"
+                className={`hover:bg-gray-50 text-center relative z-[0] border-b border-gray-300 ${rowClickHandler ? "cursor-pointer" : ""}`}
+                onClick={() => rowClickHandler && rowClickHandler(row)}
               >
                 {columns.map((col, colIdx) => {
                   const value = row[col.key];
@@ -88,8 +91,7 @@ function UniversalTable({ columns, data, rowsPerPage = 6 }) {
                     <td
                       key={col.key}
                       data-label={col.label}
-                      className="px-4 py-4 truncate text-center align-middle relative text-[12px]" 
-                      // ↑ TEXT SIZE UPDATED (12px)
+                      className="px-4 py-4 truncate text-center align-middle relative text-[12px] border-b border-gray-300"
                       style={{
                         width: colWidths[colIdx]
                           ? `${colWidths[colIdx]}px`

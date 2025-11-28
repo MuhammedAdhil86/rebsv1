@@ -11,7 +11,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../ui/pagelayout";
 import avatar from "../../assets/img/avatar.svg";
-import { fetchConsolidatedData } from "../../service/employeeService"; // ✅ imported service
+import { fetchConsolidatedData } from "../../service/employeeService";
 
 const ConsolidatedData = () => {
   const navigate = useNavigate();
@@ -22,11 +22,10 @@ const ConsolidatedData = () => {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
 
-  // ✅ Pagination
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // ✅ Fetch Consolidated Data (from service)
   const getConsolidatedData = async () => {
     setLoading(true);
     setError("");
@@ -46,12 +45,10 @@ const ConsolidatedData = () => {
     getConsolidatedData();
   }, [month, year]);
 
-  // ✅ Filter by search
   const filteredData = data.filter((item) =>
     item.user_name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ✅ Pagination logic
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
@@ -59,7 +56,6 @@ const ConsolidatedData = () => {
   const handlePrev = () => currentPage > 1 && setCurrentPage(currentPage - 1);
   const handleNext = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
 
-  // ✅ Badge color
   const getBadgeColor = (key) => {
     switch (key) {
       case "on_time":
@@ -75,7 +71,6 @@ const ConsolidatedData = () => {
     }
   };
 
-  // ✅ Download CSV
   const handleDownload = () => {
     const csv = [
       [
@@ -117,7 +112,7 @@ const ConsolidatedData = () => {
   return (
     <DashboardLayout>
       <div className="min-h-screen w-full bg-[#f9fafb] p-3">
-        {/* ✅ Header */}
+        {/* Header */}
         <header className="flex items-center justify-between bg-white px-6 py-3 border rounded-xl mb-6">
           <div className="flex items-center gap-3">
             <button
@@ -131,7 +126,6 @@ const ConsolidatedData = () => {
               Consolidated Data
             </h1>
           </div>
-
           <div className="flex items-center gap-4">
             <button className="p-2 rounded-full hover:bg-gray-100">
               <Bell size={20} className="text-gray-600" />
@@ -144,58 +138,65 @@ const ConsolidatedData = () => {
           </div>
         </header>
 
-        {/* ✅ Filters */}
-        <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-          <div className="flex flex-wrap gap-3">
-            {/* Month */}
-            <select
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              className="border border-gray-300 rounded-lg px-4 py-2 text-sm bg-white font-medium text-gray-700 cursor-pointer"
-            >
-              {["01","02","03","04","05","06","07","08","09","10","11","12"].map(
-                (m, idx) => (
-                  <option key={m} value={m}>
-                    {new Date(0, idx).toLocaleString("default", { month: "long" })}
-                  </option>
-                )
-              )}
-            </select>
+       {/* Filters */}
+<div className="flex flex-wrap justify-between items-center gap-4 mb-6">
 
-            {/* Year */}
-            <select
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              className="border border-gray-300 rounded-lg px-4 py-2 text-sm bg-white font-medium text-gray-700 cursor-pointer"
-            >
-              {[2023, 2024, 2025, 2026].map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
+  {/* Left Filters */}
+  <div className="flex flex-wrap items-center gap-2">
 
-            <button
-              onClick={handleDownload}
-              className="bg-black text-white px-5 py-2.5 rounded-lg text-sm flex items-center font-medium hover:bg-gray-800 transition duration-150 shadow-md"
-            >
-              <Download className="w-4 h-4 mr-2" /> Download
-            </button>
-          </div>
+    {/* Month */}
+    <select
+      value={month}
+      onChange={(e) => setMonth(e.target.value)}
+      className="border border-gray-300 rounded-md px-3 py-1.5 h-8 text-xs bg-white font-medium text-gray-700 cursor-pointer"
+    >
+      {["01","02","03","04","05","06","07","08","09","10","11","12"].map(
+        (m, idx) => (
+          <option key={m} value={m}>
+            {new Date(0, idx).toLocaleString("default", { month: "long" })}
+          </option>
+        )
+      )}
+    </select>
 
-          <div className="relative flex items-center w-full sm:w-64">
-            <input
-              type="text"
-              placeholder="Search by name"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-700 focus:ring-black focus:border-black"
-            />
-            <Search className="w-4 h-4 text-gray-500 absolute right-3" />
-          </div>
-        </div>
+    {/* Year */}
+    <select
+      value={year}
+      onChange={(e) => setYear(e.target.value)}
+      className="border border-gray-300 rounded-md px-3 py-1.5 h-8 text-xs bg-white font-medium text-gray-700 cursor-pointer"
+    >
+      {[2023, 2024, 2025, 2026].map((y) => (
+        <option key={y} value={y}>
+          {y}
+        </option>
+      ))}
+    </select>
 
-        {/* ✅ Table */}
+    {/* Download Button */}
+    <button
+      onClick={handleDownload}
+      className="bg-black text-white px-3 py-1.5 h-8 rounded-md text-xs flex items-center gap-1 hover:bg-gray-800 transition shadow-sm"
+    >
+      <Download className="w-3.5 h-3.5" /> Download
+    </button>
+  </div>
+
+  {/* Search */}
+  <div className="flex items-center gap-1 border px-2 py-1.5 h-8 rounded-md bg-gray-50 text-xs w-36 sm:w-48">
+    <input
+      type="text"
+      placeholder="Search by name"
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      className="bg-transparent w-full focus:outline-none text-xs"
+    />
+    <Search className="w-3.5 h-3.5 text-gray-400" />
+  </div>
+
+</div>
+
+
+        {/* Table */}
         {loading ? (
           <div className="flex justify-center items-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
@@ -207,10 +208,10 @@ const ConsolidatedData = () => {
         ) : (
           <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm">
             <table
-              className="min-w-full text-sm font-[Poppins] border-separate"
+              className="min-w-full text-[12px] font-[Poppins] border-separate"
               style={{ borderSpacing: "0 10px" }}
             >
-              <thead className="text-gray-600 text-xs uppercase font-medium">
+              <thead className="text-gray-500 text-[12px] font-normal ">
                 <tr className="bg-white shadow-sm">
                   <th className="text-left px-4 py-3 rounded-tl-lg">Name</th>
                   <th className="text-center px-4 py-3">On Time</th>
@@ -226,32 +227,27 @@ const ConsolidatedData = () => {
               <tbody className="text-gray-700 font-normal">
                 {paginatedData.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan="8"
-                      className="text-center py-8 text-gray-500 text-sm"
-                    >
+                    <td colSpan="8" className="text-center py-8 text-gray-500 text-[12px]">
                       No records found
                     </td>
                   </tr>
                 ) : (
                   paginatedData.map((item, index) => (
-                    <tr key={index} className="hover:bg-gray-50 transition bg-white shadow-sm">
+                    <tr key={index} className="hover:bg-gray-50 transition bg-white shadow-sm text-[12px]">
                       <td className="px-4 py-3 text-left text-gray-900 rounded-l-lg">
                         {item.user_name}
                       </td>
-                      {["on_time", "delay_days", "late_days", "absent_days"].map(
-                        (key) => (
-                          <td key={key} className="px-4 py-3 text-center">
-                            <span
-                              className={`inline-flex items-center justify-center ${getBadgeColor(
-                                key
-                              )} text-xs font-semibold w-7 h-7 rounded-full`}
-                            >
-                              {item[key]}
-                            </span>
-                          </td>
-                        )
-                      )}
+                      {["on_time", "delay_days", "late_days", "absent_days"].map((key) => (
+                        <td key={key} className="px-4 py-3 text-center">
+                          <span
+                            className={`inline-flex items-center justify-center ${getBadgeColor(
+                              key
+                            )} text-[12px]  w-7 h-7 rounded-full`}
+                          >
+                            {item[key]}
+                          </span>
+                        </td>
+                      ))}
                       <td className="px-4 py-3 text-center">{item.total_worked_days}</td>
                       <td className="px-4 py-3 text-center">{item.total_work_days}</td>
                       <td className="px-4 py-3 text-center rounded-r-lg">{item.total_days}</td>
@@ -261,20 +257,20 @@ const ConsolidatedData = () => {
               </tbody>
             </table>
 
-            {/* ✅ Pagination */}
+            {/* Pagination */}
             {filteredData.length > itemsPerPage && (
               <div className="flex justify-end items-center gap-3 px-6 py-4 border-t">
                 <button
                   onClick={handlePrev}
                   disabled={currentPage === 1}
-                  className={`flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium transition ${
+                  className={`flex items-center gap-1 rounded-md text-sm font-medium transition ${
                     currentPage === 1
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-black text-white hover:bg-gray-800"
+                      ? ""
+                      : ""
                   }`}
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Prev
+                  
                 </button>
 
                 <span className="text-sm font-medium text-gray-700">
@@ -284,13 +280,13 @@ const ConsolidatedData = () => {
                 <button
                   onClick={handleNext}
                   disabled={currentPage === totalPages}
-                  className={`flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium transition ${
+                  className={`flex items-center gap-1  rounded-md text-sm font-medium transition ${
                     currentPage === totalPages
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-black text-white hover:bg-gray-800"
+                      ? ""
+                      : ""
                   }`}
                 >
-                  Next
+                  
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

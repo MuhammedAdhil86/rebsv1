@@ -210,7 +210,7 @@ const LogDetails = () => {
       width: 100,
       render: (val) => (
         <span
-          className={`px-2 py-1 rounded-full text-[12.5px] font-normal ${getStatusColor(val)}`}
+          className={`px-3 py-1 rounded-full text-[12.5px] font-normal ${getStatusColor(val)}`}
         >
           {val === "IN" ? "Login" : "Logout"}
         </span>
@@ -220,31 +220,32 @@ const LogDetails = () => {
 
   return (
     <>
-      <section className="bg-[#f9fafb] px-4 w-full max-w-[1280px] mx-auto rounded-xl font-[Poppins]">
-        {/* Search */}
+      <div className="flex-1 grid grid-cols-1 gap-4 px-4 pb-4 bg-[#f9fafb] rounded-xl w-full mx-auto font-[Poppins]">
+        {/* Header + Search */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
           <h3 className="text-base font-medium text-gray-800">Log Info</h3>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
             <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm w-full sm:w-auto">
-            <input
-  type="text"
-  placeholder="Search"
-  value={searchTerm}
-  onChange={(e) => setSearchTerm(e.target.value)}
-  className="bg-transparent text-gray-600 w-full focus:outline-none text-sm placeholder:text-[12px]"
-/>
-
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-transparent text-gray-600 w-full focus:outline-none text-sm placeholder:text-[12px]"
+              />
               <Search className="w-4 h-4 text-gray-400" />
             </div>
           </div>
         </div>
 
+        {/* Error */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
             {error}
           </div>
         )}
 
+        {/* Table or Loader */}
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin" />
@@ -257,8 +258,9 @@ const LogDetails = () => {
             className="rounded-lg shadow-sm"
           />
         )}
-      </section>
+      </div>
 
+      {/* Map Modal */}
       {mapModal && (
         <MapModal
           latitude={mapModal.latitude}
@@ -269,7 +271,7 @@ const LogDetails = () => {
         />
       )}
 
-      {/* Add marquee animation */}
+      {/* Marquee Animation */}
       <style>{`
         @keyframes marquee {
           0% { transform: translateX(0%); }
