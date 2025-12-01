@@ -12,6 +12,7 @@ import useEmployeeStore from "../store/employeeStore";
 // Tab components
 import PersonalInfoTab from "../components/profiledetailstabs/personal_info_tab.jsx";
 import AttachmentsTab from "../components/profiledetailstabs/attachment_tab.jsx";
+import Privilege from "../ui/privilages.jsx";
 
 // Axios instance
 import axiosInstance from "../service/axiosinstance.js";
@@ -61,7 +62,7 @@ export default function EmployeeProfile() {
     }
   };
 
-  // Delete Employee (NEW LOGIC)
+  // Delete Employee
   const handleDelete = async () => {
     if (!deleteReason.trim()) {
       toast.error("Please provide a reason for deletion");
@@ -69,7 +70,6 @@ export default function EmployeeProfile() {
     }
 
     try {
-      // EXACT working API: DELETE /staff/delete/:uuid with body
       await axiosInstance.delete(`/staff/delete/${selectedEmployee.uuid}`, {
         data: { reason: deleteReason },
         headers: { "Content-Type": "application/json" },
@@ -91,7 +91,7 @@ export default function EmployeeProfile() {
     { name: "Activities", icon: "solar:graph-outline" },
     { name: "Attachments", icon: "subway:pin" },
     { name: "Manage Shift", icon: "ic:twotone-manage-history" },
-    { name: "Privilege", icon: "carbon:ibm-knowledge-catalog-premium" },
+    { name: "Privilege", icon: "carbon:ibm-knowledge-catalog-premium" }, // Privilege tab
     { name: "Share", icon: "fluent:share-16-regular" },
   ];
 
@@ -225,6 +225,8 @@ export default function EmployeeProfile() {
               <PersonalInfoTab employee={selectedEmployee} />
             ) : activeTab === "Attachments" ? (
               <AttachmentsTab employee={selectedEmployee} />
+            ) : activeTab === "Privilege" ? (
+              <Privilege employee={selectedEmployee} />
             ) : (
               <div className="p-6 bg-white rounded-xl shadow-md text-gray-500">
                 {activeTab} content coming soon...

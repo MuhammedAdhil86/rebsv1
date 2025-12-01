@@ -155,7 +155,7 @@ export const getPrivilegeCompliance = "/compliance/allocated/get"
 export const allocateCompliance = "/compliance/allocate"
 export const allocateRoles = "/staff/updateusertype"
 export const editWorkHourPolicy = "/attendance-policy/update"
-
+export const getShifts = "/shifts/fetch"
 
 export const deleteLeavePolicy = "/leave-policy/delete/:id"
 export const deleteAllowance = "/allowance/delete/:id"
@@ -232,3 +232,4 @@ export const getDailyAttendance = "/admin/attendance/musterroll";
 
 // Consolidated Data
 export const getConsolidatedData = "/admin/staff/consolidated";
+
