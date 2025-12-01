@@ -9,7 +9,7 @@ import useEmployeeStore from "../store/employeeStore";
 import UniversalTable from "../ui/universal_table";
 import { MoreVertical } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
-
+import { Link } from "react-router-dom";
 const API_BASE_URL = "https://rebs-hr-cwhyx.ondigitalocean.app/";
 
 const TABS = [
@@ -368,9 +368,12 @@ function ManageEmployees() {
               {loading ? "Loading..." : `${filteredData.length} Total Employees`}
             </span>
             <div className="flex items-center space-x-3">
+
+            <Link to="/employeeonboarding">
               <button className="flex items-center bg-black hover:bg-gray-800 text-white px-3 py-2 rounded-lg text-sm">
                 <FiPlus className="w-4 h-4 mr-1" /> Add Employee
               </button>
+            </Link>
 
               {/* Dropdown */}
               {view === "table" && (

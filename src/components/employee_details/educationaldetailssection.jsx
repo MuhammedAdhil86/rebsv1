@@ -8,7 +8,7 @@ const EducationalDetailsSection = ({ employee }) => {
     <div className="bg-white p-4 rounded-xl shadow-sm border w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-800 text-[14px]">Educational Details</h3>
+        <h3 className="font-medium text-gray-800 text-[14px]">Educational Details</h3>
         <Icon
           icon="basil:edit-outline"
           className="w-5 h-5 text-gray-400 cursor-pointer"
@@ -24,7 +24,7 @@ const EducationalDetailsSection = ({ employee }) => {
             <div key={index} className="bg-white rounded-lg border p-2">
               {/* Education Header if multiple entries */}
               {educationData.length > 1 && (
-                <div className="text-[14px] font-semibold text-gray-800 mb-2 border-b border-gray-200 pb-1">
+                <div className="text-[14px] font-medium text-gray-800 mb-2 border-b border-gray-200 pb-1">
                   Education {index + 1}
                 </div>
               )}

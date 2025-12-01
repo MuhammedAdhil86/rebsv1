@@ -65,7 +65,7 @@ export default function BasicInfoSection() {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-800 text-[14px]">Basic Information</h3>
+        <h3 className="font-medium text-gray-800 text-[14px]">Basic Information</h3>
         <div className="flex items-center gap-2">
           {isEditing && (
             <button

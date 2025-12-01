@@ -101,7 +101,7 @@ function EmployeeTable({ employees, loading }) {
           {/* Body Table */}
           <div className="overflow-x-auto w-full">
             <table className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl">
-              <tbody className="text-gray-800 font-poppins text-[11px]">
+              <tbody className="text-gray-800 font-poppins text-[12px]">
                 {currentEmployees.length === 0 ? (
                   <tr className="border-b border-gray-300">
                     <td colSpan={6} className="text-center py-4 text-gray-500">
@@ -203,7 +203,7 @@ function EmployeeTable({ employees, loading }) {
                 {filteredEmployees.length > 0 && (
                   <tr>
                     <td colSpan={6}>
-                      <div className="flex flex-col sm:flex-row justify-between items-center gap-2 px-4 py-3 text-[12.5px] rounded-b-2xl">
+                      <div className="flex flex-col sm:flex-row justify-between items-center gap-2 px-4 py-3 text-[12px] rounded-b-2xl">
                         <span className="text-gray-500">
                           Showing {startIdx + 1}-{Math.min(endIdx, filteredEmployees.length)} of {filteredEmployees.length}
                         </span>

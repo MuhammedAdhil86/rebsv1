@@ -56,7 +56,7 @@ const StatCard = ({ title, value, icon, iconBg, bg }) => (
       <div className="text-[13px] text-gray-500 font-normal font-[Poppins]">
         {title}
       </div>
-      <div className="text-xl font-semibold text-gray-900">{value}</div>
+      <div className="text-xl font-medium text-gray-900">{value}</div>
     </div>
   </div>
 );
@@ -71,10 +71,10 @@ const PersonRow = ({ person }) => (
         className="w-7 h-7 rounded-full object-cover"
       />
       <div>
-        <div className="text-[15px] font-medium text-gray-800 font-[Poppins]">
+        <div className="text-[12px] font-medium text-gray-800 font-[Poppins]">
           {person.name}
         </div>
-        <div className="text-[11px] text-gray-500 font-[Poppins]">
+        <div className="text-[10px] text-gray-500 font-[Poppins]">
           {person.role}
         </div>
       </div>
@@ -87,7 +87,7 @@ const MorningShiftCard = () => (
   <div className="bg-white rounded-xl p-3 shadow-sm w-full max-w-[340px] mx-auto">
     <div className="flex justify-between items-start mb-2">
       <div>
-        <div className="text-base font-semibold text-gray-800">
+        <div className="text-base font-medium text-gray-800">
           Morning Shift
         </div>
       </div>
@@ -111,7 +111,7 @@ const MorningShiftCard = () => (
 const RegularShiftPolicyCard = () => (
   <div className="bg-white rounded-xl p-4 shadow-sm">
     <div className="flex justify-between items-center mb-4">
-      <div className="text-base font-semibold text-gray-800">
+      <div className="text-base font-medium text-gray-800">
         Regular Shift Policy Details
       </div>
       <button className="text-gray-400">
@@ -125,29 +125,29 @@ const RegularShiftPolicyCard = () => (
       </div>
       <div className="bg-gray-100 p-3 rounded-lg space-y-2">
         <div className="flex justify-between">
-          <span className="text-green-600 font-medium">IN</span>
-          <span className="font-medium text-gray-800">09:00 AM</span>
+          <span className="text-green-600  font-medium text-[12px]">IN</span>
+          <span className="font-medium text-[12px] text-gray-800">09:00 AM</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-red-500 font-medium">OUT</span>
-          <span className="font-medium text-gray-800">06:00 PM</span>
+          <span className="text-red-500 font-medium text-[12px]">OUT</span>
+          <span className="font-medium text-gray-800 text-[12px]">06:00 PM</span>
         </div>
       </div>
       <div className="flex justify-between">
-        <span className="text-gray-500">Break</span>
-        <span className="font-medium text-gray-800">01:00 PM - 01:30 PM</span>
+        <span className="text-gray-500 text-[12px]">Break</span>
+        <span className="font-medium text-gray-800 text-[12px]">01:00 PM - 01:30 PM</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-gray-500">Delay</span>
-        <span className="font-medium text-gray-800">09:01 AM</span>
+        <span className="text-gray-500 text-[12px]">Delay</span>
+        <span className="font-medium text-gray-800 text-[12px]">09:01 AM</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-yellow-600 font-medium">Late</span>
-        <span className="font-medium text-gray-800">10:01 PM</span>
+        <span className="text-yellow-600 font-medium text-[12px]">Late</span>
+        <span className="font-medium text-gray-800 text-[12px]">10:01 PM</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-red-500 font-medium">Half Day</span>
-        <span className="font-medium text-gray-800">12:01 PM</span>
+        <span className="text-red-500 font-medium text-[12px]">Half Day</span>
+        <span className="font-medium text-gray-800 text-[12px]">12:01 PM</span>
       </div>
     </div>
   </div>
@@ -165,40 +165,40 @@ const ShiftRulesCard = () => (
     </div>
 
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-normal pb-3 border-b border-gray-200 pt-5 font-[Poppins]">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] font-normal pb-3 border-b border-gray-200 pt-5 font-[Poppins]">
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
-          <span className="text-gray-600">Effective Date :</span>
-          <span className="text-gray-800">01 Jan 2025 - 31 Dec 2025</span>
+          <span className="text-gray-600 text-[12px]">Effective Date :</span>
+          <span className="text-gray-800 text-[12px]">01 Jan 2025 - 31 Dec 2025</span>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
-          <span className="text-gray-600">Regularization :</span>
-          <span className="text-gray-800">04 / Month</span>
+          <span className="text-gray-600 text-[12px]">Regularization :</span>
+          <span className="text-gray-800 text-[12px]">04 / Month</span>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
-          <span className="text-gray-600">Attendance Policy Count :</span>
-          <span className="text-gray-800">01 Policy</span>
+          <span className="text-gray-600 text-[12px]">Attendance Policy Count :</span>
+          <span className="text-gray-800 text-[12px]">01 Policy</span>
         </div>
       </div>
 
       <div className="space-y-2 pt-1 text-sm font-medium">
         <div className="grid grid-cols-3 items-center">
-          <span className="text-green-500">04</span>
-          <span className="text-green-500">Delay</span>
-          <span className="text-red-500">01 Half Day</span>
+          <span className="text-green-500 text-[12px]">04</span>
+          <span className="text-green-500 text-[12px]">Delay</span>
+          <span className="text-red-500 text-[12px]">01 Half Day</span>
         </div>
 
-        <div className="grid grid-cols-3 items-center">
+        <div className="grid grid-cols-3 items-center text-[12px]">
           <span className="text-orange-400">02</span>
           <span className="text-orange-400">Late</span>
           <span className="text-red-500">01 Half Day</span>
         </div>
 
-        <div className="grid grid-cols-3 items-center">
+        <div className="grid grid-cols-3 items-center text-[12px]">
           <span className="text-red-500">00</span>
           <span className="text-red-500">Half Day</span>
           <span className="text-red-500">01 Half Day</span>
@@ -252,7 +252,7 @@ const ShiftDonutChart = () => {
 
         {/* Center number remains "60" as in the image */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[20px] font-bold text-black">60</span>
+          <span className="text-[20px] font-medium text-black">60</span>
         </div>
       </div>
 
@@ -285,8 +285,8 @@ const ShiftRatioCard = () => {
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm">
-      <div className="text-sm font-semibold text-gray-800 mb-3">Shift Ratio</div>
-      <div className="text-lg font-bold text-gray-900 mb-3">
+      <div className="text-sm font-medium text-gray-800 mb-3">Shift Ratio</div>
+      <div className="text-lg font-medium text-gray-900 mb-3">
         {total} <span className="text-sm text-gray-500">Attendance</span>
       </div>
       <div className="h-2 w-full flex rounded-full overflow-hidden">

@@ -9,7 +9,7 @@ import {
 export const getBranchData = async () => {
   try {
     const response = await axiosInstance.get(getBranch);
-    console.log("branch details response:", response);
+
     return response.data.data;
   } catch (error) {
     console.error("Error fetching branch details:", error);
@@ -20,7 +20,7 @@ export const getBranchData = async () => {
 export const getDepartmentData = async () => {
   try {
     const response = await axiosInstance.get(getDepartment);
-    console.log("department details response:", response);
+
     return response.data.data;
   } catch (error) {
     console.error("Error fetching department details:", error);
@@ -31,7 +31,7 @@ export const getDepartmentData = async () => {
 export const getDesignationData = async () => {
   try {
     const response = await axiosInstance.get(getDesignations);
-    console.log("designations details response:", response);
+ 
     return response.data.data;
   } catch (error) {
     console.error("Error fetching designations details:", error);

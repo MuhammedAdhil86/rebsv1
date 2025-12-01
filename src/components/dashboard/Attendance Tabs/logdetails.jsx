@@ -117,6 +117,7 @@ const LogDetails = () => {
         return {
           id: att.id,
           name: att.name,
+          image: att.image, // <-- REQUIRED for real image
           device: att.location_info?.device || "Unknown",
           time: combinedDateTime
             ? dayjs(combinedDateTime).format("h:mm A, MMM D, YYYY")
@@ -145,12 +146,12 @@ const LogDetails = () => {
       label: "Name",
       key: "name",
       width: 180,
-      render: (val) => {
+      render: (val, row) => {
         const shortVal = val.length > 13 ? val.substring(0, 13) + "…" : val;
         return (
           <div className="flex items-center gap-2">
             <img
-              src={`https://i.pravatar.cc/40?u=${val}`}
+              src={row.image || "/default-user.png"}   // ✔️ ONLY CHANGE HERE
               alt={val}
               className="w-8 h-8 rounded-full object-cover border"
             />
@@ -221,8 +222,7 @@ const LogDetails = () => {
   return (
     <>
       <div className="flex-1 grid grid-cols-1 gap-4 px-4 pb-4 bg-[#f9fafb] rounded-xl w-full mx-auto font-[Poppins]">
-        {/* Header + Search */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ">
           <h3 className="text-base font-medium text-gray-800">Log Info</h3>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
             <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm w-full sm:w-auto">
@@ -238,14 +238,12 @@ const LogDetails = () => {
           </div>
         </div>
 
-        {/* Error */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
             {error}
           </div>
         )}
 
-        {/* Table or Loader */}
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin" />
@@ -260,7 +258,6 @@ const LogDetails = () => {
         )}
       </div>
 
-      {/* Map Modal */}
       {mapModal && (
         <MapModal
           latitude={mapModal.latitude}
@@ -271,7 +268,6 @@ const LogDetails = () => {
         />
       )}
 
-      {/* Marquee Animation */}
       <style>{`
         @keyframes marquee {
           0% { transform: translateX(0%); }
