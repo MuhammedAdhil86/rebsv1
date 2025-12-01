@@ -117,7 +117,7 @@ const LogDetails = () => {
         return {
           id: att.id,
           name: att.name,
-          image: att.image, // <-- REQUIRED for real image
+          image: att.image,
           device: att.location_info?.device || "Unknown",
           time: combinedDateTime
             ? dayjs(combinedDateTime).format("h:mm A, MMM D, YYYY")
@@ -150,11 +150,17 @@ const LogDetails = () => {
         const shortVal = val.length > 13 ? val.substring(0, 13) + "…" : val;
         return (
           <div className="flex items-center gap-2">
+            {/* ⭐ Dynamic Avatar Fallback (same UI, new feature) */}
             <img
-              src={row.image || "/default-user.png"}   // ✔️ ONLY CHANGE HERE
+              src={row.image || `https://i.pravatar.cc/40?u=${row.id}`}
               alt={val}
               className="w-8 h-8 rounded-full object-cover border"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = `https://i.pravatar.cc/40?u=${row.id}`;
+              }}
             />
+
             {val.length > 13 ? (
               <div className="overflow-hidden max-w-[140px]">
                 <div className="whitespace-nowrap hover:animate-marquee">{val}</div>
@@ -166,9 +172,11 @@ const LogDetails = () => {
         );
       },
     },
+
     { label: "Device", key: "device", width: 120 },
     { label: "Time", key: "time", width: 180 },
     { label: "Distance", key: "distance", width: 120 },
+
     {
       label: "Location",
       key: "location",
@@ -178,12 +186,15 @@ const LogDetails = () => {
         if (val.revealed) {
           if (val.loading)
             return <span className="text-gray-400 animate-pulse">Loading...</span>;
+
           const locText = val.text || "-";
+
           return (
             <div className="flex flex-col">
               <div className="overflow-hidden max-w-[180px]">
                 <div className="whitespace-nowrap hover:animate-marquee">{locText}</div>
               </div>
+
               <button
                 className="text-blue-600 underline mt-1"
                 onClick={() =>
@@ -198,20 +209,25 @@ const LogDetails = () => {
         return (
           <button
             className="text-blue-600 underline"
-            onClick={() => handleSeeLocation(val.att.id, val.latitude, val.longitude)}
+            onClick={() =>
+              handleSeeLocation(val.att.id, val.latitude, val.longitude)
+            }
           >
             See Location
           </button>
         );
       },
     },
+
     {
       label: "Status",
       key: "status",
       width: 100,
       render: (val) => (
         <span
-          className={`px-3 py-1 rounded-full text-[12.5px] font-normal ${getStatusColor(val)}`}
+          className={`px-3 py-1 rounded-full text-[12.5px] font-normal ${getStatusColor(
+            val
+          )}`}
         >
           {val === "IN" ? "Login" : "Logout"}
         </span>
@@ -224,6 +240,7 @@ const LogDetails = () => {
       <div className="flex-1 grid grid-cols-1 gap-4 px-4 pb-4 bg-[#f9fafb] rounded-xl w-full mx-auto font-[Poppins]">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ">
           <h3 className="text-base font-medium text-gray-800">Log Info</h3>
+
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
             <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm w-full sm:w-auto">
               <input

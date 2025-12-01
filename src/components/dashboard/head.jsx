@@ -49,7 +49,7 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
       {/* ---------------- HEADER ---------------- */}
       <div className="flex justify-between items-center w-full sm:px-6 pt-3 pb-3">
         <p className="text-sm text-gray-600">
-          Hi, <span className="font-semibold">{userName}</span>, welcome back!
+          Hi, <span className="font-medium">{userName}</span>, welcome back!
         </p>
         <div className="flex items-center gap-3">
           <button className="p-2 rounded-full hover:bg-gray-100">
@@ -127,7 +127,7 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
             {/* Text */}
             <div>
               <p className="text-gray-500 text-xs sm:text-sm">{card.label}</p>
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
+              <h2 className="text-lg sm:text-xl font-medium text-gray-800">
                 {card.value}
               </h2>
             </div>

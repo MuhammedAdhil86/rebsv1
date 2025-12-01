@@ -115,7 +115,7 @@ function EmployeeTable({ employees, loading }) {
                       {/* Name */}
                       <td
                         data-label="Employee"
-                        className="px-4 py-3 relative group border-b border-gray-300"
+                        className="px-4 py-3 relative group border-b border-[#f9fafb]"
                         style={{ width: colWidths[0] ? `${colWidths[0]}px` : "auto" }}
                         onMouseEnter={(e) => {
                           if (isTruncated(emp._nameRef)) {
@@ -148,7 +148,7 @@ function EmployeeTable({ employees, loading }) {
                       {/* Designation */}
                       <td
                         data-label="Designation"
-                        className="px-4 py-3 relative group border-b border-gray-300"
+                        className="px-4 py-3 relative group border-b border-[#f9fafb]"
                         style={{ width: colWidths[1] ? `${colWidths[1]}px` : "auto" }}
                         onMouseEnter={(e) => {
                           if (isTruncated(emp._desigRef)) {
@@ -165,22 +165,22 @@ function EmployeeTable({ employees, loading }) {
                       </td>
 
                       {/* Mobile */}
-                      <td className="px-4 py-3 truncate max-w-[120px] border-b border-gray-300" style={{ width: colWidths[2] }}>
+                      <td className="px-4 py-3 truncate max-w-[120px] border-b border-[#f9fafb]" style={{ width: colWidths[2] }}>
                         {emp.ph_no}
                       </td>
 
                       {/* Branch */}
-                      <td className="px-4 py-3 truncate max-w-[120px] border-b border-gray-300" style={{ width: colWidths[3] }}>
+                      <td className="px-4 py-3 truncate max-w-[120px] border-b border-[#f9fafb]" style={{ width: colWidths[3] }}>
                         {emp.branch?.String || "Head Office"}
                       </td>
 
                       {/* Shift */}
-                      <td className="px-4 py-3 border-b border-gray-300" style={{ width: colWidths[4] }}>
+                      <td className="px-4 py-3 border-b border-[#f9fafb]" style={{ width: colWidths[4] }}>
                         {emp.shift || "Day Shift"}
                       </td>
 
                       {/* Status */}
-                      <td className="px-4 py-3 border-b border-gray-300" style={{ width: colWidths[5] }}>
+                      <td className="px-4 py-3 border-b border-[#f9fafb]" style={{ width: colWidths[5] }}>
                         <span
                           className={`px-3 py-1 w-[85px] text-center rounded-full text-[12px] font-poppins ${
                             emp.status === "Online"

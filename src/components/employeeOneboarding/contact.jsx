@@ -71,7 +71,7 @@ const ContactInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
     <div className="bg-white p-4 rounded-xl shadow-sm border w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-800 text-[14px]">Contact Information</h3>
+        <h3 className="font-medium text-gray-800 text-[14px]">Contact Information</h3>
         <CommonUploadActions />
       </div>
 

@@ -13,7 +13,7 @@ const LabourWelfareFundTab = () => {
       </h3>
 
       {/* State Label */}
-      <p className="mt-3 text-[11px] font-semibold text-gray-600">Kerala</p>
+      <p className="mt-3 text-[11px] font-medium text-gray-600">Kerala</p>
 
       {/* Content */}
       <div className="mt-3 space-y-5 text-sm text-gray-700">

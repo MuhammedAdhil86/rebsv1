@@ -69,7 +69,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
         {/* Attendance Summary */}
         <div className="bg-white shadow rounded-xl p-4 border border-gray-100 w-full">
           <div className="flex items-baseline gap-1 mb-4">
-            <p className="text-2xl font-semibold text-[#1E2734]">{totalAttendance}</p>
+            <p className="text-2xl font-medium text-[#1E2734]">{totalAttendance}</p>
             <span className="text-sm text-gray-500">Attendance</span>
           </div>
 
@@ -107,7 +107,7 @@ function DashboardOverview({ ATTENDANCE_DATA, getWidth, CALENDAR_DAYS }) {
                       </span>
                       <div className="flex items-center gap-1 ">
                         <span className={`h-2.5 w-2.5 rounded-full ${item.color}`}></span>
-                        <span className="font-semibold text-[#1E2734]">{item.count}</span>
+                        <span className="font-medium text-[#1E2734]">{item.count}</span>
                       </div>
                     </div>
                   ))}

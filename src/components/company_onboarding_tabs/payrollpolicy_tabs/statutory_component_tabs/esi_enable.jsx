@@ -7,7 +7,7 @@ const EnableESI = ({ onEnable }) => {
       <div className="text-center max-w-xl mx-auto">
         
         {/* Heading */}
-        <h2 className="text-[20px] sm:text-[22px] font-semibold text-gray-900 mb-3">
+        <h2 className="text-[20px] sm:text-[22px] font-medium text-gray-900 mb-3">
           Is Your Organization ESI Compliant?
         </h2>
 

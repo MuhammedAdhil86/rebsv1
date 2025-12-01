@@ -298,12 +298,12 @@ const ShiftCalendar = ({ employees, days, selectedWeek }) => {
       <div className="w-full overflow-y-auto scrollbar-none rounded-xl shadow-sm">
         {/* Header */}
         <div className="grid grid-cols-[minmax(120px,_1fr)_repeat(7,_minmax(95px,_0.7fr))] text-[11px] bg-white sticky top-0 z-30 border-b">
-          <div className="p-2 font-semibold text-gray-600 flex items-center gap-1 border-r bg-white">
+          <div className="p-2 font-medium text-gray-600 flex items-center gap-1 border-r bg-white">
             <input type="checkbox" className="rounded scale-90" />
             Name
           </div>
           {visibleDays.map((day, idx) => (
-            <div key={`day-${startDay + idx}`} className="p-2 font-semibold text-gray-600 text-center border-r last:border-none bg-white">
+            <div key={`day-${startDay + idx}`} className="p-2 font-medium text-gray-600 text-center border-r last:border-none bg-white">
               {day}
             </div>
           ))}

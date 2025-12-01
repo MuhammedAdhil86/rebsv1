@@ -8,7 +8,6 @@ import ForgotPasswordUI from "../page/forgetpasssword";
 import OtpUi from "../page/otp";
 import NewPasswordUI from "../page/newpassword";
 import Dashboard from "../page/dashboard";
-import WorkFromHome from "../page/workfromhome";
 import Settings from "../page/settings";
 import LogPage from "../page/testpage";
 import ManageEmployees from "../page/manageemployee";
@@ -21,6 +20,7 @@ import ManageEmployeeShifts from "../page/manageemployeeshift";
 import OrganizationOnboarding from "../page/organizationonboarding";
 import Reports from "../page/resports";
 import JobCreation from "../page/jobcreation";
+import Requests from "../page/requests";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ element: Element }) => {
@@ -56,7 +56,7 @@ function AppRoutes() {
 <Route path="/onboarding" element={<ProtectedRoute element={OrganizationOnboarding} />} />
 <Route path="/reports" element={<ProtectedRoute element={Reports} />} />
 <Route path="/job" element={<ProtectedRoute element={JobCreation} />} />
-<Route path="/workfromhome" element={<ProtectedRoute element={WorkFromHome} />} />
+<Route path="/Requests" element={<ProtectedRoute element={Requests} />} />
 
       {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
 

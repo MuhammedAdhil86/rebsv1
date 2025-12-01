@@ -218,7 +218,7 @@ const WorkExperience = ({ goNextStep, goPrevStep, onStepComplete }) => {
                   >
                     <X className="w-4 h-4" />
                   </button>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-medium text-gray-900">
                     {exp.companyName}
                   </p>
                   <p className="text-xs text-gray-600">{exp.jobTitle}</p>

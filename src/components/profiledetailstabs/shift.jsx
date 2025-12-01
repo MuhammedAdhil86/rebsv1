@@ -138,7 +138,7 @@ const ShiftSidebar = ({ selectedDate, onClose, employeeId, fetchedPolicies, onSh
       {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-medium text-gray-900">
             {moment(selectedDate).format("MMMM D, YYYY")}
           </h3>
           <p className="text-sm text-gray-500">Manage shifts for this date</p>

@@ -91,7 +91,7 @@ function UniversalTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
                     <td
                       key={col.key}
                       data-label={col.label}
-                      className="px-4 py-4 truncate text-center align-middle relative text-[12px] border-b border-gray-300"
+                      className="px-4 py-4 truncate text-center align-middle relative text-[12px] border-b border-[#f9fafb]"
                       style={{
                         width: colWidths[colIdx]
                           ? `${colWidths[colIdx]}px`

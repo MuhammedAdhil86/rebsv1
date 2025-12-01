@@ -53,7 +53,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
       items: [
         { title: "Attendance", path: `/dashboard`, icon: icons.hr },
         {
-          title: "Muster Roll",
+          title: "Letter",
           path: userId ? `/u/${userId}/${userNameSlug}/musteroll` : "#",
           icon: icons.muster,
         },
@@ -81,8 +81,8 @@ function SideBar({ isCollapsed, toggleSidebar }) {
           icon: icons.manageEmployees,
         },
         {
-          title: "Work From Home",
-          path:  `/workfromhome` ,
+          title: "Requests",
+          path:  `/requests` ,
           icon: icons.workfromhome,
         },
       ],

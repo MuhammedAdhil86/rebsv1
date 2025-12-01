@@ -10,6 +10,7 @@ import UniversalTable from "../ui/universal_table";
 import { MoreVertical } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { Link } from "react-router-dom";
+
 const API_BASE_URL = "https://rebs-hr-cwhyx.ondigitalocean.app/";
 
 const TABS = [
@@ -48,7 +49,11 @@ function ManageEmployees() {
   const formatDate = (dateStr) => {
     if (!dateStr) return "N/A";
     const date = new Date(dateStr);
-    return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   const filteredData = employees
@@ -162,10 +167,14 @@ function ManageEmployees() {
     }
   };
 
+  // -----------------------------
+  // UPDATED CARD WITH FULL CLICK
+  // -----------------------------
   const renderEmployeeCard = (emp) => (
     <div
       key={emp.id}
-      className="bg-white rounded-2xl flex flex-col justify-between h-full transition hover:shadow-md p-4"
+      onClick={() => navigate(`/details/${emp.id}`)}
+      className="bg-white rounded-2xl flex flex-col justify-between h-full transition hover:shadow-md p-4 cursor-pointer"
     >
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center space-x-4">
@@ -175,18 +184,24 @@ function ManageEmployees() {
             className="w-14 h-14 rounded-full object-cover"
           />
         </div>
+
         <div className="flex items-center space-x-2">
           <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+            className={`px-3 py-1 rounded-full text-xs font-medium ${
               emp.is_active === true || emp.is_active === "true"
                 ? "bg-green-100 text-green-700"
                 : "bg-red-100 text-red-700"
             }`}
           >
-            {emp.is_active === true || emp.is_active === "true" ? "Active" : "Inactive"}
+            {emp.is_active ? "Active" : "Inactive"}
           </span>
+
+          {/* Button fixed with stopPropagation */}
           <button
-            onClick={() => navigate(`/details/${emp.id}`)}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/details/${emp.id}`);
+            }}
             className="p-2 rounded-full hover:bg-gray-100"
           >
             <FiMoreHorizontal className="w-5 h-5 text-gray-500" />
@@ -206,15 +221,20 @@ function ManageEmployees() {
           <span className="text-[10px] text-gray-700">Department</span>
           <span className="text-[10px] text-gray-700">Date of Joining</span>
         </div>
+
         <div className="flex justify-between">
-          <span className="text-[10px] font-medium text-black">{emp.department}</span>
-          <span className="text-[10px] font-medium text-black">{formatDate(emp.date_of_join)}</span>
+          <span className="text-[12px] font-medium text-black">{emp.department}</span>
+          <span className="text-[12px] font-medium text-black">
+            {formatDate(emp.date_of_join)}
+          </span>
         </div>
-        <div className="flex items-center space-x-2 text-[10px] text-black">
+
+        <div className="flex items-center space-x-2 text-[12px] text-black">
           <Icon icon="solar:phone-linear" className="text-black w-4 h-4" />
           <span>{emp.ph_no}</span>
         </div>
-        <div className="flex items-center space-x-2 text-[10px] text-black">
+
+        <div className="flex items-center space-x-2 text-[12px] text-black">
           <Icon icon="mage:email" className="text-black w-4 h-4" />
           <span>{emp.email}</span>
         </div>
@@ -239,7 +259,8 @@ function ManageEmployees() {
       key: "name",
       label: "Name",
       render: (_, row) => {
-        const fullName = `${row.first_name || ""} ${row.last_name || ""}`.trim() || "N/A";
+        const fullName =
+          `${row.first_name || ""} ${row.last_name || ""}`.trim() || "N/A";
         return (
           <div className="flex items-center gap-2" title={fullName}>
             <img
@@ -258,7 +279,10 @@ function ManageEmployees() {
       render: (_, row) => {
         const designation = row.designation || "N/A";
         return (
-          <div className="truncate max-w-[12ch] text-center mx-auto" title={designation}>
+          <div
+            className="truncate max-w-[12ch] text-center mx-auto"
+            title={designation}
+          >
             {designation}
           </div>
         );
@@ -275,7 +299,10 @@ function ManageEmployees() {
       render: (_, row) => {
         const department = row.department || "N/A";
         return (
-          <div className="truncate max-w-[16ch] text-center mx-auto" title={department}>
+          <div
+            className="truncate max-w-[16ch] text-center mx-auto"
+            title={department}
+          >
             {department}
           </div>
         );
@@ -287,7 +314,10 @@ function ManageEmployees() {
       render: (_, row) => {
         const branch = row.branch || "HeadOffice";
         return (
-          <div className="truncate max-w-[16ch] text-center mx-auto" title={branch}>
+          <div
+            className="truncate max-w-[16ch] text-center mx-auto"
+            title={branch}
+          >
             {branch}
           </div>
         );
@@ -309,7 +339,9 @@ function ManageEmployees() {
               : "bg-green-100 text-green-800"
           }`}
         >
-          {row.is_active === false || row.is_active === "false" ? "Inactive" : "Active"}
+          {row.is_active === false || row.is_active === "false"
+            ? "Inactive"
+            : "Active"}
         </span>
       ),
     },
@@ -330,16 +362,21 @@ function ManageEmployees() {
   return (
     <DashboardLayout>
       <Toaster position="top-right" reverseOrder={false} />
+
       <div className="h-full flex flex-col">
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
           {/* Header */}
-          <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-1">
-            <h1 className="text-xl font-semibold text-gray-800">Manage Employees</h1>
+          <div className="flex justify-between items-center  border-b border-gray-300 ">
+            <h1 className="text-xl font-medium text-gray-800">Manage Employees</h1>
             <div className="flex items-center space-x-4">
               <div className="w-8 h-8 flex items-center justify-center border rounded-full">
                 <FiBell className="w-5 h-5 text-gray-600" />
               </div>
-              <img src={avatar} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
+              <img
+                src={avatar}
+                alt="Profile"
+                className="w-8 h-8 rounded-full object-cover"
+              />
             </div>
           </div>
 
@@ -364,27 +401,28 @@ function ManageEmployees() {
 
           {/* Controls */}
           <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
-            <span className="text-gray-700 font-medium">
+            <span className="text-gray-700 font-medium text-[14px]">
               {loading ? "Loading..." : `${filteredData.length} Total Employees`}
             </span>
-            <div className="flex items-center space-x-3">
 
-            <Link to="/employeeonboarding">
-              <button className="flex items-center bg-black hover:bg-gray-800 text-white px-3 py-2 rounded-lg text-sm">
-                <FiPlus className="w-4 h-4 mr-1" /> Add Employee
-              </button>
-            </Link>
+            <div className="flex items-center space-x-3">
+              <Link to="/employeeonboarding">
+                <button className="flex items-center bg-black hover:bg-gray-800 text-white px-3 sm:px-4 py-2 rounded-lg text-[12px]">
+                  <FiPlus className="w-4 h-4 mr-1" /> Add Employee
+                </button>
+              </Link>
 
               {/* Dropdown */}
               {view === "table" && (
                 <div className="relative">
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center bg-gray-800 hover:bg-gray-900 text-white px-3 py-2 rounded-lg text-sm"
+                    className="flex items-center bg-gray-800 hover:bg-gray-900 text-white px-3 sm:px-4 py-2 rounded-lg text-[12px]"
                   >
                     Update Status
                     <ChevronDown size={16} className="ml-1" />
                   </button>
+
                   {isDropdownOpen && selectedRows.length > 0 && (
                     <div
                       ref={dropdownRef}
@@ -393,26 +431,31 @@ function ManageEmployees() {
                       <div className="py-1">
                         <button
                           onClick={handleAddPrivilege}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                          className="w-full text-left px-4 py-2 text-[12px] text-gray-700 hover:bg-gray-100 flex items-center"
                         >
-                          <Shield size={16} className="mr-2 text-gray-600" /> Add Privilege
+                          <Shield size={16} className="mr-2 text-gray-600" /> Add
+                          Privilege
                         </button>
                         <button
                           onClick={handleActivateUser}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                          className="w-full text-left px-4 py-2 text-[12px] text-gray-700 hover:bg-gray-100 flex items-center"
                         >
-                          <UserCheck size={16} className="mr-2 text-gray-600" /> Activate User
+                          <UserCheck size={16} className="mr-2 text-gray-600" /> Activate
+                          User
                         </button>
                         <button
                           onClick={handleDeactivateUser}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                          className="w-full text-left px-4 py-2 text-[12px] text-gray-700 hover:bg-gray-100 flex items-center"
                         >
-                          <UserX size={16} className="mr-2 text-gray-600" /> Deactivate User
+                          <UserX size={16} className="mr-2 text-gray-600" /> Deactivate
+                          User
                         </button>
+
                         <hr className="my-1 border-gray-200" />
+
                         <button
                           onClick={handleDelete}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"
+                          className="w-full text-left px-4 py-2 text-[12px] text-red-600 hover:bg-red-50 flex items-center"
                         >
                           <Trash2 size={16} className="mr-2 text-red-600" /> Delete User
                         </button>
@@ -422,10 +465,10 @@ function ManageEmployees() {
                 </div>
               )}
 
-              {/* View Toggle + Search */}
+              {/* View Toggle */}
               <div className="flex items-center bg-white rounded-lg border border-gray-200 shadow-sm p-1">
                 <button
-                  className={`px-4 py-1 rounded-md text-sm font-medium ${
+                  className={`px-3 sm:px-4 py-2 rounded-lg text-[12px] font-medium ${
                     view === "table"
                       ? "bg-gray-100 text-gray-800 shadow-sm"
                       : "text-gray-600 hover:text-gray-800"
@@ -434,8 +477,9 @@ function ManageEmployees() {
                 >
                   Table
                 </button>
+
                 <button
-                  className={`px-4 py-1 rounded-md text-sm font-medium ${
+                  className={`px-3 sm:px-4 py-2 rounded-lg text-[12px] font-medium ${
                     view === "card"
                       ? "bg-gray-100 text-gray-800 shadow-sm"
                       : "text-gray-600 hover:text-gray-800"
@@ -445,11 +489,13 @@ function ManageEmployees() {
                   Card
                 </button>
               </div>
+
+              {/* Search */}
               <div className="relative flex items-center">
                 <input
                   type="text"
                   placeholder="Search"
-                  className="border border-gray-300 rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="border border-gray-300 rounded-lg pl-8 pr-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-blue-400"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -458,7 +504,7 @@ function ManageEmployees() {
             </div>
           </div>
 
-          {/* Conditional Views */}
+          {/* Conditional View */}
           {view === "card" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {loading ? (
@@ -474,7 +520,6 @@ function ManageEmployees() {
               )}
             </div>
           ) : (
-            // ✅ UniversalTable integration for table view
             <UniversalTable columns={tableColumns} data={filteredData} rowsPerPage={6} />
           )}
         </div>

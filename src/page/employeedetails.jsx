@@ -125,7 +125,7 @@ export default function EmployeeProfile() {
         </header>
 
         {/* Layout */}
-        <div className="flex gap-3 p-1 min-h-[700px]">
+        <div className="flex gap-3 p-3">
           {/* Sidebar */}
           <aside className="sticky top-4 self-start h-fit w-60 bg-white border rounded-2xl p-6 flex flex-col items-center shadow-sm relative">
             <span
@@ -152,7 +152,7 @@ export default function EmployeeProfile() {
               />
             </div>
 
-            <h2 className="text-sm font-semibold text-gray-800 text-center">
+            <h2 className="text-sm font-medium text-gray-800 text-center">
               {selectedEmployee?.first_name} {selectedEmployee?.last_name}
             </h2>
             <p className="text-[14px] text-gray-500 mb-6">
@@ -198,7 +198,7 @@ export default function EmployeeProfile() {
           <main className="flex-1 overflow-y-auto max-h-[85vh] pr-2 scrollbar-none">
             {activeTab === "Activities" ? (
               <div className="p-6 bg-white rounded-xl shadow-md flex flex-col items-start gap-4">
-                <h2 className="text-lg font-semibold">Update Status</h2>
+                <h2 className="text-lg font-medium">Update Status</h2>
                 <p>
                   Current Status:{" "}
                   <span className={isActive ? "text-green-600" : "text-red-600"}>
@@ -245,7 +245,7 @@ export default function EmployeeProfile() {
               >
                 <X size={18} />
               </button>
-              <h2 className="text-lg font-semibold mb-2 text-gray-800">
+              <h2 className="text-lg font-medium mb-2 text-gray-800">
                 Confirm Deletion
               </h2>
               <p className="text-sm text-gray-600 mb-4">

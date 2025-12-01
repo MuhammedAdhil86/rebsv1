@@ -33,7 +33,7 @@ const Header = ({ pageTitle, tabs, activeTab, onTabChange, onTabNavigate }) => {
           </div>
         ) : (
           <div className="flex items-center gap-1">
-            <h2 className="text-lg 4xl:text-xl text-black font-poppins font-semibold 4xl:font-bold">
+            <h2 className="text-lg 4xl:text-xl text-black font-poppins font-medium 4xl:font-bold">
               Hi,
             </h2>
             <h2 className="text-base 4xl:text-lg text-gray-600 font-poppins font-medium">

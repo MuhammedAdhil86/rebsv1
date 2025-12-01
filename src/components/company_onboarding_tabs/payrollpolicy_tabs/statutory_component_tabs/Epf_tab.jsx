@@ -5,7 +5,7 @@ import { Icon } from "@iconify/react";
 const EpfTab = ({ onDisable }) => {
   return (
     <div className="rounded-xl">
-      <h2 className="font-semibold text-gray-800 mb-4 text-[14px]">
+      <h2 className="font-medium text-gray-800 mb-4 text-[14px]">
         Employee’s Provident Fund
       </h2>
 

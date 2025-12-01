@@ -5,7 +5,7 @@ function LogTable({ logs }) {
   return (
     <section className="bg-white rounded-2xl overflow-x-auto shadow">
       <div className="flex justify-between items-center p-4 border-b border-gray-200">
-        <h3 className="text-xl font-semibold">Log Info</h3>
+        <h3 className="text-xl font-medium">Log Info</h3>
         <div className="flex items-center gap-1 border px-2 py-1 rounded-lg bg-gray-100 text-xs">
           <input
             type="text"

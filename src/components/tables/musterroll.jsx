@@ -197,7 +197,7 @@ function MusterRoll() {
       </div>
 
       {/* TABLE */}
-      <div className={`overflow-x-auto  scrollbar-none rounded-lg shadow-sm bg-white ${isFullView ? "w-[1080px]" : "w-full"}`}>
+      <div className={`overflow-x-auto scrollbar-none rounded-lg shadow-sm bg-white ${isFullView ? "w-[1080px]" : "w-full"}`}>
         <table className="min-w-full text-sm border-collapse">
           <thead className="bg-white text-gray-500 text-xs uppercase">
             <tr>
@@ -224,47 +224,52 @@ function MusterRoll() {
 
                 {/* NAME CELL */}
                 <td className="px-4 py-3 sticky left-0 bg-white text-left w-40 sm:w-56 border-r flex items-center gap-3 h-[105px]">
+
+                  {/* ⭐ Dynamic Avatar Fallback ADDED HERE */}
                   <img
-                    src={emp.image}
+                    src={emp.image || `https://i.pravatar.cc/40?img=${idx + 1}`}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://i.pravatar.cc/40?img=${idx + 1}`;
+                    }}
                     className="w-10 h-10 rounded-full"
                     alt={emp.user_name}
                   />
+
                   <div>
                     <p className="font-medium text-[13px]">{emp.user_name}</p>
                   </div>
                 </td>
 
-{/* DATE CELLS */}
-{emp.attendance.slice(0, visibleDates).map((d, i) => (
-  <td
-    key={i}
-    className={`border-r border-gray-100 ${
-      isFullView
-        ? "min-w-[120px] h-[120px]" // bigger width and height for full view
-        : "min-w-[100px] h-[100px]" // original for 7 days view
-    }`}
-  >
-    <div className="flex flex-col items-center justify-center h-full space-y-1.5">
-      <span
-        className={`px-3 py-0.5 rounded text-[10px] tracking-wider ${getStatusClasses(
-          d.status
-        )}`}
-      >
-        {d.status === "EARLY CHECK-IN" ? "EARLY" : d.status}
-      </span>
+                {/* DATE CELLS */}
+                {emp.attendance.slice(0, visibleDates).map((d, i) => (
+                  <td
+                    key={i}
+                    className={`border-r border-gray-100 ${
+                      isFullView
+                        ? "min-w-[120px] h-[120px]"
+                        : "min-w-[100px] h-[100px]"
+                    }`}
+                  >
+                    <div className="flex flex-col items-center justify-center h-full space-y-1.5">
+                      <span
+                        className={`px-3 py-0.5 rounded text-[10px] tracking-wider ${getStatusClasses(
+                          d.status
+                        )}`}
+                      >
+                        {d.status === "EARLY CHECK-IN" ? "EARLY" : d.status}
+                      </span>
 
-      <span className="text-[10px] font-light text-gray-900">
-        Work hours
-      </span>
+                      <span className="text-[10px] font-light text-gray-900">
+                        Work hours
+                      </span>
 
-      <span className="font-light bg-[#F4F6F8] rounded-md px-3 py-1 text-xs">
-        {d.total_hour}
-      </span>
-    </div>
-  </td>
-))}
-
-
+                      <span className="font-light bg-[#F4F6F8] rounded-md px-3 py-1 text-xs">
+                        {d.total_hour}
+                      </span>
+                    </div>
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>
@@ -275,7 +280,7 @@ function MusterRoll() {
       <div className="flex justify-end mt-2">
         {visibleDates < 31 ? (
           <button
-            onClick={() => setVisibleDates(31)}
+            onClick={() => setVisibleNames(31)}
             className="px-3 py-1 bg-gray-800 text-white rounded-md text-xs"
           >
             Show All Days

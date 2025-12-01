@@ -7,7 +7,7 @@ const EsiTab = ({ onDisable }) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 font-[Poppins] text-[13px] text-gray-700">
       
-      <h2 className="text-[14px] font-semibold mb-4">Employee's State Insurance</h2>
+      <h2 className="text-[14px] font-medium mb-4">Employee's State Insurance</h2>
 
       <div className="space-y-3">
         <div className="flex gap-16">

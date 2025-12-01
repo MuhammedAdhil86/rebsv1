@@ -186,7 +186,7 @@ const EducationalDetails = ({ goNextStep, goPrevStep, onStepComplete }) => {
                 key={edu.id}
                 className="bg-white rounded-lg shadow-sm p-4 border border-gray-200"
               >
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-medium text-gray-900">
                   {edu.institutionName}
                 </p>
                 <p className="text-xs text-gray-600">{edu.specialization}</p>

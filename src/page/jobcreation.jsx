@@ -45,7 +45,7 @@ const JobCreation = () => {
     <DashboardLayout userName="Admin" onLogout={() => alert("Logout")}>
       {/* Header */}
       <div className="bg-white flex justify-between items-center flex-wrap gap-4 p-3 mb-2">
-        <h1 className="text-[15px] font-semibold text-gray-800">Job Creation</h1>
+        <h1 className="text-[15px] font-medium text-gray-800">Job Creation</h1>
         <div className="flex items-center gap-3 flex-wrap">
           <div className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-300">
             <FiBell className="text-gray-600 text-lg" />
@@ -66,7 +66,7 @@ const JobCreation = () => {
             {/* Upload Vacancy Poster */}
             <div className="flex items-center justify-between rounded-xl px-5 py-5 bg-[#f9fafb]">
               <div className="flex-1">
-                <h3 className="text-[13px] font-semibold text-gray-800">Upload Vacancy Poster</h3>
+                <h3 className="text-[13px] font-medium text-gray-800">Upload Vacancy Poster</h3>
                 <p className="text-[10px] text-gray-500 mt-1">
                   Ensure the poster includes all necessary details such as job title, description,
                   qualifications, and application deadline.
