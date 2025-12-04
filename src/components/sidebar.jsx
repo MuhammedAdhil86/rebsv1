@@ -19,7 +19,11 @@ function SideBar({ isCollapsed, toggleSidebar }) {
   const displayName =
     `${firstName} ${lastName}`.trim() || user?.name || "Admin";
 
-  const avatarUrl = user?.image || "/assets/img/avatar.svg";
+  // ✅ ONLY CHANGE REQUESTED: online avatar fallback
+  const avatarUrl =
+    user?.image && user.image.trim() !== ""
+      ? user.image
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
 
   const userId = user?.id || "";
   const userNameSlug = user
@@ -82,7 +86,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
         },
         {
           title: "Requests",
-          path:  `/requests` ,
+          path: `/requests`,
           icon: icons.workfromhome,
         },
       ],
@@ -107,12 +111,14 @@ function SideBar({ isCollapsed, toggleSidebar }) {
       items: [
         {
           title: "Job Creation",
-          path: '/job',
+          path: "/job",
           icon: icons.Hiring,
         },
         {
           title: "Interview Process",
-          path: userId ? `/u/${userId}/${userNameSlug}/interviewprocess` : "#",
+          path: userId
+            ? `/u/${userId}/${userNameSlug}/interviewprocess`
+            : "#",
           icon: icons.interview,
         },
       ],
@@ -169,20 +175,18 @@ function SideBar({ isCollapsed, toggleSidebar }) {
           </button>
         </div>
 
-        {/* Profile Section - always show avatar */}
+        {/* Profile Section */}
         <div className="mt-1 flex flex-col items-center">
           <div
             onClick={toggleProfile}
             className={`flex items-center justify-center rounded-lg transition-colors duration-300 cursor-pointer
               ${isCollapsed ? "w-12 h-12" : "w-[90%] px-4 h-14"}
-              ${!isCollapsed && (isProfileOpen ? "bg-gray-600" : "bg-gray-800 hover:bg-gray-600")}`}
+              ${
+                !isCollapsed &&
+                (isProfileOpen ? "bg-gray-600" : "bg-gray-800 hover:bg-gray-600")
+              }`}
           >
-            {/* Avatar always visible */}
-            <img
-              src={avatarUrl}
-              alt="Avatar"
-              className="w-8 h-8 rounded-full"
-            />
+            <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full" />
             {!isCollapsed && (
               <div className="flex-1 text-left ml-3">
                 <span className="block text-sm">{displayName}</span>
@@ -195,7 +199,9 @@ function SideBar({ isCollapsed, toggleSidebar }) {
               <div className="ml-2 transition-transform duration-300">
                 <Icon
                   icon="mdi:chevron-down"
-                  className={`w-5 h-5 text-gray-400 ${isProfileOpen ? "rotate-180" : ""}`}
+                  className={`w-5 h-5 text-gray-400 ${
+                    isProfileOpen ? "rotate-180" : ""
+                  }`}
                 />
               </div>
             )}
@@ -223,7 +229,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
           )}
         </div>
 
-        {/* Sidebar Menu — scrollable with hidden scrollbar */}
+        {/* Sidebar Menu */}
         <nav className="flex-1 flex flex-col justify-start mt-7 overflow-y-auto scrollbar-hide">
           {menuItems.map((menu, index) => (
             <div key={index} className="px-4 mb-2 space-y-2">
@@ -255,7 +261,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
           ))}
         </nav>
 
-        {/* CSS for hiding scrollbar */}
+        {/* Hide Scrollbar */}
         <style>{`
           .scrollbar-hide::-webkit-scrollbar {
             display: none;

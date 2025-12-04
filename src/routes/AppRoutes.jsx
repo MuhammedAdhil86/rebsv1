@@ -21,6 +21,7 @@ import OrganizationOnboarding from "../page/organizationonboarding";
 import Reports from "../page/resports";
 import JobCreation from "../page/jobcreation";
 import Requests from "../page/requests";
+import EmployeeCalendar from "../page/activitycalander";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ element: Element }) => {
@@ -57,6 +58,7 @@ function AppRoutes() {
 <Route path="/reports" element={<ProtectedRoute element={Reports} />} />
 <Route path="/job" element={<ProtectedRoute element={JobCreation} />} />
 <Route path="/Requests" element={<ProtectedRoute element={Requests} />} />
+<Route path="/activity" element={<ProtectedRoute element={EmployeeCalendar} />} />
 
       {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
 

@@ -210,35 +210,36 @@ function ManageEmployees() {
       </div>
 
       <div>
-        <h3 className="text-[12px] font-semibold text-gray-800">
+        <h3 className="text-[12px] font-medium text-gray-800">
           {emp.first_name} {emp.last_name}
         </h3>
         <p className="text-[10px] text-gray-500">{emp.designation}</p>
       </div>
+<div className="flex flex-col space-y-1 text-gray-600 bg-gray-100 p-3 rounded-lg mt-2">
+  <div className="flex justify-between">
+    <span className="text-[10px] text-gray-700">Department</span>
+    <span className="text-[10px] text-gray-700">Date of Joining</span>
+  </div>
 
-      <div className="flex flex-col space-y-2 text-gray-600 bg-gray-100 p-3 rounded-lg mt-2">
-        <div className="flex justify-between">
-          <span className="text-[10px] text-gray-700">Department</span>
-          <span className="text-[10px] text-gray-700">Date of Joining</span>
-        </div>
+  <div className="flex justify-between">
+    <span className="text-[12px]  text-black">{emp.department}</span>
+    <span className="text-[12px]  text-black">
+      {formatDate(emp.date_of_join)}
+    </span>
+  </div>
 
-        <div className="flex justify-between">
-          <span className="text-[12px] font-medium text-black">{emp.department}</span>
-          <span className="text-[12px] font-medium text-black">
-            {formatDate(emp.date_of_join)}
-          </span>
-        </div>
+  {/* Increased gap STARTS here */}
+  <div className="flex items-center space-x-2 text-[12px] text-black mt-2">
+    <Icon icon="solar:phone-linear" className="text-black w-4 h-4" />
+    <span>{emp.ph_no}</span>
+  </div>
 
-        <div className="flex items-center space-x-2 text-[12px] text-black">
-          <Icon icon="solar:phone-linear" className="text-black w-4 h-4" />
-          <span>{emp.ph_no}</span>
-        </div>
+  <div className="flex items-center space-x-2 text-[12px] text-black">
+    <Icon icon="mage:email" className="text-black w-4 h-4" />
+    <span>{emp.email}</span>
+  </div>
+</div>
 
-        <div className="flex items-center space-x-2 text-[12px] text-black">
-          <Icon icon="mage:email" className="text-black w-4 h-4" />
-          <span>{emp.email}</span>
-        </div>
-      </div>
     </div>
   );
 

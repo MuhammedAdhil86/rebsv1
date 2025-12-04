@@ -283,3 +283,27 @@ export const addShift = async (shiftData, user_id, start_date, end_date) => {
     throw error;
   }
 };
+
+
+export const fetchTimeline = async (month, year, user_id) => {
+  try {
+    const response = await axiosInstance.get(`/admin/staff/activity/timeline/${month}/${year}/${user_id}`);
+    console.log("timeline activity response:", response);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching timeline activity:", error);
+    throw error;
+  }
+};
+
+
+export const fetchPieChart = async (month, year, user_id) => {
+  try {
+    const response = await axiosInstance.get(`/admin/staff/evaluation/${month}/${year}/${user_id}`);
+    console.log("piechart activity response:", response);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching piechart activity:", error);
+    throw error;
+  }
+};

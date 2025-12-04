@@ -6,6 +6,9 @@ const axiosInstance = axios.create({
   timeout: 15000,
 });
 
+// ⭐ Attach ngrok URL manually (without touching interceptors)
+axiosInstance.baseURL2 = "https://agnostically-bonniest-patrice.ngrok-free.dev/";
+
 // Attach token to requests
 axiosInstance.interceptors.request.use(
   (config) => {

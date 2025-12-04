@@ -6,15 +6,15 @@ import DashboardLayout from "../ui/pagelayout";
 import avatar from "../assets/img/avatar.svg";
 import toast, { Toaster } from "react-hot-toast";
 
-// Zustand store
+// Zustand Store
 import useEmployeeStore from "../store/employeeStore";
 
-// Tab components
+// Tabs
 import PersonalInfoTab from "../components/profiledetailstabs/personal_info_tab.jsx";
 import AttachmentsTab from "../components/profiledetailstabs/attachment_tab.jsx";
 import Privilege from "../ui/privilages.jsx";
+import SettingsTab from "../components/profiledetailstabs/settings_tab.jsx";
 
-// Axios instance
 import axiosInstance from "../service/axiosinstance.js";
 
 export default function EmployeeProfile() {
@@ -28,21 +28,23 @@ export default function EmployeeProfile() {
 
   const { selectedEmployee, fetchEmployeeById } = useEmployeeStore();
 
-  // Fetch employee data on mount
+  // Fetch employee on page load
   useEffect(() => {
-    if (id) fetchEmployeeById(id).catch((err) => console.error(err));
+    if (id) fetchEmployeeById(id);
   }, [id, fetchEmployeeById]);
 
+  // ⭐ BACKEND STATUS VALUE
   const isActive =
     selectedEmployee?.is_active === true ||
     selectedEmployee?.is_active === "true";
 
-  // Toggle activation/deactivation
+  // ⭐ ACTIVATE / DEACTIVATE
   const toggleStatus = async () => {
     if (!selectedEmployee?.uuid) return;
 
     try {
       setStatusUpdating(true);
+
       const newStatus = !isActive;
 
       await axiosInstance.put(
@@ -55,14 +57,14 @@ export default function EmployeeProfile() {
 
       await fetchEmployeeById(selectedEmployee.id);
     } catch (err) {
-      toast.error(`Status update failed`);
+      toast.error("Status update failed");
       console.error(err);
     } finally {
       setStatusUpdating(false);
     }
   };
 
-  // Delete Employee
+  // ⭐ DELETE USER
   const handleDelete = async () => {
     if (!deleteReason.trim()) {
       toast.error("Please provide a reason for deletion");
@@ -75,14 +77,14 @@ export default function EmployeeProfile() {
         headers: { "Content-Type": "application/json" },
       });
 
-      toast.success("Employee deleted successfully!", { duration: 3000 });
+      toast.success("Employee deleted successfully");
 
       setShowDeleteModal(false);
 
-      setTimeout(() => navigate("/manageemployee"), 3000);
+      setTimeout(() => navigate("/manageemployee"), 1500);
     } catch (err) {
       toast.error("Failed to delete employee");
-      console.error("DELETE ERROR:", err);
+      console.error(err);
     }
   };
 
@@ -91,15 +93,17 @@ export default function EmployeeProfile() {
     { name: "Activities", icon: "solar:graph-outline" },
     { name: "Attachments", icon: "subway:pin" },
     { name: "Manage Shift", icon: "ic:twotone-manage-history" },
-    { name: "Privilege", icon: "carbon:ibm-knowledge-catalog-premium" }, // Privilege tab
+    { name: "Privilege", icon: "carbon:ibm-knowledge-catalog-premium" },
     { name: "Share", icon: "fluent:share-16-regular" },
+    { name: "Settings", icon: "solar:settings-linear" },
   ];
 
   return (
     <DashboardLayout userName={selectedEmployee?.first_name || "Employee"}>
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster position="top-right" />
 
       <div className="bg-[#f9fafb] min-h-screen">
+        
         {/* Header */}
         <header className="flex items-center justify-between bg-white px-6 py-3 border-b shadow-sm rounded-xl mb-4">
           <div className="flex items-center gap-3">
@@ -112,13 +116,14 @@ export default function EmployeeProfile() {
             </button>
             <h1 className="text-lg text-gray-800">Employee Profile</h1>
           </div>
+
           <div className="flex items-center gap-4">
             <button className="p-2 rounded-full hover:bg-gray-100">
               <Bell size={20} className="text-gray-600" />
             </button>
             <img
-              src={selectedEmployee?.profile_image || avatar}
-              alt="User Avatar"
+              src={selectedEmployee?.image || avatar}
+              alt="Avatar"
               className="w-8 h-8 rounded-full border object-cover"
             />
           </div>
@@ -126,8 +131,10 @@ export default function EmployeeProfile() {
 
         {/* Layout */}
         <div className="flex gap-3 p-3">
+
           {/* Sidebar */}
-          <aside className="sticky top-4 self-start h-fit w-60 bg-white border rounded-2xl p-6 flex flex-col items-center shadow-sm relative">
+          <aside className="sticky top-4 w-60 bg-white border rounded-2xl p-6 flex flex-col items-center shadow-sm relative">
+            
             <span
               className={`absolute top-2 right-2 px-2 py-1 text-xs rounded flex items-center gap-1 ${
                 isActive
@@ -143,11 +150,9 @@ export default function EmployeeProfile() {
               {isActive ? "Active" : "Deactivated"}
             </span>
 
-            {/* Avatar */}
             <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border mt-4">
               <img
                 src={selectedEmployee?.image || avatar}
-                alt="Employee Avatar"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -155,17 +160,29 @@ export default function EmployeeProfile() {
             <h2 className="text-sm font-medium text-gray-800 text-center">
               {selectedEmployee?.first_name} {selectedEmployee?.last_name}
             </h2>
+
             <p className="text-[14px] text-gray-500 mb-6">
-              {selectedEmployee?.email || "-"}
+              {selectedEmployee?.email}
             </p>
 
-            {/* Tabs */}
             <div className="w-full mt-6 space-y-2 text-[14px]">
               {sidebarTabs.map((tab) => (
                 <button
                   key={tab.name}
-                  onClick={() => setActiveTab(tab.name)}
-                  className={`flex items-center gap-2 w-full text-left px-4 py-2 rounded-md transition-colors ${
+                  onClick={() => {
+                    if (tab.name === "Activities") {
+                      navigate("/activity", {
+                        state: {
+                          employee: selectedEmployee,
+                          employeeId: selectedEmployee?.id,
+                          employeeUUID: selectedEmployee?.uuid,
+                        },
+                      });
+                    } else {
+                      setActiveTab(tab.name);
+                    }
+                  }}
+                  className={`flex items-center gap-2 w-full text-left px-4 py-2 rounded-md ${
                     activeTab === tab.name
                       ? "bg-[#181818] text-white"
                       : "text-black hover:bg-gray-100"
@@ -173,23 +190,21 @@ export default function EmployeeProfile() {
                 >
                   <Icon
                     icon={tab.icon}
-                    width="18"
-                    height="18"
                     className={`${
                       activeTab === tab.name ? "text-white" : "text-gray-600"
                     }`}
+                    width="18"
                   />
                   <span>{tab.name}</span>
                 </button>
               ))}
 
-              {/* Delete */}
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="flex items-center gap-2 w-full text-left px-4 py-2 rounded-md text-red-500 hover:bg-red-50"
+                className="flex items-center gap-2 w-full px-4 py-2 text-red-500 hover:bg-red-50 rounded-md"
               >
-                <Icon icon="fluent:delete-20-regular" width="18" height="18" />
-                <span>Delete User</span>
+                <Icon icon="fluent:delete-20-regular" width="18" />
+                Delete User
               </button>
             </div>
           </aside>
@@ -197,14 +212,18 @@ export default function EmployeeProfile() {
           {/* Main Content */}
           <main className="flex-1 overflow-y-auto max-h-[85vh] pr-2 scrollbar-none">
             {activeTab === "Activities" ? (
-              <div className="p-6 bg-white rounded-xl shadow-md flex flex-col items-start gap-4">
+              <div className="p-6 bg-white rounded-xl shadow-md flex flex-col gap-4">
                 <h2 className="text-lg font-medium">Update Status</h2>
+
                 <p>
                   Current Status:{" "}
-                  <span className={isActive ? "text-green-600" : "text-red-600"}>
+                  <span
+                    className={isActive ? "text-green-600" : "text-red-600"}
+                  >
                     {isActive ? "Active" : "Deactivated"}
                   </span>
                 </p>
+
                 <button
                   onClick={toggleStatus}
                   disabled={statusUpdating}
@@ -227,6 +246,8 @@ export default function EmployeeProfile() {
               <AttachmentsTab employee={selectedEmployee} />
             ) : activeTab === "Privilege" ? (
               <Privilege employee={selectedEmployee} />
+            ) : activeTab === "Settings" ? (
+              <SettingsTab employee={selectedEmployee} />
             ) : (
               <div className="p-6 bg-white rounded-xl shadow-md text-gray-500">
                 {activeTab} content coming soon...
@@ -245,12 +266,12 @@ export default function EmployeeProfile() {
               >
                 <X size={18} />
               </button>
-              <h2 className="text-lg font-medium mb-2 text-gray-800">
-                Confirm Deletion
-              </h2>
+
+              <h2 className="text-lg font-medium mb-2">Confirm Deletion</h2>
               <p className="text-sm text-gray-600 mb-4">
                 Please enter a reason for deleting this employee.
               </p>
+
               <textarea
                 className="w-full border rounded-md p-2 text-sm mb-4"
                 rows={3}
@@ -258,6 +279,7 @@ export default function EmployeeProfile() {
                 value={deleteReason}
                 onChange={(e) => setDeleteReason(e.target.value)}
               ></textarea>
+
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowDeleteModal(false)}
@@ -265,6 +287,7 @@ export default function EmployeeProfile() {
                 >
                   Cancel
                 </button>
+
                 <button
                   onClick={handleDelete}
                   className="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700"

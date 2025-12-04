@@ -411,3 +411,30 @@ export const fetchEmployeeCalendar = async (month, year) => {
     return [];
   }
 };
+
+export const fetchEmployeeWorkHours = async (user_id, dateRange) => {
+  try {
+    const response = await axiosInstance.post(
+      `/admin/staff/daterange/workhours/${user_id}`,
+      dateRange
+    );
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching Employee Work Hour:", error.message);
+    throw error;
+  }
+};
+
+
+export const editWorkHours = async (user_id, date, data) => {
+  try {
+    const response = await axiosInstance.put(
+      `/admin/staff/attendance/regularize/${user_id}/${date}`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating regularisation:", error);
+    throw error;
+  }
+};
