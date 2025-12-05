@@ -300,7 +300,7 @@ export const fetchTimeline = async (month, year, user_id) => {
 export const fetchPieChart = async (month, year, user_id) => {
   try {
     const response = await axiosInstance.get(`/admin/staff/evaluation/${month}/${year}/${user_id}`);
-    console.log("piechart activity response:", response);
+
     return response.data.data;
   } catch (error) {
     console.error("Error fetching piechart activity:", error);

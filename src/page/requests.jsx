@@ -2,53 +2,14 @@ import React, { useState } from "react";
 import { FiBell } from "react-icons/fi";
 import DashboardLayout from "../ui/pagelayout";
 import WfhTab from "../components/requests_tab/wtf_tab";
+import RegularizationTab from "../components/requests_tab/regularization_tab";  // <-- added
 
 function Requests() {
   const [activeTab, setActiveTab] = useState("wfh");
 
-  const requests = {
-    recent: [
-      {
-        name: "Greeshma r",
-        status: "Pending",
-        reason:
-          "Due to minor health issues, I would like to request permission to work from home for the day to ensure productivity while also recovering",
-        start: "25/09/2024",
-        end: "25/09/2024",
-      },
-      {
-        name: "Gokul S",
-        status: "Pending",
-        reason:
-          "Due to minor health issues, I would like to request permission to work from home for the day to ensure productivity while also recovering",
-        start: "25/09/2024",
-        end: "26/09/2024",
-      },
-    ],
-    approved: [
-      {
-        name: "Aleona Eldhose",
-        status: "Approved",
-        reason:
-          "Due to minor health issues, I would like to request permission to work from home for the day to ensure productivity while also recovering",
-        start: "25/09/2024",
-        end: "25/09/2024",
-      },
-    ],
-    rejected: [
-      {
-        name: "Rohith E R",
-        status: "Rejected",
-        reason:
-          "Due to minor health issues, I would like to request permission to work from home for the day to ensure productivity while also recovering",
-        start: "23/09/2024",
-        end: "25/09/2024",
-      },
-    ],
-  };
-
   return (
     <DashboardLayout userName="Admin" onLogout={() => {}}>
+      
       {/* Header */}
       <div className="bg-white flex justify-between items-center p-4 mb-4 shadow-sm rounded-lg">
         <h1 className="text-lg font-medium text-gray-800">Requests</h1>
@@ -86,14 +47,14 @@ function Requests() {
         </button>
 
         <button
-          onClick={() => setActiveTab("leave")}
+          onClick={() => setActiveTab("regularization")}
           className={`pb-1 ${
-            activeTab === "leave"
+            activeTab === "regularization"
               ? "border-b-2 border-black font-medium"
               : "text-gray-500"
           }`}
         >
-          Leave
+          Regularization
         </button>
 
         <button
@@ -109,15 +70,16 @@ function Requests() {
       </div>
 
       {/* Tab Content */}
-      {activeTab === "wfh" && <WfhTab requests={requests} />}
-      {activeTab === "leave" && (
-        <div className="p-4 text-gray-600">Leave Section Coming Soon...</div>
-      )}
+      {activeTab === "wfh" && <WfhTab />}
+
+      {activeTab === "regularization" && <RegularizationTab />} 
+
       {activeTab === "attendance" && (
         <div className="p-4 text-gray-600">
           Attendance Section Coming Soon...
         </div>
       )}
+
     </DashboardLayout>
   );
 }

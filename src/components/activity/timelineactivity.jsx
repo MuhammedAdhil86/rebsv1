@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { fetchTimeline } from "../../service/companyService";
 import moment from "moment";
+import { fetchTimeline } from "../../service/companyService";
 
-const TimelineActivity = ({ month, year, employeeId }) => {
+const EmployeeTimeline = ({ month, year, employeeId }) => {
   const [activities, setActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,10 +19,12 @@ const TimelineActivity = ({ month, year, employeeId }) => {
 
       try {
         const timelineData = await fetchTimeline(month, year, employeeId);
+        console.log("timeline:", timelineData);
+
         setActivities(timelineData || []);
       } catch (err) {
-        console.error("Failed to fetch timeline data:", err);
-        setError("Failed to load activity timeline. Please try again.");
+        console.error("Failed to fetch timeline:", err);
+        setError("Failed to load timeline. Please try again.");
       } finally {
         setIsLoading(false);
       }
@@ -31,104 +33,145 @@ const TimelineActivity = ({ month, year, employeeId }) => {
     getTimelineData();
   }, [month, year, employeeId]);
 
-  const getDotColor = (activityType) => {
+  // Dot color mapping
+  const getDotColor = (type) => {
     const colors = {
       attendance: "bg-green-500",
       leave: "bg-purple-500",
       wfh: "bg-orange-500",
-      "weekly off": "bg-gray-400",
+      "weekly off": "bg-gray-500",
       absent: "bg-red-500",
       default: "bg-black",
     };
-    return colors[activityType?.toLowerCase()] || colors.default;
+    return colors[type?.toLowerCase()] || colors.default;
   };
 
-  const formatTime = (timeString) => {
-    if (!timeString || timeString === "0000-01-01T00:00:00Z") return "N/A";
-    try {
-      const [hours, minutes] = timeString.split("T")[1].split(":").map(Number);
-      const period = hours >= 12 ? "PM" : "AM";
-      let displayHours = hours % 12;
-      if (displayHours === 0) displayHours = 12;
-      return `${String(displayHours).padStart(2, "0")}:${String(minutes).padStart(
-        2,
-        "0"
-      )} ${period}`;
-    } catch {
-      return "Invalid Time";
-    }
+  const formatTime = (t) => {
+    if (!t || t.includes("0000-01-01")) return "N/A";
+    return moment(t).format("hh:mm A");
   };
 
-  const formatDate = (dateTimeString) =>
-    dateTimeString ? moment(dateTimeString).format("MMM D, YYYY") : "";
+  const formatDate = (d) => {
+    if (!d) return "";
+    return moment(d).format("MMM D, YYYY");
+  };
 
-  const formatDateTime = (dateTimeString) =>
-    dateTimeString ? `${moment(dateTimeString).format("MMM D, YYYY")} ${formatTime(dateTimeString)}` : "";
+  const formatDateTime = (d) => {
+    if (!d || d.includes("0000-01-01")) return "";
+    return `${moment(d).format("MMM D, YYYY")} ${moment(d).format("hh:mm A")}`;
+  };
+
+  const formatDuration = (timeString) => {
+    if (!timeString || timeString.includes("0000-01-01")) return "0h 0m";
+    const duration = moment.duration(moment(timeString).diff(moment("0000-01-01")));
+    return `${Math.floor(duration.asHours())}h ${duration.minutes()}m`;
+  };
 
   return (
-    <div className="p-4 h-96 rounded-lg shadow-md overflow-y-auto">
-      <h2 className="text-lg font-semibold text-black mb-4 text-center">
-        Employee Activity {month && year ? `(${moment().month(month - 1).format('MMMM')} ${year})` : ''}
+    <div className="p-4 h-96 rounded-lg overflow-y-auto bg-white">
+      <h2 className="text-lg  text-black mb-4 text-center">
+        Employee Activity{" "}
+        {month && year ? `(${moment().month(month - 1).format("MMMM")} ${year})` : ""}
       </h2>
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-64 text-gray-500">
-          Loading activities...
+        <div className="h-64 flex justify-center items-center">
+          <p className="text-gray-500">Loading activities...</p>
         </div>
       ) : error ? (
-        <div className="flex justify-center items-center h-64 text-red-500">
-          {error}
+        <div className="h-64 flex justify-center items-center">
+          <p className="text-red-500">{error}</p>
         </div>
       ) : activities.length === 0 ? (
-        <div className="flex justify-center items-center h-64 text-gray-500">
-          No activities found for this period
+        <div className="h-64 flex justify-center items-center">
+          <p className="text-gray-500">No activities found</p>
         </div>
       ) : (
-        <div className="relative border-l border-gray-300">
+        <div className="relative border-l border-gray-300 ml-4">
           {activities.map((activity, index) => (
-            <div key={index} className="mb-8 ml-6">
-              {/* Dot */}
+            <div key={index} className="mb-8 relative pl-6">
+              {/* DOT */}
               <span
-                className={`absolute -left-3 w-6 h-6 rounded-full ${getDotColor(activity.record_type)} ${
-                  activity.approval_status === "Rejected" ? "border-2 border-red-500" : ""
-                }`}
+                className={`absolute -left-[10px] w-4 h-4 rounded-full border ${
+                  activity.approval_status === "Rejected" ? "border-red-600" : "border-white"
+                } ${getDotColor(activity.record_type)}`}
               ></span>
 
-              {/* Left / Right content */}
-              <div className="flex flex-col md:flex-row md:justify-between md:items-center">
-                {/* Left - Activity */}
-                <div className="mb-2 md:mb-0">
-                  <div className="text-sm font-medium">{activity.record_type || "Activity"}</div>
-                  <div className="text-xs text-gray-600">Requested: {formatDateTime(activity.requested_date)}</div>
-                  <div className="text-xs text-gray-600">For: {formatDate(activity.date)}</div>
+              {/* ROW LAYOUT */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* LEFT COLUMN */}
+                <div>
+                  <p className="text-sm font-medium">
+                    {activity.record_type || "Activity"}
+                  </p>
+
+                  <p className="text-xs text-gray-600">
+                    Requested: {formatDateTime(activity.requested_date)}
+                  </p>
+
+                  <p className="text-xs text-gray-600">
+                    For: {formatDate(activity.date)}
+                  </p>
+
                   {activity.status && (
-                    <div className="text-xs mt-1 max-w-xs overflow-hidden text-ellipsis">
-                      {activity.status.length > 60 ? `${activity.status.substring(0, 60)}...` : activity.status}
-                    </div>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {activity.status.length > 60
+                        ? `${activity.status.substring(0, 60)}...`
+                        : activity.status}
+                    </p>
                   )}
-                  {activity.in && activity.in !== "0000-01-01T00:00:00Z" && (
-                    <div className="text-xs text-gray-600">In: {formatTime(activity.in)}</div>
+
+                  {activity.in && (
+                    <p className="text-xs text-gray-600">In: {formatTime(activity.in)}</p>
                   )}
-                  {activity.out && activity.out !== "0000-01-01T00:00:00Z" && (
-                    <div className="text-xs text-gray-600">Out: {formatTime(activity.out)}</div>
+                  {activity.out && (
+                    <p className="text-xs text-gray-600">Out: {formatTime(activity.out)}</p>
                   )}
                 </div>
 
-                {/* Right - Approval */}
-                <div className="text-right">
-                  <div className={`text-sm font-medium ${activity.approval_status === "Rejected" ? "text-red-600" : "text-green-600"}`}>
+                {/* RIGHT COLUMN */}
+                <div>
+                  <p
+                    className={`text-sm font-medium ${
+                      activity.approval_status === "Rejected"
+                        ? "text-red-600"
+                        : "text-green-600"
+                    }`}
+                  >
                     {activity.approval_status || "Pending"}
-                  </div>
-                  {activity.approval_date && activity.approval_date.Valid && (
-                    <div className="text-xs text-gray-600">
-                      {activity.approval_status === "Rejected" ? "Rejected" : "Approved"}: {formatDateTime(activity.approval_date.Time)}
-                    </div>
+                  </p>
+
+                  {activity.approval_date?.Valid && (
+                    <p className="text-xs text-gray-600">
+                      {activity.approval_status === "Rejected" ? "Rejected" : "Approved"}:{" "}
+                      {formatDateTime(activity.approval_date.Time)}
+                    </p>
                   )}
-                  {activity.manager_approver && <div className="text-xs text-gray-600">By: {activity.manager_approver}</div>}
-                  {activity.duration && <div className="text-xs text-gray-600">Duration: {activity.duration}</div>}
-                  {activity.approver_name && !activity.manager_approver && <div className="text-xs text-gray-600">By: {activity.approver_name}</div>}
+
+                  {activity.manager_approver && (
+                    <p className="text-xs text-gray-600">
+                      By: {activity.manager_approver}
+                    </p>
+                  )}
+
+                  {activity.duration && (
+                    <p className="text-xs text-gray-600">
+                      Duration: {formatDuration(activity.duration)}
+                    </p>
+                  )}
+
+                  {activity.approver_name && !activity.manager_approver && (
+                    <p className="text-xs text-gray-600">
+                      By: {activity.approver_name}
+                    </p>
+                  )}
                 </div>
               </div>
+
+              {/* CONNECTOR LINE */}
+              {index < activities.length - 1 && (
+                <div className="absolute left-[-2px] top-6 h-full w-[2px] bg-lime-500"></div>
+              )}
             </div>
           ))}
         </div>
@@ -137,4 +180,5 @@ const TimelineActivity = ({ month, year, employeeId }) => {
   );
 };
 
-export default TimelineActivity;
+export default EmployeeTimeline;
+

@@ -9,6 +9,8 @@ import {
   FiEdit,
 } from "react-icons/fi";
 
+import ShiftRatioCard from "../graphs/shiftratio";
+
 // ---------------- MOCK DATA ----------------
 const avatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
@@ -49,7 +51,7 @@ const StatCard = ({ title, value, icon, iconBg, bg }) => (
   <div
     className={`flex items-center gap-4 px-4 py-3 rounded-md shadow-sm ${bg} w-[215px]`}
   >
-    <div className={`p-2 rounded-full bg-black `}>
+    <div className={`p-2 rounded-full bg-black`}>
       {React.cloneElement(icon, { className: "w-6 h-6 text-white" })}
     </div>
     <div>
@@ -60,7 +62,6 @@ const StatCard = ({ title, value, icon, iconBg, bg }) => (
     </div>
   </div>
 );
-
 
 const PersonRow = ({ person }) => (
   <div className="flex items-center justify-between py-1 border-b last:border-b-0">
@@ -135,7 +136,9 @@ const RegularShiftPolicyCard = () => (
       </div>
       <div className="flex justify-between">
         <span className="text-gray-500 text-[12px]">Break</span>
-        <span className="font-medium text-gray-800 text-[12px]">01:00 PM - 01:30 PM</span>
+        <span className="font-medium text-gray-800 text-[12px]">
+          01:00 PM - 01:30 PM
+        </span>
       </div>
       <div className="flex justify-between">
         <span className="text-gray-500 text-[12px]">Delay</span>
@@ -169,7 +172,9 @@ const ShiftRulesCard = () => (
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
           <span className="text-gray-600 text-[12px]">Effective Date :</span>
-          <span className="text-gray-800 text-[12px]">01 Jan 2025 - 31 Dec 2025</span>
+          <span className="text-gray-800 text-[12px]">
+            01 Jan 2025 - 31 Dec 2025
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -180,7 +185,9 @@ const ShiftRulesCard = () => (
 
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
-          <span className="text-gray-600 text-[12px]">Attendance Policy Count :</span>
+          <span className="text-gray-600 text-[12px]">
+            Attendance Policy Count :
+          </span>
           <span className="text-gray-800 text-[12px]">01 Policy</span>
         </div>
       </div>
@@ -209,24 +216,20 @@ const ShiftRulesCard = () => (
 );
 
 const ShiftDonutChart = () => {
-  // Updated data to match the new image's colors and estimated percentages
   const donutChartData = [
-    { color: "#8A79F6", percentage: 48, label: "Morning Shift" }, // Adjusted purple
-    { color: "#FD9589", percentage: 35, label: "Evening Shift" }, // Adjusted reddish-orange
-    { color: "#54D1DD", percentage: 17, label: "Night Shift" },   // Adjusted teal/blue
+    { color: "#8A79F6", percentage: 48, label: "Morning Shift" },
+    { color: "#FD9589", percentage: 35, label: "Evening Shift" },
+    { color: "#54D1DD", percentage: 17, label: "Night Shift" },
   ];
 
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
-  let accumulatedOffset = 0; // Starts from the top
+  let accumulatedOffset = 0;
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center">
       <div className="relative w-[250px] h-[250px]">
-        <svg
-          viewBox="0 0 100 100"
-          className="w-full h-full transform -rotate-90" // Rotates the SVG for segments to start at the top
-        >
+        <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
           {donutChartData.map((item, index) => {
             const arcLength = (item.percentage / 100) * circumference;
             const strokeDasharray = `${arcLength} ${circumference}`;
@@ -244,88 +247,29 @@ const ShiftDonutChart = () => {
                 strokeWidth="18"
                 strokeDasharray={strokeDasharray}
                 strokeDashoffset={strokeDashoffset}
-                strokeLinecap="butt"
               />
             );
           })}
         </svg>
 
-        {/* Center number remains "60" as in the image */}
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-[20px] font-medium text-black">60</span>
         </div>
       </div>
 
-   {/* Legend below the chart, now using the adjusted colors */}
-<div className="flex justify-center gap-4 mt-3 flex-nowrap whitespace-nowrap">
-  {donutChartData.map((item) => (
-    <div
-      key={item.label}
-      className="flex items-center gap-1.5 font-[Poppins] text-[12px] font-normal"
-    >
-      <span
-        className="w-2.5 h-2.5 rounded-full"
-        style={{ backgroundColor: item.color }}
-      ></span>
-      <span className="text-gray-600">{item.label}</span>
-    </div>
-  ))}
-</div>
-
-    </div>
-  );
-};
-
-const ShiftRatioCard = () => {
-  const { total, online, delay, late, absent } = attendance;
-  const onlinePerc = (online / total) * 100;
-  const delayPerc = (delay / total) * 100;
-  const latePerc = (late / total) * 100;
-  const absentPerc = (absent / total) * 100;
-
-  return (
-    <div className="bg-white rounded-xl p-4 shadow-sm">
-      <div className="text-sm font-medium text-gray-800 mb-3">Shift Ratio</div>
-      <div className="text-lg font-medium text-gray-900 mb-3">
-        {total} <span className="text-sm text-gray-500">Attendance</span>
-      </div>
-      <div className="h-2 w-full flex rounded-full overflow-hidden">
-        <div className="h-full bg-green-400" style={{ width: `${onlinePerc}%` }} />
-        <div className="h-full bg-cyan-400" style={{ width: `${delayPerc}%` }} />
-        <div className="h-full bg-blue-600" style={{ width: `${latePerc}%` }} />
-        <div className="h-full bg-pink-500" style={{ width: `${absentPerc}%` }} />
-      </div>
-      <div className="flex items-center justify-between gap-4 mt-3 text-xs text-gray-500">
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 bg-green-400 rounded-full" />
-          <div className="flex flex-col items-center">
-            <span>Online</span>
-            <span className="text-gray-800 font-medium">{online}</span>
+      <div className="flex justify-center gap-4 mt-3 flex-nowrap whitespace-nowrap">
+        {donutChartData.map((item) => (
+          <div
+            key={item.label}
+            className="flex items-center gap-1.5 font-[Poppins] text-[12px] font-normal"
+          >
+            <span
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: item.color }}
+            ></span>
+            <span className="text-gray-600">{item.label}</span>
           </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 bg-cyan-400 rounded-full" />
-          <div className="flex flex-col items-center">
-            <span>Delay</span>
-            <span className="text-gray-800 font-medium">{delay}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 bg-blue-600 rounded-full" />
-          <div className="flex flex-col items-center">
-            <span>Late</span>
-            <span className="text-gray-800 font-medium">
-              {String(late).padStart(2, "0")}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 bg-pink-500 rounded-full" />
-          <div className="flex flex-col items-center">
-            <span>Absent</span>
-            <span className="text-gray-800 font-medium">{absent}</span>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
@@ -342,33 +286,29 @@ export default function ShiftOverview() {
             value={overviewStats.totalEmployees}
             icon={<FiUsers />}
             bg="bg-[#EBFDEF]"
-            iconBg="bg-white"
           />
           <StatCard
             title="Total Shifts"
             value={String(overviewStats.totalShifts).padStart(2, "0")}
             icon={<FiClock />}
             bg="bg-[#E8EFF9]"
-            iconBg="bg-white"
           />
           <StatCard
             title="Unallocated"
             value={overviewStats.unallocated}
             icon={<FiUserX />}
             bg="bg-[#FFEFE7]"
-            iconBg="bg-white"
           />
         </div>
 
-   <div className="flex gap-2">
-  <button className="bg-white text-black px-2.5 py-1.5 rounded-full text-[12px] font-medium flex items-center gap-1.5 shadow-sm border border-gray-200">
-    <FiPlus size={14} /> Create Shift
-  </button>
-  <button className="bg-black text-white px-3 py-1.5 rounded-full text-[12px] font-medium flex items-center gap-1.5 shadow-sm">
-    <FiPlus size={14} /> Create Attendance Policy
-  </button>
-</div>
-
+        <div className="flex gap-2">
+          <button className="bg-white text-black px-2.5 py-1.5 rounded-full text-[12px] font-medium flex items-center gap-1.5 shadow-sm border border-gray-200">
+            <FiPlus size={14} /> Create Shift
+          </button>
+          <button className="bg-black text-white px-3 py-1.5 rounded-full text-[12px] font-medium flex items-center gap-1.5 shadow-sm">
+            <FiPlus size={14} /> Create Attendance Policy
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -387,7 +327,7 @@ export default function ShiftOverview() {
         {/* ---------- Column 3 ---------- */}
         <div className="space-y-5">
           <ShiftDonutChart />
-          <ShiftRatioCard />
+          <ShiftRatioCard attendance={attendance} /> {/* ✅ FIXED */}
         </div>
       </div>
     </div>
