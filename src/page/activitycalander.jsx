@@ -250,7 +250,7 @@ Overtime: ${cleanDuration(apiDay.overtime_hr)}`
           </div>
 
           <div className="flex-1 bg-white p-4 rounded-xl shadow-md">
-            <h2 className="text-[14px] font-medium mb-4 text-center">Attendance Overview</h2>
+       
             <PieChartComponent
               month={currentMonth.getMonth() + 1}
               year={currentMonth.getFullYear()}

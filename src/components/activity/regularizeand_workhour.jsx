@@ -11,6 +11,8 @@ export default function RegularizeAndWorkHour({
   refreshAttendance,
 }) {
   const [regularizeMode, setRegularizeMode] = useState(false);
+  const [viewAllMode, setViewAllMode] = useState(false); // state for view all
+  const [viewAllData, setViewAllData] = useState(null); // data from /master/location-device
   const [editCheckIn, setEditCheckIn] = useState("");
   const [editCheckOut, setEditCheckOut] = useState("");
   const [editDate, setEditDate] = useState(selectedDate || new Date());
@@ -42,6 +44,7 @@ export default function RegularizeAndWorkHour({
       setEditDate(selectedDate);
     }
     setRegularizeMode(!regularizeMode);
+    setViewAllMode(false); // hide view all mode when regularize is active
   };
 
   const handleRegularize = async () => {
@@ -106,6 +109,23 @@ export default function RegularizeAndWorkHour({
     }
   };
 
+  const handleViewAllData = async () => {
+    try {
+      const res = await axiosInstance.get(
+        `${axiosInstance.baseURL2}/master/location-device/${UUID}`
+      );
+      if (res.data.status_code === 200) {
+        setViewAllData(res.data.data);
+        setViewAllMode(true);
+      } else {
+        alert("Error fetching full data");
+      }
+    } catch (err) {
+      console.error("VIEW ALL DATA ERROR:", err);
+      alert("Error fetching full data");
+    }
+  };
+
   const cleanTime = (t) => {
     if (!t || !t.includes("T")) return "-";
     const timePart = t.split("T")[1].replace("Z", "");
@@ -120,8 +140,40 @@ export default function RegularizeAndWorkHour({
     return `${h} hrs ${m} mins`;
   };
 
+  // If view all mode is active, show only the View All Data section
+  if (viewAllMode) {
+    return (
+      <div className="flex flex-col gap-4 border p-4">
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="font-medium text-[14px]">Location & Device Data</h2>
+          <button
+            className="px-2 py-1 rounded text-[12px] bg-gray-500 text-white hover:bg-gray-600"
+            onClick={() => setViewAllMode(false)}
+          >
+            Back
+          </button>
+        </div>
+
+        {viewAllData ? (
+          <div className="text-[12px] flex flex-col gap-1">
+            <p><strong>Device:</strong> {viewAllData.device}</p>
+            <p><strong>IP:</strong> {viewAllData.ip}</p>
+            <p><strong>Location:</strong> {viewAllData.location}</p>
+            <p><strong>Latitude:</strong> {viewAllData.latitude}</p>
+            <p><strong>Longitude:</strong> {viewAllData.longitude}</p>
+            <p><strong>Network:</strong> {viewAllData.network}</p>
+            <p><strong>Source:</strong> {viewAllData.source}</p>
+          </div>
+        ) : (
+          <p className="text-[12px]">No data available</p>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 border p-4">
+      {/* Header with date and regularize button */}
       <div className="flex justify-between items-center mb-2">
         <h2 className="font-medium text-[14px]">{format(selectedDate, "MMMM d, yyyy")}</h2>
         <button
@@ -132,6 +184,7 @@ export default function RegularizeAndWorkHour({
         </button>
       </div>
 
+      {/* Regularize Form */}
       {regularizeMode ? (
         <div className="flex flex-col gap-2">
           <label className="text-[12px] text-gray-500">Select Date</label>
@@ -167,7 +220,9 @@ export default function RegularizeAndWorkHour({
         </div>
       ) : (
         <div>
-          <p className="text-gray-500 text-[12px]">{selectedDayData ? selectedDayData.record_type : "No Data"}</p>
+          <p className="text-gray-500 text-[12px]">
+            {selectedDayData ? selectedDayData.record_type : "No Data"}
+          </p>
 
           <div className="flex justify-between mt-2 text-[12px]">
             <div>
@@ -190,23 +245,22 @@ export default function RegularizeAndWorkHour({
               <p>{cleanDuration(selectedDayData?.overtime_hr)}</p>
             </div>
           </div>
-
-          {/* ✅ View Full Data below Total Hours / Overtime */}
-          {fullData && (
-            <div className="mt-2 text-left">
-              <span
-                className="text-green-600 text-[12px] cursor-pointer"
-                onClick={() => console.log("Full Work Hours Data:", fullData)}
-              >
-                View Full Data
-              </span>
-            </div>
-          )}
         </div>
       )}
 
       <hr />
 
+      {/* View All Data Button */}
+      <div className="flex justify-end mt-2 mb-2">
+        <button
+          className="px-2 py-1 rounded text-[12px] bg-black text-white hover:bg-gray-800"
+          onClick={handleViewAllData}
+        >
+          View All Data
+        </button>
+      </div>
+
+      {/* Calculate Work Hours */}
       <div>
         <p className="text-gray-500 text-[12px]">Calculate Work Hours</p>
 

@@ -68,8 +68,8 @@ const EmployeeTimeline = ({ month, year, employeeId }) => {
   };
 
   return (
-    <div className="p-4 h-96 rounded-lg overflow-y-auto bg-white">
-      <h2 className="text-lg  text-black mb-4 text-center">
+    <div className=" h-96 rounded-lg overflow-y-auto bg-white">
+      <h2 className="text-[14px]  text-black mb-4 text-center">
         Employee Activity{" "}
         {month && year ? `(${moment().month(month - 1).format("MMMM")} ${year})` : ""}
       </h2>

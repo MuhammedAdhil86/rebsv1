@@ -33,7 +33,6 @@ const PieChartComponent = ({ month, year, employeeId }) => {
       setError(null);
       try {
         const res = await fetchPieChart(month, year, employeeId);
-
         const parsed = parseAttendanceData(res);
         setChartData(parsed);
       } catch (err) {
@@ -62,15 +61,20 @@ const PieChartComponent = ({ month, year, employeeId }) => {
   if (!chartData.length) return <p className="text-center">No data available</p>;
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <PieChart>
-        <Pie data={chartData} dataKey="value" innerRadius={60} outerRadius={90} paddingAngle={5} label={({ name, value }) => `${name}: ${value.toFixed(2)}%`}>
-          {chartData.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
-        </Pie>
-        <Tooltip content={<CustomTooltip />} />
-        <Legend layout="horizontal" verticalAlign="bottom" align="center" />
-      </PieChart>
-    </ResponsiveContainer>
+    <div>
+      {/* Heading */}
+      <h2 className="text-[16px] font-normal text-center mb-4">Attendance Overview</h2>
+
+      <ResponsiveContainer width="100%" height={300}>
+        <PieChart>
+          <Pie data={chartData} dataKey="value" innerRadius={60} outerRadius={90} paddingAngle={5} label={({ name, value }) => `${name}: ${value.toFixed(2)}%`}>
+            {chartData.map((entry, idx) => <Cell key={idx} fill={entry.color} />)}
+          </Pie>
+          <Tooltip content={<CustomTooltip />} />
+          <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 
