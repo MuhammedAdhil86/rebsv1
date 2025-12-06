@@ -12,6 +12,7 @@ import useEmployeeStore from "../store/employeeStore";
 // Tabs
 import PersonalInfoTab from "../components/profiledetailstabs/personal_info_tab.jsx";
 import AttachmentsTab from "../components/profiledetailstabs/attachment_tab.jsx";
+import ActivityTab from "../components/profiledetailstabs/activity_tab.jsx"; // <- Added
 import Privilege from "../ui/privilages.jsx";
 import SettingsTab from "../components/profiledetailstabs/settings_tab.jsx";
 
@@ -33,12 +34,12 @@ export default function EmployeeProfile() {
     if (id) fetchEmployeeById(id);
   }, [id, fetchEmployeeById]);
 
-  // ⭐ BACKEND STATUS VALUE
+  // Backend status value
   const isActive =
     selectedEmployee?.is_active === true ||
     selectedEmployee?.is_active === "true";
 
-  // ⭐ ACTIVATE / DEACTIVATE
+  // Activate / Deactivate
   const toggleStatus = async () => {
     if (!selectedEmployee?.uuid) return;
 
@@ -64,7 +65,7 @@ export default function EmployeeProfile() {
     }
   };
 
-  // ⭐ DELETE USER
+  // Delete User
   const handleDelete = async () => {
     if (!deleteReason.trim()) {
       toast.error("Please provide a reason for deletion");
@@ -94,7 +95,7 @@ export default function EmployeeProfile() {
     { name: "Attachments", icon: "subway:pin" },
     { name: "Manage Shift", icon: "ic:twotone-manage-history" },
     { name: "Privilege", icon: "carbon:ibm-knowledge-catalog-premium" },
-    { name: "Share", icon: "fluent:share-16-regular" },
+    { name: "Notifications", icon: "hugeicons:notification-02" }, 
     { name: "Settings", icon: "solar:settings-linear" },
   ];
 
@@ -103,7 +104,6 @@ export default function EmployeeProfile() {
       <Toaster position="top-right" />
 
       <div className="bg-[#f9fafb] min-h-screen">
-        
         {/* Header */}
         <header className="flex items-center justify-between bg-white px-6 py-3 border-b shadow-sm rounded-xl mb-4">
           <div className="flex items-center gap-3">
@@ -131,10 +131,8 @@ export default function EmployeeProfile() {
 
         {/* Layout */}
         <div className="flex gap-3 p-3">
-
           {/* Sidebar */}
           <aside className="sticky top-4 w-60 bg-white border rounded-2xl p-6 flex flex-col items-center shadow-sm relative">
-            
             <span
               className={`absolute top-2 right-2 px-2 py-1 text-xs rounded flex items-center gap-1 ${
                 isActive
@@ -169,19 +167,7 @@ export default function EmployeeProfile() {
               {sidebarTabs.map((tab) => (
                 <button
                   key={tab.name}
-                  onClick={() => {
-                    if (tab.name === "Activities") {
-                      navigate("/activity", {
-                        state: {
-                          employee: selectedEmployee,
-                          employeeId: selectedEmployee?.id,
-                          employeeUUID: selectedEmployee?.uuid,
-                        },
-                      });
-                    } else {
-                      setActiveTab(tab.name);
-                    }
-                  }}
+                  onClick={() => setActiveTab(tab.name)} // <- Updated
                   className={`flex items-center gap-2 w-full text-left px-4 py-2 rounded-md ${
                     activeTab === tab.name
                       ? "bg-[#181818] text-white"
@@ -212,38 +198,11 @@ export default function EmployeeProfile() {
           {/* Main Content */}
           <main className="flex-1 overflow-y-auto max-h-[85vh] pr-2 scrollbar-none">
             {activeTab === "Activities" ? (
-              <div className="p-6 bg-white rounded-xl shadow-md flex flex-col gap-4">
-                <h2 className="text-lg font-medium">Update Status</h2>
-
-                <p>
-                  Current Status:{" "}
-                  <span
-                    className={isActive ? "text-green-600" : "text-red-600"}
-                  >
-                    {isActive ? "Active" : "Deactivated"}
-                  </span>
-                </p>
-
-                <button
-                  onClick={toggleStatus}
-                  disabled={statusUpdating}
-                  className={`px-4 py-2 rounded-md text-white ${
-                    isActive
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-green-600 hover:bg-green-700"
-                  }`}
-                >
-                  {statusUpdating
-                    ? "Updating..."
-                    : isActive
-                    ? "Deactivate"
-                    : "Activate"}
-                </button>
-              </div>
+              <ActivityTab employee={selectedEmployee} /> // <- Updated
             ) : activeTab === "Personal Info" ? (
               <PersonalInfoTab employee={selectedEmployee} />
             ) : activeTab === "Attachments" ? (
-              <AttachmentsTab employee={selectedEmployee} />
+              <AttachmentsTab attachments={selectedEmployee?.attachments || []} />
             ) : activeTab === "Privilege" ? (
               <Privilege employee={selectedEmployee} />
             ) : activeTab === "Settings" ? (

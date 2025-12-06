@@ -70,7 +70,7 @@ const OrganizationOnboarding = () => {
             </h2>
           )}
           {activeTab === "payroll" && (
-            <h2 className="font-[Poppins] font-medium text-[20px] text-gray-800 mb-2">
+            <h2 className="font-[Poppins] font-medium text-[16px] text-gray-800 ">
              Manage Payroll Policy
             </h2>
           )}

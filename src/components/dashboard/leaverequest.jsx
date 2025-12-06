@@ -79,7 +79,7 @@ const LeaveRequest = () => {
     <div className="bg-white shadow rounded-lg p-3 w-full">
       <h3 className="text-sm text-gray-500 mb-4">Leaves and Vacations</h3>
 
-      <ul className="space-y-3 text-sm h-[270px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+      <ul className="space-y-3 text-sm h-[250px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         {loading ? (
           <p className="text-[12px] text-gray-500">Loading...</p>
         ) : leaveData.length === 0 ? (

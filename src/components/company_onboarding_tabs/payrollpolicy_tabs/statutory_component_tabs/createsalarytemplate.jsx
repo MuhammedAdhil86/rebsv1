@@ -1,8 +1,9 @@
 import React, { useState } from "react";
+import axiosInstance from "../../../../service/axiosinstance";
 
 const CreateSalaryTemplate = () => {
   const [template, setTemplate] = useState({
-    company_id: 1,
+    company_id: 8, // static
     name: "",
     description: "",
     annual_ctc: "",
@@ -10,8 +11,7 @@ const CreateSalaryTemplate = () => {
   });
 
   const [mappings, setMappings] = useState([
-    { component_id: 1, calculation_type: "flat", value: "" },
-    { component_id: 2, calculation_type: "percentage_ctc", value: "" },
+    { component_id: 11, calculation_type: "percentage_ctc", value: "" }, // static component_id
   ]);
 
   const handleTemplateChange = (e) => {
@@ -25,18 +25,35 @@ const CreateSalaryTemplate = () => {
     setMappings(updated);
   };
 
-  const handleSubmit = () => {
-    const payload = { template, mappings };
+  const handleSubmit = async () => {
+    const payload = {
+      template: {
+        ...template,
+        annual_ctc: parseFloat(template.annual_ctc), // convert to number
+      },
+      mappings: mappings.map((m) => ({
+        ...m,
+        value: parseFloat(m.value), // convert to number
+      })),
+    };
+
     console.log("Final Payload:", payload);
+
+    try {
+      const url = `${axiosInstance.baseURL2}api/payroll/templates`;
+      const res = await axiosInstance.post(url, payload);
+      console.log("API Response:", res.data);
+      alert("Template created successfully!");
+    } catch (err) {
+      console.error("Error creating template", err);
+      alert("Failed to create template");
+    }
   };
 
   return (
     <div className="p-4 max-w-3xl mx-auto text-[12px] font-normal">
-      
-      {/* Heading 16px regular */}
       <h2 className="text-[16px] font-normal mb-4">Create Salary Template</h2>
 
-      {/* Template Section */}
       <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
         <div>
           <label className="block mb-1 text-gray-600 font-normal">Template Name</label>
@@ -71,7 +88,6 @@ const CreateSalaryTemplate = () => {
         </div>
       </div>
 
-      {/* Mapping Section */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[12px] font-normal min-w-[700px]">
           <thead>
@@ -81,7 +97,6 @@ const CreateSalaryTemplate = () => {
               <th className="px-4 py-2 font-normal">Value</th>
             </tr>
           </thead>
-
           <tbody>
             {mappings.map((item, idx) => (
               <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
@@ -90,9 +105,7 @@ const CreateSalaryTemplate = () => {
                 <td className="px-4 py-2 font-normal">
                   <select
                     value={item.calculation_type}
-                    onChange={(e) =>
-                      handleMappingChange(idx, "calculation_type", e.target.value)
-                    }
+                    onChange={(e) => handleMappingChange(idx, "calculation_type", e.target.value)}
                     className="border px-2 py-1 rounded text-[12px] font-normal"
                   >
                     <option value="flat">Flat</option>
@@ -104,9 +117,7 @@ const CreateSalaryTemplate = () => {
                   <input
                     type="number"
                     value={item.value}
-                    onChange={(e) =>
-                      handleMappingChange(idx, "value", e.target.value)
-                    }
+                    onChange={(e) => handleMappingChange(idx, "value", e.target.value)}
                     className="border px-2 py-1 rounded text-[12px] font-normal"
                   />
                 </td>
@@ -116,7 +127,6 @@ const CreateSalaryTemplate = () => {
         </table>
       </div>
 
-      {/* Submit Button */}
       <div className="mt-4 flex justify-end">
         <button
           onClick={handleSubmit}

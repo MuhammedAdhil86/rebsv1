@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { Icon } from "@iconify/react";
+
+/* Tabs */
 import SalaryTemplate from "./payrollpolicy_tabs/salary_template_tab";
 import SalaryComponents from "./payrollpolicy_tabs/salary_components_tab";
 import StatutoryComponents from "./payrollpolicy_tabs/statutorycomponents";
 
-// ➤ Import CreateSalaryTemplate
+/* Create Forms */
 import CreateSalaryTemplate from "./payrollpolicy_tabs/statutory_component_tabs/createsalarytemplate";
+import CreateSalaryComponent from "./payrollpolicy_tabs/statutory_component_tabs/createsalarycomponents";
 
 const ManagePayrollPolicy = () => {
   const [activeTab, setActiveTab] = useState("salary-template");
@@ -32,7 +35,7 @@ const ManagePayrollPolicy = () => {
                 key={tab.id}
                 onClick={() => {
                   setActiveTab(tab.id);
-                  setShowCreate(false); // hides create screen when switching tabs
+                  setShowCreate(false); // resets create screen on tab change
                 }}
                 className={`px-3 h-[40px] text-xs rounded-md border font-medium transition-all flex items-center justify-center
                   ${
@@ -46,43 +49,55 @@ const ManagePayrollPolicy = () => {
             ))}
           </div>
 
-          {/* Show Create New only in salary-components tab */}
-          {activeTab === "salary-components" && !showCreate && (
-            <button
-              onClick={() => setShowCreate(true)}
-              className="flex items-center justify-center gap-1 px-3 h-[40px] bg-black text-white text-xs rounded-md hover:bg-gray-800 transition font-medium"
-            >
-              <Icon icon="mdi:plus" className="text-sm" />
-              Create New
-            </button>
-          )}
+          {/* Create button only for Template and Components */}
+          {(activeTab === "salary-template" ||
+            activeTab === "salary-components") &&
+            !showCreate && (
+              <button
+                onClick={() => setShowCreate(true)}
+                className="flex items-center justify-center gap-1 px-3 h-[40px] bg-black text-white text-xs rounded-md hover:bg-gray-800 transition font-medium"
+              >
+                <Icon icon="mdi:plus" className="text-sm" />
+                Create New
+              </button>
+            )}
         </div>
 
-        {/* Tab Content */}
-        <div>
-          {activeTab === "salary-template" && <SalaryTemplate />}
+        {/* -------- TAB CONTENT -------- */}
 
-          {/* 👇 When showCreate = true → show CreateSalaryTemplate */}
-          {activeTab === "salary-components" && (
-            showCreate 
-              ? <CreateSalaryTemplate setShowCreate={setShowCreate} />
-              : <SalaryComponents />
-          )}
+        {/* Salary Template Tab */}
+        {activeTab === "salary-template" &&
+          (showCreate ? (
+            <CreateSalaryTemplate setShowCreate={setShowCreate} />
+          ) : (
+            <SalaryTemplate />
+          ))}
 
-          {activeTab === "statutory-components" && <StatutoryComponents />}
+        {/* Salary Components Tab */}
+        {activeTab === "salary-components" &&
+          (showCreate ? (
+            <CreateSalaryComponent setShowCreate={setShowCreate} />
+          ) : (
+            <SalaryComponents />
+          ))}
 
-          {activeTab === "payment-schedules" && (
-            <div className="text-gray-500 py-4">Payment Schedules Tab Content</div>
-          )}
+        {/* Statutory Components */}
+        {activeTab === "statutory-components" && <StatutoryComponents />}
 
-          {activeTab === "tax" && (
-            <div className="text-gray-500 py-4">Tax Tab Content</div>
-          )}
+        {/* Payment Schedules */}
+        {activeTab === "payment-schedules" && (
+          <div className="text-gray-500 py-4">Payment Schedules Tab Content</div>
+        )}
 
-          {activeTab === "approvals" && (
-            <div className="text-gray-500 py-4">Approvals Tab Content</div>
-          )}
-        </div>
+        {/* Tax */}
+        {activeTab === "tax" && (
+          <div className="text-gray-500 py-4">Tax Tab Content</div>
+        )}
+
+        {/* Approvals */}
+        {activeTab === "approvals" && (
+          <div className="text-gray-500 py-4">Approvals Tab Content</div>
+        )}
       </div>
     </div>
   );
