@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axiosInstance from "../../../service/axiosinstance";
+import payrollService from "../../../service/payrollService";
 
 // EPF
 import EpfTab from "./statutory_component_tabs/Epf_tab";
@@ -30,155 +30,91 @@ const StatutoryComponents = () => {
   const [ptData, setPtData] = useState(null);
 
   const [loading, setLoading] = useState(true);
-
   const tabs = ["EPF", "ESI", "Professional Tax", "Labour Welfare Fund"];
 
   useEffect(() => {
-    fetchEPFStatus();
-    fetchESIStatus();
-    fetchPTData();
+    fetchAllData();
   }, []);
 
-  // =========================================================
-  //                     EPF GET API
-  // =========================================================
-  const fetchEPFStatus = async () => {
+  const fetchAllData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const url = axiosInstance.baseURL2 + "api/payroll/statutory/epf?company_id=8";
-      const response = await axiosInstance.get(url);
+      const [epf, esi, pt] = await Promise.all([
+        payrollService.getEPF(),
+        payrollService.getESI(),
+        payrollService.getProfessionalTax(),
+      ]);
 
-      const data = response.data?.data;
-      setEpfEnabled(data?.enabled || false);
-      setEpfData(data || null);
+      setEpfData(epf);
+      setEpfEnabled(epf?.enabled || false);
 
-      console.log("Fetched EPF Data:", data);
-    } catch (error) {
-      console.error("Error fetching EPF:", error);
+      setEsiData(esi);
+      setEsiEnabled(esi?.enabled || false);
+
+      setPtData(pt);
+    } catch (err) {
+      console.error("Error fetching statutory data:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // =========================================================
-  //                     ESI GET API
-  // =========================================================
-  const fetchESIStatus = async () => {
-    try {
-      const url = axiosInstance.baseURL2 + "api/payroll/statutory/esi?company_id=8";
-      const response = await axiosInstance.get(url);
-
-      const data = response.data?.data;
-      setEsiEnabled(data?.enabled || false);
-      setEsiData(data || null);
-
-      console.log("Fetched ESI Data:", data);
-    } catch (error) {
-      console.error("Error fetching ESI:", error);
-    }
-  };
-
-  // =========================================================
-  //                     Professional Tax GET API
-  // =========================================================
-  const fetchPTData = async () => {
-    try {
-      const url = axiosInstance.baseURL2 + "api/payroll/statutory/professional-tax?company_id=8";
-      const response = await axiosInstance.get(url);
-
-      const data = response.data?.data;
-      setPtData(data || null);
-
-      console.log("Fetched PT Data:", data);
-    } catch (error) {
-      console.error("Error fetching Professional Tax:", error);
-    }
-  };
-
-  // =========================================================
-  //                     ENABLE/DISABLE EPF
-  // =========================================================
+  // EPF
   const handleEnableEpf = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const url = axiosInstance.baseURL2 + "api/payroll/statutory/epf/8/enable";
-      const response = await axiosInstance.post(url, { enabled: true });
-
-      if (response.data?.data?.enabled) {
-        setEpfEnabled(true);
-        setEpfData(response.data?.data);
-        console.log("EPF Enabled:", response.data?.data);
-      }
-    } catch (error) {
-      console.error("Enable EPF Error:", error);
+      const data = await payrollService.enableEPF();
+      setEpfData(data);
+      setEpfEnabled(data?.enabled || false);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDisableEpf = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const url = axiosInstance.baseURL2 + "api/payroll/statutory/epf/8/disable";
-      const response = await axiosInstance.post(url, { enabled: false });
-
-      if (response.data?.data?.enabled === false) {
-        setEpfEnabled(false);
-        setEpfData(response.data?.data);
-        console.log("EPF Disabled:", response.data?.data);
-      }
-    } catch (error) {
-      console.error("Disable EPF Error:", error);
+      const data = await payrollService.disableEPF();
+      setEpfData(data);
+      setEpfEnabled(data?.enabled || false);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // =========================================================
-  //                     ENABLE/DISABLE ESI
-  // =========================================================
+  // ESI
   const handleEnableEsi = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const url = axiosInstance.baseURL2 + "api/payroll/statutory/esi/8/enable";
-      const response = await axiosInstance.post(url, { enabled: true });
-
-      if (response.data?.data?.enabled) {
-        setEsiEnabled(true);
-        setEsiData(response.data?.data);
-        console.log("ESI Enabled:", response.data?.data);
-      }
-    } catch (error) {
-      console.error("Enable ESI Error:", error);
+      const data = await payrollService.enableESI();
+      setEsiData(data);
+      setEsiEnabled(data?.enabled || false);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDisableEsi = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const url = axiosInstance.baseURL2 + "api/payroll/statutory/esi/8/disable";
-      const response = await axiosInstance.post(url, { enabled: false });
-
-      if (response.data?.data?.enabled === false) {
-        setEsiEnabled(false);
-        setEsiData(response.data?.data);
-        console.log("ESI Disabled:", response.data?.data);
-      }
-    } catch (error) {
-      console.error("Disable ESI Error:", error);
+      const data = await payrollService.disableESI();
+      setEsiData(data);
+      setEsiEnabled(data?.enabled || false);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // =========================================================
-  //                     RENDER UI
-  // =========================================================
   return (
     <div className="font-[Poppins] text-[13px] text-gray-700 bg-white rounded-lg p-6 shadow-sm">
-
       {/* Tabs */}
       <div className="flex gap-6 border-b border-gray-200 mb-6">
         {tabs.map((tab) => (
@@ -197,9 +133,7 @@ const StatutoryComponents = () => {
       </div>
 
       {loading && (
-        <div className="text-center py-10 text-gray-500 text-sm">
-          Loading...
-        </div>
+        <div className="text-center py-10 text-gray-500 text-sm">Loading...</div>
       )}
 
       {/* EPF Tab */}
@@ -208,8 +142,7 @@ const StatutoryComponents = () => {
           <EpfTab onDisable={handleDisableEpf} epfData={epfData} />
         ) : (
           <EnableEPF onEnable={handleEnableEpf} />
-        ))
-      }
+        ))}
 
       {/* ESI Tab */}
       {!loading && activeTab === "ESI" &&
@@ -217,8 +150,7 @@ const StatutoryComponents = () => {
           <EsiTab onDisable={handleDisableEsi} esiData={esiData} />
         ) : (
           <EnableEsi onEnable={handleEnableEsi} />
-        ))
-      }
+        ))}
 
       {/* PT Tab */}
       {!loading && activeTab === "Professional Tax" && ptData &&
@@ -229,7 +161,6 @@ const StatutoryComponents = () => {
       {!loading && activeTab === "Labour Welfare Fund" &&
         <LabourWelfareFundTab />
       }
-
     </div>
   );
 };
