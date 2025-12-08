@@ -17,29 +17,35 @@ import LabourWelfareFundTab from "./statutory_component_tabs/lw_fund_tab";
 
 const StatutoryComponents = () => {
   const [activeTab, setActiveTab] = useState("EPF");
+
   const [epfEnabled, setEpfEnabled] = useState(false);
   const [epfData, setEpfData] = useState(null);
+
   const [esiEnabled, setEsiEnabled] = useState(false);
+  const [esiData, setEsiData] = useState(null);
+
   const [loading, setLoading] = useState(true);
 
   const tabs = ["EPF", "ESI", "Professional Tax", "Labour Welfare Fund"];
 
-  // Fetch EPF status on mount
   useEffect(() => {
     fetchEPFStatus();
+    fetchESIStatus();
   }, []);
 
+  // =========================================================
+  //                     EPF GET API
+  // =========================================================
   const fetchEPFStatus = async () => {
     try {
       setLoading(true);
       const url = axiosInstance.baseURL2 + "api/payroll/statutory/epf?company_id=8";
       const response = await axiosInstance.get(url);
-      const data = response.data?.data;
 
+      const data = response.data?.data;
       setEpfEnabled(data?.enabled || false);
       setEpfData(data || null);
 
-      // Log EPF data to console
       console.log("Fetched EPF Data:", data);
     } catch (error) {
       console.error("Error fetching EPF:", error);
@@ -48,7 +54,27 @@ const StatutoryComponents = () => {
     }
   };
 
-  // ENABLE EPF
+  // =========================================================
+  //                     ESI GET API
+  // =========================================================
+  const fetchESIStatus = async () => {
+    try {
+      const url = axiosInstance.baseURL2 + "api/payroll/statutory/esi?company_id=8";
+      const response = await axiosInstance.get(url);
+
+      const data = response.data?.data;
+      setEsiEnabled(data?.enabled || false);
+      setEsiData(data || null);
+
+      console.log("Fetched ESI Data:", data);
+    } catch (error) {
+      console.error("Error fetching ESI:", error);
+    }
+  };
+
+  // =========================================================
+  //                     ENABLE EPF
+  // =========================================================
   const handleEnableEpf = async () => {
     try {
       setLoading(true);
@@ -58,7 +84,6 @@ const StatutoryComponents = () => {
       if (response.data?.data?.enabled) {
         setEpfEnabled(true);
         setEpfData(response.data?.data);
-
         console.log("EPF Enabled:", response.data?.data);
       }
     } catch (error) {
@@ -68,7 +93,9 @@ const StatutoryComponents = () => {
     }
   };
 
-  // DISABLE EPF
+  // =========================================================
+  //                     DISABLE EPF
+  // =========================================================
   const handleDisableEpf = async () => {
     try {
       setLoading(true);
@@ -78,7 +105,6 @@ const StatutoryComponents = () => {
       if (response.data?.data?.enabled === false) {
         setEpfEnabled(false);
         setEpfData(response.data?.data);
-
         console.log("EPF Disabled:", response.data?.data);
       }
     } catch (error) {
@@ -88,12 +114,55 @@ const StatutoryComponents = () => {
     }
   };
 
-  // ESI toggle (local state)
-  const handleEnableEsi = () => setEsiEnabled(true);
-  const handleDisableEsi = () => setEsiEnabled(false);
+  // =========================================================
+  //                     ENABLE ESI
+  // =========================================================
+  const handleEnableEsi = async () => {
+    try {
+      setLoading(true);
+      const url = axiosInstance.baseURL2 + "api/payroll/statutory/esi/8/enable";
+      const response = await axiosInstance.post(url, { enabled: true });
 
+      if (response.data?.data?.enabled) {
+        setEsiEnabled(true);
+        setEsiData(response.data?.data);
+        console.log("ESI Enabled:", response.data?.data);
+      }
+    } catch (error) {
+      console.error("Enable ESI Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =========================================================
+  //                     DISABLE ESI (UPDATED with API)
+  // =========================================================
+  const handleDisableEsi = async () => {
+    try {
+      setLoading(true);
+      const url = axiosInstance.baseURL2 + "api/payroll/statutory/esi/8/disable";
+
+      const response = await axiosInstance.post(url, { enabled: false });
+
+      if (response.data?.data?.enabled === false) {
+        setEsiEnabled(false);
+        setEsiData(response.data?.data);
+        console.log("ESI Disabled:", response.data?.data);
+      }
+    } catch (error) {
+      console.error("Disable ESI Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =========================================================
+  //                     RENDER UI
+  // =========================================================
   return (
     <div className="font-[Poppins] text-[13px] text-gray-700 bg-white rounded-lg p-6 shadow-sm">
+
       {/* Tabs */}
       <div className="flex gap-6 border-b border-gray-200 mb-6">
         {tabs.map((tab) => (
@@ -111,33 +180,36 @@ const StatutoryComponents = () => {
         ))}
       </div>
 
-      {/* Loading */}
       {loading && (
-        <div className="text-center py-10 text-gray-500 text-sm">Loading...</div>
+        <div className="text-center py-10 text-gray-500 text-sm">
+          Loading...
+        </div>
       )}
 
       {/* EPF Tab */}
-      {!loading && activeTab === "EPF" && (
-        epfEnabled && epfData ? (
+      {!loading && activeTab === "EPF" &&
+        (epfEnabled ? (
           <EpfTab onDisable={handleDisableEpf} epfData={epfData} />
         ) : (
           <EnableEPF onEnable={handleEnableEpf} />
-        )
-      )}
+        ))
+      }
 
       {/* ESI Tab */}
-      {activeTab === "ESI" &&
+      {!loading && activeTab === "ESI" &&
         (esiEnabled ? (
-          <EsiTab onDisable={handleDisableEsi} />
+          <EsiTab onDisable={handleDisableEsi} esiData={esiData} />
         ) : (
           <EnableEsi onEnable={handleEnableEsi} />
-        ))}
+        ))
+      }
 
-      {/* Professional Tax Tab */}
+      {/* PT */}
       {activeTab === "Professional Tax" && <ProfessionalTaxTab />}
 
-      {/* Labour Welfare Fund Tab */}
+      {/* LWF */}
       {activeTab === "Labour Welfare Fund" && <LabourWelfareFundTab />}
+
     </div>
   );
 };
