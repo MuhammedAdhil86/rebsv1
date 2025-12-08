@@ -48,6 +48,18 @@ const payrollService = {
     const response = await axiosInstance.get(url);
     return response.data?.data || null;
   },
+
+  getSalaryTemplates: async () => {
+    const url = `api/payroll/templates?company_id=${COMPANY_ID}&status=active`;
+    const res = await axiosInstance.get(url);
+    return res.data?.data?.items || [];
+  },
+    getPayrollComponents: async (limit = 10, offset = 0) => {
+    const url = `api/payroll/components?company_id=${COMPANY_ID}&limit=${limit}&offset=${offset}`;
+    const res = await axiosInstance.get(url);
+    return res.data?.data?.items || [];
+  },
 };
+
 
 export default payrollService;

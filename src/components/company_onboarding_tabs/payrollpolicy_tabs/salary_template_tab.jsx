@@ -1,34 +1,33 @@
 import React, { useEffect, useState } from "react";
-import axiosInstance from "../../../service/axiosinstance";
+import payrollService from "../../../service/payrollService";
 
 const SalaryTemplate = () => {
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        const url = `${axiosInstance.baseURL2}api/payroll/templates?company_id=8&status=active`;
-        const res = await axiosInstance.get(url);
-        const items = res.data?.data?.items || [];
-
-        const formatted = items.map((item) => ({
-          name: item.name,
-          description: item.description,
-          annualCTC: `₹${item.annual_ctc.toLocaleString()}`,
-          status: item.status.charAt(0).toUpperCase() + item.status.slice(1),
-        }));
-
-        setTableData(formatted);
-      } catch (err) {
-        console.error("Error fetching templates", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTemplates();
   }, []);
+
+  const fetchTemplates = async () => {
+    setLoading(true);
+    try {
+      const items = await payrollService.getSalaryTemplates();
+
+      const formatted = items.map((item) => ({
+        name: item.name,
+        description: item.description,
+        annualCTC: `₹${Number(item.annual_ctc).toLocaleString()}`,
+        status: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+      }));
+
+      setTableData(formatted);
+    } catch (err) {
+      console.error("Error fetching salary templates:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="overflow-x-auto">
@@ -41,7 +40,6 @@ const SalaryTemplate = () => {
             <th className="px-4 py-2 font-medium text-gray-600 whitespace-nowrap">Status</th>
           </tr>
         </thead>
-
         <tbody>
           {loading ? (
             <tr>
@@ -58,7 +56,9 @@ const SalaryTemplate = () => {
                 <td className="px-4 py-2 text-gray-600">{item.description}</td>
                 <td className="px-4 py-2 text-gray-800">{item.annualCTC}</td>
                 <td className="px-4 py-2">
-                  <span className="text-green-600 font-medium">{item.status}</span>
+                  <span className={`font-medium ${item.status === "Active" ? "text-green-600" : "text-red-600"}`}>
+                    {item.status}
+                  </span>
                 </td>
               </tr>
             ))
@@ -66,6 +66,7 @@ const SalaryTemplate = () => {
         </tbody>
       </table>
 
+      {/* Pagination info */}
       <div className="flex justify-between items-center mt-4 text-[11px] text-gray-500 font-medium">
         <div>Rows per page: 10</div>
         <div className="flex items-center gap-2">
