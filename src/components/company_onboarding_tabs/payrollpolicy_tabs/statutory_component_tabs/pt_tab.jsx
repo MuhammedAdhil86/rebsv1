@@ -1,14 +1,39 @@
 import React, { useState } from "react";
 import { FiExternalLink, FiX } from "react-icons/fi";
+import UniversalTable from "../../../../ui/universal_table";
 
 const ProfessionalTaxTab = ({ data }) => {
   const [open, setOpen] = useState(false);
 
   const ptSlabs = data?.pt_slabs || [];
 
+  // Columns for UniversalTable
+  const columns = [
+    { label: "Min Salary", key: "min_salary" },
+    { label: "Max Salary", key: "max_salary", render: (v) => v ?? "No Limit" },
+    { label: "Tax Amount", key: "tax_amount" },
+    { label: "State", key: "state" },
+    {
+      label: "Effective From",
+      key: "effective_from",
+      render: (v) => new Date(v).toLocaleDateString(),
+    },
+    {
+      label: "Effective To",
+      key: "effective_to",
+      render: (v) => (v ? new Date(v).toLocaleDateString() : "N/A"),
+    },
+    {
+      label: "Active",
+      key: "is_active",
+      render: (v) => (v ? "Yes" : "No"),
+    },
+  ];
+
   return (
     <div className="px-2 sm:px-4 md:px-6 font-poppins text-[12px]">
-      {/* Title + description */}
+
+      {/* Title */}
       <h3 className="font-medium text-[14px] sm:text-[15px] text-gray-800 flex items-center gap-1">
         Professional Tax{" "}
         <span className="text-gray-500 font-normal text-[12px]">
@@ -16,27 +41,23 @@ const ProfessionalTaxTab = ({ data }) => {
         </span>
       </h3>
 
-      {/* Content Section */}
+      {/* Info Section */}
       <div className="mt-5 space-y-5 text-gray-700">
-        {/* PT Number */}
         <div className="flex gap-3">
           <span className="w-[150px] font-normal text-gray-600">PT Number</span>
           <span className="text-gray-800">{data.pt_number}</span>
         </div>
 
-        {/* State */}
         <div className="flex gap-3">
           <span className="w-[150px] font-normal text-gray-600">State</span>
           <span className="text-gray-800">{data.state}</span>
         </div>
 
-        {/* Deduction */}
         <div className="flex gap-3">
           <span className="w-[150px] font-normal text-gray-600">Deduction Cycle</span>
           <span className="text-gray-800">{data.deduction_cycle}</span>
         </div>
 
-        {/* PT Slabs */}
         <div className="flex gap-3 items-center">
           <span className="w-[150px] font-normal text-gray-600">PT Slabs</span>
           <button
@@ -48,63 +69,35 @@ const ProfessionalTaxTab = ({ data }) => {
         </div>
       </div>
 
-      {/* Bottom Line Divider */}
+      {/* Divider */}
       <hr className="mt-6 border-gray-200" />
 
-      {/* Drawer */}
+      {/* CENTER POPUP MODAL */}
       {open && (
-        <div className="fixed inset-0 z-50 flex">
-          {/* Overlay */}
-          <div
-            className="fixed inset-0 bg-black bg-opacity-30"
-            onClick={() => setOpen(false)}
-          />
+        <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
+          
+          {/* Modal Box */}
+          <div className="bg-white rounded-xl shadow-lg w-[90%] max-w-[800px] p-5 relative">
 
-          {/* Drawer panel */}
-          <div className="ml-auto w-[400px] bg-white p-6 shadow-lg transform transition-transform duration-300">
+            {/* Header */}
             <div className="flex justify-between items-center mb-4">
-              <h4 className="font-medium text-gray-800 text-[14px]">Tax Slabs</h4>
+              <h4 className="font-medium text-gray-800 text-[14px]">PT Tax Slabs</h4>
               <button onClick={() => setOpen(false)}>
-                <FiX size={20} />
+                <FiX size={22} />
               </button>
             </div>
 
-            <div className="space-y-3">
-              {ptSlabs.map((slab, idx) => (
-                <div
-                  key={idx}
-                  className="border border-gray-200 rounded p-3 flex flex-col gap-1 hover:shadow-sm transition"
-                >
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Min Salary:</span>
-                    <span className="text-gray-800">{slab.min_salary}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Max Salary:</span>
-                    <span className="text-gray-800">{slab.max_salary ?? "No Limit"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tax Amount:</span>
-                    <span className="text-gray-800">{slab.tax_amount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">State:</span>
-                    <span className="text-gray-800">{slab.state}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Effective From:</span>
-                    <span className="text-gray-800">{new Date(slab.effective_from).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Active:</span>
-                    <span className="text-gray-800">{slab.is_active ? "Yes" : "No"}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* Table */}
+            <UniversalTable 
+              columns={columns}
+              data={ptSlabs}
+              rowsPerPage={5}
+            />
+
           </div>
         </div>
       )}
+
     </div>
   );
 };
