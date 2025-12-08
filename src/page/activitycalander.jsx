@@ -1,264 +1,160 @@
 // FILE: src/pages/EmployeeCalendar.jsx
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import DashboardLayout from "../ui/pagelayout";
-import {
-  format,
-  addDays,
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  isSameMonth,
-  isSameDay,
-  addMonths,
-  subMonths,
-} from "date-fns";
-import moment from "moment";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import axiosInstance from "../service/axiosinstance";
 
-import EmployeeTimeline from "../components/activity/timelineactivity";
-import PieChartComponent from "../components/activity/piechart";
-import RegularizeAndWorkHour from "../components/activity/regularizeand_workhour";
+// --- Status Color Mapping ---
+const statusColors = {
+  "weekly-off": "bg-black",
+  "on-time": "bg-green-500",
+  "delay": "bg-yellow-400",
+  "late": "bg-orange-500",
+  "absent": "bg-red-500",
+  "leave": "bg-purple-500",
+  "on-duty": "bg-blue-500",
+};
 
-export default function EmployeeCalendar() {
-  const { state } = useLocation();
-  const UUID = state?.employeeUUID || state?.employee?.uuid;
-
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [attendanceData, setAttendanceData] = useState([]);
-
-  if (!UUID) {
-    return (
-      <DashboardLayout>
-        <div className="p-6 text-red-500 font-medium">
-          ERROR: No employee UUID provided.
-        </div>
-      </DashboardLayout>
-    );
+// Map API record_type and in/out fields to status
+const mapRecordTypeToStatus = (record_type, apiDay) => {
+  if (!record_type && apiDay) {
+    if (apiDay.in && apiDay.out) return "on-time";
+    if (!apiDay.in) return "absent";
+    return null;
   }
+  const t = (record_type || "").toLowerCase();
+  if (t.includes("weekly")) return "weekly-off";
+  if (t.includes("holiday") || t.includes("leave")) return "leave";
+  if (t.includes("wfh") || t.includes("on-duty")) return "on-duty";
+  if (t.includes("absent")) return "absent";
+  if (t.includes("late")) return "late";
+  return "on-time";
+};
 
-  // Calendar navigation
-  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+// Extract HH:MM:SS from ISO string
+const extractTime = (isoString) => {
+  if (!isoString) return null;
+  const m = isoString.match(/T(\d{2}):(\d{2}):(\d{2})/);
+  if (m) return `${m[1]}:${m[2]}:${m[3]}`;
+  return isoString; // fallback if already HH:MM:SS
+};
 
-  // Month boundaries
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart);
-  const endDate = endOfWeek(monthEnd);
+const EmployeeCalendar = ({ UUID }) => {
+  const [month, setMonth] = useState(new Date()); // Current month
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Fix cleanTime to allow valid non-zero times
-  const cleanTime = (t) => {
-    if (!t || t === "0000-01-01T00:00:00Z") return "-";
-    return moment(t).utc().format("hh:mm A");
-  };
-
-  // Fix cleanDuration to allow valid non-zero durations
-  const cleanDuration = (t) => {
-    if (!t || t === "0000-01-01T00:00:00Z") return "0 hrs";
-    // total_hour/overtime_hr might be in "0000-01-01THH:MM:SSZ" format
-    const durationMoment = moment.utc(t, "YYYY-MM-DDTHH:mm:ssZ");
-    const hours = durationMoment.hours();
-    const minutes = durationMoment.minutes();
-    return `${hours} hrs ${minutes} mins`;
-  };
-
-  // Extract time for input fields
-  const extractTimeForInput = (dateString) => {
-    if (!dateString) return "";
-    const m = dateString.match(/T(\d{2}):(\d{2}):(\d{2})/);
-    if (!m) return "";
-    const [hh, mm, ss] = [m[1], m[2], m[3]];
-    if (hh === "00" && mm === "00" && ss === "00") return "";
-    return `${hh}:${mm}`;
-  };
-
-  // Fetch monthly attendance
+  // --- Fetch attendance data from API ---
   const fetchAttendance = async () => {
+    if (!UUID) return;
+    setIsLoading(true);
+    setError(null);
     try {
-      const year = format(currentMonth, "yyyy");
-      const month = format(currentMonth, "MM");
-      const res = await axiosInstance.get(
-        `/admin/staff/workhours/${month}/${year}/${UUID}`
-      );
+      const year = month.getFullYear();
+      const monthNum = String(month.getMonth() + 1).padStart(2, "0");
+      const res = await axiosInstance.get(`/admin/staff/workhours/${monthNum}/${year}/${UUID}`);
       setAttendanceData(res.data.data || []);
-      console.log("Attendance data for month:", month, year, res.data.data);
     } catch (err) {
-      console.error("CALENDAR API ERROR:", err);
+      console.error("Attendance fetch error:", err);
+      setError("Failed to load attendance data");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchAttendance();
-  }, [currentMonth, UUID]);
+  }, [month, UUID]);
 
-  const selectedDayData =
-    attendanceData.find((item) =>
-      isSameDay(new Date(item.date), selectedDate)
-    ) || null;
-
-  // Calendar header
-  const renderHeader = () => (
-    <div className="flex justify-between items-center mb-4">
-      <div className="flex gap-2">
-        <button
-          onClick={prevMonth}
-          className="px-3 py-1 text-[12px] border border-gray-400 rounded-md"
-        >
-          Back
-        </button>
-        <button
-          onClick={() => setCurrentMonth(new Date())}
-          className="px-3 py-1 text-[12px] border border-gray-400 rounded-md"
-        >
-          Today
-        </button>
-        <button
-          onClick={nextMonth}
-          className="px-3 py-1 text-[12px] border border-gray-400 rounded-md"
-        >
-          Next
-        </button>
-      </div>
-      <h2 className="text-[14px] font-medium">{format(currentMonth, "MMMM yyyy")}</h2>
-    </div>
-  );
-
-  // Calendar weekday labels
-  const renderDays = () => {
+  // --- Generate calendar days dynamically ---
+  const generateCalendarDays = () => {
     const days = [];
-    const start = startOfWeek(monthStart);
-    for (let i = 0; i < 7; i++) {
-      days.push(
-        <div
-          key={i}
-          className="text-center font-medium text-gray-600 text-[12px]"
-        >
-          {format(addDays(start, i), "EEE")}
-        </div>
-      );
-    }
-    return <div className="grid grid-cols-7 mb-2">{days}</div>;
-  };
+    const firstDayOfMonth = new Date(month.getFullYear(), month.getMonth(), 1).getDay();
+    const totalDays = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
 
-  // Calendar cells
-  const renderCells = () => {
-    const rows = [];
-    let days = [];
-    let day = startDate;
+    // Empty cells for days before the 1st
+    for (let i = 0; i < firstDayOfMonth; i++) days.push(null);
 
-    while (day <= endDate) {
-      for (let i = 0; i < 7; i++) {
-        const cloneDay = day;
-        const apiDay = attendanceData.find((d) =>
-          isSameDay(new Date(d.date), cloneDay)
-        );
-
-        const statusColor = apiDay
-          ? apiDay.record_type === "Holiday"
-            ? "bg-pink-500"
-            : apiDay.record_type === "Weekly Off"
-            ? "bg-gray-400"
-            : apiDay.in && apiDay.in.includes("0000")
-            ? "bg-red-500"
-            : !apiDay.in
-            ? "bg-red-500"
-            : "bg-green-500"
-          : "";
-
-        // Tooltip text for hover
-        const tooltipText = apiDay
-          ? `Type: ${apiDay.record_type || "-"}
-Check-in: ${cleanTime(apiDay.in)}
-Check-out: ${cleanTime(apiDay.out)}
-Total Hours: ${cleanDuration(apiDay.total_hour)}
-Overtime: ${cleanDuration(apiDay.overtime_hr)}`
-          : "";
-
-        days.push(
-          <div
-            key={day.getTime()}
-            className={`border h-24 p-1 cursor-pointer 
-              ${!isSameMonth(day, monthStart) ? "bg-gray-100" : ""} 
-              ${isSameDay(day, selectedDate) ? "bg-blue-100" : ""}`}
-            onClick={() => setSelectedDate(cloneDay)}
-            title={tooltipText} // Tooltip
-          >
-            <div className="text-[12px] font-medium">{format(day, "d")}</div>
-            {apiDay && (
-              <span
-                className={`text-[10px] px-1 rounded text-white ${statusColor}`}
-              >
-                {apiDay.record_type}
-              </span>
-            )}
-          </div>
-        );
-
-        day = addDays(day, 1);
-      }
-
-      rows.push(
-        <div key={day.getTime()} className="grid grid-cols-7 gap-1 mb-1">
-          {days}
-        </div>
-      );
-      days = [];
+    // Fill days with API data
+    for (let i = 1; i <= totalDays; i++) {
+      const apiDay = attendanceData.find(d => new Date(d.date).getDate() === i);
+      const status = apiDay ? mapRecordTypeToStatus(apiDay.record_type, apiDay) : null;
+      const time = apiDay ? extractTime(apiDay.in) || extractTime(apiDay.first_in_time) : null;
+      days.push({ day: i, status, time });
     }
 
-    return rows;
+    return days;
   };
+
+  const calendarDays = generateCalendarDays();
+
+  const goPrev = () => setMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  const goNext = () => setMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  const goToday = () => setMonth(new Date());
 
   return (
-    <DashboardLayout userName="Employee Calendar">
-      <div className="px-4 pt-2">
-        <h1 className="text-[14px] font-medium">Employee Attendance Calendar</h1>
-        <p className="text-gray-500 text-[12px]">{format(currentMonth, "MMMM yyyy")}</p>
-      </div>
-
-      <div className="flex flex-col gap-4 p-6 bg-gray-50">
-        {/* TOP SECTION: Calendar + Regularize Panel */}
-        <div className="flex gap-4">
-          <div className="flex-1 bg-white p-4 rounded-xl shadow-md">
-            {renderHeader()}
-            {renderDays()}
-            {renderCells()}
-          </div>
-
-          <div className="w-80 bg-white p-4 rounded-xl shadow-md flex flex-col gap-4">
-            <RegularizeAndWorkHour
-              UUID={UUID}
-              selectedDate={selectedDate}
-              selectedDayData={attendanceData.find((item) =>
-                isSameDay(new Date(item.date), selectedDate)
-              )}
-              refreshAttendance={fetchAttendance}
-            />
-          </div>
-        </div>
-
-        {/* BOTTOM SECTION: Timeline + Pie Chart */}
-        <div className="flex gap-4">
-          <div className="flex-1 bg-white p-4 rounded-xl shadow-md">
-            <EmployeeTimeline
-              month={currentMonth.getMonth() + 1}
-              year={currentMonth.getFullYear()}
-              employeeId={UUID}
-            />
-          </div>
-
-          <div className="flex-1 bg-white p-4 rounded-xl shadow-md">
-       
-            <PieChartComponent
-              month={currentMonth.getMonth() + 1}
-              year={currentMonth.getFullYear()}
-              employeeId={UUID}
-            />
-          </div>
+    <div className="p-8 w-full bg-white" style={{ minWidth: '400px' }}>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold">
+          {month.toLocaleString("default", { month: "long" }).toUpperCase()}
+          <span className="text-red-500 ml-2">{month.getFullYear()}</span>
+        </h2>
+        <div className="flex space-x-2 text-gray-700">
+          <button onClick={goPrev} className="p-2 border rounded-full hover:bg-gray-100"><ChevronLeft size={24} /></button>
+          <button onClick={goNext} className="p-2 border rounded-full hover:bg-gray-100"><ChevronRight size={24} /></button>
+          <button onClick={goToday} className="px-3 py-1 border rounded-md text-sm">Today</button>
         </div>
       </div>
-    </DashboardLayout>
+
+      {/* Day of week headers */}
+      <div className="grid grid-cols-7 text-center mb-1 text-xs text-gray-600 font-semibold">
+        {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(d => (
+          <div key={d} className="py-2">{d}</div>
+        ))}
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 border-t border-l border-gray-200">
+        {calendarDays.map((day, idx) => (
+          <div key={idx} className="h-24 border-r border-b border-gray-200 p-1 flex flex-col items-start relative">
+            {day ? (
+              <>
+                <div className="w-full flex justify-between items-start pt-1 px-1">
+                  <span className="text-sm font-medium">{day.day}</span>
+                  <div className="h-4 w-4 flex justify-center items-center">
+                    <div className="space-y-0.5">
+                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+                {day.status && <div className={`absolute bottom-2 left-2 w-3 h-3 rounded-full ${statusColors[day.status]}`}></div>}
+                {day.time && (
+                  <div className="absolute bottom-2 right-2 text-xs text-gray-600 font-mono">
+                    {day.time === "00:00:00" ? "00:00:00" : day.time}
+                  </div>
+                )}
+              </>
+            ) : <div className="h-full"></div>}
+          </div>
+        ))}
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap justify-center py-4 text-xs mt-4 border-t">
+        {Object.entries(statusColors).map(([key, colorClass]) => (
+          <div key={key} className="flex items-center mx-2 my-1">
+            <span className={`w-3 h-3 rounded-full mr-1 ${colorClass}`}></span>
+            <span className="uppercase text-gray-700 font-medium">{key.replace(/-/g, " ")}</span>
+          </div>
+        ))}
+      </div>
+
+      {isLoading && <div className="fixed bottom-4 left-4 bg-white px-3 py-2 rounded shadow text-sm text-gray-600">Loading attendance...</div>}
+      {error && <div className="fixed bottom-4 left-4 bg-red-50 px-3 py-2 rounded shadow text-sm text-red-600">{error}</div>}
+    </div>
   );
-}
+};
+
+export default EmployeeCalendar;
