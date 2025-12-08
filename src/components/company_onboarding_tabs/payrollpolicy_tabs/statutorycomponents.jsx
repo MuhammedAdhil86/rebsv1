@@ -18,11 +18,16 @@ import LabourWelfareFundTab from "./statutory_component_tabs/lw_fund_tab";
 const StatutoryComponents = () => {
   const [activeTab, setActiveTab] = useState("EPF");
 
+  // EPF
   const [epfEnabled, setEpfEnabled] = useState(false);
   const [epfData, setEpfData] = useState(null);
 
+  // ESI
   const [esiEnabled, setEsiEnabled] = useState(false);
   const [esiData, setEsiData] = useState(null);
+
+  // PT
+  const [ptData, setPtData] = useState(null);
 
   const [loading, setLoading] = useState(true);
 
@@ -31,6 +36,7 @@ const StatutoryComponents = () => {
   useEffect(() => {
     fetchEPFStatus();
     fetchESIStatus();
+    fetchPTData();
   }, []);
 
   // =========================================================
@@ -73,7 +79,24 @@ const StatutoryComponents = () => {
   };
 
   // =========================================================
-  //                     ENABLE EPF
+  //                     Professional Tax GET API
+  // =========================================================
+  const fetchPTData = async () => {
+    try {
+      const url = axiosInstance.baseURL2 + "api/payroll/statutory/professional-tax?company_id=8";
+      const response = await axiosInstance.get(url);
+
+      const data = response.data?.data;
+      setPtData(data || null);
+
+      console.log("Fetched PT Data:", data);
+    } catch (error) {
+      console.error("Error fetching Professional Tax:", error);
+    }
+  };
+
+  // =========================================================
+  //                     ENABLE/DISABLE EPF
   // =========================================================
   const handleEnableEpf = async () => {
     try {
@@ -93,9 +116,6 @@ const StatutoryComponents = () => {
     }
   };
 
-  // =========================================================
-  //                     DISABLE EPF
-  // =========================================================
   const handleDisableEpf = async () => {
     try {
       setLoading(true);
@@ -115,7 +135,7 @@ const StatutoryComponents = () => {
   };
 
   // =========================================================
-  //                     ENABLE ESI
+  //                     ENABLE/DISABLE ESI
   // =========================================================
   const handleEnableEsi = async () => {
     try {
@@ -135,14 +155,10 @@ const StatutoryComponents = () => {
     }
   };
 
-  // =========================================================
-  //                     DISABLE ESI (UPDATED with API)
-  // =========================================================
   const handleDisableEsi = async () => {
     try {
       setLoading(true);
       const url = axiosInstance.baseURL2 + "api/payroll/statutory/esi/8/disable";
-
       const response = await axiosInstance.post(url, { enabled: false });
 
       if (response.data?.data?.enabled === false) {
@@ -204,11 +220,15 @@ const StatutoryComponents = () => {
         ))
       }
 
-      {/* PT */}
-      {activeTab === "Professional Tax" && <ProfessionalTaxTab />}
+      {/* PT Tab */}
+      {!loading && activeTab === "Professional Tax" && ptData &&
+        <ProfessionalTaxTab data={ptData} />
+      }
 
-      {/* LWF */}
-      {activeTab === "Labour Welfare Fund" && <LabourWelfareFundTab />}
+      {/* LWF Tab */}
+      {!loading && activeTab === "Labour Welfare Fund" &&
+        <LabourWelfareFundTab />
+      }
 
     </div>
   );
