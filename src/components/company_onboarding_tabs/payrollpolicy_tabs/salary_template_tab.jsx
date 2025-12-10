@@ -1,31 +1,40 @@
+// SalaryTemplate.jsx
 import React, { useEffect, useState } from "react";
-import payrollService from "../../../service/payrollService";
+import payrollService from "../../../service/payrollService"; // centralized API
 
 const SalaryTemplate = () => {
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Optional: filter by status (Active/Inactive)
+  const [filterStatus, setFilterStatus] = useState("all"); // "all", "active", "inactive"
+
   useEffect(() => {
-    let isMounted = true; // Prevent state updates if unmounted
+    let isMounted = true;
 
     const fetchTemplates = async () => {
       setLoading(true);
       setError(null);
       try {
-        const items = await payrollService.getSalaryTemplates(); // Centralized API
+        const items = await payrollService.getSalaryTemplates(); // fetch from service
 
-        const formatted = items.map((item) => ({
-          name: item.name || "-",
-          description: item.description || "-",
-          annualCTC: `₹${Number(item.annual_ctc || 0).toLocaleString()}`,
-          status:
-            item.status?.toLowerCase() === "active" ? "Active" : "Inactive",
-        }));
+        const formatted = items
+          .map((item) => ({
+            name: item.name || "-",
+            description: item.description || "-",
+            annualCTC: `₹${Number(item.annual_ctc || 0).toLocaleString()}`,
+            status:
+              item.status?.toLowerCase() === "active" ? "Active" : "Inactive",
+          }))
+          .filter((item) => {
+            if (filterStatus === "all") return true;
+            return item.status.toLowerCase() === filterStatus;
+          });
 
         if (isMounted) setTableData(formatted);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching salary templates:", err);
         if (isMounted) {
           setError("Failed to load salary templates. Please try again.");
           setTableData([]);
@@ -40,10 +49,23 @@ const SalaryTemplate = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [filterStatus]);
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto p-4">
+      <div className="mb-4 flex items-center gap-2">
+        <label>Status Filter:</label>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="border px-2 py-1 rounded"
+        >
+          <option value="all">All</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+
       <table className="w-full border-collapse text-xs font-normal">
         <thead>
           <tr className="text-left bg-gray-50 border-b border-gray-200">

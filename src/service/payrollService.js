@@ -1,114 +1,111 @@
-import axiosInstance from "./axiosinstance";
-
-const API = axiosInstance.baseURL2; // ngrok URL (no trailing slash)
+// payrollService.js
+import axiosInstance from "./axiosinstance"; // Make sure the path is correct
 
 const payrollService = {
-  /* ---------------- SALARY TEMPLATE ---------------- */
-
+  // ---------------- SALARY TEMPLATES ----------------
   getSalaryTemplates: async () => {
     try {
-      const res = await axiosInstance.get(
-        "api/payroll/templates?status=active",
-        { baseURL: API }
-      );
+      const res = await axiosInstance.get("api/payroll/templates?status=active", {
+        baseURL: axiosInstance.baseURL2, // ✅ Use baseURL2
+      });
       return res.data?.data?.items || [];
     } catch (err) {
-      console.error("Error in payrollService.getSalaryTemplates:", err);
+      console.error("Error in payrollService.getSalaryTemplates:", err.response || err);
       throw err;
     }
   },
 
-  /* ---------------- STATUTORY: EPF ---------------- */
-
+  // ---------------- EPF ----------------
   getEPF: async () => {
     try {
       const res = await axiosInstance.get("api/payroll/statutory/epf", {
-        baseURL: API,
+        baseURL: axiosInstance.baseURL2,
       });
       return res.data?.data || {};
     } catch (err) {
-      console.error("Error in payrollService.getEPF:", err);
+      console.error("Error in payrollService.getEPF:", err.response || err);
       throw err;
     }
   },
 
   enableEPF: async () => {
     try {
-      return await axiosInstance.post(
+      const res = await axiosInstance.post(
         "api/payroll/statutory/epf/enable",
         { enabled: true },
-        { baseURL: API }
+        { baseURL: axiosInstance.baseURL2 }
       );
+      return res.data;
     } catch (err) {
-      console.error("Error in payrollService.enableEPF:", err);
+      console.error("Error in payrollService.enableEPF:", err.response || err);
       throw err;
     }
   },
 
   disableEPF: async () => {
     try {
-      return await axiosInstance.post(
+      const res = await axiosInstance.post(
         "api/payroll/statutory/epf/disable",
         {},
-        { baseURL: API }
+        { baseURL: axiosInstance.baseURL2 }
       );
+      return res.data;
     } catch (err) {
-      console.error("Error in payrollService.disableEPF:", err);
+      console.error("Error in payrollService.disableEPF:", err.response || err);
       throw err;
     }
   },
 
-  /* ---------------- STATUTORY: ESI ---------------- */
-
+  // ---------------- ESI ----------------
   getESI: async () => {
     try {
       const res = await axiosInstance.get("api/payroll/statutory/esi", {
-        baseURL: API,
+        baseURL: axiosInstance.baseURL2,
       });
       return res.data?.data || {};
     } catch (err) {
-      console.error("Error in payrollService.getESI:", err);
+      console.error("Error in payrollService.getESI:", err.response || err);
       throw err;
     }
   },
 
   enableESI: async () => {
     try {
-      return await axiosInstance.post(
+      const res = await axiosInstance.post(
         "api/payroll/statutory/esi/enable",
         { enabled: true },
-        { baseURL: API }
+        { baseURL: axiosInstance.baseURL2 }
       );
+      return res.data;
     } catch (err) {
-      console.error("Error in payrollService.enableESI:", err);
+      console.error("Error in payrollService.enableESI:", err.response || err);
       throw err;
     }
   },
 
   disableESI: async () => {
     try {
-      return await axiosInstance.post(
+      const res = await axiosInstance.post(
         "api/payroll/statutory/esi/disable",
         {},
-        { baseURL: API }
+        { baseURL: axiosInstance.baseURL2 }
       );
+      return res.data;
     } catch (err) {
-      console.error("Error in payrollService.disableESI:", err);
+      console.error("Error in payrollService.disableESI:", err.response || err);
       throw err;
     }
   },
 
-  /* ---------------- PROFESSIONAL TAX ---------------- */
-
+  // ---------------- PROFESSIONAL TAX ----------------
   getPT: async () => {
     try {
-      const res = await axiosInstance.get(
-        "api/payroll/statutory/professional-tax",
-        { baseURL: API }
-      );
+      const res = await axiosInstance.get("api/payroll/statutory/professional-tax", {
+        baseURL: axiosInstance.baseURL2,
+      });
       return res.data?.data || {};
     } catch (err) {
-      console.error("Error in payrollService.getPT:", err);
+      console.error("Error in payrollService.getPT:", err.response || err);
       throw err;
     }
   },
