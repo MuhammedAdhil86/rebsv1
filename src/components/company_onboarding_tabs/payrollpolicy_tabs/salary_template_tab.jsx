@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import payrollService from "../../../service/payrollService";
+import payrollService from "../../../service/payrollService"; // centralize API calls
 
 const SalaryTemplate = () => {
   const [tableData, setTableData] = useState([]);
@@ -7,33 +7,39 @@ const SalaryTemplate = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let isMounted = true; // prevent state update if unmounted
+
     const fetchTemplates = async () => {
       setLoading(true);
-      setError(null); // reset previous errors
+      setError(null);
       try {
-        const items = await payrollService.getSalaryTemplates();
+        const items = await payrollService.getSalaryTemplates(); // centralized API call
 
-        // Format data for table
         const formatted = items.map((item) => ({
           name: item.name || "-",
           description: item.description || "-",
           annualCTC: `₹${Number(item.annual_ctc || 0).toLocaleString()}`,
-          status: item.status
-            ? item.status.charAt(0).toUpperCase() + item.status.slice(1)
-            : "Unknown",
+          status:
+            item.status?.toLowerCase() === "active" ? "Active" : "Inactive",
         }));
 
-        setTableData(formatted);
+        if (isMounted) setTableData(formatted);
       } catch (err) {
-        console.error("Error fetching salary templates:", err);
-        setTableData([]);
-        setError("Failed to load salary templates");
+        console.error(err);
+        if (isMounted) {
+          setError("Failed to load salary templates. Please try again.");
+          setTableData([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchTemplates();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -56,7 +62,7 @@ const SalaryTemplate = () => {
             </tr>
           ) : error ? (
             <tr>
-              <td colSpan={4} className="text-center py-4 text-red-500">
+              <td colSpan={4} className="text-center py-4 text-red-600">
                 {error}
               </td>
             </tr>

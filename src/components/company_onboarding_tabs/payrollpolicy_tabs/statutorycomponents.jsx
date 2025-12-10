@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axiosInstance from "../../../service/axiosinstance";
+import payrollService from "../../../service/payrollService";
 
 // Components
 import EpfTab from "./statutory_component_tabs/Epf_tab";
@@ -9,7 +9,7 @@ import EnableESI from "./statutory_component_tabs/esi_enable";
 import ProfessionalTaxTab from "./statutory_component_tabs/pt_tab";
 
 const StatutoryComponents = () => {
-  const tabs = ["EPF", "ESI", "PT"]; // All tabs
+  const tabs = ["EPF", "ESI", "PT"];
   const [activeTab, setActiveTab] = useState("EPF");
 
   // EPF state
@@ -29,16 +29,13 @@ const StatutoryComponents = () => {
   // Global loading
   const [loading, setLoading] = useState(true);
 
-  // Fetch EPF
+  // ------------------- Fetchers -------------------
   const fetchEPF = useCallback(async () => {
     setEpfLoading(true);
     try {
-      const response = await axiosInstance.get(
-        `${axiosInstance.baseURL2}api/payroll/statutory/epf`
-      );
-      const epfInfo = response.data?.data || {};
-      setEpfData(epfInfo);
-      setEpfEnabled(Boolean(epfInfo.enabled));
+      const data = await payrollService.getEPF();
+      setEpfData(data);
+      setEpfEnabled(Boolean(data.enabled));
     } catch (err) {
       console.error("Error fetching EPF:", err);
     } finally {
@@ -46,16 +43,12 @@ const StatutoryComponents = () => {
     }
   }, []);
 
-  // Fetch ESI
   const fetchESI = useCallback(async () => {
     setEsiLoading(true);
     try {
-      const response = await axiosInstance.get(
-        `${axiosInstance.baseURL2}api/payroll/statutory/esi`
-      );
-      const esiInfo = response.data?.data || {};
-      setEsiData(esiInfo);
-      setEsiEnabled(Boolean(esiInfo.enabled));
+      const data = await payrollService.getESI();
+      setEsiData(data);
+      setEsiEnabled(Boolean(data.enabled));
     } catch (err) {
       console.error("Error fetching ESI:", err);
     } finally {
@@ -63,15 +56,11 @@ const StatutoryComponents = () => {
     }
   }, []);
 
-  // Fetch PT
   const fetchPT = useCallback(async () => {
     setPtLoading(true);
     try {
-      const response = await axiosInstance.get(
-        `${axiosInstance.baseURL2}api/payroll/statutory/professional-tax`
-      );
-      const ptInfo = response.data?.data || {};
-      setPtData(ptInfo);
+      const data = await payrollService.getPT();
+      setPtData(data);
     } catch (err) {
       console.error("Error fetching PT:", err);
     } finally {
@@ -79,7 +68,7 @@ const StatutoryComponents = () => {
     }
   }, []);
 
-  // Fetch all data on mount
+  // Fetch all statutory data on mount
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
@@ -89,14 +78,11 @@ const StatutoryComponents = () => {
     fetchAll();
   }, [fetchEPF, fetchESI, fetchPT]);
 
-  // EPF Handlers
+  // ------------------- Handlers -------------------
   const handleEnableEpf = async () => {
     setEpfLoading(true);
     try {
-      await axiosInstance.post(
-        `${axiosInstance.baseURL2}api/payroll/statutory/epf/enable`,
-        { enabled: true }
-      );
+      await payrollService.enableEPF();
       fetchEPF();
     } catch (err) {
       console.error("Error enabling EPF:", err);
@@ -108,9 +94,7 @@ const StatutoryComponents = () => {
   const handleDisableEpf = async () => {
     setEpfLoading(true);
     try {
-      await axiosInstance.post(
-        `${axiosInstance.baseURL2}api/payroll/statutory/epf/disable`
-      );
+      await payrollService.disableEPF();
       fetchEPF();
     } catch (err) {
       console.error("Error disabling EPF:", err);
@@ -119,14 +103,10 @@ const StatutoryComponents = () => {
     }
   };
 
-  // ESI Handlers
   const handleEnableEsi = async () => {
     setEsiLoading(true);
     try {
-      await axiosInstance.post(
-        `${axiosInstance.baseURL2}api/payroll/statutory/esi/enable`,
-        { enabled: true }
-      );
+      await payrollService.enableESI();
       fetchESI();
     } catch (err) {
       console.error("Error enabling ESI:", err);
@@ -138,9 +118,7 @@ const StatutoryComponents = () => {
   const handleDisableEsi = async () => {
     setEsiLoading(true);
     try {
-      await axiosInstance.post(
-        `${axiosInstance.baseURL2}api/payroll/statutory/esi/disable`
-      );
+      await payrollService.disableESI();
       fetchESI();
     } catch (err) {
       console.error("Error disabling ESI:", err);
@@ -149,7 +127,7 @@ const StatutoryComponents = () => {
     }
   };
 
-  // Tab content
+  // ------------------- Tab Components -------------------
   const tabComponents = {
     EPF: epfLoading ? (
       <div className="text-center py-10 text-gray-500 text-sm">Loading...</div>
