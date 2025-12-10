@@ -1,27 +1,30 @@
-// service/payrollService.js
 import axiosInstance from "./axiosinstance";
 
+const API = axiosInstance.baseURL2; // ngrok URL (no trailing slash)
+
 const payrollService = {
-  // Fetch active salary templates
+  /* ---------------- SALARY TEMPLATE ---------------- */
+
   getSalaryTemplates: async () => {
     try {
-      const response = await axiosInstance.get(
+      const res = await axiosInstance.get(
         "api/payroll/templates?status=active",
-        { baseURL: axiosInstance.baseURL2 } // Use ngrok
+        { baseURL: API }
       );
-      return response.data?.data?.items || [];
-    } catch (error) {
-      console.error("Error in payrollService.getSalaryTemplates:", error);
-      throw error;
+      return res.data?.data?.items || [];
+    } catch (err) {
+      console.error("Error in payrollService.getSalaryTemplates:", err);
+      throw err;
     }
   },
 
-  // ---------------- STATUTORY ----------------
+  /* ---------------- STATUTORY: EPF ---------------- */
 
-  // Fetch EPF details
   getEPF: async () => {
     try {
-      const res = await axiosInstance.get(`${axiosInstance.baseURL2}api/payroll/statutory/epf`);
+      const res = await axiosInstance.get("api/payroll/statutory/epf", {
+        baseURL: API,
+      });
       return res.data?.data || {};
     } catch (err) {
       console.error("Error in payrollService.getEPF:", err);
@@ -29,30 +32,39 @@ const payrollService = {
     }
   },
 
-  // Enable EPF
   enableEPF: async () => {
     try {
-      await axiosInstance.post(`${axiosInstance.baseURL2}api/payroll/statutory/epf/enable`, { enabled: true });
+      return await axiosInstance.post(
+        "api/payroll/statutory/epf/enable",
+        { enabled: true },
+        { baseURL: API }
+      );
     } catch (err) {
       console.error("Error in payrollService.enableEPF:", err);
       throw err;
     }
   },
 
-  // Disable EPF
   disableEPF: async () => {
     try {
-      await axiosInstance.post(`${axiosInstance.baseURL2}api/payroll/statutory/epf/disable`);
+      return await axiosInstance.post(
+        "api/payroll/statutory/epf/disable",
+        {},
+        { baseURL: API }
+      );
     } catch (err) {
       console.error("Error in payrollService.disableEPF:", err);
       throw err;
     }
   },
 
-  // Fetch ESI details
+  /* ---------------- STATUTORY: ESI ---------------- */
+
   getESI: async () => {
     try {
-      const res = await axiosInstance.get(`${axiosInstance.baseURL2}api/payroll/statutory/esi`);
+      const res = await axiosInstance.get("api/payroll/statutory/esi", {
+        baseURL: API,
+      });
       return res.data?.data || {};
     } catch (err) {
       console.error("Error in payrollService.getESI:", err);
@@ -60,30 +72,40 @@ const payrollService = {
     }
   },
 
-  // Enable ESI
   enableESI: async () => {
     try {
-      await axiosInstance.post(`${axiosInstance.baseURL2}api/payroll/statutory/esi/enable`, { enabled: true });
+      return await axiosInstance.post(
+        "api/payroll/statutory/esi/enable",
+        { enabled: true },
+        { baseURL: API }
+      );
     } catch (err) {
       console.error("Error in payrollService.enableESI:", err);
       throw err;
     }
   },
 
-  // Disable ESI
   disableESI: async () => {
     try {
-      await axiosInstance.post(`${axiosInstance.baseURL2}api/payroll/statutory/esi/disable`);
+      return await axiosInstance.post(
+        "api/payroll/statutory/esi/disable",
+        {},
+        { baseURL: API }
+      );
     } catch (err) {
       console.error("Error in payrollService.disableESI:", err);
       throw err;
     }
   },
 
-  // Fetch Professional Tax details
+  /* ---------------- PROFESSIONAL TAX ---------------- */
+
   getPT: async () => {
     try {
-      const res = await axiosInstance.get(`${axiosInstance.baseURL2}api/payroll/statutory/professional-tax`);
+      const res = await axiosInstance.get(
+        "api/payroll/statutory/professional-tax",
+        { baseURL: API }
+      );
       return res.data?.data || {};
     } catch (err) {
       console.error("Error in payrollService.getPT:", err);

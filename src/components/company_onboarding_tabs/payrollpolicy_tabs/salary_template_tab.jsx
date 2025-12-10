@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import payrollService from "../../../service/payrollService"; // centralize API calls
+import payrollService from "../../../service/payrollService";
 
 const SalaryTemplate = () => {
   const [tableData, setTableData] = useState([]);
@@ -7,13 +7,13 @@ const SalaryTemplate = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    let isMounted = true; // prevent state update if unmounted
+    let isMounted = true; // Prevent state updates if unmounted
 
     const fetchTemplates = async () => {
       setLoading(true);
       setError(null);
       try {
-        const items = await payrollService.getSalaryTemplates(); // centralized API call
+        const items = await payrollService.getSalaryTemplates(); // Centralized API
 
         const formatted = items.map((item) => ({
           name: item.name || "-",
