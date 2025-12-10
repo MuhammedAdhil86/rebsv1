@@ -6,26 +6,26 @@ const COMPANY_ID = 8; // Adjust as needed
 const payrollService = {
   // EPF
   getEPF: async () => {
-    const url = `api/payroll/statutory/epf?company_id=${COMPANY_ID}`;
+    const url = `/api/payroll/statutory/epf`;
     const response = await axiosInstance.get(url);
     return response.data?.data || null;
   },
 
   enableEPF: async () => {
-    const url = `api/payroll/statutory/epf/${COMPANY_ID}/enable`;
+    const url = `api/payroll/statutory/epf/enable`;
     const response = await axiosInstance.post(url, { enabled: true });
     return response.data?.data || null;
   },
 
   disableEPF: async () => {
-    const url = `api/payroll/statutory/epf/${COMPANY_ID}/disable`;
-    const response = await axiosInstance.post(url, { enabled: false });
+    const url = `api/payroll/statutory/epf/disable`;
+    const response = await axiosInstance.post;
     return response.data?.data || null;
   },
 
   // ESI
   getESI: async () => {
-    const url = `api/payroll/statutory/esi?company_id=${COMPANY_ID}`;
+    const url = `api/payroll/statutory/esi`;
     const response = await axiosInstance.get(url);
     return response.data?.data || null;
   },
@@ -55,7 +55,7 @@ const payrollService = {
     return res.data?.data?.items || [];
   },
     getPayrollComponents: async (limit = 10, offset = 0) => {
-    const url = `api/payroll/components?company_id=${COMPANY_ID}&limit=${limit}&offset=${offset}`;
+    const url = `api/payroll/components?limit=${limit}&offset=${offset}`;
     const res = await axiosInstance.get(url);
     return res.data?.data?.items || [];
   },

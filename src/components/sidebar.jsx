@@ -207,26 +207,31 @@ function SideBar({ isCollapsed, toggleSidebar }) {
             )}
           </div>
 
-          {/* Profile Dropdown */}
-          {!isCollapsed && isProfileOpen && (
-            <div className="mt-2 w-[90%] bg-[#1C2526] rounded-lg flex flex-col space-y-1 px-2 py-1">
-              <Link
-                to="/settings"
-                className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
-              >
-                <Settings size={20} />
-                <span className="text-sm flex-1 text-left">Settings</span>
-              </Link>
+       {/* Profile Dropdown */}
+{!isCollapsed && isProfileOpen && (
+  <div className="mt-2 w-[90%] bg-[#1C2526] rounded-lg flex flex-col space-y-1 px-2 py-1">
+    <Link
+      to="/settings"
+      className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
+    >
+      <Settings size={20} />
+      <span className="text-sm flex-1 text-left">Settings</span>
+    </Link>
 
-              <button
-                onClick={() => alert("Logout logic here")}
-                className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
-              >
-                <Icon icon="material-symbols:logout" width="20" height="20" />
-                <span className="text-sm flex-1 text-left">Logout</span>
-              </button>
-            </div>
-          )}
+    <button
+      onClick={() => {
+        // ✅ Logout: remove token and redirect to login
+        localStorage.removeItem("token"); // or whatever key you use
+        window.location.href = "/login"; // redirect to login page
+      }}
+      className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
+    >
+      <Icon icon="material-symbols:logout" width="20" height="20" />
+      <span className="text-sm flex-1 text-left">Logout</span>
+    </button>
+  </div>
+)}
+
         </div>
 
         {/* Sidebar Menu */}
@@ -259,7 +264,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
               ))}
             </div>
           ))}
-        </nav>
+        </nav>f
 
         {/* Hide Scrollbar */}
         <style>{`

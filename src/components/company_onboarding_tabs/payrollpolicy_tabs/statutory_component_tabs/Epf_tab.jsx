@@ -1,21 +1,77 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axiosInstance from "../../../../service/axiosinstance";
 import { Check, X } from "lucide-react";
 import { Icon } from "@iconify/react";
+import EnableEPF from "./epf_enable";
 
-const EpfTab = ({ onDisable, epfData }) => {
-  const [loading, setLoading] = useState(false);
+const EpfTab = () => {
+  const [epfData, setEpfData] = useState(null);
+  const [epfEnabled, setEpfEnabled] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [epfLoading, setEpfLoading] = useState(false);
 
-  const handleDisableClick = async () => {
+  // Fetch EPF data
+  const fetchEPF = async () => {
     setLoading(true);
-    await onDisable();
-    setLoading(false);
+    try {
+      const response = await axiosInstance.get(
+        `${axiosInstance.baseURL2}api/payroll/statutory/epf`
+      );
+      console.log("EPF GET Response:", response.data);
+      const epfInfo = response.data?.data || {};
+      setEpfData(epfInfo);
+      setEpfEnabled(Boolean(epfInfo.enabled));
+    } catch (err) {
+      console.error("Error fetching EPF:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
+  useEffect(() => {
+    fetchEPF();
+  }, []);
+
+  // Enable EPF
+  const handleEnableEpf = async () => {
+    setEpfLoading(true);
+    try {
+      const response = await axiosInstance.post(
+        `${axiosInstance.baseURL2}api/payroll/statutory/epf/enable`,
+        { enabled: true }
+      );
+      console.log("EPF Enable Response:", response.data);
+      fetchEPF(); // refresh data
+    } catch (err) {
+      console.error("Error enabling EPF:", err);
+    } finally {
+      setEpfLoading(false);
+    }
+  };
+
+  // Disable EPF
+  const handleDisableEpf = async () => {
+    setEpfLoading(true);
+    try {
+      const response = await axiosInstance.post(
+        `${axiosInstance.baseURL2}api/payroll/statutory/epf/disable`
+      );
+      console.log("EPF Disable Response:", response.data);
+      fetchEPF(); // refresh data
+    } catch (err) {
+      console.error("Error disabling EPF:", err);
+    } finally {
+      setEpfLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-10 text-gray-500 text-sm">Loading...</div>;
+  }
+
+  return epfEnabled ? (
     <div className="rounded-xl">
-      <h2 className="font-medium text-gray-800 mb-4 text-[14px]">
-        Employee’s Provident Fund
-      </h2>
+      <h2 className="font-medium text-gray-800 mb-4 text-[14px]">Employee’s Provident Fund</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-[1.2fr_1fr] gap-y-5 gap-x-10">
         {/* LEFT SIDE */}
@@ -24,34 +80,24 @@ const EpfTab = ({ onDisable, epfData }) => {
             <p className="text-gray-500 w-[240px]">EPF Number</p>
             <p className="text-gray-800 font-medium">{epfData?.epf_number || "-"}</p>
           </div>
-
           <div className="flex items-center gap-2">
             <p className="text-gray-500 w-[240px]">Deduction Cycle</p>
             <p className="text-gray-800 font-medium">
               {epfData?.deduction_cycle?.charAt(0).toUpperCase() + epfData?.deduction_cycle?.slice(1) || "-"}
             </p>
           </div>
-
           <div className="flex items-center gap-2">
             <p className="text-gray-500 w-[240px]">Employee Contribution Rate</p>
-            <div className="flex flex-col items-start gap-1">
-              <p className="text-gray-800 font-medium">{epfData?.employee_contribution_rate}% of Actual PF Wage</p>
-              <button className="text-[12px] font-medium px-2 py-0.5 rounded bg-[#F4F6F8] hover:bg-gray-100 transition">
-                View Splitup
-              </button>
-            </div>
+            <p className="text-gray-800 font-medium">{epfData?.employee_contribution_rate}% of Actual PF Wage</p>
           </div>
-
           <div className="flex items-center gap-2">
             <p className="text-gray-500 w-[240px]">Allow Employee Level Override</p>
             <p className="text-gray-800 font-medium">{epfData?.allow_employee_override ? "Yes" : "No"}</p>
           </div>
-
           <div className="flex items-center gap-2">
             <p className="text-gray-500 w-[240px]">Pro-rate Restricted PF Wage</p>
             <p className="text-gray-800 font-medium">{epfData?.pro_rate_restricted_wage ? "Yes" : "No"}</p>
           </div>
-
           <div className="flex items-start gap-2">
             <p className="text-gray-500 w-[240px]">Consider applicable salary components based on LOP</p>
             <p className="text-gray-800 font-medium leading-snug">
@@ -60,14 +106,13 @@ const EpfTab = ({ onDisable, epfData }) => {
                 : "No"}
             </p>
           </div>
-
           <div className="flex items-center gap-2">
             <p className="text-gray-500 w-[240px]">Eligible for ABRY Scheme</p>
             <p className="text-gray-800 font-medium">{epfData?.eligible_for_abry_scheme ? "Yes" : "No"}</p>
           </div>
         </div>
 
-        {/* RIGHT SIDE - Contribution Preferences */}
+        {/* RIGHT SIDE */}
         <div>
           <p className="text-gray-500 mb-0.5">Contribution Preferences</p>
           <div className="flex flex-col gap-2 mt-1">
@@ -93,21 +138,19 @@ const EpfTab = ({ onDisable, epfData }) => {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex gap-3 mt-8">
-        <button className="flex items-center gap-2 text-xs text-black px-4 py-1.5 border border-gray-300 rounded-md hover:bg-gray-100 transition font-medium">
-          <Icon icon="basil:edit-outline" className="w-4 h-4" /> Edit EPF
-        </button>
         <button
-          onClick={handleDisableClick}
-          disabled={loading}
+          onClick={handleDisableEpf}
+          disabled={epfLoading}
           className="flex items-center gap-2 text-xs px-4 py-1.5 border border-red-300 text-red-600 rounded-md hover:bg-red-50 transition font-medium disabled:opacity-50"
         >
           <Icon icon="proicons:delete" className="w-4 h-4" />
-          {loading ? "Disabling..." : "Disable EPF"}
+          {epfLoading ? "Disabling..." : "Disable EPF"}
         </button>
       </div>
     </div>
+  ) : (
+    <EnableEPF onEnable={handleEnableEpf} epfLoading={epfLoading} />
   );
 };
 

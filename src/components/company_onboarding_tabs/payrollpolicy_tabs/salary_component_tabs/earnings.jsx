@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import payrollService from "../../../../service/payrollService";
+import axios from "axios";
 
 const Earnings = () => {
   const [data, setData] = useState([]);
@@ -12,7 +12,22 @@ const Earnings = () => {
   const fetchComponents = async () => {
     setLoading(true);
     try {
-      const items = await payrollService.getPayrollComponents(10, 0);
+      console.log("Fetching payroll components...");
+
+      const token = localStorage.getItem("authToken"); // your bearer token
+      const res = await axios.get(
+        "https://agnostically-bonniest-patrice.ngrok-free.dev/api/payroll/components?limit=10&offset=0",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        }
+      );
+
+      console.log("API Response:", res.data);
+
+      const items = res.data?.data?.items || [];
 
       const formatted = items.map((item) => ({
         template: item.payslip_name || "-",
@@ -28,9 +43,11 @@ const Earnings = () => {
         status: item.active ? "Active" : "Inactive",
       }));
 
+      console.log("Formatted data:", formatted);
       setData(formatted);
     } catch (err) {
       console.error("Error loading payroll components:", err);
+      setData([]);
     } finally {
       setLoading(false);
     }

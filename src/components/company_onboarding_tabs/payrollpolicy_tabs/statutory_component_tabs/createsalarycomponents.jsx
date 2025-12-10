@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import axiosInstance from "../../../../service/axiosinstance";
 
 const CreateSalaryComponent = ({ setShowCreate }) => {
-  const [companies, setCompanies] = useState([]);
-  const [loadingCompanies, setLoadingCompanies] = useState(true);
+  const [components, setComponents] = useState([]);
+  const [loadingComponents, setLoadingComponents] = useState(true);
 
   const [form, setForm] = useState({
-    company_id: "",
+    selected_component_id: "",
     name: "",
     internal_name: "",
     payslip_name: "",
@@ -19,105 +19,132 @@ const CreateSalaryComponent = ({ setShowCreate }) => {
     show_in_payslip: true,
     flexible_benefit: false,
     part_of_salary_structure: true,
-    display_order: 1,
   });
 
-  // ----------------------------------------------------
-  // Load company list (dropdown)
-  // ----------------------------------------------------
+  // -----------------------------------------------------
+  // FIXED: Fetch components properly using baseURL2
+  // -----------------------------------------------------
   useEffect(() => {
-    const fetchCompanies = async () => {
+    const fetchComponents = async () => {
       try {
         const res = await axiosInstance.get(
-          `${axiosInstance.baseURL2}/api/companies`
+          `${axiosInstance.baseURL2}/api/payroll/components?limit=10&offset=0`
         );
-        setCompanies(res.data.data || []);
+
+        console.log("Fetched Components:", res.data);
+        setComponents(res.data?.data?.items || []);
       } catch (err) {
-        console.error("Error loading companies:", err);
-        alert("Failed to load companies.");
+        console.error("Error fetching components:", err);
+        alert("Failed to load components.");
       } finally {
-        setLoadingCompanies(false);
+        setLoadingComponents(false);
       }
     };
 
-    fetchCompanies();
+    fetchComponents();
   }, []);
 
-  // ----------------------------------------------------
-  // Handle input change
-  // ----------------------------------------------------
+  // -----------------------------------------------------
+  // Handle dropdown + input changes
+  // -----------------------------------------------------
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    if (name === "selected_component_id") {
+      const selected = components.find((c) => c.id === Number(value));
+
+      if (selected) {
+        console.log("Selected Component:", selected);
+
+        setForm({
+          ...form,
+          selected_component_id: selected.id,
+          name: selected.name,
+          internal_name: selected.internal_name,
+          payslip_name: selected.payslip_name,
+          component_type: selected.component_type,
+          active: selected.active,
+          taxable: selected.taxable,
+          consider_epf: selected.consider_epf,
+          consider_esi: selected.consider_esi,
+          pro_rata: selected.pro_rata,
+          show_in_payslip: selected.show_in_payslip,
+          flexible_benefit: selected.flexible_benefit,
+          part_of_salary_structure: selected.part_of_salary_structure,
+        });
+      }
+      return;
+    }
+
     setForm((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  // ----------------------------------------------------
-  // Submit form
-  // ----------------------------------------------------
+  // -----------------------------------------------------
+  // Submit
+  // -----------------------------------------------------
   const handleSubmit = async () => {
-    if (!form.company_id) {
-      alert("Please select a company.");
-      return;
-    }
-
-    const payload = {
-      ...form,
-      company_id: Number(form.company_id), // IMPORTANT FIX
-      display_order: Number(form.display_order),
-    };
-
     try {
+      const payload = { ...form };
+      delete payload.selected_component_id;
+
       const response = await axiosInstance.post(
         `${axiosInstance.baseURL2}/api/payroll/components`,
         payload
       );
 
+      console.log("Component Created Response:", response);
       alert(response.data.message || "Component created successfully!");
       setShowCreate(false);
-
     } catch (error) {
       console.error("Axios Error:", error);
-
-      if (error.response) {
-        alert(error.response.data.message || "Error occurred.");
-      } else {
-        alert("Network error. Check API URL.");
-      }
+      alert(error.response?.data?.message || "Error occurred.");
     }
   };
 
-  // ----------------------------------------------------
-  // UI
-  // ----------------------------------------------------
+  const checkboxFields = [
+    "active",
+    "taxable",
+    "consider_epf",
+    "consider_esi",
+    "show_in_payslip",
+    "pro_rata",
+    "flexible_benefit",
+    "part_of_salary_structure",
+  ];
+
+  // -----------------------------------------------------
+  // UI (unchanged)
+  // -----------------------------------------------------
   return (
     <div className="p-4 max-w-3xl mx-auto text-[12px]">
-
       <h2 className="text-[16px] mb-4 font-semibold">Create Salary Component</h2>
 
-      <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
-
-        {/* Company Dropdown */}
+      <div className="grid grid-cols-2 gap-4 bg-gray-800 p-4 rounded-lg border border-gray-200 mb-6">
+        
+        {/* Dropdown */}
         <div>
-          <label className="block mb-1">Company</label>
+          <label className="block mb-1">Select Component</label>
           <select
-            name="company_id"
-            value={form.company_id}
+            name="selected_component_id"
+            value={form.selected_component_id}
             onChange={handleChange}
             className="w-full border px-2 py-1 rounded"
+            disabled={loadingComponents}
           >
-            <option value="">-- Select Company --</option>
-            {companies.map((c) => (
+            <option value="">-- Select Component --</option>
+
+            {components.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.company_name}
+                {c.name}
               </option>
             ))}
           </select>
         </div>
 
-        {/* Component Name */}
+        {/* Name */}
         <div>
           <label className="block mb-1">Component Name</label>
           <input
@@ -167,30 +194,9 @@ const CreateSalaryComponent = ({ setShowCreate }) => {
           </select>
         </div>
 
-        {/* Display Order */}
-        <div>
-          <label className="block mb-1">Display Order</label>
-          <input
-            type="number"
-            name="display_order"
-            value={form.display_order}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-          />
-        </div>
-
-        {/* Checkbox Group */}
+        {/* Checkboxes */}
         <div className="col-span-2 grid grid-cols-2 gap-4 mt-2">
-          {[
-            "active",
-            "taxable",
-            "consider_epf",
-            "consider_esi",
-            "show_in_payslip",
-            "pro_rata",
-            "flexible_benefit",
-            "part_of_salary_structure",
-          ].map((field) => (
+          {checkboxFields.map((field) => (
             <label key={field} className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -204,7 +210,6 @@ const CreateSalaryComponent = ({ setShowCreate }) => {
         </div>
       </div>
 
-      {/* Buttons */}
       <div className="mt-4 flex justify-end gap-3">
         <button
           onClick={() => setShowCreate(false)}
