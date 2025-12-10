@@ -1,40 +1,33 @@
 import React, { useEffect, useState } from "react";
-import axiosInstance from "../../../service/axiosinstance"; // import your axios instance
+import payrollService from "../../../service/payrollService";
 
 const SalaryTemplate = () => {
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchTemplates = async () => {
       setLoading(true);
+      setError(null); // reset previous errors
       try {
-        console.log("Fetching salary templates...");
+        const items = await payrollService.getSalaryTemplates();
 
-        // Make GET request using baseURL2 (ngrok)
-        const res = await axiosInstance.get(
-          "api/payroll/templates?status=active",
-          { baseURL: axiosInstance.baseURL2 } // use ngrok URL
-        );
-
-        console.log("API Response:", res.data);
-
-        const items = res.data?.data?.items || [];
-
+        // Format data for table
         const formatted = items.map((item) => ({
-          name: item.name,
-          description: item.description,
+          name: item.name || "-",
+          description: item.description || "-",
           annualCTC: `₹${Number(item.annual_ctc || 0).toLocaleString()}`,
           status: item.status
             ? item.status.charAt(0).toUpperCase() + item.status.slice(1)
-            : "",
+            : "Unknown",
         }));
 
-        console.log("Formatted table data:", formatted);
         setTableData(formatted);
-      } catch (error) {
-        console.error("Error fetching salary templates:", error);
+      } catch (err) {
+        console.error("Error fetching salary templates:", err);
         setTableData([]);
+        setError("Failed to load salary templates");
       } finally {
         setLoading(false);
       }
@@ -59,6 +52,12 @@ const SalaryTemplate = () => {
             <tr>
               <td colSpan={4} className="text-center py-4 text-gray-500">
                 Loading...
+              </td>
+            </tr>
+          ) : error ? (
+            <tr>
+              <td colSpan={4} className="text-center py-4 text-red-500">
+                {error}
               </td>
             </tr>
           ) : tableData.length === 0 ? (
