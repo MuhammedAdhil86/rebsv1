@@ -1,12 +1,11 @@
-// payrollService.js
-import axiosInstance from "./axiosinstance"; // Make sure the path is correct
+import axiosInstance from "./axiosinstance"; // Ensure this path is correct
 
 const payrollService = {
   // ---------------- SALARY TEMPLATES ----------------
   getSalaryTemplates: async () => {
     try {
       const res = await axiosInstance.get("api/payroll/templates?status=active", {
-        baseURL: axiosInstance.baseURL2, // ✅ Use baseURL2
+        baseURL: axiosInstance.baseURL2,
       });
       return res.data?.data?.items || [];
     } catch (err) {
@@ -106,6 +105,45 @@ const payrollService = {
       return res.data?.data || {};
     } catch (err) {
       console.error("Error in payrollService.getPT:", err.response || err);
+      throw err;
+    }
+  },
+
+  // ---------------- LABOUR WELFARE FUND ----------------
+  getLWF: async () => {
+    try {
+      const res = await axiosInstance.get("api/payroll/statutory/lwf", {
+        baseURL: axiosInstance.baseURL2,
+      });
+      return res.data?.data || {};
+    } catch (err) {
+      console.error("Error in payrollService.getLWF:", err.response || err);
+      throw err;
+    }
+  },
+enableLWF: async ({ state, deduction_cycle }) => {
+  if (!state) throw new Error("State is required to enable LWF");
+  if (!deduction_cycle) throw new Error("Deduction cycle is required");
+
+  const res = await axiosInstance.post(
+    "api/payroll/statutory/lwf/enable",
+    { enabled: true, state, deduction_cycle },
+    { baseURL: axiosInstance.baseURL2 }
+  );
+  return res.data;
+},
+
+
+  disableLWF: async () => {
+    try {
+      const res = await axiosInstance.post(
+        "api/payroll/statutory/lwf/disable",
+        {}, // no body needed
+        { baseURL: axiosInstance.baseURL2 }
+      );
+      return res.data;
+    } catch (err) {
+      console.error("Error in payrollService.disableLWF:", err.response || err);
       throw err;
     }
   },

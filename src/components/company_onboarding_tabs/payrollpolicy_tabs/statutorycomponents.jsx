@@ -7,26 +7,32 @@ import EnableEPF from "./statutory_component_tabs/epf_enable";
 import EsiTab from "./statutory_component_tabs/Esi_tab";
 import EnableESI from "./statutory_component_tabs/esi_enable";
 import ProfessionalTaxTab from "./statutory_component_tabs/pt_tab";
+import LabourWelfareFundTab from "./statutory_component_tabs/lw_fund_tab";
 
 const StatutoryComponents = () => {
-  const tabs = ["EPF", "ESI", "PT"];
+  const tabs = ["EPF", "ESI", "PT", "LWF"];
   const [activeTab, setActiveTab] = useState("EPF");
 
-  // EPF state
+  // ------------------- EPF state -------------------
   const [epfData, setEpfData] = useState(null);
   const [epfEnabled, setEpfEnabled] = useState(false);
   const [epfLoading, setEpfLoading] = useState(false);
 
-  // ESI state
+  // ------------------- ESI state -------------------
   const [esiData, setEsiData] = useState(null);
   const [esiEnabled, setEsiEnabled] = useState(false);
   const [esiLoading, setEsiLoading] = useState(false);
 
-  // PT state
+  // ------------------- PT state -------------------
   const [ptData, setPtData] = useState(null);
   const [ptLoading, setPtLoading] = useState(false);
 
-  // Global loading
+  // ------------------- LWF state -------------------
+  const [lwfData, setLwfData] = useState(null);
+  const [lwfEnabled, setLwfEnabled] = useState(false);
+  const [lwfLoading, setLwfLoading] = useState(false);
+
+  // ------------------- Global loading -------------------
   const [loading, setLoading] = useState(true);
 
   // ------------------- Fetchers -------------------
@@ -68,15 +74,28 @@ const StatutoryComponents = () => {
     }
   }, []);
 
-  // Fetch all statutory data on mount
+  const fetchLWF = useCallback(async () => {
+    setLwfLoading(true);
+    try {
+      const data = await payrollService.getLWF();
+      setLwfData(data);
+      setLwfEnabled(Boolean(data.enabled));
+    } catch (err) {
+      console.error("Error fetching LWF:", err);
+    } finally {
+      setLwfLoading(false);
+    }
+  }, []);
+
+  // ------------------- Fetch all statutory data -------------------
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
-      await Promise.all([fetchEPF(), fetchESI(), fetchPT()]);
+      await Promise.all([fetchEPF(), fetchESI(), fetchPT(), fetchLWF()]);
       setLoading(false);
     };
     fetchAll();
-  }, [fetchEPF, fetchESI, fetchPT]);
+  }, [fetchEPF, fetchESI, fetchPT, fetchLWF]);
 
   // ------------------- Handlers -------------------
   const handleEnableEpf = async () => {
@@ -127,6 +146,32 @@ const StatutoryComponents = () => {
     }
   };
 
+  // ------------------- LWF Handlers -------------------
+  const handleEnableLWF = async ({ state, deduction_cycle }) => {
+    setLwfLoading(true);
+    try {
+      await payrollService.enableLWF({ state, deduction_cycle });
+      fetchLWF();
+    } catch (err) {
+      console.error("Error enabling LWF:", err);
+    } finally {
+      setLwfLoading(false);
+    }
+  };
+
+  const handleDisableLWF = async () => {
+    setLwfLoading(true);
+    try {
+      await payrollService.disableLWF(); // updated API call
+      fetchLWF(); // refresh LWF data
+      setLwfEnabled(false); // update UI immediately
+    } catch (err) {
+      console.error("Error disabling LWF:", err);
+    } finally {
+      setLwfLoading(false);
+    }
+  };
+
   // ------------------- Tab Components -------------------
   const tabComponents = {
     EPF: epfLoading ? (
@@ -149,6 +194,18 @@ const StatutoryComponents = () => {
       <div className="text-center py-10 text-gray-500 text-sm">Loading...</div>
     ) : (
       <ProfessionalTaxTab data={ptData} />
+    ),
+
+    LWF: lwfLoading ? (
+      <div className="text-center py-10 text-gray-500 text-sm">Loading...</div>
+    ) : (
+      <LabourWelfareFundTab
+        lwfData={lwfData}
+        enabled={lwfEnabled}
+        onEnable={handleEnableLWF}
+        onDisable={handleDisableLWF}
+        loading={lwfLoading}
+      />
     ),
   };
 

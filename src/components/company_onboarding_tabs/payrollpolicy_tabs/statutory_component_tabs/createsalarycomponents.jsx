@@ -1,232 +1,232 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axiosInstance from "../../../../service/axiosinstance";
 
-const CreateSalaryComponent = ({ setShowCreate }) => {
-  const [components, setComponents] = useState([]);
-  const [loadingComponents, setLoadingComponents] = useState(true);
-
+export default function CreateSalaryTemplate() {
   const [form, setForm] = useState({
-    selected_component_id: "",
     name: "",
-    internal_name: "",
-    payslip_name: "",
-    component_type: "earning",
-    active: true,
-    taxable: true,
-    consider_epf: true,
-    consider_esi: true,
-    pro_rata: true,
-    show_in_payslip: true,
-    flexible_benefit: false,
-    part_of_salary_structure: true,
+    description: "",
+    annual_ctc: "",
+    status: "active",
   });
 
-  // -----------------------------------------------------
-  // FIXED: Fetch components properly using baseURL2
-  // -----------------------------------------------------
+  const [components, setComponents] = useState([]);
+  const [mappings, setMappings] = useState([
+    { component_id: "", calculation_type: "", value: "" },
+  ]);
+
+  // Fetch components from API
   useEffect(() => {
     const fetchComponents = async () => {
       try {
-        const res = await axiosInstance.get(
-          `${axiosInstance.baseURL2}/api/payroll/components?limit=10&offset=0`
-        );
-
-        console.log("Fetched Components:", res.data);
+        const url = `${axiosInstance.baseURL2}/api/payroll/components?limit=50&offset=0`;
+        const res = await axiosInstance.get(url);
         setComponents(res.data?.data?.items || []);
-      } catch (err) {
-        console.error("Error fetching components:", err);
-        alert("Failed to load components.");
-      } finally {
-        setLoadingComponents(false);
+      } catch (e) {
+        console.error("Component fetch failed:", e);
       }
     };
-
     fetchComponents();
   }, []);
 
-  // -----------------------------------------------------
-  // Handle dropdown + input changes
-  // -----------------------------------------------------
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    if (name === "selected_component_id") {
-      const selected = components.find((c) => c.id === Number(value));
-
-      if (selected) {
-        console.log("Selected Component:", selected);
-
-        setForm({
-          ...form,
-          selected_component_id: selected.id,
-          name: selected.name,
-          internal_name: selected.internal_name,
-          payslip_name: selected.payslip_name,
-          component_type: selected.component_type,
-          active: selected.active,
-          taxable: selected.taxable,
-          consider_epf: selected.consider_epf,
-          consider_esi: selected.consider_esi,
-          pro_rata: selected.pro_rata,
-          show_in_payslip: selected.show_in_payslip,
-          flexible_benefit: selected.flexible_benefit,
-          part_of_salary_structure: selected.part_of_salary_structure,
-        });
-      }
-      return;
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+  const handleTemplateChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // -----------------------------------------------------
-  // Submit
-  // -----------------------------------------------------
-  const handleSubmit = async () => {
-    try {
-      const payload = { ...form };
-      delete payload.selected_component_id;
+  const handleMappingChange = (index, e) => {
+    const { name, value } = e.target;
+    const updated = [...mappings];
+    updated[index][name] = value;
+    setMappings(updated);
+  };
 
-      const response = await axiosInstance.post(
-        `${axiosInstance.baseURL2}/api/payroll/components`,
-        payload
+  const addMapping = () => {
+    setMappings([
+      ...mappings,
+      { component_id: "", calculation_type: "", value: "" },
+    ]);
+  };
+
+  const removeMapping = (index) => {
+    const updated = mappings.filter((_, i) => i !== index);
+    setMappings(updated);
+  };
+
+  const submitTemplate = async () => {
+    try {
+      // Only allow valid mappings
+      const cleanedMappings = mappings.filter(
+        (m) =>
+          m.component_id &&
+          ["flat", "percentage_ctc", "percentage_basic"].includes(
+            m.calculation_type
+          ) &&
+          m.value !== ""
       );
 
-      console.log("Component Created Response:", response);
-      alert(response.data.message || "Component created successfully!");
-      setShowCreate(false);
-    } catch (error) {
-      console.error("Axios Error:", error);
-      alert(error.response?.data?.message || "Error occurred.");
+      if (!form.name || !form.annual_ctc) {
+        alert("Template name and Annual CTC are required.");
+        return;
+      }
+
+      if (cleanedMappings.length === 0) {
+        alert(
+          "Add at least one mapping with a valid calculation type: flat, percentage_ctc, or percentage_basic"
+        );
+        return;
+      }
+
+      const body = {
+        template: {
+          name: form.name,
+          description: form.description,
+          annual_ctc: Number(form.annual_ctc),
+          status: form.status,
+        },
+        mappings: cleanedMappings.map((m) => ({
+          component_id: Number(m.component_id),
+          calculation_type: m.calculation_type,
+          value: Number(m.value),
+        })),
+      };
+
+      console.log("POST BODY:", body);
+
+      const url =
+        "https://agnostically-bonniest-patrice.ngrok-free.dev/api/payroll/templates";
+
+      const res = await axiosInstance.post(url, body, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+        },
+      });
+
+      alert("Salary Template Created!");
+      console.log("SERVER RESPONSE:", res.data);
+
+      // Reset form after success
+      setForm({ name: "", description: "", annual_ctc: "", status: "active" });
+      setMappings([{ component_id: "", calculation_type: "", value: "" }]);
+    } catch (err) {
+      console.error("POST ERROR:", err);
+      alert(err.response?.data?.message || "Error creating template");
     }
   };
 
-  const checkboxFields = [
-    "active",
-    "taxable",
-    "consider_epf",
-    "consider_esi",
-    "show_in_payslip",
-    "pro_rata",
-    "flexible_benefit",
-    "part_of_salary_structure",
-  ];
-
-  // -----------------------------------------------------
-  // UI (unchanged)
-  // -----------------------------------------------------
   return (
-    <div className="p-4 max-w-3xl mx-auto text-[12px]">
-      <h2 className="text-[16px] mb-4 font-semibold">Create Salary Component</h2>
+    <div className="p-6 grid place-items-center">
+      <div className="w-full max-w-2xl bg-white shadow-xl rounded-2xl p-6 border">
+        <h1 className="text-2xl font-bold mb-4">Create Salary Template</h1>
 
-      <div className="grid grid-cols-2 gap-4 bg-gray-800 p-4 rounded-lg border border-gray-200 mb-6">
-        
-        {/* Dropdown */}
-        <div>
-          <label className="block mb-1">Select Component</label>
-          <select
-            name="selected_component_id"
-            value={form.selected_component_id}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
-            disabled={loadingComponents}
-          >
-            <option value="">-- Select Component --</option>
-
-            {components.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Name */}
-        <div>
-          <label className="block mb-1">Component Name</label>
+        {/* Template Info */}
+        <div className="grid gap-4">
           <input
-            type="text"
             name="name"
+            placeholder="Template Name"
             value={form.name}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
+            className="border p-2 rounded"
+            onChange={handleTemplateChange}
           />
-        </div>
 
-        {/* Internal Name */}
-        <div>
-          <label className="block mb-1">Internal Name</label>
           <input
-            type="text"
-            name="internal_name"
-            value={form.internal_name}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
+            name="description"
+            placeholder="Description"
+            value={form.description}
+            className="border p-2 rounded"
+            onChange={handleTemplateChange}
           />
-        </div>
 
-        {/* Payslip Name */}
-        <div>
-          <label className="block mb-1">Payslip Name</label>
           <input
-            type="text"
-            name="payslip_name"
-            value={form.payslip_name}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
+            name="annual_ctc"
+            placeholder="Annual CTC"
+            type="number"
+            value={form.annual_ctc}
+            className="border p-2 rounded"
+            onChange={handleTemplateChange}
           />
-        </div>
 
-        {/* Component Type */}
-        <div>
-          <label className="block mb-1">Component Type</label>
           <select
-            name="component_type"
-            value={form.component_type}
-            onChange={handleChange}
-            className="w-full border px-2 py-1 rounded"
+            name="status"
+            value={form.status}
+            className="border p-2 rounded"
+            onChange={handleTemplateChange}
           >
-            <option value="earning">Earning</option>
-            <option value="deduction">Deduction</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
         </div>
 
-        {/* Checkboxes */}
-        <div className="col-span-2 grid grid-cols-2 gap-4 mt-2">
-          {checkboxFields.map((field) => (
-            <label key={field} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name={field}
-                checked={form[field]}
-                onChange={handleChange}
-              />
-              {field.replace(/_/g, " ").toUpperCase()}
-            </label>
-          ))}
+        {/* Component Mappings */}
+        <h2 className="text-xl font-semibold mt-6 mb-2">Mappings</h2>
+
+        {mappings.map((map, index) => (
+          <div key={index} className="grid grid-cols-4 gap-2 mb-3">
+            {/* Component Selector */}
+            <select
+              name="component_id"
+              value={map.component_id}
+              className="border p-2 rounded"
+              onChange={(e) => handleMappingChange(index, e)}
+            >
+              <option value="">Select Component</option>
+              {components.map((c, i) => (
+                <option key={`${c.id}-${i}`} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Calculation Type */}
+            <select
+              name="calculation_type"
+              value={map.calculation_type}
+              className="border p-2 rounded"
+              onChange={(e) => handleMappingChange(index, e)}
+            >
+              <option value="">Select Type</option>
+              <option value="flat">Flat</option>
+              <option value="percentage_ctc">% of CTC</option>
+              <option value="percentage_basic">% of Basic</option>
+            </select>
+
+            {/* Value */}
+            <input
+              name="value"
+              type="number"
+              value={map.value}
+              placeholder="Value"
+              className="border p-2 rounded"
+              onChange={(e) => handleMappingChange(index, e)}
+            />
+
+            {/* Remove Mapping Button */}
+            <button
+              className="bg-red-500 text-white rounded px-2"
+              onClick={() => removeMapping(index)}
+            >
+              X
+            </button>
+          </div>
+        ))}
+
+        {/* Buttons */}
+        <div className="flex flex-col gap-2 mt-2">
+          <button
+            className="bg-blue-600 text-white p-2 rounded"
+            onClick={addMapping}
+          >
+            + Add Component Mapping
+          </button>
+
+          <button
+            className="bg-green-600 text-white p-2 rounded"
+            onClick={submitTemplate}
+          >
+            Submit Template
+          </button>
         </div>
-      </div>
-
-      <div className="mt-4 flex justify-end gap-3">
-        <button
-          onClick={() => setShowCreate(false)}
-          className="px-4 py-2 border rounded"
-        >
-          Cancel
-        </button>
-
-        <button
-          onClick={handleSubmit}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-        >
-          Save Component
-        </button>
       </div>
     </div>
   );
-};
-
-export default CreateSalaryComponent;
+}

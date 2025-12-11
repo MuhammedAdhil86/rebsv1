@@ -1,216 +1,208 @@
-import React, { useState, useEffect } from "react";
-import axiosInstance from "../../../../service/axiosinstance";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
-const CreateSalaryTemplate = () => {
-  const [template, setTemplate] = useState({
+export default function CreateSalaryTemplate() {
+  const API_BASE = "https://agnostically-bonniest-patrice.ngrok-free.dev/api/payroll";
+
+  const [form, setForm] = useState({
     name: "",
     description: "",
     annual_ctc: "",
     status: "active",
   });
 
-  const [mapping, setMapping] = useState({
-    component_id: "",
-    component_name: "",
-    calculation_type: "percentage_ctc",
-    value: "",
-  });
-
   const [components, setComponents] = useState([]);
+  const [mappings, setMappings] = useState([
+    { id: Date.now(), component_id: "", calculation_type: "", value: "" },
+  ]);
 
-  // ----------------------------------------------------
-  // Fetch Component List
-  // ----------------------------------------------------
+  // ================================
+  // FETCH COMPONENTS
+  // ================================
   useEffect(() => {
     const fetchComponents = async () => {
       try {
-        const res = await axiosInstance.get(
-          "/api/payroll/components?limit=50&offset=0",
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-          }
-        );
+        const url = `${API_BASE}/components?limit=50&offset=0`;
+        const token = localStorage.getItem("authToken");
 
-        console.log("Components API:", res.data);
+        const res = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         setComponents(res.data?.data?.items || []);
       } catch (err) {
-        console.error("Failed to load components:", err);
+        console.error("Component fetch error:", err);
       }
     };
 
     fetchComponents();
   }, []);
 
-  // ----------------------------------------------------
-  // Input Handlers
-  // ----------------------------------------------------
+  // ================================
+  // INPUT HANDLERS
+  // ================================
   const handleTemplateChange = (e) => {
     const { name, value } = e.target;
-    setTemplate((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleMappingChange = (field, value) => {
-    setMapping((prev) => ({
+  const handleMappingChange = (index, e) => {
+    const { name, value } = e.target;
+
+    setMappings((prev) => {
+      const updated = [...prev];
+      updated[index][name] = value;
+      return updated;
+    });
+  };
+
+  const addMapping = () => {
+    setMappings((prev) => [
       ...prev,
-      [field]: value,
-    }));
+      { id: Date.now(), component_id: "", calculation_type: "", value: "" },
+    ]);
   };
 
-  // Select component and store both ID + Name
-  const handleComponentSelect = (value) => {
-    const selected = components.find((c) => c.id === Number(value));
-
-    setMapping((prev) => ({
-      ...prev,
-      component_id: selected?.id || "",
-      component_name: selected?.name || "",
-    }));
-  };
-
-  // ----------------------------------------------------
-  // Submit Template
-  // ----------------------------------------------------
-  const handleSubmit = async () => {
-    const payload = {
-      template: {
-        ...template,
-        annual_ctc: parseFloat(template.annual_ctc),
-      },
-      mappings: [
-        {
-          component_id: mapping.component_id,
-          calculation_type: mapping.calculation_type,
-          value: parseFloat(mapping.value),
-        },
-      ],
-    };
-
-    console.log("Final Payload:", payload);
-
+  // ================================
+  // SUBMIT TEMPLATE
+  // ================================
+  const submitTemplate = async () => {
     try {
-      const res = await axiosInstance.post("/api/payroll/templates", payload);
-      console.log("Template Created:", res.data);
-      alert("Template created successfully!");
+      const postURL = `${API_BASE}/templates`; // EXACT SAME AS POSTMAN
+      const token = localStorage.getItem("authToken");
+
+      const body = {
+        template: {
+          name: form.name,
+          description: form.description,
+          annual_ctc: Number(form.annual_ctc),
+          status: form.status,
+        },
+        mappings: mappings.map((m) => ({
+          component_id: Number(m.component_id),
+          calculation_type: m.calculation_type,
+          value: Number(m.value),
+        })),
+      };
+
+      console.log("POST BODY:", body);
+      console.log("POST URL:", postURL);
+
+      const response = await axios.post(postURL, body, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // SAME AS POSTMAN
+        },
+      });
+
+      console.log("SERVER RESPONSE:", response.data);
+
+      alert("Salary Template Created Successfully!");
+
     } catch (err) {
-      console.error("Error creating template:", err);
-      alert("Failed to create template");
+      console.error("CREATE ERROR:", err.response?.data || err);
+      alert(err.response?.data?.message || "Failed to create salary template");
     }
   };
 
+  // ================================
+  // UI
+  // ================================
   return (
-    <div className="p-4 max-w-4xl mx-auto text-[12px] font-normal">
-      <h2 className="text-[16px] font-semibold mb-4">Create Salary Template</h2>
+    <div className="p-6 grid place-items-center">
+      <div className="w-full max-w-2xl bg-white shadow-xl rounded-2xl p-6 border">
+        <h1 className="text-2xl font-bold mb-4">Create Salary Template</h1>
 
-      {/* Template Info */}
-      <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border mb-6">
-        <div>
-          <label className="block mb-1">Template Name</label>
+        <div className="grid gap-4">
           <input
-            type="text"
             name="name"
-            value={template.name}
+            placeholder="Template Name"
+            className="border p-2 rounded"
             onChange={handleTemplateChange}
-            className="w-full border px-2 py-1 rounded"
           />
-        </div>
 
-        <div>
-          <label className="block mb-1">Annual CTC</label>
           <input
-            type="number"
-            name="annual_ctc"
-            value={template.annual_ctc}
-            onChange={handleTemplateChange}
-            className="w-full border px-2 py-1 rounded"
-          />
-        </div>
-
-        <div className="col-span-2">
-          <label className="block mb-1">Description</label>
-          <textarea
             name="description"
-            value={template.description}
+            placeholder="Description"
+            className="border p-2 rounded"
             onChange={handleTemplateChange}
-            className="w-full border px-2 py-1 rounded"
           />
+
+          <input
+            name="annual_ctc"
+            placeholder="Annual CTC"
+            type="number"
+            className="border p-2 rounded"
+            onChange={handleTemplateChange}
+          />
+
+          <select
+            name="status"
+            className="border p-2 rounded"
+            onChange={handleTemplateChange}
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
         </div>
-      </div>
 
-      {/* Component Mapping */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse min-w-[700px] text-[12px]">
-          <thead>
-            <tr className="bg-gray-100 border">
-              <th className="px-3 py-2">Component Name</th>
-              <th className="px-3 py-2">Calculation Type</th>
-              <th className="px-3 py-2">Value</th>
-            </tr>
-          </thead>
+        <h2 className="text-xl font-semibold mt-6 mb-2">Mappings</h2>
 
-          <tbody>
-            <tr className="border">
-              {/* Component Dropdown */}
-              <td className="px-3 py-2">
-                <select
-                  value={mapping.component_id}
-                  onChange={(e) => handleComponentSelect(e.target.value)}
-                  className="border px-2 py-1 w-full rounded"
-                >
-                  <option value="">Select Component</option>
+        {mappings.map((map, index) => (
+          <div key={map.id} className="grid grid-cols-3 gap-2 mb-3">
+            <select
+              name="component_id"
+              className="border p-2 rounded"
+              value={map.component_id}
+              onChange={(e) => handleMappingChange(index, e)}
+            >
+              <option value="">Select Component</option>
+              {components.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
 
-                  {components.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </td>
+            <select
+              name="calculation_type"
+              className="border p-2 rounded"
+              value={map.calculation_type}
+              onChange={(e) => handleMappingChange(index, e)}
+            >
+              <option value="">Select Type</option>
+              <option value="flat">Flat</option>
+              <option value="percentage_ctc">% of CTC</option>
+              <option value="percentage_basic">% of Basic</option>
+            </select>
 
-              {/* Calculation Type */}
-              <td className="px-3 py-2">
-                <select
-                  value={mapping.calculation_type}
-                  onChange={(e) =>
-                    handleMappingChange("calculation_type", e.target.value)
-                  }
-                  className="border px-2 py-1 rounded w-full"
-                >
-                  <option value="flat">Flat</option>
-                  <option value="percentage_ctc">Percentage of CTC</option>
-                </select>
-              </td>
+            <input
+              name="value"
+              placeholder="Value"
+              type="number"
+              value={map.value}
+              className="border p-2 rounded"
+              onChange={(e) => handleMappingChange(index, e)}
+            />
+          </div>
+        ))}
 
-              {/* Value */}
-              <td className="px-3 py-2">
-                <input
-                  type="number"
-                  value={mapping.value}
-                  onChange={(e) =>
-                    handleMappingChange("value", e.target.value)
-                  }
-                  className="border px-2 py-1 rounded w-full"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      {/* Save Button */}
-      <div className="mt-5 flex justify-end">
         <button
-          onClick={handleSubmit}
-          className="px-4 py-2 bg-black text-white rounded hover:bg-gray-900"
+          className="bg-blue-600 text-white p-2 rounded w-full mt-2"
+          onClick={addMapping}
         >
-          Save Template
+          + Add Component Mapping
+        </button>
+
+        <button
+          className="bg-green-600 text-white p-2 rounded w-full mt-2"
+          onClick={submitTemplate}
+        >
+          Submit Template
         </button>
       </div>
     </div>
   );
-};
-
-export default CreateSalaryTemplate;
+}

@@ -58,7 +58,7 @@ const SalaryTemplate = () => {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="border px-2 py-1 rounded"
+          className="border text-[12px] px-2 py-1 rounded"
         >
           <option value="all">All</option>
           <option value="active">Active</option>
