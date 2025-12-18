@@ -1,61 +1,177 @@
-import React from "react";
+import React, { useState } from "react";
 import { Icon } from "@iconify/react";
+import toast, { Toaster } from "react-hot-toast";
+import { addDesignation } from "../../../service/companyService";
 
 const AddDesignationForm = () => {
+  const [formData, setFormData] = useState({
+    name: "",
+    code: "",
+    email: "",
+  });
+
+  const [errors, setErrors] = useState({});
+
+  /* ---------------- Handle Change ---------------- */
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  /* ---------------- Validation ---------------- */
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Designation name is required";
+    }
+
+    if (
+      formData.email &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+    ) {
+      newErrors.email = "Invalid email format";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Please fix the errors");
+      return false;
+    }
+
+    return true;
+  };
+
+  /* ---------------- Submit ---------------- */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    try {
+      await addDesignation({
+        name: formData.name,
+        code: formData.code,
+        email: formData.email,
+      });
+
+      toast.success("Designation added successfully");
+
+      setFormData({
+        name: "",
+        code: "",
+        email: "",
+      });
+
+      setErrors({});
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to add designation");
+    }
+  };
+
   return (
-    <form className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        {/* Designation Name */}
-        <div className="flex flex-col relative">
-          <label className="text-sm text-gray-600 mb-1">Designation Name</label>
-          <select className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200 appearance-none">
-            <option value="">Enter name</option>
-          </select>
+    <>
+      <Toaster position="top-right" />
 
-          {/* Dropdown Icon */}
-          <Icon
-            icon="material-symbols:arrow-left-rounded"
-            className="absolute right-3 top-8 text-gray-500 rotate-[-90deg] text-lg pointer-events-none"
-          />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-3 gap-4">
+          {/* Designation Name */}
+          <div className="flex flex-col relative">
+            <label className="text-sm text-gray-600 mb-1">
+              Designation Name <span className="text-red-500">*</span>
+            </label>
+
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter name"
+              className={`border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                errors.name
+                  ? "border-red-500 focus:ring-red-200"
+                  : "border-gray-200 focus:ring-gray-200"
+              }`}
+            />
+
+            {errors.name && (
+              <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+            )}
+          </div>
+
+          {/* Designation Code */}
+          <div className="flex flex-col">
+            <label className="text-sm text-gray-600 mb-1">
+              Designation Code
+            </label>
+            <input
+              type="text"
+              name="code"
+              value={formData.code}
+              onChange={handleChange}
+              placeholder="Enter code"
+              className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"
+            />
+          </div>
+
+          {/* Designation Email */}
+          <div className="flex flex-col">
+            <label className="text-sm text-gray-600 mb-1">
+              Designation Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter email"
+              className={`border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+                errors.email
+                  ? "border-red-500 focus:ring-red-200"
+                  : "border-gray-200 focus:ring-gray-200"
+              }`}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+            )}
+          </div>
         </div>
 
-        {/* Designation Code */}
-        <div className="flex flex-col">
-          <label className="text-sm text-gray-600 mb-1">Designation Code</label>
-          <input
-            type="text"
-            placeholder="Enter code"
-            className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"
-          />
-        </div>
+        {/* Buttons */}
+        <div className="flex justify-end gap-2 pt-4">
+          <button
+            type="button"
+            onClick={() =>
+              setFormData({
+                name: "",
+                code: "",
+                email: "",
+              })
+            }
+            className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition"
+          >
+            Cancel
+          </button>
 
-        {/* Designation Email */}
-        <div className="flex flex-col">
-          <label className="text-sm text-gray-600 mb-1">Designation Email</label>
-          <input
-            type="email"
-            placeholder="Enter email"
-            className="border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"
-          />
+          <button
+            type="submit"
+            className="px-4 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition"
+          >
+            Save
+          </button>
         </div>
-      </div>
-
-      {/* Buttons */}
-      <div className="flex justify-end gap-2 pt-4">
-        <button
-          type="button"
-          className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition"
-        >
-          Save
-        </button>
-      </div>
-    </form>
+      </form>
+    </>
   );
 };
 

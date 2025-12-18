@@ -1,14 +1,13 @@
 // SalaryTemplate.jsx
 import React, { useEffect, useState } from "react";
-import payrollService from "../../../service/payrollService"; // centralized API
+import payrollService from "../../../service/payrollService";
 
-const SalaryTemplate = () => {
+export default function SalaryTemplate() {
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Optional: filter by status (Active/Inactive)
-  const [filterStatus, setFilterStatus] = useState("all"); // "all", "active", "inactive"
+  const [filterStatus, setFilterStatus] = useState("all");
 
   useEffect(() => {
     let isMounted = true;
@@ -16,16 +15,36 @@ const SalaryTemplate = () => {
     const fetchTemplates = async () => {
       setLoading(true);
       setError(null);
-      try {
-        const items = await payrollService.getSalaryTemplates(); // fetch from service
 
-        const formatted = items
-          .map((item) => ({
+      try {
+        const response = await payrollService.getSalaryTemplates();
+
+        // --- PRODUCTION API RESPONSE NORMALIZATION ---
+        const rawItems =
+          response?.data?.items ||
+          response?.data?.data?.items ||
+          response?.items ||
+          response ||
+          [];
+
+        if (!Array.isArray(rawItems)) {
+          console.error("Unexpected API response:", response);
+          throw new Error("Invalid API format");
+        }
+
+        // --- PRODUCTION NORMALIZATION & TRANSFORMATION ---
+        const formatted = rawItems
+          .map((item, index) => ({
+            id: item.id ?? index, // fallback key
             name: item.name || "-",
             description: item.description || "-",
             annualCTC: `₹${Number(item.annual_ctc || 0).toLocaleString()}`,
             status:
-              item.status?.toLowerCase() === "active" ? "Active" : "Inactive",
+              String(item.status).toLowerCase() === "active" ||
+              item.status === true ||
+              item.status === 1
+                ? "Active"
+                : "Inactive",
           }))
           .filter((item) => {
             if (filterStatus === "all") return true;
@@ -34,10 +53,10 @@ const SalaryTemplate = () => {
 
         if (isMounted) setTableData(formatted);
       } catch (err) {
-        console.error("Error fetching salary templates:", err);
+        console.error("Error loading salary templates:", err);
         if (isMounted) {
-          setError("Failed to load salary templates. Please try again.");
           setTableData([]);
+          setError("Failed to load salary templates. Please try again.");
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -53,12 +72,13 @@ const SalaryTemplate = () => {
 
   return (
     <div className="overflow-x-auto p-4">
+      {/* FILTER SECTION */}
       <div className="mb-4 flex items-center gap-2">
-        <label>Status Filter:</label>
+        <label className="text-sm">Status Filter:</label>
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="border text-[12px] px-2 py-1 rounded"
+          className="border text-sm px-2 py-1 rounded"
         >
           <option value="all">All</option>
           <option value="active">Active</option>
@@ -66,7 +86,8 @@ const SalaryTemplate = () => {
         </select>
       </div>
 
-      <table className="w-full border-collapse text-xs font-normal">
+      {/* TABLE */}
+      <table className="w-full border-collapse text-sm font-normal">
         <thead>
           <tr className="text-left bg-gray-50 border-b border-gray-200">
             <th className="px-4 py-2 font-medium text-gray-600">Template Name</th>
@@ -75,6 +96,7 @@ const SalaryTemplate = () => {
             <th className="px-4 py-2 font-medium text-gray-600">Status</th>
           </tr>
         </thead>
+
         <tbody>
           {loading ? (
             <tr>
@@ -95,9 +117,9 @@ const SalaryTemplate = () => {
               </td>
             </tr>
           ) : (
-            tableData.map((item, index) => (
+            tableData.map((item) => (
               <tr
-                key={index}
+                key={item.id}
                 className="border-b border-gray-100 hover:bg-gray-50 transition"
               >
                 <td className="px-4 py-2 text-gray-800">{item.name}</td>
@@ -106,7 +128,9 @@ const SalaryTemplate = () => {
                 <td className="px-4 py-2">
                   <span
                     className={`font-medium ${
-                      item.status === "Active" ? "text-green-600" : "text-red-600"
+                      item.status === "Active"
+                        ? "text-green-600"
+                        : "text-red-600"
                     }`}
                   >
                     {item.status}
@@ -119,6 +143,4 @@ const SalaryTemplate = () => {
       </table>
     </div>
   );
-};
-
-export default SalaryTemplate;
+}

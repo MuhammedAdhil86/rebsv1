@@ -4,46 +4,57 @@ import payrollService from "../../../service/payrollService";
 // Components
 import EpfTab from "./statutory_component_tabs/Epf_tab";
 import EnableEPF from "./statutory_component_tabs/epf_enable";
+import UpsertEPF from "./statutory_component_tabs/upsertepf";
+
 import EsiTab from "./statutory_component_tabs/Esi_tab";
 import EnableESI from "./statutory_component_tabs/esi_enable";
+import UpsertESI from "./statutory_component_tabs/upsertesi";
+
 import ProfessionalTaxTab from "./statutory_component_tabs/pt_tab";
+import UpsertPT from "./statutory_component_tabs/upsertpt";
+
 import LabourWelfareFundTab from "./statutory_component_tabs/lw_fund_tab";
+import UpsertLWF from "./statutory_component_tabs/upsertlwf"; // ✅ NEW
 
 const StatutoryComponents = () => {
   const tabs = ["EPF", "ESI", "PT", "LWF"];
   const [activeTab, setActiveTab] = useState("EPF");
 
-  // ------------------- EPF state -------------------
+  // ---------------- EPF ----------------
   const [epfData, setEpfData] = useState(null);
   const [epfEnabled, setEpfEnabled] = useState(false);
   const [epfLoading, setEpfLoading] = useState(false);
+  const [epfRowExists, setEpfRowExists] = useState(true);
 
-  // ------------------- ESI state -------------------
+  // ---------------- ESI ----------------
   const [esiData, setEsiData] = useState(null);
   const [esiEnabled, setEsiEnabled] = useState(false);
   const [esiLoading, setEsiLoading] = useState(false);
+  const [esiRowExists, setEsiRowExists] = useState(true);
 
-  // ------------------- PT state -------------------
+  // ---------------- PT ----------------
   const [ptData, setPtData] = useState(null);
   const [ptLoading, setPtLoading] = useState(false);
+  const [ptEditMode, setPtEditMode] = useState(false);
 
-  // ------------------- LWF state -------------------
+  // ---------------- LWF ----------------
   const [lwfData, setLwfData] = useState(null);
   const [lwfEnabled, setLwfEnabled] = useState(false);
   const [lwfLoading, setLwfLoading] = useState(false);
+  const [lwfEditMode, setLwfEditMode] = useState(false); // ✅ NEW
 
-  // ------------------- Global loading -------------------
+  // ---------------- Global ----------------
   const [loading, setLoading] = useState(true);
 
-  // ------------------- Fetchers -------------------
+  // ================= FETCHERS =================
+
   const fetchEPF = useCallback(async () => {
     setEpfLoading(true);
     try {
       const data = await payrollService.getEPF();
       setEpfData(data);
-      setEpfEnabled(Boolean(data.enabled));
-    } catch (err) {
-      console.error("Error fetching EPF:", err);
+      setEpfEnabled(Boolean(data?.enabled));
+      setEpfRowExists(Boolean(data?.row_exists));
     } finally {
       setEpfLoading(false);
     }
@@ -54,9 +65,8 @@ const StatutoryComponents = () => {
     try {
       const data = await payrollService.getESI();
       setEsiData(data);
-      setEsiEnabled(Boolean(data.enabled));
-    } catch (err) {
-      console.error("Error fetching ESI:", err);
+      setEsiEnabled(Boolean(data?.enabled));
+      setEsiRowExists(Boolean(data?.row_exists));
     } finally {
       setEsiLoading(false);
     }
@@ -67,8 +77,7 @@ const StatutoryComponents = () => {
     try {
       const data = await payrollService.getPT();
       setPtData(data);
-    } catch (err) {
-      console.error("Error fetching PT:", err);
+      setPtEditMode(false);
     } finally {
       setPtLoading(false);
     }
@@ -79,15 +88,15 @@ const StatutoryComponents = () => {
     try {
       const data = await payrollService.getLWF();
       setLwfData(data);
-      setLwfEnabled(Boolean(data.enabled));
-    } catch (err) {
-      console.error("Error fetching LWF:", err);
+      setLwfEnabled(Boolean(data?.enabled));
+      setLwfEditMode(false); // ✅ reset after fetch
     } finally {
       setLwfLoading(false);
     }
   }, []);
 
-  // ------------------- Fetch all statutory data -------------------
+  // ================= INITIAL LOAD =================
+
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
@@ -97,14 +106,13 @@ const StatutoryComponents = () => {
     fetchAll();
   }, [fetchEPF, fetchESI, fetchPT, fetchLWF]);
 
-  // ------------------- Handlers -------------------
+  // ================= HANDLERS =================
+
   const handleEnableEpf = async () => {
     setEpfLoading(true);
     try {
       await payrollService.enableEPF();
-      fetchEPF();
-    } catch (err) {
-      console.error("Error enabling EPF:", err);
+      await fetchEPF();
     } finally {
       setEpfLoading(false);
     }
@@ -114,9 +122,7 @@ const StatutoryComponents = () => {
     setEpfLoading(true);
     try {
       await payrollService.disableEPF();
-      fetchEPF();
-    } catch (err) {
-      console.error("Error disabling EPF:", err);
+      await fetchEPF();
     } finally {
       setEpfLoading(false);
     }
@@ -126,9 +132,7 @@ const StatutoryComponents = () => {
     setEsiLoading(true);
     try {
       await payrollService.enableESI();
-      fetchESI();
-    } catch (err) {
-      console.error("Error enabling ESI:", err);
+      await fetchESI();
     } finally {
       setEsiLoading(false);
     }
@@ -138,22 +142,19 @@ const StatutoryComponents = () => {
     setEsiLoading(true);
     try {
       await payrollService.disableESI();
-      fetchESI();
-    } catch (err) {
-      console.error("Error disabling ESI:", err);
+      await fetchESI();
     } finally {
       setEsiLoading(false);
     }
   };
 
-  // ------------------- LWF Handlers -------------------
+  // -------- LWF --------
+
   const handleEnableLWF = async ({ state, deduction_cycle }) => {
     setLwfLoading(true);
     try {
       await payrollService.enableLWF({ state, deduction_cycle });
-      fetchLWF();
-    } catch (err) {
-      console.error("Error enabling LWF:", err);
+      await fetchLWF();
     } finally {
       setLwfLoading(false);
     }
@@ -162,65 +163,72 @@ const StatutoryComponents = () => {
   const handleDisableLWF = async () => {
     setLwfLoading(true);
     try {
-      await payrollService.disableLWF(); // updated API call
-      fetchLWF(); // refresh LWF data
-      setLwfEnabled(false); // update UI immediately
-    } catch (err) {
-      console.error("Error disabling LWF:", err);
+      await payrollService.disableLWF();
+      await fetchLWF();
     } finally {
       setLwfLoading(false);
     }
   };
 
-  // ------------------- Tab Components -------------------
+  // ================= TAB CONTENT =================
+
   const tabComponents = {
     EPF: epfLoading ? (
-      <div className="text-center py-10 text-gray-500 text-sm">Loading...</div>
+      <div className="text-center py-10">Loading...</div>
+    ) : !epfRowExists ? (
+      <UpsertEPF onSuccess={fetchEPF} />
     ) : epfEnabled ? (
-      <EpfTab onDisable={handleDisableEpf} epfData={epfData} epfLoading={epfLoading} />
+      <EpfTab epfData={epfData} onDisable={handleDisableEpf} />
     ) : (
-      <EnableEPF onEnable={handleEnableEpf} epfLoading={epfLoading} />
+      <EnableEPF onEnable={handleEnableEpf} />
     ),
 
     ESI: esiLoading ? (
-      <div className="text-center py-10 text-gray-500 text-sm">Loading...</div>
+      <div className="text-center py-10">Loading...</div>
+    ) : !esiRowExists ? (
+      <UpsertESI onSuccess={fetchESI} />
     ) : esiEnabled ? (
-      <EsiTab onDisable={handleDisableEsi} esiData={esiData} />
+      <EsiTab esiData={esiData} onDisable={handleDisableEsi} />
     ) : (
       <EnableESI onEnable={handleEnableEsi} />
     ),
 
     PT: ptLoading ? (
-      <div className="text-center py-10 text-gray-500 text-sm">Loading...</div>
+      <div className="text-center py-10">Loading...</div>
+    ) : ptEditMode ? (
+      <UpsertPT data={ptData} onSuccess={fetchPT} />
     ) : (
-      <ProfessionalTaxTab data={ptData} />
+      <ProfessionalTaxTab data={ptData} onEdit={() => setPtEditMode(true)} />
     ),
 
+    // ✅ FIXED LWF FLOW
     LWF: lwfLoading ? (
-      <div className="text-center py-10 text-gray-500 text-sm">Loading...</div>
+      <div className="text-center py-10">Loading...</div>
+    ) : lwfEditMode ? (
+      <UpsertLWF lwfData={lwfData} onSuccess={fetchLWF} />
     ) : (
       <LabourWelfareFundTab
         lwfData={lwfData}
         enabled={lwfEnabled}
+        loading={lwfLoading}
         onEnable={handleEnableLWF}
         onDisable={handleDisableLWF}
-        loading={lwfLoading}
+        onEdit={() => setLwfEditMode(true)} // ✅ Update button trigger
       />
     ),
   };
 
   return (
-    <div className="font-[Poppins] text-[13px] text-gray-700 bg-white rounded-lg p-6 shadow-sm">
-      {/* Tabs */}
-      <div className="flex gap-6 border-b border-gray-200 mb-6">
+    <div className="bg-white rounded-lg p-6">
+      <div className="flex gap-6 border-b mb-6">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-2 px-1 transition-all ${
+            className={`pb-2 ${
               activeTab === tab
-                ? "text-black border-b-2 border-black font-medium"
-                : "text-gray-400 hover:text-gray-600"
+                ? "border-b-2 border-black font-medium"
+                : "text-gray-400"
             }`}
           >
             {tab}
@@ -228,12 +236,7 @@ const StatutoryComponents = () => {
         ))}
       </div>
 
-      {/* Tab content */}
-      {loading ? (
-        <div className="text-center py-10 text-gray-500 text-sm">Loading...</div>
-      ) : (
-        tabComponents[activeTab]
-      )}
+      {loading ? <div className="py-10">Loading...</div> : tabComponents[activeTab]}
     </div>
   );
 };

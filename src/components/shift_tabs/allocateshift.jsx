@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { FiPlus, FiChevronDown, FiCalendar, FiSearch } from "react-icons/fi";
+import { FiPlus, FiChevronDown, FiCalendar, FiSearch, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import axiosInstance from "../../service/axiosinstance";
 
 const avatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
 // ---------------- FILTER BAR ----------------
-const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek }) => {
+const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek, handlePrev, handleNext }) => {
   const [filterMode, setFilterMode] = useState("All Employees");
   const [selectedValues, setSelectedValues] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -45,7 +45,6 @@ const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek }) => {
   const filteredEmployees = employees.filter((e) =>
     e.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const weeks = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
 
   return (
     <div className="flex flex-wrap items-end gap-3 mb-3 p-3 mt-1 rounded-lg relative">
@@ -65,23 +64,6 @@ const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek }) => {
             <option>Job Type</option>
             <option>Branch</option>
             <option>Division</option>
-          </select>
-          <FiChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-        </div>
-      </div>
-
-      {/* Week Filter */}
-      <div className="min-w-[100px] w-[130px] relative">
-        <label className="text-[11px] text-gray-500 mb-0.5 block">Week</label>
-        <div className="relative">
-          <select
-            value={selectedWeek}
-            onChange={(e) => setSelectedWeek(e.target.value)}
-            className="w-full border border-gray-300 rounded-md p-1.5 text-xs focus:outline-none focus:border-black appearance-none"
-          >
-            {weeks.map((w) => (
-              <option key={w} value={w}>{w}</option>
-            ))}
           </select>
           <FiChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
         </div>
@@ -187,10 +169,21 @@ const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek }) => {
         </div>
       </div>
 
-      {/* Allocate Button */}
-      <button className="bg-black text-white px-2.5 py-1.5 rounded-md text-xs flex items-center gap-1.5 h-8">
-        <FiPlus size={12} /> Allocate Shift
-      </button>
+      {/* Allocate Button + Arrows */}
+      <div className="flex items-center gap-3">
+        <button className="bg-black text-white px-2.5 py-1.5 rounded-md text-xs flex items-center gap-1.5 h-8">
+          <FiPlus size={12} /> Allocate Shift
+        </button>
+
+        <div className="flex items-center gap-1">
+          <button onClick={handlePrev} className="p-1 text-gray-600 hover:text-black">
+            <FiChevronLeft size={16} />
+          </button>
+          <button onClick={handleNext} className="p-1 text-gray-600 hover:text-black">
+            <FiChevronRight size={16} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
@@ -206,16 +199,10 @@ const EmployeeInfo = ({ employee }) => (
         </div>
       </div>
       <div className="flex flex-col">
-        <div
-          className="text-gray-800 text-[10px] leading-tight truncate max-w-[100px]"
-          title={employee.name}
-        >
+        <div className="text-gray-800 text-[12px] " title={employee.name}>
           {employee.name}
         </div>
-        <div
-          className="text-[9px] text-gray-500 truncate max-w-[100px]"
-          title={employee.role}
-        >
+        <div className="text-[12px] text-gray-500 m" title={employee.role}>
           {employee.role}
         </div>
       </div>
@@ -227,37 +214,24 @@ const ShiftCard = ({ shift }) => {
   const isRegular = shift.name === "Regular Shift";
   const isEvening = shift.name === "Evening Shift";
   const borderColor = isRegular ? "border-green-400" : isEvening ? "border-sky-400" : "border-gray-300";
-
   const inTime = shift.in || "00:00 AM";
   const outTime = shift.out || "00:00 PM";
   const workHours = shift.work_hours || "00:00:00";
 
   return (
-    <div className={`w-full border ${borderColor} rounded p-[6px]  h-full flex flex-col justify-between bg-white relative text-[8px]`}>
-      <button className="absolute top-1 right-1 p-[2px] bg-black hover:bg-gray-800 rounded-full flex items-center justify-center transition-colors z-10">
-        <FiPlus className="text-white text-[8px]" />
+    <div className={`w-full border ${borderColor} rounded p-[6px] h-full flex flex-col justify-between bg-white relative text-[12px]`}>
+      <button className="absolute top-1 right-1 p-[2px] bg-black hover:bg-gray-800 rounded-full flex items-center justify-center transition-colors z-10 mt-1">
+        <FiPlus className="text-white text-[8px] " />
       </button>
-
-<div className="flex justify-between items-center mb-[2px]">
-  <div
-    className={`truncate px-2 py-[1px] rounded-xs ${
-      shift.name === "Regular Shift" ? "text-green-500 bg-green-50" :
-      shift.name === "Evening Shift" ? "text-sky-500 bg-sky-50" :
-      shift.name === "Office" ? "text-purple-500 bg-purple-50" :
-      shift.name === "Night Shift" ? "text-orange-500 bg-orange-50" :
-      "text-gray-700 bg-gray-50"
-    }`}
-  >
-    {shift.name || "Shift"}
-  </div>
-</div>
-
-
+      <div className="flex justify-between items-center mb-[2px]">
+        <div className={`truncate px-2 py-[1px] rounded-xs ${isRegular ? "text-green-500 bg-green-50" : isEvening ? "text-sky-500 bg-sky-50" : "text-gray-700 bg-gray-50"}`}>
+          {shift.name || "Shift"}
+        </div>
+      </div>
       <div className="flex justify-between text-gray-700 mt-[4px] px-[2px]">
         <span className="text-gray-600">Work</span>
-        <span className="text-gray-800 text-[9px]">{workHours}</span>
+        <span className="text-gray-800 ">{workHours}</span>
       </div>
-
       <div className="bg-gray-100 rounded mt-[2px] p-[2px]">
         <div className="flex justify-between items-center px-[2px] border-b border-gray-200">
           <span className="text-green-600 ">IN</span>
@@ -268,10 +242,9 @@ const ShiftCard = ({ shift }) => {
           <span>{outTime}</span>
         </div>
       </div>
-
-      <div className="flex justify-between items-center mt-[10px]">
-        <span className="text-gray-500 text-[8px]">Break</span>
-        <span className="text-gray-500 text-[8px]">1:00PM–1:30PM</span>
+      <div className="flex justify-between items-center text-[9px] mt-[10px]">
+        <span className="text-gray-500 ">Break</span>
+        <span className="text-gray-500 ">1:00PM–1:30PM</span>
       </div>
     </div>
   );
@@ -287,23 +260,20 @@ const WeeklyOffCard = () => (
 );
 
 // ---------------- CALENDAR ----------------
-const ShiftCalendar = ({ employees, days, selectedWeek }) => {
-  const weekIndex = Number(selectedWeek?.split(" ")[1]) - 1 || 0;
-  const startDay = weekIndex * 7;
-  const endDay = weekIndex === 4 ? days.length : startDay + 7;
-  const visibleDays = days.slice(startDay, endDay);
+const ShiftCalendar = ({ employees, days, startIndex }) => {
+  const visibleDays = days.slice(startIndex, startIndex + 5);
 
   return (
     <div className="overflow-x-auto scrollbar-none">
       <div className="w-full overflow-y-auto scrollbar-none rounded-xl shadow-sm">
         {/* Header */}
-        <div className="grid grid-cols-[minmax(120px,_1fr)_repeat(7,_minmax(95px,_0.7fr))] text-[11px] bg-white sticky top-0 z-30 border-b">
+        <div className="grid grid-cols-[minmax(120px,_1fr)_repeat(5,_minmax(95px,_0.7fr))] text-[11px] bg-white sticky top-0 z-30 border-b">
           <div className="p-2 font-medium text-gray-600 flex items-center gap-1 border-r bg-white">
             <input type="checkbox" className="rounded scale-90" />
             Name
           </div>
           {visibleDays.map((day, idx) => (
-            <div key={`day-${startDay + idx}`} className="p-2 font-medium text-gray-600 text-center border-r last:border-none bg-white">
+            <div key={`day-${startIndex + idx}`} className="p-2 font-medium text-gray-600 text-center border-r last:border-none bg-white">
               {day}
             </div>
           ))}
@@ -312,18 +282,13 @@ const ShiftCalendar = ({ employees, days, selectedWeek }) => {
         {/* Rows */}
         <div className="bg-white">
           {employees.map((employee) => (
-            <div key={`emp-${employee.id}`} className="grid grid-cols-[minmax(120px,_1fr)_repeat(7,_minmax(95px,_0.7fr))] text-[11px] border-b last:border-none">
+            <div key={`emp-${employee.id}`} className="grid grid-cols-[minmax(120px,_1fr)_repeat(5,_minmax(95px,_0.7fr))] text-[11px] border-b last:border-none">
               <div className="p-2 border-r">
                 <EmployeeInfo employee={employee} />
               </div>
-              {(employee.shifts || []).slice(startDay, endDay).map((shift, index) => (
-                <div key={`shift-${employee.id}-${startDay + index}`} className="p-2 border-r last:border-none w-full">
-                  {shift.type === "off" ? <WeeklyOffCard /> : <ShiftCard shift={{
-                    ...shift,
-                    in: shift.in || "00:00 AM",
-                    out: shift.out || "00:00 PM",
-                    work_hours: shift.work_hours || "00:00:00"
-                  }} />}
+              {(employee.shifts || []).slice(startIndex, startIndex + 5).map((shift, index) => (
+                <div key={`shift-${employee.id}-${startIndex + index}`} className="p-2 border-r last:border-none w-full">
+                  {shift.type === "off" ? <WeeklyOffCard /> : <ShiftCard shift={shift} />}
                 </div>
               ))}
             </div>
@@ -336,16 +301,22 @@ const ShiftCalendar = ({ employees, days, selectedWeek }) => {
 
 // ---------------- MAIN EXPORT ----------------
 export default function AllocateShift() {
-  const [selectedWeek, setSelectedWeek] = useState("Week 1");
   const [employeesData, setEmployeesData] = useState([]);
+  const [startIndex, setStartIndex] = useState(0); 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const days = Array.from({ length: 31 }, (_, i) => `${String(i + 1).padStart(2,"0")}-Day`);
+
+  const handlePrev = () => setStartIndex((prev) => Math.max(prev - 5, 0));
+  const handleNext = () => setStartIndex((prev) => Math.min(prev + 5, days.length - 5));
 
   useEffect(() => {
     const fetchShifts = async () => {
       try {
         const response = await axiosInstance.get("/shifts/filtered");
         const data = response.data;
-
+   
         const grouped = {};
         data.forEach((shift) => {
           const empKey = shift.name || shift.id || Math.random();
@@ -358,15 +329,17 @@ export default function AllocateShift() {
             };
           }
           const dayIndex = new Date(shift.date).getDate() - 1;
-          grouped[empKey].shifts[dayIndex] = shift.shift_type
-            ? {
-                type: "work",
-                name: shift.shift_type || "Regular Shift",
-                in: shift.in_time || "00:00 AM",
-                out: shift.out_time || "00:00 PM",
-                work_hours: shift.work_hours || "00:00:00"
-              }
-            : { type: "off" };
+          if (dayIndex >= 0 && dayIndex < 31) {
+            grouped[empKey].shifts[dayIndex] = shift.shift_type
+              ? {
+                  type: "work",
+                  name: shift.shift_type || "Regular Shift",
+                  in: shift.in_time || "00:00 AM",
+                  out: shift.out_time || "00:00 PM",
+                  work_hours: shift.work_hours || "00:00:00"
+                }
+              : { type: "off" };
+          }
         });
 
         setEmployeesData(Object.values(grouped));
@@ -375,14 +348,60 @@ export default function AllocateShift() {
         setEmployeesData([]);
       }
     };
-
     fetchShifts();
   }, []);
 
+  // Pagination Logic
+  const totalPages = Math.ceil(employeesData.length / itemsPerPage);
+  const currentEmployees = employeesData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="bg-[#f9fafb] p-4 rounded-lg">
-      <FilterBar employees={employeesData} selectedWeek={selectedWeek} setSelectedWeek={setSelectedWeek} />
-      <ShiftCalendar employees={employeesData} days={days} selectedWeek={selectedWeek} />
+      <FilterBar
+        employees={employeesData}
+        handlePrev={handlePrev}
+        handleNext={handleNext}
+      />
+      <ShiftCalendar employees={currentEmployees} days={days} startIndex={startIndex} />
+      
+      {/* Pagination Controls */}
+      {employeesData.length > itemsPerPage && (
+        <div className="flex items-center justify-between mt-4 px-2">
+          <span className="text-xs text-gray-500">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, employeesData.length)} of {employeesData.length} employees
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className={`p-1 rounded border ${currentPage === 1 ? 'text-gray-300 border-gray-200' : 'text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+            >
+              <FiChevronLeft size={16} />
+            </button>
+            <div className="flex gap-1">
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`px-2 py-1 text-xs rounded ${currentPage === i + 1 ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className={`p-1 rounded border ${currentPage === totalPages ? 'text-gray-300 border-gray-200' : 'text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+            >
+              <FiChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

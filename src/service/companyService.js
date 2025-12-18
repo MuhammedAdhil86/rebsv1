@@ -15,6 +15,13 @@ import {
   getLeavePolicy,
   getAllowanceData,
   getCompliances,
+  getCountry,
+  updateCompanyDet,
+  postBranch,
+  getOrgType,
+  postDepartment,
+  postDivision,
+  postDesignation,
 } from "../api/api";
 
 export const getBranchData = async () => {
@@ -304,6 +311,93 @@ export const fetchPieChart = async (month, year, user_id) => {
     return response.data.data;
   } catch (error) {
     console.error("Error fetching piechart activity:", error);
+    throw error;
+  }
+};
+export const getCountryName = async () => {
+  try {
+    const response = await axiosInstance.get(getCountry);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error creating asset:", error);
+    throw error;
+  }
+};
+
+export const updateCompanyDetails = async (companyData) => {
+  try {
+    const response = await axiosInstance.put(updateCompanyDet, companyData, {
+      headers: {
+        "Content-Type": "multipart/form-data", // Make sure this is necessary based on the API
+      },
+    });
+    console.log("API Response:", response.data.status_code);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating company details:", error);
+    throw error;
+  }
+};
+
+export const OrganizationType = async () => {
+  try {
+    const response = await axiosInstance.get(getOrgType);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error creating asset:", error);
+    throw error;
+  }
+};
+
+
+export const addBranch = async (branchData) => {
+  try {
+    const response = await axiosInstance.post(postBranch, branchData);
+    return response.data;
+  } catch (error) {
+    console.error("Error adding branch:", error);
+    throw error;
+  }
+};
+
+export const editBranch = async (id, data) => {
+  try {
+    const response = await axiosInstance.put(`/branch/update/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating branch:", error);
+    throw error;
+  }
+};
+
+export const addDepartment = async (DepartmentData) => {
+  try {
+    const response = await axiosInstance.post(postDepartment, DepartmentData);
+    return response.data;
+  } catch (error) {
+    console.error("Error adding department:", error);
+    throw error;
+  }
+};
+export const addDivision = async (id, divisionData) => {
+  try {
+    const response = await axiosInstance.post(postDivision(id), divisionData, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error adding division:", error);
+    throw error;
+  }
+};
+export const addDesignation = async (DesignationData) => {
+  try {
+    const response = await axiosInstance.post(postDesignation, DesignationData);
+    return response.data;
+  } catch (error) {
+    console.error("Error adding designation:", error);
     throw error;
   }
 };

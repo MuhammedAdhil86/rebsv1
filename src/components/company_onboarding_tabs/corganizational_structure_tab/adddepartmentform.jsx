@@ -1,7 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
+import toast, { Toaster } from "react-hot-toast";
+import {
+  addDepartment,
+  getDepartmentData,
+} from "../../../service/companyService";
 
 const AddDepartmentForm = () => {
+  const [parentDepartments, setParentDepartments] = useState([]);
+  const [errors, setErrors] = useState({});
+
   const [formData, setFormData] = useState({
     departmentName: "",
     departmentCode: "",
@@ -11,108 +19,204 @@ const AddDepartmentForm = () => {
     parentBranch: "",
   });
 
+  /* ---------------- Fetch Parent Departments ---------------- */
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const data = await getDepartmentData();
+        setParentDepartments(data);
+      } catch (error) {
+        console.error("Failed to fetch departments", error);
+      }
+    };
+    fetchDepartments();
+  }, []);
+
+  /* ---------------- Handle Change ---------------- */
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
+      ...(name === "hasParent" && !checked ? { parentBranch: "" } : {}),
     }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  /* ---------------- Validation ---------------- */
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.departmentName.trim()) {
+      newErrors.departmentName = "Department name is required";
+    }
+
+    if (
+      formData.email &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+    ) {
+      newErrors.email = "Invalid email format";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  /* ---------------- Submit ---------------- */
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Department Form Data:", formData);
+
+    if (!validateForm()) {
+      toast.error("Please correct the highlighted errors");
+      return;
+    }
+
+    const payload = {
+      name: formData.departmentName,
+      code: formData.departmentCode,
+      email: formData.email,
+      desc: formData.description,
+      has_parent: formData.hasParent ? "true" : "false",
+      parent:
+        formData.hasParent && formData.parentBranch
+          ? formData.parentBranch
+          : "0",
+      lead: 0,
+    };
+
+    try {
+      await addDepartment(payload);
+
+      toast.success("Department Added Successfully");
+
+      setFormData({
+        departmentName: "",
+        departmentCode: "",
+        email: "",
+        description: "",
+        hasParent: false,
+        parentBranch: "",
+      });
+
+      setErrors({});
+    } catch (error) {
+      toast.error("Error Adding Department. Please Try Again!!");
+      console.error(error);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Row 1 */}
-      <div className="grid grid-cols-3 gap-6">
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">
-            Department Name
-          </label>
-          <input
-            type="text"
-            name="departmentName"
-            value={formData.departmentName}
-            onChange={handleChange}
-            placeholder="Enter name"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-black"
-          />
-        </div>
+    <>
+      <Toaster position="top-right" />
 
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">
-            Department Code
-          </label>
-          <input
-            type="text"
-            name="departmentCode"
-            value={formData.departmentCode}
-            onChange={handleChange}
-            placeholder="Enter code"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-black"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm text-gray-700 mb-1">Email</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Enter email"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-black"
-          />
-        </div>
-      </div>
-
-      {/* Row 2 */}
-      <div className="grid grid-cols-3 gap-6">
-        {/* Description */}
-        <div className="col-span-1">
-          <label className="block text-sm text-gray-700 mb-1">Description</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            placeholder="Enter description"
-            className="w-full h-[120px] border border-gray-300 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:border-black"
-          ></textarea>
-        </div>
-
-        {/* Has Parent Department */}
-        <div className="flex flex-col justify-start mt-6">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              name="hasParent"
-              checked={formData.hasParent}
-              onChange={handleChange}
-              className="w-4 h-4 accent-black"
-            />
-            Has Parent Department? Check if this department is a sub-department of a parent department.
-          </label>
-        </div>
-
-        {/* Parent Branch */}
-        <div className="flex flex-col justify-between mt-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Row 1 */}
+        <div className="grid grid-cols-3 gap-6">
           <div>
             <label className="block text-sm text-gray-700 mb-1">
-              Parent Branch
+              Department Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="departmentName"
+              value={formData.departmentName}
+              onChange={handleChange}
+              placeholder="Enter name"
+              className={`w-full border rounded-md px-3 py-2 text-sm focus:outline-none ${
+                errors.departmentName ? "border-red-500" : "border-gray-300"
+              }`}
+            />
+            {errors.departmentName && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.departmentName}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-700 mb-1">
+              Department Code
+            </label>
+            <input
+              type="text"
+              name="departmentCode"
+              value={formData.departmentCode}
+              onChange={handleChange}
+              placeholder="Enter code"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter email"
+              className={`w-full border rounded-md px-3 py-2 text-sm focus:outline-none ${
+                errors.email ? "border-red-500" : "border-gray-300"
+              }`}
+            />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Row 2 */}
+        <div className="grid grid-cols-3 gap-6">
+          <div>
+            <label className="block text-sm text-gray-700 mb-1">
+              Description
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Enter description"
+              className="w-full h-[120px] border border-gray-300 rounded-md px-3 py-2 text-sm resize-none focus:outline-none"
+            />
+          </div>
+
+          <div className="flex items-start mt-6">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                name="hasParent"
+                checked={formData.hasParent}
+                onChange={handleChange}
+                className="w-4 h-4 accent-black"
+              />
+              Has Parent Department
+            </label>
+          </div>
+
+          <div className="mt-6">
+            <label className="block text-sm text-gray-700 mb-1">
+              Parent Department
             </label>
             <div className="relative">
               <select
                 name="parentBranch"
                 value={formData.parentBranch}
                 onChange={handleChange}
-                className="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-black"
+                disabled={!formData.hasParent}
+                className={`w-full appearance-none border rounded-md px-3 py-2 text-sm bg-white focus:outline-none ${
+                  errors.parentBranch ? "border-red-500" : "border-gray-300"
+                }`}
               >
                 <option value="">Select</option>
-                <option value="Branch1">Branch 1</option>
-                <option value="Branch2">Branch 2</option>
+                {parentDepartments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </option>
+                ))}
               </select>
               <Icon
                 icon="material-symbols:arrow-left-rounded"
@@ -121,24 +225,35 @@ const AddDepartmentForm = () => {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Footer Buttons */}
-      <div className="flex justify-end gap-4 pt-6">
-        <button
-          type="button"
-          className="border border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm hover:bg-gray-100 transition"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="bg-black text-white px-6 py-2 rounded-md text-sm hover:bg-gray-800 transition"
-        >
-          Save
-        </button>
-      </div>
-    </form>
+        {/* Footer */}
+        <div className="flex justify-end gap-4 pt-6">
+          <button
+            type="button"
+            className="border border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm hover:bg-gray-100"
+            onClick={() =>
+              setFormData({
+                departmentName: "",
+                departmentCode: "",
+                email: "",
+                description: "",
+                hasParent: false,
+                parentBranch: "",
+              })
+            }
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            className="bg-black text-white px-6 py-2 rounded-md text-sm hover:bg-gray-800"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+    </>
   );
 };
 

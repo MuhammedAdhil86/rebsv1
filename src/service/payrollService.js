@@ -55,18 +55,26 @@ const payrollService = {
     }
   },
 
-  // ---------------- ESI ----------------
-  getESI: async () => {
-    try {
-      const res = await axiosInstance.get("api/payroll/statutory/esi", {
-        baseURL: axiosInstance.baseURL2,
-      });
-      return res.data?.data || {};
-    } catch (err) {
-      console.error("Error in payrollService.getESI:", err.response || err);
-      throw err;
-    }
-  },
+// ---------------- ESI ----------------
+getESI: async () => {
+  try {
+    const res = await axiosInstance.get("api/payroll/statutory/esi", {
+      baseURL: axiosInstance.baseURL2,
+    });
+
+    // ✅ ADD THESE CONSOLES
+    console.log("ESI FULL RESPONSE 👉", res.data);
+    console.log("ESI DATA OBJECT 👉", res.data?.data);
+    console.log("ESI ROW EXISTS 👉", res.data?.data?.row_exists);
+    console.log("ESI ENABLED 👉", res.data?.data?.enabled);
+
+    return res.data?.data || {};
+  } catch (err) {
+    console.error("Error in payrollService.getESI:", err.response || err);
+    throw err;
+  }
+},
+
 
   enableESI: async () => {
     try {
@@ -147,6 +155,30 @@ enableLWF: async ({ state, deduction_cycle }) => {
       throw err;
     }
   },
+
+  // ---------------- LABOUR WELFARE FUND (UPSERT) ----------------
+upsertLWF: async ({ state, deduction_cycle, description }) => {
+  try {
+    if (!state) throw new Error("State is required");
+    if (!deduction_cycle) throw new Error("Deduction cycle is required");
+
+    const res = await axiosInstance.put(
+      "api/payroll/statutory/lwf/upsert",
+      {
+        state,
+        deduction_cycle,
+        description,
+      },
+      { baseURL: axiosInstance.baseURL2 }
+    );
+
+    return res.data;
+  } catch (err) {
+    console.error("Error in payrollService.upsertLWF:", err.response || err);
+    throw err;
+  }
+},
+
 };
 
 export default payrollService;

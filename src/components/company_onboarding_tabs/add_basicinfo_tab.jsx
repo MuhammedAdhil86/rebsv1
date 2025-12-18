@@ -1,30 +1,128 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { FiUpload } from "react-icons/fi";
 import { Icon } from "@iconify/react";
 
+/* ===== API SERVICES ===== */
+import {
+  getOrganisationDetails,
+  updateCompanyDetails,
+  OrganizationType,
+  getCountryName,
+} from "../../service/companyservice";
+import { fetchTimeZone } from "../../service/eventservice";
+
 const AddBasicInformation = () => {
+  const userData = JSON.parse(localStorage.getItem("userData"));
+  const companyId = userData?.company?.id;
+
+  const [countries, setCountries] = useState([]);
+  const [orgTypes, setOrgTypes] = useState([]);
+  const [timeZones, setTimeZones] = useState([]);
+
+  const [showUploadOptions, setShowUploadOptions] = useState(false);
+  const [logoFile, setLogoFile] = useState(null);
+  const [horizontalLogoFile, setHorizontalLogoFile] = useState(null);
+
+  const logoInputRef = useRef(null);
+  const horizontalLogoInputRef = useRef(null);
+
   const [formData, setFormData] = useState({
     name: "",
-    country: "Asia/Kolkata",
-    website: "https://google.com",
+    country: "",
+    website: "",
     description: "",
-    organizationType: "Software Company",
+    organizationType: "",
     locationName: "",
     address: "",
-    timeZone: "Asia/Kolkata",
+    timeZone: "",
     contactPerson: "",
     contactNumber: "",
     contactEmail: "",
   });
 
+  /* ================= FETCH DATA ================= */
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [company, countryRes, orgRes, tzRes] = await Promise.all([
+          getOrganisationDetails(companyId),
+          getCountryName(),
+          OrganizationType(),
+          fetchTimeZone(),
+        ]);
+
+        setCountries(countryRes || []);
+        setOrgTypes(orgRes || []);
+        setTimeZones(tzRes || []);
+
+        setFormData({
+          name: company.name || "",
+          country: String(company.country_id || ""),
+          website: company.website || "",
+          description: company.description || "",
+          organizationType: String(company.organisation_type_id || ""),
+          locationName: company.location || "",
+          address: company.address || "",
+          timeZone: String(company.time_zone_id || ""),
+          contactPerson: company.contact_person || "",
+          contactNumber: company.phone_number || "",
+          contactEmail: company.email || "",
+        });
+      } catch (err) {
+        console.error("Failed to fetch company data", err);
+      }
+    };
+
+    if (companyId) loadData();
+  }, [companyId]);
+
+  /* ================= HANDLERS ================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogoFile(file);
+      setShowUploadOptions(false);
+    }
+  };
+
+  const handleHorizontalLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setHorizontalLogoFile(file);
+      setShowUploadOptions(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
+
+    const payload = {
+      name: formData.name,
+      website: formData.website,
+      description: formData.description,
+      address: formData.address,
+      location: formData.locationName,
+      contact_person: formData.contactPerson,
+      phone_number: formData.contactNumber,
+      email: formData.contactEmail,
+      country_id: formData.country,
+      organisation_type_id: formData.organizationType,
+      time_zone_id: formData.timeZone,
+      // TODO: Handle logo & horizontal_logo upload using FormData
+    };
+
+    try {
+      await updateCompanyDetails(payload);
+      alert("Company updated successfully");
+    } catch (err) {
+      console.error("Update failed", err);
+      alert("Update failed");
+    }
   };
 
   return (
@@ -42,15 +140,65 @@ const AddBasicInformation = () => {
                 organization’s logo to ensure optimal display across different
                 layouts and screen sizes.
               </p>
+              {logoFile && (
+                <p className="text-sm text-gray-700 mt-1">Logo: {logoFile.name}</p>
+              )}
+              {horizontalLogoFile && (
+                <p className="text-sm text-gray-700 mt-1">
+                  Horizontal Logo: {horizontalLogoFile.name}
+                </p>
+              )}
             </div>
-            <button className="flex items-center gap-2 bg-black text-white text-sm px-3 py-1.5 rounded-md hover:bg-gray-800 transition">
-              <FiUpload className="text-sm" />
-              Upload Image
-            </button>
+
+            {/* Upload Button */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowUploadOptions((prev) => !prev)}
+                className="flex items-center gap-2 bg-black text-white text-sm px-3 py-1.5 rounded-md hover:bg-gray-800 transition"
+              >
+                <FiUpload className="text-sm" />
+                Upload Image
+              </button>
+
+              {showUploadOptions && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-20">
+                  <button
+                    type="button"
+                    onClick={() => logoInputRef.current.click()}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Upload Logo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => horizontalLogoInputRef.current.click()}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Upload Horizontal Logo
+                  </button>
+                </div>
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                ref={logoInputRef}
+                onChange={handleLogoUpload}
+                className="hidden"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                ref={horizontalLogoInputRef}
+                onChange={handleHorizontalLogoUpload}
+                className="hidden"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Form Fields */}
+        {/* ===== FORM ===== */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Row 1 */}
           <div className="grid grid-cols-3 gap-6">
@@ -78,9 +226,12 @@ const AddBasicInformation = () => {
                 onChange={handleChange}
                 className="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-black"
               >
-                <option>Asia/Kolkata</option>
-                <option>Europe/London</option>
-                <option>America/New_York</option>
+                <option value="">Select</option>
+                {countries.map((c) => (
+                  <option key={c.id} value={String(c.id)}>
+                    {c.name}
+                  </option>
+                ))}
               </select>
               <Icon
                 icon="material-symbols:arrow-left-rounded"
@@ -89,9 +240,7 @@ const AddBasicInformation = () => {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-700 mb-1">
-                Website
-              </label>
+              <label className="block text-sm text-gray-700 mb-1">Website</label>
               <input
                 type="text"
                 name="website"
@@ -129,9 +278,12 @@ const AddBasicInformation = () => {
                   onChange={handleChange}
                   className="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-black"
                 >
-                  <option>Software Company</option>
-                  <option>Education</option>
-                  <option>Finance</option>
+                  <option value="">Select</option>
+                  {orgTypes.map((o) => (
+                    <option key={o.id} value={String(o.id)}>
+                      {o.name}
+                    </option>
+                  ))}
                 </select>
                 <Icon
                   icon="material-symbols:arrow-left-rounded"
@@ -181,9 +333,12 @@ const AddBasicInformation = () => {
                       onChange={handleChange}
                       className="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-black"
                     >
-                      <option>Asia/Kolkata</option>
-                      <option>Europe/London</option>
-                      <option>America/New_York</option>
+                      <option value="">Select</option>
+                      {timeZones.map((t) => (
+                        <option key={t.id} value={String(t.id)}>
+                          {t.name}
+                        </option>
+                      ))}
                     </select>
                     <Icon
                       icon="material-symbols:arrow-left-rounded"
@@ -193,10 +348,7 @@ const AddBasicInformation = () => {
                 </div>
 
                 <div className="ml-2 flex items-center justify-center w-9 h-9 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100 transition">
-                  <Icon
-                    icon="mdi:location"
-                    className="text-gray-600 text-[18px]"
-                  />
+                  <Icon icon="mdi:location" className="text-gray-600 text-[18px]" />
                 </div>
               </div>
             </div>
@@ -205,9 +357,7 @@ const AddBasicInformation = () => {
           {/* Row 3 */}
           <div className="grid grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm text-gray-700 mb-1">
-                Contact Person
-              </label>
+              <label className="block text-sm text-gray-700 mb-1">Contact Person</label>
               <input
                 type="text"
                 name="contactPerson"
@@ -219,9 +369,7 @@ const AddBasicInformation = () => {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-700 mb-1">
-                Contact Number
-              </label>
+              <label className="block text-sm text-gray-700 mb-1">Contact Number</label>
               <input
                 type="text"
                 name="contactNumber"
@@ -233,9 +381,7 @@ const AddBasicInformation = () => {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-700 mb-1">
-                Contact Email
-              </label>
+              <label className="block text-sm text-gray-700 mb-1">Contact Email</label>
               <input
                 type="email"
                 name="contactEmail"
@@ -257,7 +403,6 @@ const AddBasicInformation = () => {
             </button>
             <button
               type="submit"
-              onClick={handleSubmit}
               className="bg-black text-white px-6 py-2 rounded-md text-sm hover:bg-gray-800 transition"
             >
               Save

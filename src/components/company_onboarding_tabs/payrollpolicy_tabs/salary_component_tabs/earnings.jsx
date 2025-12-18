@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "../../../../service/axiosinstance";
 
-const Earnings = () => {
+const Earnings = ({ onEdit }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -12,38 +12,33 @@ const Earnings = () => {
   const fetchComponents = async () => {
     setLoading(true);
     try {
-      console.log("Fetching payroll components...");
-
-      const token = localStorage.getItem("authToken"); // your bearer token
-      const res = await axios.get(
-        "https://agnostically-bonniest-patrice.ngrok-free.dev/api/payroll/components?limit=10&offset=0",
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
+      const res = await axiosInstance.get(
+        `${axiosInstance.baseURL2}api/payroll/components?limit=10&offset=0`
       );
-
-      console.log("API Response:", res.data);
 
       const items = res.data?.data?.items || [];
 
-      const formatted = items.map((item) => ({
-        template: item.payslip_name || "-",
-        earningType: item.name || "-",
-        calculationType:
-          item.calculation_type === "percentage_ctc"
-            ? `Fixed, ${item.value}% of CTC`
-            : item.calculation_type === "flat_amount"
-            ? `Fixed, Flat Amount of ${item.value}`
-            : item.calculation_type || "-",
-        epf: item.consider_epf ? "Yes" : "No",
-        esi: item.consider_esi ? "Yes" : "No",
-        status: item.active ? "Active" : "Inactive",
-      }));
+      const formatted = items.map((item) => {
+        let calculationText = "-";
+        if (item.calculation_type === "percentage_ctc") {
+          calculationText = `Fixed, ${item.value}% of CTC`;
+        } else if (item.calculation_type === "percentage_basic") {
+          calculationText = `Fixed, ${item.value}% of Basic`;
+        } else if (item.calculation_type === "flat") {
+          calculationText = `Fixed, Flat Amount of ${item.value}`;
+        }
 
-      console.log("Formatted data:", formatted);
+        return {
+          id: item.id,
+          template: item.payslip_name || "-",
+          earningType: item.name || "-",
+          calculationType: calculationText,
+          epf: item.consider_epf ? "Yes" : "No",
+          esi: item.consider_esi ? "Yes" : "No",
+          status: item.active ? "Active" : "Inactive",
+        };
+      });
+
       setData(formatted);
     } catch (err) {
       console.error("Error loading payroll components:", err);
@@ -55,37 +50,51 @@ const Earnings = () => {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-[12px] font-normal min-w-[700px]">
+      <table className="w-full border-collapse text-[12px] min-w-[700px]">
         <thead>
           <tr className="text-left bg-gray-50 border-b border-gray-200">
-            <th className="px-4 py-2 font-medium text-gray-600 whitespace-nowrap">Template Name</th>
-            <th className="px-4 py-2 font-medium text-gray-600 whitespace-nowrap">Earning Type</th>
-            <th className="px-4 py-2 font-medium text-gray-600 whitespace-nowrap">Calculation Type</th>
-            <th className="px-4 py-2 font-medium text-gray-600 whitespace-nowrap">Consider for EPF</th>
-            <th className="px-4 py-2 font-medium text-gray-600 whitespace-nowrap">Consider for ESI</th>
-            <th className="px-4 py-2 font-medium text-gray-600 whitespace-nowrap">Status</th>
+            <th className="px-4 py-2">Template Name</th>
+            <th className="px-4 py-2">Earning Type</th>
+            <th className="px-4 py-2">Calculation Type</th>
+            <th className="px-4 py-2">EPF</th>
+            <th className="px-4 py-2">ESI</th>
+            <th className="px-4 py-2">Status</th>
           </tr>
         </thead>
 
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan="6" className="text-center py-4 text-gray-500">Loading...</td>
+              <td colSpan="6" className="text-center py-4">
+                Loading...
+              </td>
             </tr>
           ) : data.length === 0 ? (
             <tr>
-              <td colSpan="6" className="text-center py-4 text-gray-500">No data found</td>
+              <td colSpan="6" className="text-center py-4">
+                No data found
+              </td>
             </tr>
           ) : (
-            data.map((item, idx) => (
-              <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50 transition">
-                <td className="px-4 py-2 text-gray-800 whitespace-nowrap">{item.template}</td>
-                <td className="px-4 py-2 text-gray-700 whitespace-nowrap">{item.earningType}</td>
-                <td className="px-4 py-2 text-gray-700 whitespace-nowrap">{item.calculationType}</td>
-                <td className="px-4 py-2 text-gray-700 whitespace-nowrap">{item.epf}</td>
-                <td className="px-4 py-2 text-gray-700 whitespace-nowrap">{item.esi}</td>
-                <td className="px-4 py-2 whitespace-nowrap">
-                  <span className={`font-medium ${item.status === "Active" ? "text-green-600" : "text-red-600"}`}>
+            data.map((item) => (
+              <tr
+                key={item.id}
+                onClick={() => onEdit(item.id)}
+                className="border-b hover:bg-gray-50 cursor-pointer"
+              >
+                <td className="px-4 py-2">{item.template}</td>
+                <td className="px-4 py-2">{item.earningType}</td>
+                <td className="px-4 py-2">{item.calculationType}</td>
+                <td className="px-4 py-2">{item.epf}</td>
+                <td className="px-4 py-2">{item.esi}</td>
+                <td className="px-4 py-2">
+                  <span
+                    className={
+                      item.status === "Active"
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }
+                  >
                     {item.status}
                   </span>
                 </td>
@@ -94,15 +103,6 @@ const Earnings = () => {
           )}
         </tbody>
       </table>
-
-      <div className="flex justify-between items-center mt-4 text-[12px] text-gray-500 font-medium">
-        <div>Rows per page: 10</div>
-        <div className="flex items-center gap-2">
-          <span>1–{data.length} of {data.length}</span>
-          <button className="text-gray-400 hover:text-gray-600">{"<"}</button>
-          <button className="text-gray-400 hover:text-gray-600">{">"}</button>
-        </div>
-      </div>
     </div>
   );
 };

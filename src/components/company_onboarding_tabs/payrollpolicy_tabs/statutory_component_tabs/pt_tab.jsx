@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { FiExternalLink, FiX } from "react-icons/fi";
+import { FiExternalLink } from "react-icons/fi";
 import UniversalTable from "../../../../ui/universal_table";
+import UpsertPT from "./upsertpt"; // import the UpsertPT component
 
-const ProfessionalTaxTab = ({ data }) => {
-  const [open, setOpen] = useState(false);
+const ProfessionalTaxTab = ({ data, onEdit }) => {
+  const [openSlabs, setOpenSlabs] = useState(false);
 
   const ptSlabs = data?.pt_slabs || [];
 
@@ -30,6 +31,11 @@ const ProfessionalTaxTab = ({ data }) => {
     },
   ];
 
+  // If data is null, show a loading or empty state
+  if (!data) {
+    return <div className="text-gray-500 text-sm py-10 text-center">Loading PT data...</div>;
+  }
+
   return (
     <div className="px-2 sm:px-4 md:px-6 font-poppins text-[12px]">
 
@@ -43,26 +49,37 @@ const ProfessionalTaxTab = ({ data }) => {
 
       {/* Info Section */}
       <div className="mt-5 space-y-5 text-gray-700">
-        <div className="flex gap-3">
-          <span className="w-[150px] font-normal text-gray-600">PT Number</span>
+
+        {/* PT Number with Update */}
+        <div className="flex gap-3 items-center">
+          <span className="font-normal text-gray-600">PT Number</span>
           <span className="text-gray-800">{data.pt_number}</span>
+          <button
+            className="px-4 text-black font-medium underline flex items-center gap-1 hover:text-blue-600 transition text-[12px]"
+            onClick={onEdit} // triggers UpsertPT in parent
+          >
+            Update PT Number
+          </button>
         </div>
 
+        {/* State */}
         <div className="flex gap-3">
           <span className="w-[150px] font-normal text-gray-600">State</span>
           <span className="text-gray-800">{data.state}</span>
         </div>
 
+        {/* Deduction Cycle */}
         <div className="flex gap-3">
           <span className="w-[150px] font-normal text-gray-600">Deduction Cycle</span>
           <span className="text-gray-800">{data.deduction_cycle}</span>
         </div>
 
+        {/* PT Slabs */}
         <div className="flex gap-3 items-center">
           <span className="w-[150px] font-normal text-gray-600">PT Slabs</span>
           <button
-            className="text-black font-medium underline flex items-center gap-1 hover:text-blue-600 transition"
-            onClick={() => setOpen(true)}
+            className="text-black font-medium underline flex items-center gap-1 hover:text-blue-600 transition text-[12px]"
+            onClick={() => setOpenSlabs(true)}
           >
             View Tax Slabs <FiExternalLink size={14} />
           </button>
@@ -72,28 +89,17 @@ const ProfessionalTaxTab = ({ data }) => {
       {/* Divider */}
       <hr className="mt-6 border-gray-200" />
 
-      {/* CENTER POPUP MODAL */}
-      {open && (
+      {/* PT Slabs Modal */}
+      {openSlabs && (
         <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
-          
-          {/* Modal Box */}
           <div className="bg-white rounded-xl shadow-lg w-[90%] max-w-[800px] p-5 relative">
-
-            {/* Header */}
             <div className="flex justify-between items-center mb-4">
               <h4 className="font-medium text-gray-800 text-[14px]">PT Tax Slabs</h4>
-              <button onClick={() => setOpen(false)}>
-                <FiX size={22} />
+              <button onClick={() => setOpenSlabs(false)}>
+                <FiExternalLink size={22} />
               </button>
             </div>
-
-            {/* Table */}
-            <UniversalTable 
-              columns={columns}
-              data={ptSlabs}
-              rowsPerPage={5}
-            />
-
+            <UniversalTable columns={columns} data={ptSlabs} rowsPerPage={5} />
           </div>
         </div>
       )}

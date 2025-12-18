@@ -23,6 +23,7 @@ updateContactInfo,
 updatePersonalInfo,
 getStaff,
 getEmployeeCalendar,
+
   getMaritalStatus// make sure you export this from your api.js
 } from "../api/api";
 import axiosInstance from "../service/axiosinstance";
@@ -435,6 +436,16 @@ export const editWorkHours = async (user_id, date, data) => {
     return response.data;
   } catch (error) {
     console.error("Error updating regularisation:", error);
+    throw error;
+  }
+};
+export const getStaffData = async () => {
+  try {
+    const response = await axiosInstance.get(getStaff);
+    console.log("new details employee gree", response);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching employee details:", error);
     throw error;
   }
 };

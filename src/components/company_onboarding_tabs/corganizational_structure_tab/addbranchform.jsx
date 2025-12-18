@@ -1,6 +1,7 @@
 // AddBranchForm.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Icon } from "@iconify/react";
+import axiosInstance from "../../../service/axiosinstance";
 
 const AddBranchForm = () => {
   const [formData, setFormData] = useState({
@@ -11,17 +12,70 @@ const AddBranchForm = () => {
     address: "",
     latitude: "",
     longitude: "",
-    timeZone: "Asia/Kolkata",
+    timeZone: "",
   });
+
+  const [timeZones, setTimeZones] = useState([]);
+
+  // Fetch time zones from API
+  useEffect(() => {
+    const fetchTimeZones = async () => {
+      try {
+        const res = await axiosInstance.get("/admin/timezone/get");
+        if (res.data?.data) {
+          setTimeZones(res.data.data);
+          if (res.data.data.length > 0) {
+            setFormData((prev) => ({
+              ...prev,
+              timeZone: res.data.data[0].id.toString(),
+            }));
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching time zones:", error);
+      }
+    };
+    fetchTimeZones();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
+    try {
+      const payload = {
+        name: formData.branchName,
+        code: formData.branchCode,
+        description: formData.description,
+        time_zone: formData.timeZone, // API expects time_zone
+        longitude: formData.longitude,
+        latitude: formData.latitude,
+        address: formData.address,
+        location: formData.location,
+      };
+
+      const res = await axiosInstance.post("/branch/add", payload);
+      if (res.data?.status_code === 200) {
+        alert(res.data.message);
+        // Optionally reset form
+        setFormData({
+          branchName: "",
+          branchCode: "",
+          location: "",
+          description: "",
+          address: "",
+          latitude: "",
+          longitude: "",
+          timeZone: timeZones.length > 0 ? timeZones[0].id.toString() : "",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding branch:", error);
+      alert("Failed to add branch");
+    }
   };
 
   return (
@@ -102,9 +156,11 @@ const AddBranchForm = () => {
                 onChange={handleChange}
                 className="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-black"
               >
-                <option>Asia/Kolkata</option>
-                <option>Europe/London</option>
-                <option>America/New_York</option>
+                {timeZones.map((tz) => (
+                  <option key={tz.id} value={tz.id}>
+                    {tz.name}
+                  </option>
+                ))}
               </select>
               <Icon
                 icon="material-symbols:arrow-left-rounded"
