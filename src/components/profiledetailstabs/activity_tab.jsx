@@ -36,19 +36,18 @@ const formatTime = (timeString) => {
 
 const ActivityTab = ({ employee }) => {
   const UUID = employee?.uuid;
+
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [attendanceData, setAttendanceData] = useState([]);
-
   const [selectedDay, setSelectedDay] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
 
-  // Fetch attendance data
+  /* ---------- FETCH ATTENDANCE ---------- */
   useEffect(() => {
     if (!UUID) return;
 
     const fetchAttendance = async () => {
       try {
-        const month = (currentMonth.getMonth() + 1).toString().padStart(2, "0");
+        const month = String(currentMonth.getMonth() + 1).padStart(2, "0");
         const year = currentMonth.getFullYear();
 
         const res = await axiosInstance.get(
@@ -57,10 +56,6 @@ const ActivityTab = ({ employee }) => {
 
         const data = res.data.data || [];
         setAttendanceData(data);
-
-        // ✅ ONLY ONE MONTH CONSOLE LOG
-        console.log("📌 FULL MONTH DATA →", data);
-
       } catch (err) {
         console.error("Attendance fetch error:", err);
       }
@@ -69,7 +64,7 @@ const ActivityTab = ({ employee }) => {
     fetchAttendance();
   }, [UUID, currentMonth]);
 
-  // Generate calendar days
+  /* ---------- CALENDAR DAYS ---------- */
   const generateCalendarDays = () => {
     const days = [];
     const firstDay = new Date(
@@ -77,6 +72,7 @@ const ActivityTab = ({ employee }) => {
       currentMonth.getMonth(),
       1
     ).getDay();
+
     const daysInMonth = new Date(
       currentMonth.getFullYear(),
       currentMonth.getMonth() + 1,
@@ -87,7 +83,9 @@ const ActivityTab = ({ employee }) => {
 
     for (let i = 1; i <= daysInMonth; i++) {
       const dayData =
-        attendanceData.find((d) => new Date(d.date).getDate() === i) || {};
+        attendanceData.find(
+          (d) => new Date(d.date).getDate() === i
+        ) || {};
 
       const statusRaw =
         dayData.record_type?.toLowerCase().replace(/_/g, " ").trim() || null;
@@ -105,6 +103,7 @@ const ActivityTab = ({ employee }) => {
 
   const calendarDays = generateCalendarDays();
 
+  /* ---------- MONTH NAVIGATION ---------- */
   const prevMonth = () =>
     setCurrentMonth(
       new Date(
@@ -128,7 +127,7 @@ const ActivityTab = ({ employee }) => {
 
   return (
     <div className="p-8 w-full bg-white" style={{ minWidth: "400px" }}>
-      {/* Header */}
+      {/* ---------- HEADER ---------- */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-[16px]">
           {monthName.toUpperCase()}
@@ -151,7 +150,7 @@ const ActivityTab = ({ employee }) => {
         </div>
       </div>
 
-      {/* Week headers */}
+      {/* ---------- WEEK HEADERS ---------- */}
       <div className="grid grid-cols-7 text-center mb-1 text-xs text-gray-600 font-semibold">
         {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d) => (
           <div key={d} className="py-2">
@@ -160,29 +159,18 @@ const ActivityTab = ({ employee }) => {
         ))}
       </div>
 
-      {/* Calendar Grid */}
+      {/* ---------- CALENDAR GRID ---------- */}
       <div className="grid grid-cols-7 border-t border-l border-gray-200">
         {calendarDays.map((day, idx) => (
           <div
             key={idx}
-            className="h-24 border-r border-b border-gray-200 p-1 flex flex-col items-start relative cursor-pointer"
-            onClick={() => {
-              if (day) {
-                setSelectedDay(day);
-                setModalOpen(true);
-              }
-            }}
+            className="h-24 border-r border-b border-gray-200 p-1 flex flex-col relative cursor-pointer"
+            onClick={() => day && setSelectedDay(day)}
           >
-            {day ? (
+            {day && (
               <>
                 <div className="w-full flex justify-between items-start pt-1 px-1">
                   <span className="text-sm font-medium">{day.day}</span>
-                  <div className="h-4 w-4 flex justify-center items-center">
-                    <div className="space-y-0.5">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                    </div>
-                  </div>
                 </div>
 
                 {day.status && (
@@ -190,30 +178,28 @@ const ActivityTab = ({ employee }) => {
                     className={`absolute bottom-2 left-2 w-3 h-3 rounded-full ${
                       statusColors[day.status] || "bg-gray-300"
                     }`}
-                  ></div>
+                  />
                 )}
 
                 {day.totalHours && (
                   <div
-                    className="absolute bottom-2 right-2 text-xs text-gray-600 font-mono"
+                    className="absolute bottom-2 right-2 text-gray-600 font-mono"
                     style={{ fontSize: "0.6rem" }}
                   >
                     {day.totalHours}
                   </div>
                 )}
               </>
-            ) : (
-              <div className="h-full"></div>
             )}
           </div>
         ))}
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap justify-start py-4 text-xs mt-4 border-t">
+      {/* ---------- LEGEND ---------- */}
+      <div className="flex flex-wrap py-4 text-xs mt-4 border-t">
         {Object.entries(statusColors).map(([key, colorClass]) => (
           <div key={key} className="flex items-center mx-2 my-1">
-            <span className={`w-3 h-3 rounded-full mr-1 ${colorClass}`}></span>
+            <span className={`w-3 h-3 rounded-full mr-1 ${colorClass}`} />
             <span className="uppercase text-gray-700 font-medium">
               {key.replace(/-/g, " ")}
             </span>
@@ -221,61 +207,46 @@ const ActivityTab = ({ employee }) => {
         ))}
       </div>
 
-      {/* Modal */}
-      {modalOpen && selectedDay && (
-        <div className="fixed inset-0 z-50 flex justify-center items-start pt-20 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-lg w-[90%] max-w-4xl p-4 overflow-y-auto max-h-[90vh]">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-lg">
-                {`Details for ${selectedDay.day}-${
-                  currentMonth.getMonth() + 1
-                }-${currentMonth.getFullYear()}`}
-              </h3>
-              <button
-                className="px-2 py-1 rounded bg-gray-500 text-white"
-                onClick={() => setModalOpen(false)}
-              >
-                Close
-              </button>
-            </div>
+      {/* ---------- BOTTOM DETAILS SECTION ---------- */}
+      {selectedDay && (
+        <div className="mt-8 border-t pt-6 space-y-6">
+          <h3 className="font-semibold text-lg">
+            Details for {selectedDay.day}-
+            {currentMonth.getMonth() + 1}-{currentMonth.getFullYear()}
+          </h3>
 
-            <RegularizeAndWorkHour
-              UUID={UUID}
-              selectedDate={
+          <RegularizeAndWorkHour
+            UUID={UUID}
+            selectedDate={
+              new Date(
+                currentMonth.getFullYear(),
+                currentMonth.getMonth(),
+                selectedDay.day
+              )
+            }
+            selectedDayData={selectedDay.rawData}
+            refreshAttendance={() =>
+              setCurrentMonth(
                 new Date(
                   currentMonth.getFullYear(),
                   currentMonth.getMonth(),
-                  selectedDay.day
+                  1
                 )
-              }
-              selectedDayData={selectedDay.rawData}
-              refreshAttendance={() => {
-                setCurrentMonth(
-                  new Date(
-                    currentMonth.getFullYear(),
-                    currentMonth.getMonth(),
-                    1
-                  )
-                );
-              }}
-            />
+              )
+            }
+          />
 
-            <hr className="my-4" />
+          <EmployeeTimeline
+            month={currentMonth.getMonth() + 1}
+            year={currentMonth.getFullYear()}
+            employeeId={UUID}
+          />
 
-            <EmployeeTimeline
-              month={currentMonth.getMonth() + 1}
-              year={currentMonth.getFullYear()}
-              employeeId={UUID}
-            />
-
-            <hr className="my-4" />
-
-            <PieChartComponent
-              month={currentMonth.getMonth() + 1}
-              year={currentMonth.getFullYear()}
-              employeeId={UUID}
-            />
-          </div>
+          <PieChartComponent
+            month={currentMonth.getMonth() + 1}
+            year={currentMonth.getFullYear()}
+            employeeId={UUID}
+          />
         </div>
       )}
     </div>

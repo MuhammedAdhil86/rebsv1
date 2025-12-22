@@ -449,3 +449,25 @@ export const getStaffData = async () => {
     throw error;
   }
 };
+export const fetchRegularizationRequests = async () => {
+  const response = await axiosInstance.get(
+    "admin/attendance/regularize/requests"
+  );
+
+  console.log("Regularization Requests API Response 👉", response.data);
+
+  return response.data;
+};
+
+
+export const fetchShiftAllocation = async (staffId) => {
+  try {
+    const response = await axiosInstance.get(
+      `shifts/allocation/${staffId}`
+    );
+    return response.data; // expected: {status_code, message, data:{shift_name,...}}
+  } catch (err) {
+    console.error("Failed to fetch shift allocation: ", err);
+    throw err;
+  }
+};

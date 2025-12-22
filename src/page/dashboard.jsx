@@ -6,15 +6,25 @@ import LogDetails from "../components/dashboard/Attendance Tabs/logdetails";
 import LeaveRequestes from "../components/tables/leaverequests";
 import DailyAttendance from "../components/tables/daily-attendance";
 import MusterRoll from "../components/tables/musterroll";
+import RegularizationTable from "../components/tables/regularizationtable";
+
 
 function Dashboard({ userId, userName, onLogout }) {
   const [activeTab, setActiveTab] = useState("overview");
 
   // Attendance Data
-  const ATTENDANCE_DATA = { total: 134, ontime: 86, delay: 12, late: 9, absent: 21 };
+  const ATTENDANCE_DATA = {
+    total: 134,
+    ontime: 86,
+    delay: 12,
+    late: 9,
+    absent: 21,
+  };
 
   const getWidth = (value) =>
-    ATTENDANCE_DATA?.total ? `${(value / ATTENDANCE_DATA.total) * 100}%` : "0%";
+    ATTENDANCE_DATA?.total
+      ? `${(value / ATTENDANCE_DATA.total) * 100}%`
+      : "0%";
 
   // Sample Data
   const CALENDAR_DAYS = [
@@ -68,12 +78,22 @@ function Dashboard({ userId, userName, onLogout }) {
                 LEAVES={LEAVES}
               />
             )}
+
             {activeTab === "logdetails" && (
-              <LogDetails CALENDAR_DAYS={CALENDAR_DAYS} EMPLOYEES={EMPLOYEES} />
+              <LogDetails
+                CALENDAR_DAYS={CALENDAR_DAYS}
+                EMPLOYEES={EMPLOYEES}
+              />
             )}
+
             {activeTab === "leaverequests" && <LeaveRequestes />}
+
             {activeTab === "dailyAttendance" && <DailyAttendance />}
+
             {activeTab === "musterRoll" && <MusterRoll />}
+
+            {/* ✅ ONLY ADDITION */}
+            {activeTab === "regularization" && <RegularizationTable />}
           </div>
         </div>
       </div>
@@ -81,11 +101,11 @@ function Dashboard({ userId, userName, onLogout }) {
       {/* Hidden scrollbar CSS */}
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {
-          display: none; /* Chrome, Safari, Opera */
+          display: none;
         }
         .scrollbar-hide {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;     /* Firefox */
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
     </DashboardLayout>

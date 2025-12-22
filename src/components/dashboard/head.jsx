@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import dashboardService from "../../service/dashboardService";
 import { Icon } from "@iconify/react";
+import RegularizationTab from "../requests_tab/regularization_tab";
 
 function DashboardHead({ userName, activeTab, setActiveTab }) {
   const [dashboardData, setDashboardData] = useState({
@@ -143,6 +144,8 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
       { label: "Leave Requests", key: "leaverequests" },
       { label: "Daily Attendance", key: "dailyAttendance" },
       { label: "Muster Roll", key: "musterRoll" },
+      { label: "Regularization", key: "regularization" },
+
     ].map((tab) => (
       <button
         key={tab.key}
