@@ -26,7 +26,8 @@ const ShiftCard = ({ className }) => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const visiblePeople = showAll
@@ -58,7 +59,7 @@ const ShiftCard = ({ className }) => {
 
   return (
     <div
-      className={`bg-white rounded-xl p-3 shadow-sm w-full max-w-[340px] h-[360px] mx-auto flex flex-col ${className}`}
+      className={`bg-white rounded-xl p-3 shadow-sm w-full h-[360px] flex flex-col ${className}`}
     >
       {/* ---------------- HEADER ---------------- */}
       <div className="flex justify-between items-start mb-2">
@@ -98,12 +99,8 @@ const ShiftCard = ({ className }) => {
         </div>
       </div>
 
-      {/* ---------------- PEOPLE LIST ---------------- */}
-      <div
-        className={`space-y-0.5 overflow-y-auto ${
-          showAll ? "flex-1" : ""
-        }`}
-      >
+      {/* ---------------- PEOPLE LIST (SCROLL ONLY) ---------------- */}
+      <div className="flex-1 overflow-y-auto space-y-0.5">
         {visiblePeople.map((p, index) => (
           <PersonRow key={index} person={p} />
         ))}

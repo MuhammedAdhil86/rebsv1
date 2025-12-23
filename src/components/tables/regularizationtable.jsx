@@ -301,16 +301,18 @@ function RegularizationTable() {
       {/* ================= MODALS ================= */}
       {modalType === "add" &&
         createPortal(
-          <AddRegularizeModal
-            open
-            data={selectedRow}
-            shiftData={shiftData}
-            onClose={() => {
-              setModalType(null);
-              setSelectedRow(null);
-              setShiftData(null);
-            }}
-          />,
+ <AddRegularizeModal
+  open
+  data={selectedRow}
+  shiftData={shiftData}
+  onClose={() => {
+    setModalType(null);
+    setSelectedRow(null);
+    setShiftData(null);
+  }}
+  onSuccess={fetchData}   // ✅ ADD THIS LINE
+/>
+,
           document.body
         )}
 

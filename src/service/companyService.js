@@ -46,6 +46,7 @@ export const getDepartmentData = async () => {
   }
 };
 
+
 export const getDesignationData = async () => {
   try {
     const response = await axiosInstance.get(getDesignations);
@@ -65,7 +66,7 @@ export const getOrganisationDetails = async () => {
     if (!companyId) throw new Error("Company ID not found in localStorage.");
 
     const response = await axiosInstance.get(getCompanyDetails(companyId));
-    console.log("Company details response:", response);
+
     return response.data.data;
   } catch (error) {
     console.error("Error fetching company details:", error);

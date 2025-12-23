@@ -1,4 +1,3 @@
-// src/pages/ShiftOverview.jsx
 import React, { useEffect } from "react";
 import { FiPlus, FiUsers, FiClock, FiUserX } from "react-icons/fi";
 
@@ -13,26 +12,48 @@ import RegularShiftPolicyCard from "./shiftoverview/regularshiftpolicard";
 import ShiftRulesCard from "./shiftoverview/shiftrulescard";
 import ShiftRatioCard from "../graphs/shiftratio";
 
-// ---------------- SUB COMPONENT (UNCHANGED) ----------------
+// ---------------- SUB COMPONENT ----------------
 const StatCard = ({ title, value, icon, bg }) => (
   <div className={`flex items-center gap-4 px-4 py-3 rounded-md shadow-sm ${bg} w-[215px]`}>
     <div className="p-2 rounded-full bg-black">
       {React.cloneElement(icon, { className: "w-6 h-6 text-white" })}
     </div>
     <div>
-      <div className="text-[13px] text-gray-500 font-normal font-[Poppins]">{title}</div>
-      <div className="text-xl font-medium text-gray-900">{value}</div>
+      <div className="text-[13px] text-gray-500 font-normal font-[Poppins]">
+        {title}
+      </div>
+      <div className="text-xl font-medium text-gray-900">
+        {value}
+      </div>
     </div>
   </div>
 );
 
 // ---------------- MAIN COMPONENT ----------------
 export default function ShiftOverview() {
-  const { stats, fetchDashboard } = useShiftDashboardStore();
+  const {
+    stats,
+    shiftDetails,
+    policyDetails,
+    shiftRules,
+    selectedShiftName,
+    fetchDashboard,
+  } = useShiftDashboardStore();
 
   useEffect(() => {
     fetchDashboard();
   }, [fetchDashboard]);
+
+  // ✅ PAGE LOAD LOG (STATE DATA)
+  useEffect(() => {
+    console.log("📦 ShiftOverview Store State:", {
+      stats,
+      selectedShiftName,
+      shiftDetails,
+      policyDetails,
+      shiftRules,
+    });
+  }, [stats, shiftDetails, policyDetails, shiftRules, selectedShiftName]);
 
   return (
     <div className="min-h-screen bg-[#f9fafb] p-6">
@@ -69,7 +90,7 @@ export default function ShiftOverview() {
         </div>
       </div>
 
-      {/* ---------- Main Grid (UNCHANGED) ---------- */}
+      {/* ---------- Main Grid ---------- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch h-full">
         <div className="space-y-5 flex flex-col h-full">
           <ShiftSummaryCard className="flex-1" />

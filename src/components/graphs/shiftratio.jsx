@@ -1,7 +1,34 @@
-import React from "react";
+import React, { useEffect } from "react";
+import useShiftDashboardStore from "../../store/shiftoverviewStore";
 
-const ShiftRatioCard = ({ attendance, className }) => {
-  const { total, online, delay, late, absent, early } = attendance || {};
+const ShiftRatioCard = ({ className }) => {
+  const {
+    shiftRatios,
+    fetchShiftRatios,
+    selectedShiftName,
+  } = useShiftDashboardStore();
+
+  /* ---------- FETCH API ---------- */
+  useEffect(() => {
+    fetchShiftRatios();
+  }, []);
+
+  /* ---------- ACTIVE SHIFT ---------- */
+  const activeShift =
+    selectedShiftName || shiftRatios?.[0]?.shift_name;
+
+  const shiftData = shiftRatios.find(
+    (s) => s.shift_name === activeShift
+  );
+
+  /* ---------- ATTENDANCE ---------- */
+  const total = shiftData?.total_attendance ?? 0;
+  const online = shiftData?.ontime ?? 0;
+  const delay = shiftData?.delay ?? 0;
+  const late = shiftData?.late ?? 0;
+  const absent = shiftData?.absent ?? 0;
+  const early = 0; // API doesn’t provide early
+
   const safeTotal = total || 1;
 
   const onlinePerc = (online / safeTotal) * 100;
@@ -10,8 +37,7 @@ const ShiftRatioCard = ({ attendance, className }) => {
   const absentPerc = (absent / safeTotal) * 100;
   const earlyPerc = (early / safeTotal) * 100;
 
-  const shifts = ["Morning", "Evening", "Night"];
-  const activeShift = "Morning"; // static active tab
+  const shifts = shiftRatios.map((s) => s.shift_name);
 
   return (
     <div
@@ -22,8 +48,8 @@ const ShiftRatioCard = ({ attendance, className }) => {
         Shift Ratio
       </div>
 
-      {/* Shift Tabs */}
-      <div className="flex justify-between text-[12px] text-gray-500 mb-3 border-b border-gray-200">
+      {/* Tabs */}
+      <div className="flex justify-between text-[12px] text-gray-500 mb-10 border-b border-gray-200">
         {shifts.map((shift) => (
           <div
             key={shift}
@@ -38,39 +64,38 @@ const ShiftRatioCard = ({ attendance, className }) => {
         ))}
       </div>
 
-      {/* Attendance Number */}
+      {/* Attendance */}
       <div className="text-2xl text-gray-900 mb-3">
         {total}{" "}
         <span className="text-[12px] text-gray-500">Attendance</span>
       </div>
 
       {/* Status Bar */}
-      <div className="flex h-3 w-full overflow-hidden mb-3">
+      <div className="flex h-3 w-full">
         <div
-          className="h-full bg-green-400 first:rounded-l-full"
+          className="h-full bg-green-400 rounded-full mr-[2px]"
           style={{ width: `${onlinePerc}%` }}
         />
         <div
-          className="h-full bg-yellow-400"
+          className="h-full bg-yellow-400 rounded-full mr-[2px]"
           style={{ width: `${delayPerc}%` }}
         />
         <div
-          className="h-full bg-orange-400"
+          className="h-full bg-orange-400 rounded-full mr-[2px]"
           style={{ width: `${latePerc}%` }}
         />
         <div
-          className="h-full bg-red-500"
+          className="h-full bg-red-500 rounded-full mr-[2px]"
           style={{ width: `${absentPerc}%` }}
         />
         <div
-          className="h-full bg-purple-600 last:rounded-r-full"
+          className="h-full bg-purple-600 rounded-full"
           style={{ width: `${earlyPerc}%` }}
         />
       </div>
 
       {/* Legend */}
-      <div className="mt-auto text-xs text-gray-500 space-y-2">
-        {/* First row */}
+      <div className="mt-auto text-xs text-gray-500 space-y-2 px-0 p-6">
         <div className="flex justify-between">
           <div className="flex items-center gap-1">
             <span className="w-2 h-2 bg-green-400 rounded-full" />
@@ -90,12 +115,9 @@ const ShiftRatioCard = ({ attendance, className }) => {
           </div>
         </div>
 
-        {/* Second row */}
-        <div className="flex">
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 bg-purple-600 rounded-full" />
-            <span>Early {early}</span>
-          </div>
+        <div className="flex items-center gap-1">
+          <span className="w-2 h-2 bg-purple-600 rounded-full" />
+          <span>Early {early}</span>
         </div>
       </div>
     </div>
