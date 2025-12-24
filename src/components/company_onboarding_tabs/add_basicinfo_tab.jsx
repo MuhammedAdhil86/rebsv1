@@ -8,7 +8,7 @@ import {
   updateCompanyDetails,
   OrganizationType,
   getCountryName,
-} from "../../service/companyservice";
+} from "../../service/companyService";
 import { fetchTimeZone } from "../../service/eventservice";
 
 const AddBasicInformation = () => {
