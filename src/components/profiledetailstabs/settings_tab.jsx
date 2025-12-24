@@ -14,10 +14,9 @@ export default function SettingsTab({ employee }) {
       />
 
       <ActionCenter employee={employee} />
-      
-      {/* ✅ Pass uuid correctly to ManagePrivileges */}
+
       <ManagePrivileges uuid={employee?.uuid} />
-      
+
       <CompliancesDeductions employee={employee} />
       <Salary employee={employee} />
     </div>

@@ -78,7 +78,7 @@ const useShiftDashboardStore = create((set) => ({
       set({ loading: true });
 
       const res = await axiosInstance.get(
-        `${axiosInstance.baseURL2}shifts/ratio`
+        `shifts/ratio`
       );
 
       set({
