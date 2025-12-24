@@ -174,7 +174,7 @@ function ManageEmployees() {
     <div
       key={emp.id}
       onClick={() => navigate(`/details/${emp.id}`)}
-      className="bg-white rounded-2xl flex flex-col justify-between h-full transition hover:shadow-md p-4 cursor-pointer"
+      className="bg-white rounded-2xl flex flex-col justify-between h-full transition hover:shadow-md p-3.5 cursor-pointer"
     >
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center space-x-4">
@@ -215,7 +215,7 @@ function ManageEmployees() {
         </h3>
         <p className="text-[10px] text-gray-500">{emp.designation}</p>
       </div>
-<div className="flex flex-col text-gray-600 bg-gray-100 p-3 rounded-lg mt-2">
+<div className="flex flex-col text-gray-600 bg-gray-100 p-2 rounded-lg mt-2">
 
   {/* LABELS */}
   <div className="flex justify-between">
@@ -230,13 +230,13 @@ function ManageEmployees() {
   </div>
 
   {/* PHONE */}
-  <div className="flex items-center space-x-2 text-[12px] text-gray-800 mt-3">
+  <div className="flex items-center space-x-2 text-[12px] text-gray-800 mt-1.5 ">
     <Icon icon="solar:phone-linear" className="text-black w-4 h-4" />
     <span>{emp.ph_no}</span>
   </div>
 
   {/* EMAIL */}
-  <div className="flex items-center space-x-2 text-[12px] text-gray-800">
+  <div className="flex items-center space-x-2 text-[12px] text-gray-800 ">
     <Icon icon="mage:email" className="text-black w-4 h-4" />
     <span>{emp.email}</span>
   </div>

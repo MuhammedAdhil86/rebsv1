@@ -9,38 +9,31 @@ const RegularizationApprovalModal = ({
   shiftData,
   onClose,
   onSuccess,
-  onOptimisticUpdate, // 🔥 NEW (table update)
+  onOptimisticUpdate,
 }) => {
   const [remarks, setRemarks] = useState("");
   const [loading, setLoading] = useState(false);
 
-  /* ---------- SET DEFAULT REMARK FROM FETCH ---------- */
   useEffect(() => {
     setRemarks(data?.remarks || "");
   }, [data]);
 
   if (!open || !data) return null;
 
-  /* ---------- APPROVE / REJECT ---------- */
   const handleAction = async (status) => {
-    if (loading) return; // 🔒 prevent double click
+    if (loading) return;
 
-    const previousStatus = data.status; // for rollback
+    const previousStatus = data.status;
 
     try {
       setLoading(true);
-
-      // ⚡ OPTIMISTIC UPDATE (instant table change)
       onOptimisticUpdate?.(data.id, status);
 
-      await axiosInstance.put(
-        "/admin/attendance/regularize/approval",
-        {
-          request_id: data.id,
-          status,
-          remarks,
-        }
-      );
+      await axiosInstance.put("/admin/attendance/regularize/approval", {
+        request_id: data.id,
+        status,
+        remarks,
+      });
 
       toast.success(
         status === "approved"
@@ -49,23 +42,18 @@ const RegularizationApprovalModal = ({
       );
 
       onClose();
-      onSuccess?.(); // background refresh
+      onSuccess?.();
     } catch (error) {
-      console.error("Approval error:", error);
-
-      // 🔁 rollback optimistic update
       onOptimisticUpdate?.(data.id, previousStatus);
-
       toast.error("Failed to update regularization");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= UI (UNCHANGED) ================= */
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden">
         {/* HEADER */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <div className="flex items-center gap-3">
@@ -83,53 +71,85 @@ const RegularizationApprovalModal = ({
 
         {/* BODY */}
         <div className="p-8">
-          <div className="grid grid-cols-2 gap-x-8 gap-y-5 mb-6">
+          {/* GRID */}
+          <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-5">
             <div>
               <label className="text-[11px] text-gray-400">Staff Name</label>
-              <input readOnly value={data.name} className="w-full px-4 py-2.5 bg-gray-50 border rounded-lg text-sm" />
-              <p className="text-[10px] text-orange-500 text-right italic">
+              <input
+                readOnly
+                value={data.name}
+                className="w-full px-4 py-2.5 bg-gray-50 border rounded-lg text-sm"
+              />
+              <p className="text-[10px] text-orange-500 text-right h-[14px]">
                 {data.designation}
               </p>
             </div>
 
             <div>
               <label className="text-[11px] text-gray-400">Date</label>
-              <input readOnly value={data.date} className="w-full px-4 py-2.5 bg-gray-50 border rounded-lg text-sm" />
+              <input
+                readOnly
+                value={data.date}
+                className="w-full px-4 py-2.5 bg-gray-50 border rounded-lg text-sm"
+              />
+              <div className="h-[14px]" />
             </div>
 
             <div>
               <label className="text-[11px] text-gray-400">Check In</label>
               <div className="relative">
-                <input readOnly value={data.checkIn} className="w-full px-4 py-2.5 bg-gray-50 border rounded-lg text-sm" />
+                <input
+                  readOnly
+                  value={data.checkIn}
+                  className="w-full px-4 py-2.5 bg-gray-50 border rounded-lg text-sm"
+                />
                 <Clock size={16} className="absolute right-4 top-3 text-gray-400" />
               </div>
+              <div className="h-[14px]" />
             </div>
 
             <div>
               <label className="text-[11px] text-gray-400">Check Out</label>
               <div className="relative">
-                <input readOnly value={data.checkOut} className="w-full px-4 py-2.5 bg-gray-50 border rounded-lg text-sm" />
+                <input
+                  readOnly
+                  value={data.checkOut}
+                  className="w-full px-4 py-2.5 bg-gray-50 border rounded-lg text-sm"
+                />
                 <Clock size={16} className="absolute right-4 top-3 text-gray-400" />
               </div>
+              <div className="h-[14px]" />
             </div>
 
             <div>
               <label className="text-[11px] text-gray-400">Shift</label>
               <div className="relative">
-                <select readOnly className="w-full px-4 py-2.5 bg-gray-50 border rounded-lg appearance-none">
+                <select
+                  readOnly
+                  className="w-full px-4 py-2.5 bg-gray-50 border rounded-lg appearance-none"
+                >
                   <option>{shiftData?.shift_name || "Not Allocated"}</option>
                 </select>
                 <ChevronDown size={14} className="absolute right-4 top-3.5 text-gray-400" />
               </div>
+              <div className="h-[14px]" />
             </div>
 
             <div>
-              <label className="text-[11px] text-gray-400">Hours Worked</label>
-              <input readOnly value={data.workingHours} className="w-full px-4 py-2.5 bg-gray-50 border rounded-lg text-sm font-medium" />
+              <label className="text-[11px] text-gray-400">
+                Hours Worked
+              </label>
+              <input
+                readOnly
+                value={data.workingHours}
+                className="w-full px-4 py-2.5 bg-gray-50 border rounded-lg text-sm font-medium"
+              />
+              <div className="h-[14px]" />
             </div>
           </div>
 
-          <div className="mb-10">
+          {/* REMARKS */}
+          <div className="mb-5">
             <label className="text-[11px] text-gray-400">Remarks</label>
             <textarea
               value={remarks}
@@ -138,17 +158,18 @@ const RegularizationApprovalModal = ({
             />
           </div>
 
-          <div className="flex justify-between items-center">
-            <p className="font-semibold text-sm">
+          {/* FOOTER */}
+          <div className="flex justify-between items-center mt-5">
+            <p className="text-[12px]">
               Regularization Remaining :
               <span className="ml-1">{data.remaining || 0}</span>
             </p>
 
-            <div className="flex gap-4">
+            <div className="flex gap-4 text-[12px]">
               <button
                 disabled={loading}
                 onClick={() => handleAction("rejected")}
-                className="px-12 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold disabled:opacity-60"
+                className="px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-60"
               >
                 Reject
               </button>
@@ -156,7 +177,7 @@ const RegularizationApprovalModal = ({
               <button
                 disabled={loading}
                 onClick={() => handleAction("approved")}
-                className="px-12 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold disabled:opacity-60"
+                className="px-8 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-60"
               >
                 Approve
               </button>

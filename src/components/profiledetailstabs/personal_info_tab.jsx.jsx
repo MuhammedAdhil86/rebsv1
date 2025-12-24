@@ -10,15 +10,38 @@ import DependantDetailsSection from "../employee_details/dependantdetailssection
 
 export default function PersonalInfoTab({ employee }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 w-full">
-      <BasicInfoSection employee={employee} />
-      <WorkInfoSection employee={employee} />
-      <BankInfoSection employee={employee} />
-      <PersonalInfoSection employee={employee} />
-      <ContactInfoSection employee={employee} />
-      <HierarchyInfoSection employee={employee} />
-      <EducationalDetailsSection employee={employee} />
-      <DependantDetailsSection employee={employee} />
+    <div className="columns-1 sm:columns-2 gap-4 w-full">
+      <div className="break-inside-avoid mb-4">
+        <BasicInfoSection employee={employee} />
+      </div>
+
+      <div className="break-inside-avoid mb-4">
+        <WorkInfoSection employee={employee} />
+      </div>
+
+      <div className="break-inside-avoid mb-4">
+        <BankInfoSection employee={employee} />
+      </div>
+
+      <div className="break-inside-avoid mb-4">
+        <PersonalInfoSection employee={employee} />
+      </div>
+
+      <div className="break-inside-avoid mb-4">
+        <ContactInfoSection employee={employee} />
+      </div>
+
+      <div className="break-inside-avoid mb-4">
+        <HierarchyInfoSection employee={employee} />
+      </div>
+
+      <div className="break-inside-avoid mb-4">
+        <EducationalDetailsSection employee={employee} />
+      </div>
+
+      <div className="break-inside-avoid mb-4">
+        <DependantDetailsSection employee={employee} />
+      </div>
     </div>
   );
 }

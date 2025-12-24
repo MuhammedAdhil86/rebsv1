@@ -21,7 +21,7 @@ const EducationalDetailsSection = ({ employee }) => {
           <div className="text-gray-500 text-[13px]">No educational details available</div>
         ) : (
           educationData.map((edu, index) => (
-            <div key={index} className="bg-white rounded-lg border p-2">
+            <div key={index} className="bg-white ">
               {/* Education Header if multiple entries */}
               {educationData.length > 1 && (
                 <div className="text-[14px] font-medium text-gray-800 mb-2 border-b border-gray-200 pb-1">

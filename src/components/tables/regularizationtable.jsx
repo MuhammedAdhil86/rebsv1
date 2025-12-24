@@ -66,7 +66,7 @@ const ActionMenu = ({ row, openMenuId, setOpenMenuId, onEdit }) => {
               className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100"
             >
               <Pencil className="w-4 h-4" />
-              Approve
+            Edit
             </button>
 
             <button
