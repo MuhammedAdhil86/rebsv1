@@ -4,6 +4,9 @@ import ActionCenter from "../company_onboarding_tabs/settings_tabs/actionCenter"
 import ManagePrivileges from "../company_onboarding_tabs/settings_tabs/manageprivilage";
 import CompliancesDeductions from "../company_onboarding_tabs/settings_tabs/compliancesdeductions";
 import Salary from "../company_onboarding_tabs/settings_tabs/salary";
+import LeavesVacation from "../company_onboarding_tabs/settings_tabs/leavesandvacation";
+// Import the new component
+
 
 export default function SettingsTab({ employee }) {
   return (
@@ -18,7 +21,11 @@ export default function SettingsTab({ employee }) {
       <ManagePrivileges uuid={employee?.uuid} />
 
       <CompliancesDeductions employee={employee} />
+      
       <Salary employee={employee} />
+
+      {/* Add the new section here */}
+      <LeavesVacation employee={employee} />
     </div>
   );
 }

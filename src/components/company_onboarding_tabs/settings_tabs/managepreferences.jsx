@@ -6,14 +6,14 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
 // ----------------------------------------------------
-// ✔ Toggle Component
+// ✔ Toggle Component (Updated to Green)
 // ----------------------------------------------------
 const Toggle = ({ enabled, onToggle, disabled }) => {
   return (
     <div
       onClick={() => !disabled && onToggle()}
       className={`w-10 h-5 flex items-center rounded-full p-1 cursor-pointer transition 
-        ${enabled ? "bg-[#2d2929]" : "bg-gray-300"} 
+        ${enabled ? "bg-green-500" : "bg-gray-300"} 
         ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
     >
       <div
@@ -87,7 +87,7 @@ export default function ManagePreferencesSection({ uuid, initialPreferences }) {
       setPreferences(mapped);
       setOriginalPref(mapped);
     }
-  }, [initialPreferences]);
+  }, [initialPreferences, preferences.attendanceRequired]);
 
   // ----------------------------------------------------
   // ✔ Local Toggle (NO API CALL)
