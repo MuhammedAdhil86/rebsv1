@@ -43,7 +43,7 @@ const ActivityFullDetails = ({ event, employeeId, onClose }) => {
         // Format date as required by your API
         const formattedDate = moment(event.start).format("YYYY-MM-DD");
         const data = await fetchFullDetails(formattedDate, employeeId);
-        console.log("Full attendance data:", data);
+     
         
         if (Array.isArray(data) && data.length > 0) {
           setAttendanceRecords(data);

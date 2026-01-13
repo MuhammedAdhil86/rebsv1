@@ -19,7 +19,7 @@ const EmployeeTimeline = ({ month, year, employeeId }) => {
 
       try {
         const timelineData = await fetchTimeline(month, year, employeeId);
-        console.log("timeline:", timelineData);
+
 
         setActivities(timelineData || []);
       } catch (err) {

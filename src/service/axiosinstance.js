@@ -7,7 +7,7 @@ const axiosInstance = axios.create({
 });
 
 // ⭐ Attach ngrok URL manually (without touching interceptors)
-axiosInstance.baseURL2 = "https://agnostically-bonniest-patrice.ngrok-free.dev/";
+axiosInstance.baseURL2 = "https://garishly-pluvious-keiko.ngrok-free.dev/";
 
 // Attach token to requests
 axiosInstance.interceptors.request.use(

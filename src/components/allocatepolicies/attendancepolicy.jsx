@@ -20,7 +20,7 @@ const AttendancePolicy = ({
       try {
         setIsShiftsLoading(true);
         const data = await ShiftDataGet();
-        console.log("Fetched shifts:", data);
+   
         setShifts(data);
       } catch (err) {
         console.error("Failed to fetch shift data:", err);
@@ -37,7 +37,7 @@ const AttendancePolicy = ({
     const fetchPolicy = async () => {
       try {
         const policyResponse = await getShiftPolicyById(employeeUuid);
-        console.log("Fetched policy from API:", policyResponse); // Debug log
+        
         
         // Handle array response - take the first policy if it exists
         if (Array.isArray(policyResponse) && policyResponse.length > 0) {
@@ -60,7 +60,7 @@ const AttendancePolicy = ({
   }, [employeeUuid]);
 
   const handleAddItem = (shiftId) => {
-    console.log("Selected shiftId:", shiftId);
+
     if (!isShiftsLoading && shifts && shifts.length > 0) {
       setAttendanceList([shiftId]);
     }
@@ -70,7 +70,7 @@ const AttendancePolicy = ({
     if (attendanceList && attendanceList.length === 1) {
       setLoading(true);
       try {
-        console.log("employeeUuid : ", employeeUuid);
+     ;
         const shiftId = parseInt(attendanceList[0], 10);
         if (isNaN(shiftId)) {
           setLoading(false);
@@ -105,7 +105,7 @@ const AttendancePolicy = ({
 
   // Helper function to render allocated policy information
   const renderAllocatedPolicy = () => {
-    console.log("allocatedPolicy in render:", allocatedPolicy); // Debug log
+ 
     
     if (!allocatedPolicy) {
       return <li>No policy allocated yet.</li>;

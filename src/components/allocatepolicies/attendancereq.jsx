@@ -5,7 +5,7 @@ import {toast,Toaster } from 'react-hot-toast'
 const AttendanceReq = ({ employeeUuid, employees }) => {
   const [isRequired, setIsRequired] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
-console.log("is attendan",employees.is_attendence_required)
+
   // Initialize state based on employee data when component mounts or when employees prop changes
   useEffect(() => {
     if (employees && employees.is_attendence_required !== undefined) {

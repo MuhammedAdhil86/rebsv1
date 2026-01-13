@@ -12,7 +12,7 @@ const Allowance = ({ allowances, allowanceList, setAllowanceList, employeeUuid }
       try {
         const allocated = await fetchPrivilegeAllowance(employeeUuid);
         setAllocatedAllowances(allocated || []); // Set fetched allowances
-        console.log("Fetched allocated allowances:", allocated);
+   
       } catch (error) {
         console.error("Error fetching allocated allowances:", error);
       }
