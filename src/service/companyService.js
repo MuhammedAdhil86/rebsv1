@@ -22,6 +22,8 @@ import {
   postDepartment,
   postDivision,
   postDesignation,
+  postShiftcreate,
+  getAttendancepolicy,
 } from "../api/api";
 
 export const getBranchData = async () => {
@@ -400,5 +402,27 @@ export const addDesignation = async (DesignationData) => {
   } catch (error) {
     console.error("Error adding designation:", error);
     throw error;
+  }
+};
+
+export const createShift = async (shiftData) => {
+  try {
+    const res = await axiosInstance.post(postShiftcreate, shiftData);
+    console.log("Shift creation response:", res.data);
+    return res.data;
+  } catch (error) {
+    console.error("Error creating shift:", error);
+    throw error; // so the caller knows it failed
+  }
+};
+
+export const getAttendancePolicyData = async () => {
+  try {
+    const res = await axiosInstance.get("attendance-policy/get"); // ✅ leading slash
+    console.log("Policies:", res.data.data);
+    return res.data.data;
+  } catch (err) {
+    console.error("Error fetching attendance policies:", err.response?.data || err.message);
+    return [];
   }
 };

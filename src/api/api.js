@@ -233,3 +233,5 @@ export const getDailyAttendance = "/admin/attendance/musterroll";
 // Consolidated Data
 export const getConsolidatedData = "/admin/staff/consolidated";
 
+export const postShiftcreate = "/shifts/add";
+export const getAttendancepolicy ="attendance-policy/get"

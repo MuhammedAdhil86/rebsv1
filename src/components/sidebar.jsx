@@ -264,7 +264,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
               ))}
             </div>
           ))}
-        </nav>f
+        </nav>
 
         {/* Hide Scrollbar */}
         <style>{`
