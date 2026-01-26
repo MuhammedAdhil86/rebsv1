@@ -11,6 +11,7 @@ const CreateShiftModal = ({ isOpen, onClose }) => {
   const [isCrossShift, setIsCrossShift] = useState(false);
   const [policies, setPolicies] = useState([]);
   const [allPolicies, setAllPolicies] = useState([]);
+  const [remarks, setRemarks] = useState(""); // ✅ Remarks field
   const [loading, setLoading] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -62,6 +63,7 @@ const CreateShiftModal = ({ isOpen, onClose }) => {
       is_cross_shift: isCrossShift,
       is_default: false,
       policies,
+      remarks, // ✅ include remarks in payload
     };
 
     try {
@@ -70,11 +72,14 @@ const CreateShiftModal = ({ isOpen, onClose }) => {
       console.log("Shift created:", res.data);
       toast.success("Shift created successfully!");
       onClose();
+
+      // Reset form
       setShiftName("");
       setShiftCode("");
       setShiftColour("#4CAF50");
       setIsCrossShift(false);
       setPolicies([]);
+      setRemarks(""); // ✅ reset remarks
     } catch (err) {
       console.error(
         "Error creating shift:",
@@ -91,7 +96,6 @@ const CreateShiftModal = ({ isOpen, onClose }) => {
     "w-full px-4 py-3 bg-[#F4F6F8] border border-gray-200 rounded-xl text-sm text-[#797979] placeholder:text-[#797979] focus:outline-none focus:ring-1 focus:ring-gray-300 transition-all";
   const labelStyle = "text-[13px] text-black mb-2 block";
 
-  // ✅ Return modal without top-level conditional to avoid React warnings
   return (
     <>
       {isOpen && (
@@ -200,6 +204,17 @@ const CreateShiftModal = ({ isOpen, onClose }) => {
                   <option value="false">No</option>
                   <option value="true">Yes</option>
                 </select>
+              </div>
+
+              {/* ✅ Remarks Field */}
+              <div className="col-span-2">
+                <label className={labelStyle}>Remarks</label>
+                <textarea
+                  className={`${inputStyle} h-24 resize-none`}
+                  placeholder="Add any remarks for this shift"
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                />
               </div>
             </div>
 

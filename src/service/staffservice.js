@@ -1,38 +1,31 @@
 import axiosInstance from "./axiosinstance";
-import { getDepartment, getBranch, getDesignations,postShiftcreate } from "../api/api";
+import {
+  getDepartment,
+  getBranch,
+  getDesignations,
+  postShiftcreate,
+  getShifts
+} from "../api/api";
 
 /* ================= STAFF ================= */
 
-// Default – All users
+// All users (default)
 export const getAllStaff = async () => {
   try {
-    const res = await axiosInstance.get(
-      `${axiosInstance.baseURL2}staff/get-by/filter`
-    );
+    const res = await axiosInstance.get("staff/get-by/filter");
 
-    console.log("API response:", res); // Debug: see full Axios response
-
-    if (res && res.data && res.data.data) {
-      return res.data.data; // array of users
-    } else {
-      console.warn("API returned unexpected structure:", res.data);
-      return [];
-    }
+    return Array.isArray(res?.data?.data) ? res.data.data : [];
   } catch (error) {
     console.error("Error fetching all staff:", error);
     return [];
   }
 };
 
-
 // Filtered users
 export const filterStaff = async (params) => {
   try {
-    const res = await axiosInstance.get(
-      `${axiosInstance.baseURL2}staff/get-by/filter`,
-      { params }
-    );
-    return res.data.data; // filtered users array
+    const res = await axiosInstance.get("staff/get-by/filter", { params });
+    return Array.isArray(res?.data?.data) ? res.data.data : [];
   } catch (error) {
     console.error("Error filtering staff:", error);
     return [];
@@ -43,26 +36,38 @@ export const filterStaff = async (params) => {
 
 export const getDepartmentData = async () => {
   const res = await axiosInstance.get(getDepartment);
-  return res.data.data;
+  return res.data.data || [];
 };
 
 export const getBranchData = async () => {
   const res = await axiosInstance.get(getBranch);
-  return res.data.data;
+  return res.data.data || [];
 };
 
 export const getDesignationData = async () => {
   const res = await axiosInstance.get(getDesignations);
-  return res.data.data;
+  return res.data.data || [];
 };
- 
+
+/* ================= SHIFT ================= */
+
 export const createShift = async (shiftData) => {
   try {
     const res = await axiosInstance.post(postShiftcreate, shiftData);
-    console.log("Shift creation response:", res.data);
     return res.data;
   } catch (error) {
     console.error("Error creating shift:", error);
-    throw error; // so the caller knows it failed
+    throw error;
+  }
+};
+
+
+export const getShiftList = async () => {
+  try {
+    const res = await axiosInstance.get(getShifts);
+    return res?.data?.data || [];
+  } catch (error) {
+    console.error("Error fetching shifts:", error);
+    return [];
   }
 };

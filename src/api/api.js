@@ -121,6 +121,7 @@ export const getGender = "/admin/gender/get"
 export const getMaritalStatus = "/admin/marital-status/get"
 export const getEmploymentType = "/admin/applicability-category/get"
 export const getClubbingPolicy = "/master/leavetype"
+export const getAllLeavePolicy = "/leave-policy/fetch-all"
 
 
 //Week Off
@@ -235,3 +236,11 @@ export const getConsolidatedData = "/admin/staff/consolidated";
 
 export const postShiftcreate = "/shifts/add";
 export const getAttendancepolicy ="attendance-policy/get"
+export const getEmailPlaceholders = "/admin/email/placeholders"; // ✅ add this
+
+export const getEmailPurposes = "admin/available-purposes";
+export const postCreateEmailTemplate = "admin/create/templates";
+
+export const getEmailTemplates = "/admin/templates";
+
+export const updateEmailTemplate = "admin/notification-templates/{purpose}";

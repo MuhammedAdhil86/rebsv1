@@ -178,23 +178,34 @@ function EmployeeTable({ employees, loading }) {
                       <td className="px-4 py-3 border-b border-[#f9fafb]" style={{ width: colWidths[4] }}>
                         {emp.shift || "Day Shift"}
                       </td>
+{/* Status */}
+<td
+  className="px-4 py-3 border-b border-[#f9fafb] relative"
+  style={{ width: colWidths[5] }}
+  onMouseEnter={(e) => {
+    if (emp.status === "Early Check-in") {
+      const rect = e.target.getBoundingClientRect();
+      setTooltipPos({ x: rect.left, y: rect.top - 28 });
+      setHoverText(emp.status);
+    }
+  }}
+  onMouseLeave={() => setHoverText(null)}
+>
+  <span
+    className={`px-3 py-1 w-[85px] text-center rounded-full text-[12px] font-poppins truncate cursor-default ${
+      emp.status === "Online"
+        ? "bg-green-100 text-green-600"
+        : emp.status === "Absent"
+        ? "bg-red-100 text-red-600"
+        : emp.status === "Late"
+        ? "bg-purple-100 text-purple-600"
+        : "bg-blue-100 text-blue-600"
+    }`}
+  >
+    {emp.status === "Early Check-in" ? "Early..." : emp.status}
+  </span>
+</td>
 
-                      {/* Status */}
-                      <td className="px-4 py-3 border-b border-[#f9fafb]" style={{ width: colWidths[5] }}>
-                        <span
-                          className={`px-3 py-1 w-[85px] text-center rounded-full text-[12px] font-poppins ${
-                            emp.status === "Online"
-                              ? "bg-green-100 text-green-600"
-                              : emp.status === "Absent"
-                              ? "bg-red-100 text-red-600"
-                              : emp.status === "Late"
-                              ? "bg-purple-100 text-purple-600"
-                              : "bg-blue-100 text-blue-600"
-                          }`}
-                        >
-                          {emp.status}
-                        </span>
-                      </td>
                     </tr>
                   ))
                 )}

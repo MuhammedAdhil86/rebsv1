@@ -24,6 +24,7 @@ import {
   postDesignation,
   postShiftcreate,
   getAttendancepolicy,
+  getAllLeavePolicy
 } from "../api/api";
 
 export const getBranchData = async () => {
@@ -424,5 +425,27 @@ export const getAttendancePolicyData = async () => {
   } catch (err) {
     console.error("Error fetching attendance policies:", err.response?.data || err.message);
     return [];
+  }
+};
+
+
+export const allocateShiftBulkUpsert = async (payload) => {
+  try {
+    const response = await axiosInstance.post("/shifts/allocate/bulk", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error allocating shift in bulk:", error);
+    throw error;
+  }
+};
+
+export const fetchAllLeavePolicy = async () => {
+  try {
+    const response = await axiosInstance.get(getAllLeavePolicy);
+    console.log("all leave policy response:", response);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching all leave policies:", error);
+    throw error;
   }
 };

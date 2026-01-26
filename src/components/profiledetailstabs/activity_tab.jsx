@@ -183,7 +183,7 @@ const ActivityTab = ({ employee }) => {
 
                 {day.totalHours && (
                   <div
-                    className="absolute bottom-2 right-2 text-gray-600 font-mono text-[12px]"
+                    className="absolute bottom-2 right-2 text-gray-600  text-[10px]"
                     
                   >
                     {day.totalHours}

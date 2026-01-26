@@ -1,15 +1,15 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "https://rebs-hr-cwhyx.ondigitalocean.app/", // ✅ trailing slash added
+  baseURL: "https://rebs-hr-cwhyx.ondigitalocean.app/", // main API
   headers: { "Content-Type": "application/json" },
   timeout: 15000,
 });
 
-// ⭐ Attach ngrok URL manually (without touching interceptors)
-axiosInstance.baseURL2 = "https://garishly-pluvious-keiko.ngrok-free.dev/";
+// Base URL 2 for email APIs
+axiosInstance.baseURL2 = "https://blank-exclude-venues-finds.trycloudflare.com/";
 
-// Attach token to requests
+// -------------------- Request Interceptor --------------------
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("authToken");
@@ -19,18 +19,31 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle 401 errors and update token
+// -------------------- Response Interceptor --------------------
 axiosInstance.interceptors.response.use(
   (response) => {
+    // Update token if backend sends a new one
     const newToken = response.data?.token;
     if (newToken) localStorage.setItem("authToken", newToken);
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = error.config?.url || "";
+
+    // ✅ Only auto-logout for main API, NOT email API (baseURL2)
+    if (
+      error.response?.status === 401 &&
+      !requestUrl.startsWith(axiosInstance.baseURL2)
+    ) {
       localStorage.removeItem("authToken");
       window.location.href = "/"; // Redirect to login
+    } else if (error.response?.status === 401) {
+      console.warn(
+        "Email API returned 401, user will NOT be logged out:",
+        requestUrl
+      );
     }
+
     return Promise.reject(error);
   }
 );
