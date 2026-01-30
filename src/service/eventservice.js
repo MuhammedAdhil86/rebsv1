@@ -5,6 +5,7 @@ import {
   getTimezone,
   deleteEvent as deleteEventapi,
   cancelEvent,
+  postAddWeekOff,
 } from "../api/api";
 
 export const fetchEvents = async () => {
@@ -113,6 +114,17 @@ export const fetchWeeklyOffEvents = async (month, year) => {
     return weeklyOffs;
   } catch (error) {
     console.error(`Error fetching weekly offs for ${month}/${year}:`, error);
+    throw error;
+  }
+};
+
+export const createWeeklyOff = async (weeklyOffData) => {
+  try {
+    const response = await axiosInstance.post(postAddWeekOff, weeklyOffData);
+    console.log("Weekly off added:", response);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error adding weekly off:", error);
     throw error;
   }
 };

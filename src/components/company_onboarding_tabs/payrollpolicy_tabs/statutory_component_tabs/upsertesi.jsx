@@ -59,7 +59,7 @@ export default function UpsertESI() {
 
     try {
       const res = await axiosInstance.put(
-        axiosInstance.baseURL2 + "api/payroll/statutory/esi/upsert",
+        "api/payroll/statutory/esi/upsert",
         payload
       );
 

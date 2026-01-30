@@ -11,6 +11,8 @@ export const Login = "/staff/login"
 export const getTotalEmployee = "/admin/staffstatus/list"
 export const putStatusUpdate = "/admin/attendance/status/update"
 
+export const postEmployeeListbyMonth ="/admin/attendance/listbymonth "
+
 //leaveapproval
 
 export const putLeaveApproval = "/admin/leave/change-status/:leave_id"
@@ -241,6 +243,12 @@ export const getEmailPlaceholders = "/admin/email/placeholders"; // ✅ add this
 export const getEmailPurposes = "admin/available-purposes";
 export const postCreateEmailTemplate = "admin/create/templates";
 
-export const getEmailTemplates = "/admin/templates";
+export const getEmailTemplates = "admin/templates";
 
 export const updateEmailTemplate = "admin/notification-templates/{purpose}";
+
+export const uploadEmailTemplateFile ="admin/upload/templates";
+
+export const getDefulatEmailTemplate = "/admin/defaults";
+
+export const postCloneEmailTemplate = "/admin/clone-default";

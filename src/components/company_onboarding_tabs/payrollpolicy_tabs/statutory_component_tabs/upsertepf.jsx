@@ -88,7 +88,7 @@ export default function UpsertEPF() {
 
     try {
       const res = await axiosInstance.put(
-        axiosInstance.baseURL2 + "api/payroll/statutory/epf/upsert",
+        "api/payroll/statutory/epf/upsert",
         payload
       );
 

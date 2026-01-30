@@ -1,36 +1,25 @@
 import { useState, useEffect, useMemo } from "react";
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  ChevronDown,
-} from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
+import UniversalTable from "../../../ui/universal_table";
 
 const UsersTable = ({
-  users = [],               // ✅ SAFE DEFAULT
-  filteredUsers = [],       // ✅ SAFE DEFAULT
+  users = [],
+  filteredUsers = [],
   loading = false,
   searchTerm = "",
   setSearchTerm = () => {},
-  selectedUsers = [],       // ✅ SAFE DEFAULT
+  selectedUsers = [],
   setSelectedUsers = () => {},
 }) => {
   const [selectAll, setSelectAll] = useState(false);
 
-  const [sortConfig, setSortConfig] = useState({
-    key: null,
-    direction: null,
-  });
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
 
-  // Sort handler
+  // Handle sorting
   const handleSort = (key) => {
     setSortConfig((prev) => {
       if (prev.key === key) {
-        return {
-          key,
-          direction: prev.direction === "asc" ? "desc" : "asc",
-        };
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
       }
       return { key, direction: "asc" };
     });
@@ -38,19 +27,19 @@ const UsersTable = ({
 
   // Sorted users
   const sortedUsers = useMemo(() => {
-    if (!sortConfig.key) return filteredUsers;
+    let data = filteredUsers.length > 0 ? filteredUsers : users;
+    if (!sortConfig.key) return data;
 
-    return [...filteredUsers].sort((a, b) => {
+    return [...data].sort((a, b) => {
       const aValue = a?.[sortConfig.key] ?? "";
       const bValue = b?.[sortConfig.key] ?? "";
-
       if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
       return 0;
     });
-  }, [filteredUsers, sortConfig]);
+  }, [users, filteredUsers, sortConfig]);
 
-  // Select all
+  // Select all toggle
   const handleSelectAll = () => {
     if (!selectAll) {
       setSelectedUsers(sortedUsers.map((u) => u.id.toString()));
@@ -67,7 +56,6 @@ const UsersTable = ({
     );
   };
 
-  // Sync checkbox
   useEffect(() => {
     const allSelected =
       sortedUsers.length > 0 &&
@@ -75,13 +63,29 @@ const UsersTable = ({
     setSelectAll(allSelected);
   }, [sortedUsers, selectedUsers]);
 
-  const headers = [
-    { label: "Name", key: "full_name" },
-    { label: "Designation", key: "designation" },
-    { label: "Date of Joining", key: "date_of_join" },
-    { label: "Department", key: "department" },
-    { label: "Branch", key: "branch" },
-
+  // Define columns for UniversalTable
+  const columns = [
+    {
+      key: "select",
+      label: "",
+      render: (_, row) => (
+        <input
+          type="checkbox"
+          checked={selectedUsers.includes(row.id.toString())}
+          onChange={() => handleSelectUser(row.id)}
+        />
+      ),
+      width: 50,
+    },
+    { key: "full_name", label: "Name" },
+    { key: "designation", label: "Designation" },
+    {
+      key: "date_of_join",
+      label: "Date of Joining",
+      render: (value) => (value ? new Date(value).toLocaleDateString() : "-"),
+    },
+    { key: "department", label: "Department" },
+    { key: "branch", label: "Branch", render: (v) => v || "-" },
   ];
 
   return (
@@ -95,6 +99,7 @@ const UsersTable = ({
           </span>
         </div>
 
+        {/* Search Input */}
         <div className="relative">
           <input
             type="text"
@@ -110,97 +115,20 @@ const UsersTable = ({
         </div>
       </div>
 
-      {/* Table */}
+      {/* Universal Table */}
       <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-        <table className="w-full text-left text-[12px]">
-          <thead>
-            <tr className="border-b border-gray-50">
-              <th className="p-5 w-14">
-                <input
-                  type="checkbox"
-                  checked={selectAll}
-                  onChange={handleSelectAll}
-                />
-              </th>
-
-              {headers.map((h) => (
-                <th
-                  key={h.key}
-                  onClick={() => handleSort(h.key)}
-                  className="p-5 cursor-pointer"
-                >
-                  <div className="flex items-center gap-1">
-                    {h.label}
-                    <div className="flex flex-col -space-y-1">
-                      <ChevronUp
-                        size={12}
-                        className={
-                          sortConfig.key === h.key &&
-                          sortConfig.direction === "asc"
-                            ? "text-black"
-                            : "text-gray-300"
-                        }
-                      />
-                      <ChevronDown
-                        size={12}
-                        className={
-                          sortConfig.key === h.key &&
-                          sortConfig.direction === "desc"
-                            ? "text-black"
-                            : "text-gray-300"
-                        }
-                      />
-                    </div>
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="7" className="p-6 text-center text-gray-500">
-                  Loading...
-                </td>
-              </tr>
-            ) : sortedUsers.length === 0 ? (
-              <tr>
-                <td colSpan="7" className="p-6 text-center text-gray-500">
-                  No users found
-                </td>
-              </tr>
-            ) : (
-              sortedUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="p-5">
-                    <input
-                      type="checkbox"
-                      checked={selectedUsers.includes(user.id.toString())}
-                      onChange={() => handleSelectUser(user.id)}
-                    />
-                  </td>
-                  <td className="p-5">{user.full_name}</td>
-                  <td className="p-5">{user.designation}</td>
-                  <td className="p-5">
-                    {user.date_of_join
-                      ? new Date(user.date_of_join).toLocaleDateString()
-                      : "-"}
-                  </td>
-                  <td className="p-5">{user.department}</td>
-                  <td className="p-5">{user.branch || "-"}</td>
-               
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-
-        {/* Pagination */}
-        <div className="p-4 flex justify-end gap-4 border-t">
-          <ChevronLeft size={18} />
-          <ChevronRight size={18} />
-        </div>
+        {loading ? (
+          <p className="p-6 text-center text-gray-500 text-[12px]">Loading...</p>
+        ) : sortedUsers.length === 0 ? (
+          <p className="p-6 text-center text-gray-500 text-[12px]">No users found</p>
+        ) : (
+          <UniversalTable
+            columns={columns}
+            data={sortedUsers}
+            rowsPerPage={6}
+            rowClickHandler={(row) => console.log("Clicked row:", row)}
+          />
+        )}
       </div>
     </div>
   );

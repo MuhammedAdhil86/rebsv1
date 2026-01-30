@@ -26,7 +26,7 @@ const UpsertPT = ({ data = {}, onSuccess }) => {
 
     try {
       const res = await axiosInstance.put(
-        axiosInstance.baseURL2 + "api/payroll/statutory/professional-tax/upsert",
+        "api/payroll/statutory/professional-tax/upsert",
         payload
       );
       toast.success(res.data?.message || "Professional Tax updated successfully!");

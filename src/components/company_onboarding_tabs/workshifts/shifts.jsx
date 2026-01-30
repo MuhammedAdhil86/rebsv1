@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Plus, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus } from "lucide-react";
 import CreateShiftModal from "../../../ui/createshiftmodal";
-import { ShiftDataGet } from "../../../service/companyService"; // ✅ Import your API
+import { ShiftDataGet } from "../../../service/companyService";
+import UniversalTable from "../../../ui/universal_table";
 
 const Shifts = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -9,13 +10,10 @@ const Shifts = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch shifts from API using getShifts
   useEffect(() => {
     const fetchShiftsData = async () => {
       try {
-        const data = await ShiftDataGet(); // ✅ Use centralized API function
-
-        // Map API data to table-friendly format
+        const data = await ShiftDataGet();
         const mappedData = data.map((shift) => ({
           name: shift.shift_name,
           duration: `${shift.policies[0]?.working_hours || 0} Hrs`,
@@ -27,7 +25,9 @@ const Shifts = () => {
                 shift.policies[0].lunch_break_to
               )}`
             : "N/A",
-          reg: `${shift.policies[0]?.regularisation_limit || 0}/${shift.policies[0]?.regularisation_type || ""}`,
+          reg: `${shift.policies[0]?.regularisation_limit || 0}/${
+            shift.policies[0]?.regularisation_type || ""
+          }`,
           policy: shift.policy_count,
           status: shift.allocated_employees > 0 ? "Active" : "Inactive",
         }));
@@ -44,7 +44,6 @@ const Shifts = () => {
     fetchShiftsData();
   }, []);
 
-  // Format 24-hour time to 12-hour
   const formatTime = (timeStr) => {
     if (!timeStr) return "N/A";
     const [hour, minute] = timeStr.split(":");
@@ -67,6 +66,27 @@ const Shifts = () => {
     }
   };
 
+  // ✅ Define columns for UniversalTable
+  const columns = [
+    { key: "name", label: "Shift Name" },
+    { key: "duration", label: "Duration" },
+    { key: "start", label: "Start Time" },
+    { key: "end", label: "End Time" },
+    { key: "staff", label: "Allocated Staffs" },
+    { key: "break", label: "Break Time" },
+    { key: "reg", label: "Regularization Count" },
+    { key: "policy", label: "Policy Count" },
+    {
+      key: "status",
+      label: "Status",
+      render: (value) => (
+        <span className={`px-3 py-1 rounded-full border ${getStatusStyle(value)}`}>
+          {value}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="w-full">
       {/* Header */}
@@ -87,62 +107,12 @@ const Shifts = () => {
         ) : error ? (
           <p className="text-red-500 text-[12px]">{error}</p>
         ) : (
-          <table className="w-full text-left text-[12px]">
-            <thead>
-              <tr className="border-b border-gray-50">
-                {[
-                  "Shift Name",
-                  "Duration",
-                  "Start time",
-                  "End Time",
-                  "Allocated Staffs",
-                  "Break Time",
-                  "Regularization Count",
-                  "Policy count",
-                  "Status",
-                ].map((heading) => (
-                  <th
-                    key={heading}
-                    className="pb-3 px-2 text-[12px] font-normal text-gray-800"
-                  >
-                    {[
-                      "Allocated Staffs",
-                      "Break Time",
-                      "Regularization Count",
-                      "Policy count",
-                      "Status",
-                    ].includes(heading) ? (
-                      <div className="text-center">{heading}</div>
-                    ) : (
-                      <div className="flex items-center gap-1.5">
-                        {heading} <SortIcon />
-                      </div>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-50">
-              {shiftData.map((shift, index) => (
-                <tr key={index} className="group">
-                  <td className="py-3 px-2 text-[12px] text-gray-700">{shift.name}</td>
-                  <td className="py-3 px-2 text-[12px] text-gray-500">{shift.duration}</td>
-                  <td className="py-3 px-2 text-[12px] text-gray-500">{shift.start}</td>
-                  <td className="py-3 px-2 text-[12px] text-gray-500">{shift.end}</td>
-                  <td className="py-3 px-2 text-[12px] text-gray-600 text-center">{shift.staff}</td>
-                  <td className="py-3 px-2 text-[12px] text-gray-600 text-center">{shift.break}</td>
-                  <td className="py-3 px-2 text-[12px] text-gray-600 text-center">{shift.reg}</td>
-                  <td className="py-3 px-2 text-[12px] text-gray-600 text-center">{shift.policy}</td>
-                  <td className="py-3 px-2 text-[12px] text-center">
-                    <span className={`px-3 py-1 rounded-full border ${getStatusStyle(shift.status)}`}>
-                      {shift.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <UniversalTable
+            columns={columns}
+            data={shiftData}
+            rowsPerPage={6} // optional
+            rowClickHandler={(row) => console.log("Clicked row:", row)}
+          />
         )}
       </div>
 
@@ -151,12 +121,5 @@ const Shifts = () => {
     </div>
   );
 };
-
-const SortIcon = () => (
-  <div className="flex flex-col">
-    <ChevronUp size={8} className="-mb-0.5 text-black" />
-    <ChevronDown size={8} />
-  </div>
-);
 
 export default Shifts;

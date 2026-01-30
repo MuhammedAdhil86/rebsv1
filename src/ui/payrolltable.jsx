@@ -1,15 +1,13 @@
-import React, { useEffect, useState, useRef } from "react";
-import payrollService from "../../../service/payrollService";
+import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-// Standalone PayrollTable Component
-function PayrollTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
+export default function PayrollTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [colWidths, setColWidths] = useState([]);
   const headerRef = useRef(null);
 
-  // Filter data based on search
+  // Filter data by search term
   const filteredData = data.filter((row) => {
     const term = searchTerm.toLowerCase();
     return columns.some((col) =>
@@ -22,7 +20,7 @@ function PayrollTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
   const endIdx = startIdx + rowsPerPage;
   const currentData = filteredData.slice(startIdx, endIdx);
 
-  // Calculate column widths for consistent sizing
+  // Set column widths
   useEffect(() => {
     if (headerRef.current) {
       const widths = Array.from(headerRef.current.querySelectorAll("th")).map(
@@ -45,7 +43,7 @@ function PayrollTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
         />
       </div>
 
-      {/* Table Header */}
+      {/* Header */}
       <table
         className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl overflow-hidden"
         ref={headerRef}
@@ -56,19 +54,11 @@ function PayrollTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
               <th
                 key={col.key}
                 style={{
-                  width: colWidths[idx]
-                    ? `${colWidths[idx]}px`
-                    : col.width
-                    ? `${col.width}px`
-                    : "auto",
+                  width: colWidths[idx] ? `${colWidths[idx]}px` : col.width ? `${col.width}px` : "auto",
                   textAlign: col.align || "center",
                 }}
                 className={`px-4 py-3 font-medium text-gray-700 text-center whitespace-nowrap align-middle ${
-                  idx === 0
-                    ? "rounded-tl-2xl"
-                    : idx === columns.length - 1
-                    ? "rounded-tr-2xl"
-                    : ""
+                  idx === 0 ? "rounded-tl-2xl" : idx === columns.length - 1 ? "rounded-tr-2xl" : ""
                 }`}
               >
                 {col.label}
@@ -80,15 +70,12 @@ function PayrollTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
 
       <div className="h-2" />
 
-      {/* Table Body */}
+      {/* Body */}
       <table className="w-full min-w-[600px] bg-white border-separate border-spacing-0 rounded-2xl overflow-hidden">
         <tbody className="text-gray-800">
           {currentData.length === 0 ? (
             <tr>
-              <td
-                colSpan={columns.length}
-                className="text-center py-4 text-gray-500 border-b border-gray-300"
-              >
+              <td colSpan={columns.length} className="text-center py-4 text-gray-500 border-b border-gray-300">
                 No data available
               </td>
             </tr>
@@ -108,11 +95,7 @@ function PayrollTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
                       key={col.key}
                       data-label={col.label}
                       style={{
-                        width: colWidths[colIdx]
-                          ? `${colWidths[colIdx]}px`
-                          : col.width
-                          ? `${col.width}px`
-                          : "auto",
+                        width: colWidths[colIdx] ? `${colWidths[colIdx]}px` : col.width ? `${col.width}px` : "auto",
                         textAlign: col.align || "center",
                       }}
                       className="px-4 py-4 truncate text-center align-middle relative text-[12px] border-b border-[#f9fafb]"
@@ -156,124 +139,5 @@ function PayrollTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
         </tbody>
       </table>
     </section>
-  );
-}
-
-// Main SalaryTemplate Component
-export default function SalaryTemplate() {
-  const [tableData, setTableData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filterStatus, setFilterStatus] = useState("all");
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchTemplates = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await payrollService.getSalaryTemplates();
-        const rawItems =
-          response?.data?.items ||
-          response?.data?.data?.items ||
-          response?.items ||
-          response ||
-          [];
-
-        const formatted = rawItems
-          .map((item, index) => ({
-            id: item.id ?? index,
-            name: item.name || "-",
-            description: item.description || "-",
-            annualCTC: `₹${Number(item.annual_ctc || 0).toLocaleString()}`,
-            status:
-              String(item.status).toLowerCase() === "active" ||
-              item.status === true ||
-              item.status === 1
-                ? "Active"
-                : "Inactive",
-          }))
-          .filter((item) => {
-            if (filterStatus === "all") return true;
-            return item.status.toLowerCase() === filterStatus;
-          });
-
-        if (isMounted) setTableData(formatted);
-      } catch (err) {
-        console.error(err);
-        if (isMounted) {
-          setTableData([]);
-          setError("Failed to load salary templates. Please try again.");
-        }
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    fetchTemplates();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [filterStatus]);
-
-  const columns = [
-    { key: "name", label: "Template Name", align: "left" },
-    {
-      key: "description",
-      label: "Description",
-      align: "left",
-      render: (value) => (
-        <div style={{ whiteSpace: "normal", wordBreak: "break-word", maxWidth: "400px" }}>
-          {value}
-        </div>
-      ),
-    },
-    { key: "annualCTC", label: "Annual CTC", align: "right" },
-    {
-      key: "status",
-      label: "Status",
-      align: "center",
-      render: (value) => (
-        <span className={`font-medium ${value === "Active" ? "text-green-600" : "text-red-600"}`}>
-          {value}
-        </span>
-      ),
-    },
-  ];
-
-  return (
-    <div className="overflow-x-auto p-4">
-      {/* FILTER */}
-      <div className="mb-4 flex items-center gap-2">
-        <label className="text-sm">Status Filter:</label>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="border text-sm px-2 py-1 rounded"
-        >
-          <option value="all">All</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
-      </div>
-
-      {/* PAYROLL TABLE */}
-      <PayrollTable
-        columns={columns}
-        data={tableData}
-        rowsPerPage={6}
-        rowClickHandler={(row) => console.log("Row clicked:", row)}
-      />
-
-      {/* LOADING / ERROR */}
-      {loading && <div className="text-center py-4 text-gray-500">Loading...</div>}
-      {error && <div className="text-center py-4 text-red-600">{error}</div>}
-      {!loading && !error && tableData.length === 0 && (
-        <div className="text-center py-4 text-gray-500">No templates found</div>
-      )}
-    </div>
   );
 }

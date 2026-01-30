@@ -15,7 +15,7 @@ const EpfTab = () => {
     setLoading(true);
     try {
       const response = await axiosInstance.get(
-        `${axiosInstance.baseURL2}api/payroll/statutory/epf`
+        `api/payroll/statutory/epf`
       );
       console.log("EPF GET Response:", response.data);
       const epfInfo = response.data?.data || {};
@@ -37,7 +37,7 @@ const EpfTab = () => {
     setEpfLoading(true);
     try {
       const response = await axiosInstance.post(
-        `${axiosInstance.baseURL2}api/payroll/statutory/epf/enable`,
+        `api/payroll/statutory/epf/enable`,
         { enabled: true }
       );
       console.log("EPF Enable Response:", response.data);
@@ -54,7 +54,7 @@ const EpfTab = () => {
     setEpfLoading(true);
     try {
       const response = await axiosInstance.post(
-        `${axiosInstance.baseURL2}api/payroll/statutory/epf/disable`
+        `api/payroll/statutory/epf/disable`
       );
       console.log("EPF Disable Response:", response.data);
       fetchEPF(); // refresh data

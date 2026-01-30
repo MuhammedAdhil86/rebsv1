@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import CreateLeavePolicyModal from "./createleavepolicymodal";
 import { fetchAllLeavePolicy } from "../../../service/companyService";
+import UniversalTable from "../../../ui/universal_table";
 
 const LeavesAndVacations = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,6 +37,59 @@ const LeavesAndVacations = () => {
       leave.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       leave.leave_type?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // ✅ Columns for UniversalTable
+  const columns = [
+    { key: "name", label: "Leave Name" },
+    {
+      key: "leave_type",
+      label: "Type",
+      render: (value) => value?.toUpperCase(),
+    },
+    {
+      key: "created_at",
+      label: "Effective From",
+      render: (value) =>
+        new Date(value).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }),
+    },
+    {
+      key: "count",
+      label: "Count",
+      render: (_, row) => `${row.employee_accrues}/${row.accrual_method}`,
+    },
+    {
+      key: "description",
+      label: "Description",
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (value) => (
+        <span
+          className={`px-4 py-1 rounded-full text-[11px] font-medium ${
+            value === "active"
+              ? "bg-[#E7F7EF] text-[#00B050]"
+              : "bg-[#F1F1F8] text-[#8C8CB1]"
+          }`}
+        >
+          {value === "active" ? "Active" : "Inactive"}
+        </span>
+      ),
+    },
+    {
+      key: "action",
+      label: "Action",
+      render: () => (
+        <button className="text-gray-400 hover:text-gray-900 transition-colors">
+          <MoreHorizontal size={18} />
+        </button>
+      ),
+    },
+  ];
 
   return (
     <div className="w-full">
@@ -73,95 +127,18 @@ const LeavesAndVacations = () => {
 
       {/* Table Section */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="border-b border-gray-50">
-              <th className="pb-4 px-4 text-[12px] font-medium text-gray-800">
-                <div className="flex items-center gap-1.5">
-                  Leave Name <SortIcons />
-                </div>
-              </th>
-              <th className="pb-4 px-4 text-[12px] font-medium text-gray-800">
-                <div className="flex items-center gap-1.5">
-                  Type <SortIcons />
-                </div>
-              </th>
-              <th className="pb-4 px-4 text-[12px] font-medium text-gray-800">
-                <div className="flex items-center gap-1.5">
-                  Effective From <SortIcons />
-                </div>
-              </th>
-              <th className="pb-4 px-4 text-[12px] font-medium text-gray-800 text-center">
-                Count
-              </th>
-              <th className="pb-4 px-4 text-[12px] font-medium text-gray-800 text-center">
-                Description
-              </th>
-              <th className="pb-4 px-4 text-[12px] font-medium text-gray-800 text-center">
-                Status
-              </th>
-              <th className="pb-4 px-4 text-[12px] font-medium text-gray-800 text-center">
-                Action
-              </th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-gray-50">
-            {filteredLeaves.map((leave) => (
-              <tr
-                key={leave.id}
-                className="hover:bg-gray-50/40 transition-colors"
-              >
-                <td className="py-5 px-4 text-[12px] text-gray-700">
-                  {leave.name}
-                </td>
-
-                <td className="py-5 px-4 text-[12px] text-gray-600">
-                  {leave.leave_type?.toUpperCase()}
-                </td>
-
-                <td className="py-5 px-4 text-[12px] text-gray-600">
-                  {new Date(leave.created_at).toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </td>
-
-                <td className="py-5 px-4 text-[12px] text-gray-600 text-center">
-                  {leave.employee_accrues}/{leave.accrual_method}
-                </td>
-
-                <td className="py-5 px-4 text-[12px] text-gray-500 text-center">
-                  {leave.description}
-                </td>
-
-                <td className="py-5 px-4 text-center">
-                  <span
-                    className={`px-4 py-1 rounded-full text-[11px] font-medium ${
-                      leave.status === "active"
-                        ? "bg-[#E7F7EF] text-[#00B050]"
-                        : "bg-[#F1F1F8] text-[#8C8CB1]"
-                    }`}
-                  >
-                    {leave.status === "active" ? "Active" : "Inactive"}
-                  </span>
-                </td>
-
-                <td className="py-5 px-4 text-center">
-                  <button className="text-gray-400 hover:text-gray-900 transition-colors">
-                    <MoreHorizontal size={18} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {!loading && filteredLeaves.length === 0 && (
+        {loading ? (
+          <p className="text-gray-400 text-[12px]">Loading...</p>
+        ) : filteredLeaves.length === 0 ? (
           <div className="text-center py-10 text-gray-400 text-[12px]">
             No matching leaves found.
           </div>
+        ) : (
+          <UniversalTable
+            columns={columns}
+            data={filteredLeaves}
+            rowsPerPage={6}
+          />
         )}
       </div>
 

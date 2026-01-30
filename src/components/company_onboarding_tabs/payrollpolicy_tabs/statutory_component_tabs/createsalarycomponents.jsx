@@ -2,9 +2,6 @@ import { useState } from "react";
 import axiosInstance from "../../../../service/axiosinstance";
 
 export default function CreateSalaryComponent() {
-  const API_URL =
-    "https://agnostically-bonniest-patrice.ngrok-free.dev/api/payroll/components";
-
   const [form, setForm] = useState({
     name: "",
     internal_name: "",
@@ -28,14 +25,14 @@ export default function CreateSalaryComponent() {
     }));
   };
 
-  const submitData = async () =>
-    {
+  const submitData = async () => {
     try {
-      const res = await axiosInstance.post(API_URL, form);
+      // ✅ No need to hardcode URL; axiosInstance.baseURL is used
+      const res = await axiosInstance.post("api/payroll/components", form);
       alert("Component Created Successfully!");
       console.log("API Response:", res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to create component:", err.response || err);
       alert("Failed to create component");
     }
   };
@@ -47,7 +44,6 @@ export default function CreateSalaryComponent() {
 
         {/* Input Fields */}
         <div className="grid grid-cols-2 gap-5">
-
           <div>
             <label className="text-sm text-gray-500">Name</label>
             <input
@@ -97,74 +93,38 @@ export default function CreateSalaryComponent() {
 
         {/* Checkboxes */}
         <div className="grid grid-cols-2 gap-4 mt-6">
-
           <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="active"
-              checked={form.active}
-              onChange={handleChange}
-            />
+            <input type="checkbox" name="active" checked={form.active} onChange={handleChange} />
             Active
           </label>
 
           <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="taxable"
-              checked={form.taxable}
-              onChange={handleChange}
-            />
+            <input type="checkbox" name="taxable" checked={form.taxable} onChange={handleChange} />
             Taxable
           </label>
 
           <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="consider_epf"
-              checked={form.consider_epf}
-              onChange={handleChange}
-            />
+            <input type="checkbox" name="consider_epf" checked={form.consider_epf} onChange={handleChange} />
             Consider EPF
           </label>
 
           <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="consider_esi"
-              checked={form.consider_esi}
-              onChange={handleChange}
-            />
+            <input type="checkbox" name="consider_esi" checked={form.consider_esi} onChange={handleChange} />
             Consider ESI
           </label>
 
           <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="pro_rata"
-              checked={form.pro_rata}
-              onChange={handleChange}
-            />
+            <input type="checkbox" name="pro_rata" checked={form.pro_rata} onChange={handleChange} />
             Pro Rata
           </label>
 
           <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="show_in_payslip"
-              checked={form.show_in_payslip}
-              onChange={handleChange}
-            />
+            <input type="checkbox" name="show_in_payslip" checked={form.show_in_payslip} onChange={handleChange} />
             Show in Payslip
           </label>
 
           <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="flexible_benefit"
-              checked={form.flexible_benefit}
-              onChange={handleChange}
-            />
+            <input type="checkbox" name="flexible_benefit" checked={form.flexible_benefit} onChange={handleChange} />
             Flexible Benefit
           </label>
 
@@ -177,16 +137,12 @@ export default function CreateSalaryComponent() {
             />
             Part of Salary Structure
           </label>
-
         </div>
 
         {/* Buttons */}
         <div className="flex justify-end gap-4 mt-8">
           <button className="border px-6 py-2 rounded">Cancel</button>
-          <button
-            onClick={submitData}
-            className="bg-black text-white px-7 py-2 rounded"
-          >
+          <button onClick={submitData} className="bg-black text-white px-7 py-2 rounded">
             Save
           </button>
         </div>

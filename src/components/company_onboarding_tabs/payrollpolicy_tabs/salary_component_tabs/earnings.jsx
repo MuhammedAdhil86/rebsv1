@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../../../service/axiosinstance";
+import PayrollTable from "../../../../ui/payrolltable";
 
 const Earnings = ({ onEdit }) => {
   const [data, setData] = useState([]);
@@ -13,7 +14,7 @@ const Earnings = ({ onEdit }) => {
     setLoading(true);
     try {
       const res = await axiosInstance.get(
-        `${axiosInstance.baseURL2}api/payroll/components?limit=10&offset=0`
+        "api/payroll/components?limit=10&offset=0"
       );
 
       const items = res.data?.data?.items || [];
@@ -41,68 +42,44 @@ const Earnings = ({ onEdit }) => {
 
       setData(formatted);
     } catch (err) {
-      console.error("Error loading payroll components:", err);
+      console.error("Error loading payroll components:", err.response || err);
       setData([]);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-[12px] min-w-[700px]">
-        <thead>
-          <tr className="text-left bg-gray-50 border-b border-gray-200">
-            <th className="px-4 py-2">Template Name</th>
-            <th className="px-4 py-2">Earning Type</th>
-            <th className="px-4 py-2">Calculation Type</th>
-            <th className="px-4 py-2">EPF</th>
-            <th className="px-4 py-2">ESI</th>
-            <th className="px-4 py-2">Status</th>
-          </tr>
-        </thead>
+  const columns = [
+    { key: "template", label: "Template Name", align: "left" },
+    { key: "earningType", label: "Earning Type", align: "left" },
+    { key: "calculationType", label: "Calculation Type", align: "left", render: (value) => (
+        <div style={{ whiteSpace: "normal", wordBreak: "break-word", maxWidth: "300px" }}>
+          {value}
+        </div>
+      )
+    },
+    { key: "epf", label: "EPF", align: "center" },
+    { key: "esi", label: "ESI", align: "center" },
+    { key: "status", label: "Status", align: "center", render: (value) => (
+        <span className={value === "Active" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+          {value}
+        </span>
+      )
+    },
+  ];
 
-        <tbody>
-          {loading ? (
-            <tr>
-              <td colSpan="6" className="text-center py-4">
-                Loading...
-              </td>
-            </tr>
-          ) : data.length === 0 ? (
-            <tr>
-              <td colSpan="6" className="text-center py-4">
-                No data found
-              </td>
-            </tr>
-          ) : (
-            data.map((item) => (
-              <tr
-                key={item.id}
-                onClick={() => onEdit(item.id)}
-                className="border-b hover:bg-gray-50 cursor-pointer"
-              >
-                <td className="px-4 py-2">{item.template}</td>
-                <td className="px-4 py-2">{item.earningType}</td>
-                <td className="px-4 py-2">{item.calculationType}</td>
-                <td className="px-4 py-2">{item.epf}</td>
-                <td className="px-4 py-2">{item.esi}</td>
-                <td className="px-4 py-2">
-                  <span
-                    className={
-                      item.status === "Active"
-                        ? "text-green-600"
-                        : "text-red-600"
-                    }
-                  >
-                    {item.status}
-                  </span>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+  return (
+    <div className="p-4">
+      {loading ? (
+        <div className="text-center py-10 text-gray-500">Loading...</div>
+      ) : (
+        <PayrollTable
+          columns={columns}
+          data={data}
+          rowsPerPage={6}
+          rowClickHandler={(row) => onEdit && onEdit(row.id)}
+        />
+      )}
     </div>
   );
 };

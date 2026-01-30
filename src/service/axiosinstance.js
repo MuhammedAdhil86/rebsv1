@@ -6,8 +6,7 @@ const axiosInstance = axios.create({
   timeout: 15000,
 });
 
-// Base URL 2 for email APIs
-axiosInstance.baseURL2 = "https://blank-exclude-venues-finds.trycloudflare.com/";
+
 
 // -------------------- Request Interceptor --------------------
 axiosInstance.interceptors.request.use(

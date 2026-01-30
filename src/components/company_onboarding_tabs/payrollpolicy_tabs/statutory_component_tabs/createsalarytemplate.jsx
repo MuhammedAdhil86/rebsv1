@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "../../../../service/axiosinstance";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function CreateSalaryTemplate() {
   const [form, setForm] = useState({
@@ -13,10 +14,10 @@ export default function CreateSalaryTemplate() {
 
   const [mappings, setMappings] = useState([
     {
-      id: Date.now() + Math.random(), // unique key
+      id: Date.now() + Math.random(),
       component_id: "",
       calculation_type: "",
-      value: "", // user-entered value: percent or flat
+      value: "",
       monthly_amount: 0,
       annual_amount: 0,
     },
@@ -27,11 +28,12 @@ export default function CreateSalaryTemplate() {
     const fetchComponents = async () => {
       try {
         const res = await axiosInstance.get(
-          `${axiosInstance.baseURL2}api/payroll/components?limit=50&offset=0`
+          "api/payroll/components?limit=50&offset=0"
         );
         setComponents(res.data?.data?.items || []);
       } catch (err) {
         console.error("Component fetch error:", err);
+        toast.error("Failed to load components");
       }
     };
     fetchComponents();
@@ -75,28 +77,34 @@ export default function CreateSalaryTemplate() {
 
     return final.map((m) => ({
       ...m,
-      monthly_amount: Math.round((Number(m.annual_amount || 0) || 0) / 12),
+      monthly_amount: Math.round(
+        (Number(m.annual_amount || 0) || 0) / 12
+      ),
     }));
   };
 
   const sumPercentForType = (arr, type) =>
-    arr.reduce((s, m) => (m.calculation_type === type ? s + Number(m.value || 0) : s), 0);
+    arr.reduce(
+      (s, m) =>
+        m.calculation_type === type ? s + Number(m.value || 0) : s,
+      0
+    );
+
   const sumFlat = (arr) =>
-    arr.reduce((s, m) => (m.calculation_type === "flat" ? s + Number(m.value || 0) : s), 0);
-  const remainingPercentCTC = (arr) => Math.max(100 - sumPercentForType(arr, "percentage_ctc"), 0);
-  const remainingPercentBasic = (arr) => Math.max(100 - sumPercentForType(arr, "percentage_basic"), 0);
+    arr.reduce(
+      (s, m) =>
+        m.calculation_type === "flat" ? s + Number(m.value || 0) : s,
+      0
+    );
+
+  const remainingPercentCTC = (arr) =>
+    Math.max(100 - sumPercentForType(arr, "percentage_ctc"), 0);
+
+  const remainingPercentBasic = (arr) =>
+    Math.max(100 - sumPercentForType(arr, "percentage_basic"), 0);
+
   const remainingFlatAmount = (arr, annualCTC) =>
     Math.max(Number(annualCTC || 0) - sumFlat(arr), 0);
-
-  const distributePercentEvenly = (n) => {
-    if (n <= 0) return [];
-    const base = +(100 / n).toFixed(2);
-    const arr = Array(n).fill(base);
-    const sum = arr.reduce((s, v) => s + v, 0);
-    const diff = +(100 - sum).toFixed(2);
-    arr[arr.length - 1] = +(arr[arr.length - 1] + diff).toFixed(2);
-    return arr;
-  };
 
   useEffect(() => {
     setMappings((prev) => computeAmounts(prev, form.annual_ctc));
@@ -115,35 +123,58 @@ export default function CreateSalaryTemplate() {
       const updated = prev.map((m) => ({ ...m }));
       updated[index][name] = value;
 
-      // Calculation type defaults
       if (name === "calculation_type") {
         const ct = value;
         const annualCTC = Number(form.annual_ctc) || 0;
 
         if (ct === "percentage_ctc") {
           const totalPct = sumPercentForType(updated, "percentage_ctc");
-          updated[index].value = totalPct === 0 ? 100 : Math.max(100 - totalPct + Number(updated[index].value || 0), 0);
+          updated[index].value =
+            totalPct === 0
+              ? 100
+              : Math.max(
+                  100 - totalPct + Number(updated[index].value || 0),
+                  0
+                );
         } else if (ct === "percentage_basic") {
           const totalPct = sumPercentForType(updated, "percentage_basic");
-          updated[index].value = totalPct === 0 ? 100 : Math.max(100 - totalPct + Number(updated[index].value || 0), 0);
+          updated[index].value =
+            totalPct === 0
+              ? 100
+              : Math.max(
+                  100 - totalPct + Number(updated[index].value || 0),
+                  0
+                );
         } else if (ct === "flat") {
           const usedFlat = sumFlat(updated);
           updated[index].value = Math.max(annualCTC - usedFlat, 0);
         } else updated[index].value = "";
       }
 
-      // Value limits
       if (name === "value") {
         const thisType = updated[index].calculation_type;
-        if (thisType === "percentage_ctc" || thisType === "percentage_basic") {
+
+        if (
+          thisType === "percentage_ctc" ||
+          thisType === "percentage_basic"
+        ) {
           const total = updated.reduce(
             (s, m, i) =>
-              m.calculation_type === thisType ? s + (i === index ? Number(value || 0) : Number(m.value || 0)) : s,
+              m.calculation_type === thisType
+                ? s +
+                  (i === index
+                    ? Number(value || 0)
+                    : Number(m.value || 0))
+                : s,
             0
           );
+
           if (total > 100) {
             const otherSum = updated.reduce(
-              (s, m, i) => (m.calculation_type === thisType && i !== index ? s + Number(m.value || 0) : s),
+              (s, m, i) =>
+                m.calculation_type === thisType && i !== index
+                  ? s + Number(m.value || 0)
+                  : s,
               0
             );
             updated[index].value = +Math.max(100 - otherSum, 0).toFixed(2);
@@ -151,10 +182,17 @@ export default function CreateSalaryTemplate() {
         } else if (thisType === "flat") {
           const annualCTC = Number(form.annual_ctc) || 0;
           const otherFlat = updated.reduce(
-            (s, m, i) => (m.calculation_type === "flat" && i !== index ? s + Number(m.value || 0) : s),
+            (s, m, i) =>
+              m.calculation_type === "flat" && i !== index
+                ? s + Number(m.value || 0)
+                : s,
             0
           );
-          updated[index].value = Number(value) > annualCTC - otherFlat ? Math.max(annualCTC - otherFlat, 0) : value;
+
+          updated[index].value =
+            Number(value) > annualCTC - otherFlat
+              ? Math.max(annualCTC - otherFlat, 0)
+              : value;
         }
       }
 
@@ -174,14 +212,19 @@ export default function CreateSalaryTemplate() {
         const first = next[0];
         defaultCalc = first.calculation_type || "";
 
-        if (defaultCalc === "percentage_ctc") defaultVal = remainingPercentCTC(next);
-        else if (defaultCalc === "percentage_basic") defaultVal = remainingPercentBasic(next);
-        else if (defaultCalc === "flat") defaultVal = remainingFlatAmount(next, annualCTC);
-        else { defaultCalc = ""; defaultVal = ""; }
-      } else { defaultCalc = "percentage_ctc"; defaultVal = 100; }
+        if (defaultCalc === "percentage_ctc")
+          defaultVal = remainingPercentCTC(next);
+        else if (defaultCalc === "percentage_basic")
+          defaultVal = remainingPercentBasic(next);
+        else if (defaultCalc === "flat")
+          defaultVal = remainingFlatAmount(next, annualCTC);
+      } else {
+        defaultCalc = "percentage_ctc";
+        defaultVal = 100;
+      }
 
       next.push({
-        id: Date.now() + Math.random(), // unique key
+        id: Date.now() + Math.random(),
         component_id: "",
         calculation_type: defaultCalc,
         value: defaultVal,
@@ -194,7 +237,12 @@ export default function CreateSalaryTemplate() {
   };
 
   const deleteMapping = (id) => {
-    setMappings((prev) => computeAmounts(prev.filter((m) => m.id !== id), form.annual_ctc));
+    setMappings((prev) =>
+      computeAmounts(
+        prev.filter((m) => m.id !== id),
+        form.annual_ctc
+      )
+    );
   };
 
   const submitTemplate = async () => {
@@ -208,23 +256,31 @@ export default function CreateSalaryTemplate() {
         })),
       };
 
-      console.log("POST BODY:", body);
+      await axiosInstance.post("api/payroll/templates", body);
 
-      await axiosInstance.post(`${axiosInstance.baseURL2}api/payroll/templates`, body);
+      toast.success("Salary Template Created Successfully!");
 
-      alert("Salary Template Created Successfully!");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (err) {
       console.error("CREATE ERROR:", err.response?.data || err);
-      alert(err.response?.data?.message || "Failed to create salary template");
+      toast.error(
+        err.response?.data?.message || "Failed to create salary template"
+      );
     }
   };
 
-  // Totals
-  const totalAnnual = mappings.reduce((s, m) => s + Number(m.annual_amount || 0), 0);
+  const totalAnnual = mappings.reduce(
+    (s, m) => s + Number(m.annual_amount || 0),
+    0
+  );
   const totalMonthly = Math.round(totalAnnual / 12);
 
   return (
-    <div className="grid place-items-center">
+    <>
+      <Toaster position="top-right" />
+<div className="grid place-items-center">
       <div className="w-full bg-white shadow-xl rounded-2xl p-6 border">
         <h1 className="text-[16px] mb-4">New Salary Template</h1>
 
@@ -354,5 +410,32 @@ export default function CreateSalaryTemplate() {
         </div>
       </div>
     </div>
+    </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

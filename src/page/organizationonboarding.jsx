@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import DashboardLayout from "../ui/pagelayout";
 
 // Tabs
@@ -9,6 +10,7 @@ import OrganizationalPolicy from "../components/company_onboarding_tabs/organiza
 
 const OrganizationOnboarding = () => {
   const [activeTab, setActiveTab] = useState("details");
+  const navigate = useNavigate(); // ✅ Hook for navigation
 
   return (
     <DashboardLayout>
@@ -16,7 +18,10 @@ const OrganizationOnboarding = () => {
 
         {/* ================= HEADER ================= */}
         <div className="flex items-center bg-white px-8 py-4 border-b border-gray-200">
-          <button className="text-sm text-gray-600 mr-3 hover:text-black">
+          <button
+            className="text-sm text-gray-600 mr-3 hover:text-black"
+            onClick={() => navigate(-1)} // ✅ Go back one step
+          >
             &lt; Back
           </button>
           <h1 className="text-lg font-semibold text-gray-800">
@@ -110,5 +115,5 @@ const TabButton = ({ label, isActive, onClick }) => {
     >
       {label}
     </button>
-  );
+  ); 
 };

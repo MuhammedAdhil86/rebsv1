@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { fetchEmployeeAttendanceByMonth } from "../../service/totalEmployeeService";
+import useEmployeeStore from "../../store/employeeStore";
+import EmployeeModal from "../../ui/employeemodal";
 
 function EmployeeTable({ employees, loading }) {
   const rowsPerPage = 6;
@@ -9,6 +12,14 @@ function EmployeeTable({ employees, loading }) {
   const headerRef = useRef(null);
   const [hoverText, setHoverText] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  
+  // Updated state to hold both employee info and attendance data
+  const [selectedEmployeeData, setSelectedEmployeeData] = useState({
+    employee: null,
+    attendance: [],
+  });
+
+  const { selectedDay } = useEmployeeStore();
 
   const isTruncated = (el) => el && el.scrollWidth > el.clientWidth;
 
@@ -29,7 +40,9 @@ function EmployeeTable({ employees, loading }) {
   const currentEmployees = filteredEmployees.slice(startIdx, endIdx);
 
   const handlePrev = () => currentPage > 1 && setCurrentPage(currentPage - 1);
-  const handleNext = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
+  const handleNext = () =>
+    currentPage < totalPages && setCurrentPage(currentPage + 1);
+
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
@@ -44,6 +57,23 @@ function EmployeeTable({ employees, loading }) {
       setColWidths(widths);
     }
   }, [employees, searchTerm]);
+
+  // Row click handler: fetch attendance and store employee + data
+  const handleRowClick = async (emp) => {
+    try {
+      const response = await fetchEmployeeAttendanceByMonth(emp.uuid, selectedDay);
+      setSelectedEmployeeData({
+        employee: emp,
+        attendance: response.data || [],
+      });
+    } catch (error) {
+      console.error("Error fetching modal data:", error);
+      setSelectedEmployeeData({
+        employee: emp,
+        attendance: [],
+      });
+    }
+  };
 
   return (
     <section className="p-2 rounded-2xl overflow-x-auto relative w-full">
@@ -110,8 +140,11 @@ function EmployeeTable({ employees, loading }) {
                   </tr>
                 ) : (
                   currentEmployees.map((emp, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50 align-middle border-b border-gray-300">
-
+                    <tr
+                      key={idx}
+                      onClick={() => handleRowClick(emp)}
+                      className="hover:bg-gray-50 align-middle border-b border-gray-300 cursor-pointer"
+                    >
                       {/* Name */}
                       <td
                         data-label="Employee"
@@ -178,34 +211,34 @@ function EmployeeTable({ employees, loading }) {
                       <td className="px-4 py-3 border-b border-[#f9fafb]" style={{ width: colWidths[4] }}>
                         {emp.shift || "Day Shift"}
                       </td>
-{/* Status */}
-<td
-  className="px-4 py-3 border-b border-[#f9fafb] relative"
-  style={{ width: colWidths[5] }}
-  onMouseEnter={(e) => {
-    if (emp.status === "Early Check-in") {
-      const rect = e.target.getBoundingClientRect();
-      setTooltipPos({ x: rect.left, y: rect.top - 28 });
-      setHoverText(emp.status);
-    }
-  }}
-  onMouseLeave={() => setHoverText(null)}
->
-  <span
-    className={`px-3 py-1 w-[85px] text-center rounded-full text-[12px] font-poppins truncate cursor-default ${
-      emp.status === "Online"
-        ? "bg-green-100 text-green-600"
-        : emp.status === "Absent"
-        ? "bg-red-100 text-red-600"
-        : emp.status === "Late"
-        ? "bg-purple-100 text-purple-600"
-        : "bg-blue-100 text-blue-600"
-    }`}
-  >
-    {emp.status === "Early Check-in" ? "Early..." : emp.status}
-  </span>
-</td>
 
+                      {/* Status */}
+                      <td
+                        className="px-4 py-3 border-b border-[#f9fafb] relative"
+                        style={{ width: colWidths[5] }}
+                        onMouseEnter={(e) => {
+                          if (emp.status === "Early Check-in") {
+                            const rect = e.target.getBoundingClientRect();
+                            setTooltipPos({ x: rect.left, y: rect.top - 28 });
+                            setHoverText(emp.status);
+                          }
+                        }}
+                        onMouseLeave={() => setHoverText(null)}
+                      >
+                        <span
+                          className={`px-3 py-1 w-[85px] text-center rounded-full text-[12px] font-poppins truncate cursor-default ${
+                            emp.status === "Online"
+                              ? "bg-green-100 text-green-600"
+                              : emp.status === "Absent"
+                              ? "bg-red-100 text-red-600"
+                              : emp.status === "Late"
+                              ? "bg-purple-100 text-purple-600"
+                              : "bg-blue-100 text-blue-600"
+                          }`}
+                        >
+                          {emp.status === "Early Check-in" ? "Early..." : emp.status}
+                        </span>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -244,7 +277,7 @@ function EmployeeTable({ employees, loading }) {
         </>
       )}
 
-      {/* Tooltip for truncated text */}
+      {/* Tooltip */}
       {hoverText && (
         <div
           className="fixed px-2 py-1 bg-black text-white text-xs rounded shadow-lg z-[999999]"
@@ -266,6 +299,13 @@ function EmployeeTable({ employees, loading }) {
           }
         `}
       </style>
+
+      {/* Modal */}
+      <EmployeeModal
+        data={selectedEmployeeData.attendance}
+        employee={selectedEmployeeData.employee}
+        onClose={() => setSelectedEmployeeData({ employee: null, attendance: [] })}
+      />
     </section>
   );
 }
