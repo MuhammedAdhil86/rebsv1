@@ -224,7 +224,7 @@ export default function LeaveReports() {
               <option value="PENDING">Pending</option>
               <option value="REJECTED">Rejected</option>
             </select>
-          )}
+          )}z
 
           {/* Download Button */}
           <button

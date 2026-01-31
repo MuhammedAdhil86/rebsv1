@@ -4,7 +4,8 @@ import {
   getBranch,
   getDesignations,
   postShiftcreate,
-  getShifts
+  getShifts,
+  getUserPayrollTemplateAllocations
 } from "../api/api";
 
 /* ================= STAFF ================= */
@@ -68,6 +69,18 @@ export const getShiftList = async () => {
     return res?.data?.data || [];
   } catch (error) {
     console.error("Error fetching shifts:", error);
+    return [];
+  }
+};
+
+/* ================= PAYROLL ================= */
+
+export const fetchUserPayrollTemplates = async (userId) => {
+  try {
+    const res = await axiosInstance.get(getUserPayrollTemplateAllocations(userId));
+    return res?.data?.data || [];
+  } catch (error) {
+    console.error(`Error fetching payroll templates for user ${userId}:`, error);
     return [];
   }
 };

@@ -2,15 +2,19 @@ import axiosInstance from "./axiosinstance";
 
 const payrollService = {
   // ---------------- SALARY TEMPLATES ----------------
-  getSalaryTemplates: async () => {
-    try {
-      const res = await axiosInstance.get("api/payroll/templates?status=active");
-      return res.data?.data?.items || [];
-    } catch (err) {
-      console.error("Error in getSalaryTemplates:", err.response || err);
-      throw err;
-    }
-  },
+getSalaryTemplates: async () => {
+  try {
+    const res = await axiosInstance.get("api/payroll/templates?status=active");
+
+    console.log("Salary Templates API Response:", res); // 👈 full response
+    console.log("Salary Templates Items:", res.data?.data?.items); // 👈 actual data
+
+    return res.data?.data?.items || [];
+  } catch (err) {
+    console.error("Error in getSalaryTemplates:", err.response || err);
+    throw err;
+  }
+},
 
   // ---------------- EPF ----------------
   getEPF: async () => {

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { Icon } from "@iconify/react";
+
+/* Common Button */
+import CommonButton from "../../ui/bottom";
 
 /* Tabs */
 import SalaryTemplate from "./payrollpolicy_tabs/salary_template_tab";
@@ -24,7 +26,7 @@ const ManagePayrollPolicy = () => {
   ];
 
   return (
-    <div className="min-h-screen p-1 font-[Poppins] text-sm">
+    <div className="min-h-screen font-[Poppins] text-sm">
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
 
         {/* Tabs + Create Button */}
@@ -35,7 +37,7 @@ const ManagePayrollPolicy = () => {
                 key={tab.id}
                 onClick={() => {
                   setActiveTab(tab.id);
-                  setShowCreate(false); // resets create screen on tab change
+                  setShowCreate(false);
                 }}
                 className={`px-3 h-[40px] text-xs rounded-md border font-medium transition-all flex items-center justify-center
                   ${
@@ -49,21 +51,16 @@ const ManagePayrollPolicy = () => {
             ))}
           </div>
 
-          {/* Create button only for Template and Components */}
           {(activeTab === "salary-template" ||
             activeTab === "salary-components") &&
             !showCreate && (
-              <button
+              <CommonButton
                 onClick={() => setShowCreate(true)}
-                className="flex items-center justify-center gap-1 px-3 h-[40px] bg-black text-white text-xs rounded-md hover:bg-gray-800 transition font-medium"
-              >
-                <Icon icon="mdi:plus" className="text-sm" />
-                Create New
-              </button>
+                text="Create New"
+                icon="mdi:plus"
+              />
             )}
         </div>
-
-        {/* -------- TAB CONTENT -------- */}
 
         {/* Salary Template Tab */}
         {activeTab === "salary-template" &&
@@ -76,7 +73,10 @@ const ManagePayrollPolicy = () => {
         {/* Salary Components Tab */}
         {activeTab === "salary-components" &&
           (showCreate ? (
-            <CreateSalaryComponent setShowCreate={setShowCreate} />
+            <CreateSalaryComponent
+              componentId={null}
+              onCancel={() => setShowCreate(false)}
+            />
           ) : (
             <SalaryComponents />
           ))}
@@ -86,7 +86,9 @@ const ManagePayrollPolicy = () => {
 
         {/* Payment Schedules */}
         {activeTab === "payment-schedules" && (
-          <div className="text-gray-500 py-4">Payment Schedules Tab Content</div>
+          <div className="text-gray-500 py-4">
+            Payment Schedules Tab Content
+          </div>
         )}
 
         {/* Tax */}

@@ -40,6 +40,8 @@ const Earnings = ({ onEdit }) => {
         };
       });
 
+      console.log("Formatted Data:", formatted); // ✅ console log added
+
       setData(formatted);
     } catch (err) {
       console.error("Error loading payroll components:", err.response || err);
@@ -52,19 +54,33 @@ const Earnings = ({ onEdit }) => {
   const columns = [
     { key: "template", label: "Template Name", align: "left" },
     { key: "earningType", label: "Earning Type", align: "left" },
-    { key: "calculationType", label: "Calculation Type", align: "left", render: (value) => (
+    {
+      key: "calculationType",
+      label: "Calculation Type",
+      align: "left",
+      render: (value) => (
         <div style={{ whiteSpace: "normal", wordBreak: "break-word", maxWidth: "300px" }}>
           {value}
         </div>
-      )
+      ),
     },
     { key: "epf", label: "EPF", align: "center" },
     { key: "esi", label: "ESI", align: "center" },
-    { key: "status", label: "Status", align: "center", render: (value) => (
-        <span className={value === "Active" ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+    {
+      key: "status",
+      label: "Status",
+      align: "center",
+      render: (value) => (
+        <span
+          className={
+            value === "Active"
+              ? "text-green-600 font-medium"
+              : "text-red-600 font-medium"
+          }
+        >
           {value}
         </span>
-      )
+      ),
     },
   ];
 

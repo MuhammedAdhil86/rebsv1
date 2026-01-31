@@ -252,3 +252,6 @@ export const uploadEmailTemplateFile ="admin/upload/templates";
 export const getDefulatEmailTemplate = "/admin/defaults";
 
 export const postCloneEmailTemplate = "/admin/clone-default";
+
+export const getUserPayrollTemplateAllocations =
+  "/api/payroll/template-allocations/user?user_id=100365";

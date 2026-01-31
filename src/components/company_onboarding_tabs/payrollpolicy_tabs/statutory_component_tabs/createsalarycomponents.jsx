@@ -1,151 +1,214 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { ChevronLeft } from "lucide-react";
 import axiosInstance from "../../../../service/axiosinstance";
+import toast from "react-hot-toast";
 
-export default function CreateSalaryComponent() {
-  const [form, setForm] = useState({
-    name: "",
-    internal_name: "",
-    payslip_name: "",
-    component_type: "earning",
-    active: true,
-    taxable: true,
-    consider_epf: true,
-    consider_esi: true,
-    pro_rata: true,
-    show_in_payslip: true,
-    flexible_benefit: false,
-    part_of_salary_structure: true,
-  });
+export default function CreateSalaryComponent({ onCancel }) {
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
+  // =========================
+  // FORM STATE
+  // =========================
+  const [earningType, setEarningType] = useState("");
+  const [salaryName, setSalaryName] = useState("");
+  const [payslipName, setPayslipName] = useState("");
 
-  const submitData = async () => {
+  const [calculationType, setCalculationType] = useState("percentage_ctc");
+  const [value, setValue] = useState(0);
+
+  const [active, setActive] = useState(true);
+  const [taxable, setTaxable] = useState(true);
+  const [partSalary, setPartSalary] = useState(true);
+  const [proRata, setProRata] = useState(true);
+  const [fbp, setFbp] = useState(false);
+  const [epf, setEpf] = useState(true);
+  const [esi, setEsi] = useState(true);
+  const [showPayslip, setShowPayslip] = useState(true);
+
+  // =========================
+  // SAVE HANDLER
+  // =========================
+  const handleSave = async () => {
+
+    const payload = {
+      name: salaryName,
+      internal_name: salaryName,
+      payslip_name: payslipName,
+      component_type: "earning",
+      active: active,
+      taxable: taxable,
+      consider_epf: epf,
+      consider_esi: esi,
+      pro_rata: proRata,
+      show_in_payslip: showPayslip,
+      flexible_benefit: fbp,
+      part_of_salary_structure: partSalary,
+      calculation_type: calculationType,
+      value: Number(value)
+    };
+
+    console.log("Salary Component Payload:", payload);
+
+    const loadingToast = toast.loading("Saving salary component...");
+
     try {
-      // ✅ No need to hardcode URL; axiosInstance.baseURL is used
-      const res = await axiosInstance.post("api/payroll/components", form);
-      alert("Component Created Successfully!");
-      console.log("API Response:", res.data);
+      const res = await axiosInstance.post("api/payroll/components", payload);
+
+      toast.dismiss(loadingToast);
+
+      if (res.data?.ok) {
+        toast.success(res.data.message || "Salary component created successfully");
+        onCancel();
+      } else {
+        toast.error(res.data?.message || "Failed to create component");
+      }
+
     } catch (err) {
-      console.error("Failed to create component:", err.response || err);
-      alert("Failed to create component");
+      toast.dismiss(loadingToast);
+
+      console.error(err);
+
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Something went wrong. Please try again.";
+
+      toast.error(errorMessage);
     }
   };
 
+  // =========================
+  // CUSTOM UI COMPONENTS
+  // =========================
+  const CustomRadio = ({ label, checked, onClick }) => (
+    <label className="flex items-center gap-2.5 cursor-pointer group" onClick={onClick}>
+      <div
+        className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${
+          checked ? "bg-black border-black" : "bg-white border-gray-300"
+        }`}
+      >
+        {checked && (
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        )}
+      </div>
+      <span className="text-gray-800 font-medium">{label}</span>
+    </label>
+  );
+
+  const CheckboxOption = ({ label, description, checked, onChange, isGreenLabel }) => (
+    <div className="flex items-start gap-3">
+      <div className="relative flex items-center pt-0.5">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onChange}
+          className="peer h-[18px] w-[18px] cursor-pointer appearance-none rounded border border-gray-300 transition-all checked:bg-black checked:border-black"
+        />
+        <svg
+          className="absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <div className="flex flex-col">
+        <label className={`leading-tight cursor-pointer font-medium ${isGreenLabel && checked ? "text-green-500" : "text-gray-700"}`}>
+          {label}
+        </label>
+        {description && <p className="text-gray-400 mt-1 max-w-sm leading-normal">{description}</p>}
+      </div>
+    </div>
+  );
+
+  // =========================
+  // RENDER (UI UNCHANGED)
+  // =========================
   return (
-    <div className="grid place-items-center p-6">
-      <div className="w-full bg-white shadow-xl rounded-xl p-6 border max-w-3xl">
-        <h1 className="text-2xl font-bold mb-6">Create Salary Component</h1>
+    <div className="w-full bg-white min-h-screen font-poppins text-[12px] font-normal">
 
-        {/* Input Fields */}
-        <div className="grid grid-cols-2 gap-5">
-          <div>
-            <label className="text-sm text-gray-500">Name</label>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              className="border p-2 rounded w-full mt-1 h-10"
-              placeholder="Basic Salary"
-            />
+      {/* HEADER */}
+      <div className="flex items-center gap-3 p-4 border-b border-gray-50">
+        <button onClick={onCancel} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
+          <ChevronLeft size={20} className="text-gray-600" />
+        </button>
+        <h2 className="font-semibold text-gray-900">
+          Create Earning <span className="text-red-500 font-normal ml-2">*Indicates mandatory fields</span>
+        </h2>
+      </div>
+
+      <div className="px-10 py-8 max-w-7xl mx-auto">
+
+        {/* INPUT GRID */}
+        <div className="grid grid-cols-3 gap-8 mb-10">
+          <div className="flex flex-col gap-1.5">
+            <label className="font-medium text-gray-600">Component Type*</label>
+            <input type="text" value={earningType} onChange={(e) => setEarningType(e.target.value)}
+              className="h-11 px-4 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gray-400" />
           </div>
 
-          <div>
-            <label className="text-sm text-gray-500">Internal Name</label>
-            <input
-              name="internal_name"
-              value={form.internal_name}
-              onChange={handleChange}
-              className="border p-2 rounded w-full mt-1 h-10"
-              placeholder="basic_salary"
-            />
+          <div className="flex flex-col gap-1.5">
+            <label className="font-medium text-gray-600">Component name*</label>
+            <input type="text" value={salaryName} onChange={(e) => setSalaryName(e.target.value)}
+              className="h-11 px-4 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gray-400" />
           </div>
 
-          <div>
-            <label className="text-sm text-gray-500">Payslip Name</label>
-            <input
-              name="payslip_name"
-              value={form.payslip_name}
-              onChange={handleChange}
-              className="border p-2 rounded w-full mt-1 h-10"
-              placeholder="Basic"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-500">Component Type</label>
-            <select
-              name="component_type"
-              value={form.component_type}
-              onChange={handleChange}
-              className="border p-2 rounded w-full mt-1 h-10"
-            >
-              <option value="earning">Earning</option>
-              <option value="deduction">Deduction</option>
-            </select>
+          <div className="flex flex-col gap-1.5">
+            <label className="font-medium text-gray-600">Name in Payslip*</label>
+            <input type="text" value={payslipName} onChange={(e) => setPayslipName(e.target.value)}
+              className="h-11 px-4 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gray-400" />
           </div>
         </div>
 
-        {/* Checkboxes */}
-        <div className="grid grid-cols-2 gap-4 mt-6">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="active" checked={form.active} onChange={handleChange} />
-            Active
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="taxable" checked={form.taxable} onChange={handleChange} />
-            Taxable
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="consider_epf" checked={form.consider_epf} onChange={handleChange} />
-            Consider EPF
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="consider_esi" checked={form.consider_esi} onChange={handleChange} />
-            Consider ESI
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="pro_rata" checked={form.pro_rata} onChange={handleChange} />
-            Pro Rata
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="show_in_payslip" checked={form.show_in_payslip} onChange={handleChange} />
-            Show in Payslip
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input type="checkbox" name="flexible_benefit" checked={form.flexible_benefit} onChange={handleChange} />
-            Flexible Benefit
-          </label>
-
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="part_of_salary_structure"
-              checked={form.part_of_salary_structure}
-              onChange={handleChange}
-            />
-            Part of Salary Structure
-          </label>
+        {/* CALCULATION TYPE */}
+        <div className="mb-6 py-8 border-y border-gray-100">
+          <label className="font-semibold text-gray-700 block mb-6">CALCULATION TYPE*</label>
+          <div className="flex items-center gap-12">
+            {["flat", "percentage_basic", "percentage_ctc", "percentage"].map((type) => (
+              <div className="flex items-center gap-4" key={type}>
+                <CustomRadio label={type} checked={calculationType === type} onClick={() => setCalculationType(type)} />
+                {calculationType === type && (
+                  <div className="flex items-center h-10 border border-gray-200 rounded-md bg-gray-50 overflow-hidden">
+                    <input type="number" value={value} onChange={(e) => setValue(Number(e.target.value))}
+                      className="w-24 px-3 bg-transparent outline-none font-medium text-right" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Buttons */}
-        <div className="flex justify-end gap-4 mt-8">
-          <button className="border px-6 py-2 rounded">Cancel</button>
-          <button onClick={submitData} className="bg-black text-white px-7 py-2 rounded">
-            Save
-          </button>
+        {/* OTHER CONFIG */}
+        <h3 className="font-bold text-gray-900 mb-8">Other Configurations</h3>
+
+        <div className="grid grid-cols-2 gap-x-20 gap-y-8 mb-16">
+          <div className="space-y-6">
+            <CheckboxOption label="Mark as Active" isGreenLabel checked={active} onChange={() => setActive(!active)} />
+            <CheckboxOption label="This is a taxable earning" checked={taxable} onChange={() => setTaxable(!taxable)} />
+            <CheckboxOption label="Make this earning a part of the employee's salary structure" checked={partSalary} onChange={() => setPartSalary(!partSalary)} />
+            <CheckboxOption label="Calculate on pro-rata basis" checked={proRata} onChange={() => setProRata(!proRata)} />
+          </div>
+
+          <div className="space-y-6">
+            <CheckboxOption label="Include this as a Flexible Benefit Plan component" checked={fbp} onChange={() => setFbp(!fbp)} />
+            <CheckboxOption label="Consider for EPF Contribution" checked={epf} onChange={() => setEpf(!epf)} />
+            <CheckboxOption label="Consider for ESI Contribution" checked={esi} onChange={() => setEsi(!esi)} />
+            <CheckboxOption label="Show this component in payslip" checked={showPayslip} onChange={() => setShowPayslip(!showPayslip)} />
+          </div>
         </div>
+
+        {/* FOOTER */}
+        <div className="flex justify-end gap-4 py-8 border-t border-gray-100">
+          <button onClick={onCancel} className="px-8 py-2.5 font-medium border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+          <button onClick={handleSave} className="px-10 py-2.5 font-medium bg-black text-white rounded-lg hover:bg-gray-800">Save</button>
+        </div>
+
       </div>
     </div>
   );

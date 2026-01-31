@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import axiosInstance from "../../../service/axiosinstance";
+import { fetchUserPayrollTemplates } from "../../../service/staffservice"; // ✅ Import payroll function
 
 /* 🔁 Reverse-geocode (same as LogDetails) */
 const getPlaceName = async (latitude, longitude) => {
@@ -18,7 +19,7 @@ const getPlaceName = async (latitude, longitude) => {
   }
 };
 
-export default function ManagePrivilegesSection({ uuid }) {
+export default function ManagePrivilegesSection({ uuidcc }) {
   const [userType, setUserType] = useState("-");
   const [shift, setShift] = useState("");
   const [device, setDevice] = useState("-");
@@ -26,6 +27,7 @@ export default function ManagePrivilegesSection({ uuid }) {
   const [isEditing, setIsEditing] = useState(false);
 
   const [shifts, setShifts] = useState([]);
+  const [payrollTemplate, setPayrollTemplate] = useState("-"); // ✅ Payroll template state
 
   /* =========================
      Fetch shifts for dropdown
@@ -39,32 +41,29 @@ export default function ManagePrivilegesSection({ uuid }) {
         console.error("Failed to fetch shifts:", error);
       }
     };
-
     fetchShifts();
   }, []);
 
   /* =========================
-     Fetch privileges
+     Fetch privileges + payroll
   ========================= */
   useEffect(() => {
-    if (!uuid) return;
+    if (!uuidcc) return;
 
     const fetchPrivileges = async () => {
       try {
         /* 1️⃣ USER TYPE / SHIFT */
         const shiftRes = await axiosInstance.get(
-          `/master/shift-attendance-user-type/${uuid}`
+          `/master/shift-attendance-user-type/${uuidcc}`
         );
-
         const shiftData = shiftRes.data?.data || {};
         setUserType(shiftData.user_type || "-");
         setShift(shiftData.shift_name || "");
 
         /* 2️⃣ LOCATION / DEVICE */
         const locRes = await axiosInstance.get(
-          `/master/location-device/${uuid}`
+          `/master/location-device/${uuidcc}`
         );
-
         const locData = locRes.data?.data;
         setDevice(locData?.device || "-");
 
@@ -77,14 +76,21 @@ export default function ManagePrivilegesSection({ uuid }) {
         } else {
           setLocation("-");
         }
+
+        /* 3️⃣ PAYROLL TEMPLATE */
+        const templateData = await fetchUserPayrollTemplates(uuidcc);
+        // templateData may return allocation object, extract name safely
+        setPayrollTemplate(templateData?.allocation?.template?.name || "-");
+
       } catch (error) {
         console.error("Failed to fetch privileges:", error);
         setLocation("-");
+        setPayrollTemplate("-");
       }
     };
 
     fetchPrivileges();
-  }, [uuid]);
+  }, [uuidcc]);
 
   /* =========================
      Save handler (API optional)
@@ -169,6 +175,14 @@ export default function ManagePrivilegesSection({ uuid }) {
             title={location}
           >
             {location}
+          </span>
+        </div>
+
+        {/* Payroll Template */}
+        <div className="flex justify-between items-center border-b border-gray-100 py-2">
+          <span className="text-gray-500 text-[12px]">Payroll Template</span>
+          <span className="font-medium text-gray-800 text-[13px]">
+            {payrollTemplate}
           </span>
         </div>
       </div>

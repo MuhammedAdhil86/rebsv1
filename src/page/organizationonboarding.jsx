@@ -17,7 +17,7 @@ const OrganizationOnboarding = () => {
       <div className="min-h-screen bg-[#f7f8fa] rounded-2xl overflow-hidden">
 
         {/* ================= HEADER ================= */}
-        <div className="flex items-center bg-white px-8 py-4 border-b border-gray-200">
+        <div className="flex items-center bg-white px-6 py-2 border-b border-gray-200">
           <button
             className="text-sm text-gray-600 mr-3 hover:text-black"
             onClick={() => navigate(-1)} // ✅ Go back one step
@@ -31,7 +31,7 @@ const OrganizationOnboarding = () => {
 
         {/* ================= TABS ================= */}
         <div className="bg-white border-b border-gray-200">
-          <div className="flex gap-4 px-4 py-3 overflow-x-auto whitespace-nowrap">
+          <div className="flex gap-4 px-2 py-3 overflow-x-auto whitespace-nowrap">
 
             <TabButton
               label="Organizational Details"
@@ -61,7 +61,7 @@ const OrganizationOnboarding = () => {
         </div>
 
         {/* ================= SECTION TITLE ================= */}
-        <div className="px-8 py-4">
+        <div className="px-6 py-2">
           {activeTab === "details" && (
             <h2 className="text-[20px] font-medium text-gray-800">
               Add Basic Information
@@ -75,7 +75,7 @@ const OrganizationOnboarding = () => {
           )}
 
           {activeTab === "payroll" && (
-            <h2 className="text-[16px] font-medium text-gray-800">
+            <h2 className="text-[14px] font-medium text-gray-800">
               Manage Payroll Policy
             </h2>
           )}
@@ -88,7 +88,7 @@ const OrganizationOnboarding = () => {
         </div>
 
         {/* ================= CONTENT ================= */}
-        <div className="px-6 pb-6">
+        <div className="px-4 pb-2">
           {activeTab === "details" && <AddBasicInformation />}
           {activeTab === "structure" && <OrganizationalStructure />}
           {activeTab === "payroll" && <ManagePayrollPolicy />}
