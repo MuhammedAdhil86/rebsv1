@@ -10,7 +10,7 @@ export default function LeaveReports() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Tooltip states
+  // Tooltip
   const [hoverText, setHoverText] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
@@ -18,44 +18,41 @@ export default function LeaveReports() {
   const [searchUser, setSearchUser] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("");
-  const [isHalfDay, setIsHalfDay] = useState(false);
-  const [halfDayType, setHalfDayType] = useState("");
-  const [status, setStatus] = useState("");
 
-  // Truncate helper with tooltip support
+  // Dynamic filter
+  const [mainFilter, setMainFilter] = useState(""); // Leave Type / Status / Manager Approval
+  const [dynamicValue, setDynamicValue] = useState(""); // selected value of the dynamic dropdown
+
+  // Half Day for Leave Type
+  const [leaveTypeHalfFull, setLeaveTypeHalfFull] = useState(""); // Half Day / Full Day
+
+  // Helper: truncate text
   const truncate = (text, limit = 17) => {
     if (!text) return "";
     return text.length > limit ? text.substring(0, limit) + "…" : text;
   };
 
-  // Reset dynamic filters
-  const resetDynamicFilters = () => {
-    setIsHalfDay(false);
-    setHalfDayType("");
-    setStatus("");
-  };
-
-  // Fetch Data
+  // Fetch data from backend
   const fetchData = async () => {
     try {
       setLoading(true);
       const params = {
         user_id: searchUser || undefined,
         from: from || undefined,
-        to: to || (from ? from : undefined),
-        is_half_day: selectedFilter === "isHalfDay" ? isHalfDay : undefined,
-        half_day_type:
-          selectedFilter === "halfDayType" ? halfDayType : undefined,
-        status: selectedFilter === "status" ? status : undefined,
+        to: to || undefined,
+        leave_type: mainFilter === "leaveType" ? leaveTypeHalfFull : undefined,
+        status: mainFilter === "status" ? dynamicValue : undefined,
+        manager_approval:
+          mainFilter === "managerApproval" ? dynamicValue : undefined,
       };
 
-      const res = await axiosInstance.get("admin/leave/employee/leave/report", {
-        params,
-      });
+      const res = await axiosInstance.get(
+        "/admin/leave/employee/leave/report",
+        { params },
+      );
+
       const list = res.data?.data?.records || [];
 
-      // Process fields for table
       const processed = list.map((r) => ({
         ...r,
         designation_short: truncate(r.designation),
@@ -65,6 +62,7 @@ export default function LeaveReports() {
       setRecords(processed);
     } catch (err) {
       console.error("Error fetching data:", err);
+      setRecords([]);
     } finally {
       setLoading(false);
     }
@@ -72,7 +70,7 @@ export default function LeaveReports() {
 
   useEffect(() => {
     fetchData();
-  }, [searchUser, from, to, selectedFilter, isHalfDay, halfDayType, status]);
+  }, [searchUser, from, to, mainFilter, dynamicValue, leaveTypeHalfFull]);
 
   // Table columns
   const columns = [
@@ -120,7 +118,7 @@ export default function LeaveReports() {
     { label: "Manager Approval", key: "manager_approval" },
   ];
 
-  // Excel Download
+  // Excel download
   const handleDownload = () => {
     if (!records.length) return;
 
@@ -137,17 +135,6 @@ export default function LeaveReports() {
     }));
 
     const ws = XLSX.utils.json_to_sheet(excelData, { dateNF: "yyyy-mm-dd" });
-
-    const range = XLSX.utils.decode_range(ws["!ref"]);
-    for (let c = range.s.c; c <= range.e.c; c++) {
-      const cell = XLSX.utils.encode_cell({ r: 0, c });
-      if (ws[cell]) ws[cell].s = { font: { bold: true } };
-    }
-
-    Object.keys(ws).forEach((cell) => {
-      if (ws[cell]?.v instanceof Date) ws[cell].z = "dd/mm/yyyy";
-    });
-
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Leave Reports");
 
@@ -164,95 +151,96 @@ export default function LeaveReports() {
 
   return (
     <>
-      <div className="p-1 rounded-xl shadow-sm">
-        {/* Title */}
-        <h2 className="text-lg font-mrdium mb-2">Leave Reports</h2>
+      <div className="p-2 rounded-xl shadow-sm">
+        <h2 className="text-lg font-medium mb-2">Leave Reports</h2>
 
-        {/* Filters + Download */}
-        <div className="flex gap-3 mb-4 flex-wrap items-center w-full">
-          {/* Search User */}
-          <div className="relative w-[200px]">
-            <input
-              type="text"
-              placeholder="Search User ID"
-              value={searchUser}
-              onChange={(e) => setSearchUser(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 sm:px-4 py-2 text-xs w-full"
-            />
-            <Search className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
-          </div>
-
-          {/* From Date */}
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2 items-center mb-4">
+          {/* From / To Dates */}
           <input
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="border rounded-lg px-3 sm:px-4 py-2 text-xs"
+            className="border rounded-lg px-3 py-2 text-xs"
           />
-
-          {/* To Date */}
           <input
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="border rounded-lg px-3 sm:px-4 py-2 text-xs"
+            className="border rounded-lg px-3 py-2 text-xs"
           />
 
-          {/* Filter Select */}
+          {/* Main dynamic filter */}
           <select
-            value={selectedFilter}
+            value={mainFilter}
             onChange={(e) => {
-              resetDynamicFilters();
-              setSelectedFilter(e.target.value);
+              setMainFilter(e.target.value);
+              setDynamicValue("");
+              setLeaveTypeHalfFull("");
             }}
-            className="border rounded-lg px-3 sm:px-4 py-2 text-xs"
+            className="border rounded-lg px-3 py-2 text-xs"
           >
-            <option value="">Select Filter</option>
-            <option value="isHalfDay">Is Half Day</option>
-            <option value="halfDayType">Half Day Type</option>
+            <option value="">Filter</option>
+            <option value="leaveType">Leave Type</option>
             <option value="status">Status</option>
+            <option value="managerApproval">Manager Approval</option>
           </select>
 
-          {/* Conditional Filters */}
-          {selectedFilter === "isHalfDay" && (
-            <label className="flex items-center gap-2 text-xs">
-              <input
-                type="checkbox"
-                checked={isHalfDay}
-                onChange={(e) => setIsHalfDay(e.target.checked)}
-                className="w-4 h-4"
-              />
-              Half Day Leave
-            </label>
-          )}
-          {selectedFilter === "halfDayType" && (
+          {/* Dynamic sub-filter */}
+          {mainFilter === "leaveType" && (
             <select
-              value={halfDayType}
-              onChange={(e) => setHalfDayType(e.target.value)}
-              className="border rounded-lg px-3 sm:px-4 py-2 text-xs"
+              value={leaveTypeHalfFull}
+              onChange={(e) => setLeaveTypeHalfFull(e.target.value)}
+              className="border rounded-lg px-3 py-2 text-xs"
             >
-              <option value="">Half Day Type</option>
-              <option value="1">First Half</option>
-              <option value="2">Second Half</option>
-            </select>
-          )}
-          {selectedFilter === "status" && (
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="border rounded-lg px-3 sm:px-4 py-2 text-xs"
-            >
-              <option value="">Select Status</option>
-              <option value="APPROVED">Approved</option>
-              <option value="PENDING">Pending</option>
-              <option value="REJECTED">Rejected</option>
+              <option value="">Select Leave</option>
+              <option value="Full Day">Full Day</option>
+              <option value="Half Day">Half Day</option>
             </select>
           )}
 
-          {/* Download Button */}
+          {mainFilter === "status" && (
+            <select
+              value={dynamicValue}
+              onChange={(e) => setDynamicValue(e.target.value)}
+              className="border rounded-lg px-3 py-2 text-xs"
+            >
+              <option value="">Select Status</option>
+              <option value="Approved">Approved</option>
+              <option value="Pending">Pending</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          )}
+
+          {mainFilter === "managerApproval" && (
+            <select
+              value={dynamicValue}
+              onChange={(e) => setDynamicValue(e.target.value)}
+              className="border rounded-lg px-3 py-2 text-xs"
+            >
+              <option value="">Select Approval</option>
+              <option value="Approved">Approved</option>
+              <option value="Pending">Pending</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          )}
+
+          {/* Search Staff */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search Staff"
+              value={searchUser}
+              onChange={(e) => setSearchUser(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-xs"
+            />
+            <Search className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+          </div>
+
+          {/* Download */}
           <button
             onClick={handleDownload}
-            className="ml-auto flex items-center gap-2 px-3 sm:px-4 py-2 text-xs rounded-lg border bg-black text-white font-poppins font-normal"
+            className="flex items-center gap-2 px-3 py-2 text-xs rounded-lg border bg-black text-white"
           >
             <Download className="w-4 h-4" /> Download
           </button>

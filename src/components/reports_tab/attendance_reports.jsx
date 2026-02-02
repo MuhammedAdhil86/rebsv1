@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FiDownload } from "react-icons/fi";
 import { Icon } from "@iconify/react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import axiosInstance from "../../service/axiosinstance"; // Make sure axiosInstance is configured
+import UniversalTable from "../../ui/universal_table";
+import axiosInstance from "../../service/axiosinstance";
 
-// StatusCell component
+// StatusCell component for Status column
 function StatusCell({ value, row }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -23,9 +23,7 @@ function StatusCell({ value, row }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleView = () => {
-    console.log("View row data:", row); // 🔹 Logs row data
-  };
+  const handleView = () => console.log("View row data:", row);
 
   return (
     <div
@@ -71,148 +69,7 @@ function StatusCell({ value, row }) {
   );
 }
 
-// UniversalTable component
-function UniversalTable({ columns, data, rowsPerPage = 6, searchTerm }) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [colWidths, setColWidths] = useState([]);
-  const headerRef = useRef(null);
-
-  const filteredData = searchTerm
-    ? data.filter((row) =>
-        columns.some((col) =>
-          row[col.key]
-            ?.toString()
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()),
-        ),
-      )
-    : data;
-
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const startIdx = (currentPage - 1) * rowsPerPage;
-  const endIdx = startIdx + rowsPerPage;
-  const currentData = filteredData.slice(startIdx, endIdx);
-
-  useEffect(() => {
-    if (headerRef.current) {
-      const widths = Array.from(headerRef.current.querySelectorAll("th")).map(
-        (th) => th.offsetWidth,
-      );
-      setColWidths(widths);
-    }
-  }, [columns, data, searchTerm]);
-
-  return (
-    <section className="p-2 rounded-2xl overflow-x-auto w-full">
-      <table
-        className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl overflow-hidden table-fixed"
-        ref={headerRef}
-      >
-        <thead className="bg-white text-gray-600 text-[12.5px]">
-          <tr>
-            {columns.map((col, idx) => (
-              <th
-                key={col.key}
-                className={`px-4 py-3 font-medium text-gray-700 text-center whitespace-nowrap ${
-                  idx === 0
-                    ? "rounded-tl-2xl"
-                    : idx === columns.length - 1
-                      ? "rounded-tr-2xl"
-                      : ""
-                }`}
-                style={{
-                  width: colWidths[idx]
-                    ? `${colWidths[idx]}px`
-                    : col.width
-                      ? `${col.width}px`
-                      : "auto",
-                }}
-              >
-                {col.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-      </table>
-
-      <div className="h-2" />
-
-      <table className="w-full min-w-[600px] text-[11px] bg-white border-separate border-spacing-0 rounded-2xl table-fixed">
-        <tbody className="divide-y divide-gray-100">
-          {currentData.length === 0 ? (
-            <tr>
-              <td
-                colSpan={columns.length}
-                className="py-4 text-center text-gray-500"
-              >
-                No data available
-              </td>
-            </tr>
-          ) : (
-            currentData.map((row, rowIdx) => (
-              <tr key={rowIdx} className="hover:bg-gray-50 text-center">
-                {columns.map((col, colIdx) => (
-                  <td
-                    key={col.key}
-                    className="px-4 py-3 truncate text-center"
-                    style={{
-                      width: colWidths[colIdx]
-                        ? `${colWidths[colIdx]}px`
-                        : col.width
-                          ? `${col.width}px`
-                          : "auto",
-                    }}
-                  >
-                    {col.render
-                      ? col.render(row[col.key], row)
-                      : row[col.key] || "N/A"}
-                  </td>
-                ))}
-              </tr>
-            ))
-          )}
-
-          {filteredData.length > 0 && (
-            <tr>
-              <td colSpan={columns.length}>
-                <div className="flex justify-between items-center px-4 py-3 text-[12px]">
-                  <span className="text-gray-500">
-                    Showing {startIdx + 1}-
-                    {Math.min(endIdx, filteredData.length)} of{" "}
-                    {filteredData.length}
-                  </span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() =>
-                        currentPage > 1 && setCurrentPage(currentPage - 1)
-                      }
-                      disabled={currentPage === 1}
-                      className="p-2 rounded disabled:opacity-50 hover:bg-gray-300"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() =>
-                        currentPage < totalPages &&
-                        setCurrentPage(currentPage + 1)
-                      }
-                      disabled={currentPage === totalPages}
-                      className="p-2 rounded disabled:opacity-50 hover:bg-gray-300"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </section>
-  );
-}
-
-// Columns
+// Columns definition
 const columns = [
   { key: "name", label: "Name" },
   { key: "designation", label: "Designation" },
@@ -229,67 +86,43 @@ const columns = [
 
 export default function AttendanceReports() {
   const today = new Date();
-
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [apiData, setApiData] = useState([]);
 
-  const getDefaultDates = (month, year) => {
-    const firstDay = new Date(year, month - 1, 1);
-    const lastDay = new Date(year, month, 0);
-    const formatDate = (date) => date.toISOString().split("T")[0];
-    return [formatDate(firstDay), formatDate(lastDay)];
-  };
-
-  // Set initial default month range
-  useEffect(() => {
-    const [from, to] = getDefaultDates(
-      today.getMonth() + 1,
-      today.getFullYear(),
-    );
-    setFromDate(from);
-    setToDate(to);
-  }, []);
-
-  // Update dates when month/year changes
-  useEffect(() => {
-    const [from, to] = getDefaultDates(selectedMonth, selectedYear);
-    setFromDate(from);
-    setToDate(to);
-  }, [selectedMonth, selectedYear]);
-
-  // API integration
+  // Fetch API data whenever month/year changes
   useEffect(() => {
     axiosInstance
-      .get(`/admin/staff/fullreport/${selectedMonth}/${selectedYear}`, {})
+      .get(`admin/staff/fullreport/${selectedMonth}/${selectedYear}`)
       .then((res) => {
         const mapped =
-          res.data?.data?.map((item) => ({
-            name: item.name || "N/A",
-            designation: item.designation || "N/A",
-            user_id: item.user_id || "N/A",
-            department: item.department || "N/A",
-            doj: item.doj
-              ? (() => {
-                  const d = new Date(item.doj);
-                  return isNaN(d.getTime())
-                    ? "N/A"
-                    : d.toISOString().split("T")[0];
-                })()
-              : "N/A",
-            net_salary: item.net_salary != null ? item.net_salary : "N/A",
-            status: item.net_salary > 0 ? "Accepted" : "Pending",
-          })) || [];
+          res.data?.data?.map((item) => {
+            // Safe DOJ formatting
+            let dojFormatted = "N/A";
+            if (item.doj) {
+              const d = new Date(item.doj);
+              if (!isNaN(d.getTime()))
+                dojFormatted = d.toISOString().split("T")[0];
+            }
+
+            return {
+              name: item.name || "N/A",
+              designation: item.designation || "N/A",
+              user_id: item.user_id || "N/A",
+              department: item.department || "N/A",
+              doj: dojFormatted,
+              net_salary: item.net_salary != null ? item.net_salary : "N/A",
+              status: item.net_salary > 0 ? "Accepted" : "Pending",
+            };
+          }) || [];
         setApiData(mapped);
       })
       .catch((err) => {
         console.error(err);
         setApiData([]);
       });
-  }, [selectedMonth, selectedYear, fromDate, toDate]);
+  }, [selectedMonth, selectedYear]);
 
   return (
     <div className="flex flex-col gap-4 text-[13px]">
@@ -303,7 +136,7 @@ export default function AttendanceReports() {
         </div>
 
         <div className="flex gap-3 flex-wrap items-center justify-end flex-1">
-          {/* Month */}
+          {/* Month selector */}
           <select
             className="border border-gray-300 rounded px-3 py-1 w-[110px]"
             value={selectedMonth}
@@ -316,7 +149,7 @@ export default function AttendanceReports() {
             ))}
           </select>
 
-          {/* Year */}
+          {/* Year selector */}
           <select
             className="border border-gray-300 rounded px-3 py-1 w-[90px]"
             value={selectedYear}
@@ -332,37 +165,7 @@ export default function AttendanceReports() {
             ))}
           </select>
 
-          {/* From Date */}
-          <div className="relative w-[150px]">
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="remove-default-icon border border-gray-300 bg-white rounded px-3 py-1 w-full pr-8"
-            />
-            <Icon
-              icon="solar:calendar-linear"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-lg"
-            />
-          </div>
-
-          <span className="text-[13px] font-medium mx-1">to</span>
-
-          {/* To Date */}
-          <div className="relative w-[150px]">
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="remove-default-icon border border-gray-300 bg-white rounded px-3 py-1 w-full pr-8"
-            />
-            <Icon
-              icon="solar:calendar-linear"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-lg"
-            />
-          </div>
-
-          {/* Download */}
+          {/* Download button */}
           <button
             className="flex items-center px-4 py-1 bg-black text-white rounded"
             onClick={() =>
@@ -372,7 +175,7 @@ export default function AttendanceReports() {
             <FiDownload className="mr-2" /> Download
           </button>
 
-          {/* Search */}
+          {/* Search input */}
           <div className="relative w-[200px]">
             <input
               type="text"

@@ -127,7 +127,7 @@ const AttendancePolicy = () => {
         return (
           <span
             className={`px-4 py-1.5 rounded-full text-[10px] border ${getStatusStyle(
-              status
+              status,
             )}`}
           >
             {status}
@@ -141,9 +141,7 @@ const AttendancePolicy = () => {
     <div className="w-full">
       {/* Header */}
       <div className="flex justify-between items-center mb-6 px-1">
-        <h2 className="text-[16px] font-medium text-gray-900">
-          All Policy
-        </h2>
+        <h2 className="text-[16px] font-medium text-gray-900">All Policy</h2>
 
         <div className="flex gap-3">
           <div className="relative">
@@ -169,15 +167,11 @@ const AttendancePolicy = () => {
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-6 text-sm text-gray-500">
+        <div className="text-center  text-sm text-gray-500">
           Loading policies...
         </div>
       ) : (
-        <UniversalTable
-          columns={columns}
-          data={policyData}
-          rowsPerPage={6}
-        />
+        <UniversalTable columns={columns} data={policyData} rowsPerPage={6} />
       )}
 
       {/* Modal */}

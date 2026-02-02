@@ -6,8 +6,6 @@ export default function SalaryTemplate() {
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [searchTerm, setSearchTerm] = useState(""); // new search term state
 
   useEffect(() => {
     let isMounted = true;
@@ -25,23 +23,18 @@ export default function SalaryTemplate() {
           response ||
           [];
 
-        const formatted = rawItems
-          .map((item, index) => ({
-            id: item.id ?? index,
-            name: item.name || "-",
-            description: item.description || "-",
-            annualCTC: `₹${Number(item.annual_ctc || 0).toLocaleString()}`,
-            status:
-              String(item.status).toLowerCase() === "active" ||
-              item.status === true ||
-              item.status === 1
-                ? "Active"
-                : "Inactive",
-          }))
-          .filter((item) => {
-            if (filterStatus === "all") return true;
-            return item.status.toLowerCase() === filterStatus;
-          });
+        const formatted = rawItems.map((item, index) => ({
+          id: item.id ?? index,
+          name: item.name || "-",
+          description: item.description || "-",
+          annualCTC: `₹${Number(item.annual_ctc || 0).toLocaleString()}`,
+          status:
+            String(item.status).toLowerCase() === "active" ||
+            item.status === true ||
+            item.status === 1
+              ? "Active"
+              : "Inactive",
+        }));
 
         if (isMounted) setTableData(formatted);
       } catch (err) {
@@ -60,7 +53,7 @@ export default function SalaryTemplate() {
     return () => {
       isMounted = false;
     };
-  }, [filterStatus]);
+  }, []);
 
   const columns = [
     { key: "name", label: "Template Name", align: "left" },
@@ -98,41 +91,12 @@ export default function SalaryTemplate() {
   ];
 
   return (
-    <div className="overflow-x-auto ">
-      {/* FILTER + SEARCH (same line) */}
-      <div className="mb-4 flex flex-col sm:flex-row items-center gap-2 justify-between">
-        {/* Status Filter */}
-        <div className="flex items-center gap-2">
-          <label className="text-sm">Status Filter:</label>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="border text-sm px-2 py-1 rounded"
-          >
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-
-        {/* Search Input */}
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="Search templates..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-3 py-2 border rounded-lg text-sm w-64"
-          />
-        </div>
-      </div>
-
+    <div className="overflow-x-auto">
       {/* PAYROLL TABLE */}
       <PayrollTable
         columns={columns}
         data={tableData}
         rowsPerPage={6}
-        searchTerm={searchTerm} // pass search term from filter
         rowClickHandler={(row) => console.log("Row clicked:", row)}
       />
 

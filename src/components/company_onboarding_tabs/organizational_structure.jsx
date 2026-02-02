@@ -19,7 +19,7 @@ const OrganizationalStructure = () => {
   ];
 
   return (
-    <div className="min-h-screen p-3 bg-gray-50">
+    <div className="min-h-screen  bg-gray-50">
       <div className="bg-white rounded-2xl border border-gray-200 p-8">
         {/* Header Tabs */}
         <div className="flex justify-between items-center mb-6">
@@ -45,22 +45,21 @@ const OrganizationalStructure = () => {
           </div>
 
           {/* Show Added Button */}
-    <button
-  onClick={() => setShowAdded((prev) => !prev)}
-  className="px-3 h-[40px] text-xs rounded-md border font-normal transition-all flex items-center justify-center
+          <button
+            onClick={() => setShowAdded((prev) => !prev)}
+            className="px-3 h-[40px] text-xs rounded-md border font-normal transition-all flex items-center justify-center
   border-gray-300 text-gray-700 hover:bg-gray-100 font-[Poppins]"
->
-  {activeTab === "branch"
-    ? "Added Branches"
-    : activeTab === "division"
-    ? "Added Divisions"
-    : activeTab === "department"
-    ? "Added Departments"
-    : activeTab === "designation"
-    ? "Added Designations"
-    : "Added Branches"}
-</button>
-
+          >
+            {activeTab === "branch"
+              ? "Added Branches"
+              : activeTab === "division"
+                ? "Added Divisions"
+                : activeTab === "department"
+                  ? "Added Departments"
+                  : activeTab === "designation"
+                    ? "Added Designations"
+                    : "Added Branches"}
+          </button>
         </div>
 
         {/* Conditional Rendering */}
@@ -69,7 +68,9 @@ const OrganizationalStructure = () => {
 
         {activeTab === "division" && !showAdded && <AddDivisionForm />}
         {activeTab === "division" && showAdded && (
-          <div className="text-gray-500 text-center py-10">Division Table Coming Soon...</div>
+          <div className="text-gray-500 text-center py-10">
+            Division Table Coming Soon...
+          </div>
         )}
 
         {activeTab === "department" && !showAdded && <AddDepartmentForm />}

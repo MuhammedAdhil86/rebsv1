@@ -15,7 +15,6 @@ const OrganizationOnboarding = () => {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-[#f7f8fa] rounded-2xl overflow-hidden">
-
         {/* ================= HEADER ================= */}
         <div className="flex items-center bg-white px-6 py-2 border-b border-gray-200">
           <button
@@ -32,7 +31,6 @@ const OrganizationOnboarding = () => {
         {/* ================= TABS ================= */}
         <div className="bg-white border-b border-gray-200">
           <div className="flex gap-4 px-2 py-3 overflow-x-auto whitespace-nowrap">
-
             <TabButton
               label="Organizational Details"
               isActive={activeTab === "details"}
@@ -56,20 +54,19 @@ const OrganizationOnboarding = () => {
               isActive={activeTab === "policy"}
               onClick={() => setActiveTab("policy")}
             />
-
           </div>
         </div>
 
         {/* ================= SECTION TITLE ================= */}
         <div className="px-6 py-2">
           {activeTab === "details" && (
-            <h2 className="text-[20px] font-medium text-gray-800">
+            <h2 className="text-[14px] font-medium text-gray-800">
               Add Basic Information
             </h2>
           )}
 
           {activeTab === "structure" && (
-            <h2 className="text-[20px] font-medium text-gray-800">
+            <h2 className="text-[14px] font-medium text-gray-800">
               Organizational Structure
             </h2>
           )}
@@ -81,9 +78,7 @@ const OrganizationOnboarding = () => {
           )}
 
           {activeTab === "policy" && (
-            <h2 className="text-[16px] font-medium text-gray-800">
-              
-            </h2>
+            <h2 className="text-[16px] font-medium text-gray-800"></h2>
           )}
         </div>
 
@@ -94,7 +89,6 @@ const OrganizationOnboarding = () => {
           {activeTab === "payroll" && <ManagePayrollPolicy />}
           {activeTab === "policy" && <OrganizationalPolicy />}
         </div>
-
       </div>
     </DashboardLayout>
   );
@@ -115,5 +109,5 @@ const TabButton = ({ label, isActive, onClick }) => {
     >
       {label}
     </button>
-  ); 
+  );
 };

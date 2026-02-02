@@ -27,8 +27,7 @@ export default function SettingsTab({ employee }) {
       <ActionCenter employee={employee} />
       <ManagePrivileges uuid={employeeUUID} />
       <CompliancesDeductions employee={employee} />
-      <Salary employee={employee} />
-
+      <Salary uuid={employeeUUID} />
       {/* Lazy-loaded components with fallback */}
       <Suspense
         fallback={<div className="text-gray-500">Loading Leaves...</div>}

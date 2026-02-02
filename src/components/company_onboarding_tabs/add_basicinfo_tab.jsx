@@ -126,8 +126,8 @@ const AddBasicInformation = () => {
   };
 
   return (
-    <div className="px-3">
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
+    <div className="">
+      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
         {/* Upload Section */}
         <div className="border border-gray-200 rounded-lg p-4 mb-8 bg-[#fafafa]">
           <div className="flex justify-between items-center">
@@ -141,7 +141,9 @@ const AddBasicInformation = () => {
                 layouts and screen sizes.
               </p>
               {logoFile && (
-                <p className="text-sm text-gray-700 mt-1">Logo: {logoFile.name}</p>
+                <p className="text-sm text-gray-700 mt-1">
+                  Logo: {logoFile.name}
+                </p>
               )}
               {horizontalLogoFile && (
                 <p className="text-sm text-gray-700 mt-1">
@@ -240,7 +242,9 @@ const AddBasicInformation = () => {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Website</label>
+              <label className="block text-sm text-gray-700 mb-1">
+                Website
+              </label>
               <input
                 type="text"
                 name="website"
@@ -348,7 +352,10 @@ const AddBasicInformation = () => {
                 </div>
 
                 <div className="ml-2 flex items-center justify-center w-9 h-9 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100 transition">
-                  <Icon icon="mdi:location" className="text-gray-600 text-[18px]" />
+                  <Icon
+                    icon="mdi:location"
+                    className="text-gray-600 text-[18px]"
+                  />
                 </div>
               </div>
             </div>
@@ -357,7 +364,9 @@ const AddBasicInformation = () => {
           {/* Row 3 */}
           <div className="grid grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Contact Person</label>
+              <label className="block text-sm text-gray-700 mb-1">
+                Contact Person
+              </label>
               <input
                 type="text"
                 name="contactPerson"
@@ -369,7 +378,9 @@ const AddBasicInformation = () => {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Contact Number</label>
+              <label className="block text-sm text-gray-700 mb-1">
+                Contact Number
+              </label>
               <input
                 type="text"
                 name="contactNumber"
@@ -381,7 +392,9 @@ const AddBasicInformation = () => {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Contact Email</label>
+              <label className="block text-sm text-gray-700 mb-1">
+                Contact Email
+              </label>
               <input
                 type="email"
                 name="contactEmail"
