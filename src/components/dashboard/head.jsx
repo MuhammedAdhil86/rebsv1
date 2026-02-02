@@ -54,10 +54,16 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
         </p>
         <div className="flex items-center gap-3">
           <button className="p-2 rounded-full hover:bg-gray-100">
-            <Icon icon="hugeicons:notification-02" className="w-5 h-5 text-gray-600" />
+            <Icon
+              icon="hugeicons:notification-02"
+              className="w-5 h-5 text-gray-600"
+            />
           </button>
           <button className="p-2 rounded-full hover:bg-gray-100">
-            <Icon icon="solar:settings-linear" className="w-5 h-5 text-gray-600" />
+            <Icon
+              icon="solar:settings-linear"
+              className="w-5 h-5 text-gray-600"
+            />
           </button>
           <button className="flex items-center gap-2 px-3 py-1 border rounded-full text-[12px]">
             Settings
@@ -76,15 +82,15 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
         </div>
 
         {/* Top Action Buttons */}
- <div className="flex flex-wrap gap-2">
-  <button className="px-3 sm:px-4 py-2 text-xs rounded-lg border bg-black text-white font-poppins font-normal">
-    + Create Announcement
-  </button>
-  <button className="px-3 sm:px-4 py-2 text-xs rounded-lg border bg-black text-white font-poppins font-normal">
-    + Add Leave
-  </button>
-</div>
+        <div className="flex flex-wrap gap-2">
+          <button className="px-3 sm:px-4 py-3 text-xs rounded-lg border bg-black text-white font-poppins font-normal">
+            + Add Leave
+          </button>
 
+          <button className="px-3 sm:px-4 py-3 text-xs rounded-lg border bg-black text-white font-poppins font-normal">
+            + Add Leave
+          </button>
+        </div>
       </div>
 
       {/* ---------------- KPI CARDS ---------------- */}
@@ -136,32 +142,30 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
         ))}
       </section>
 
-   <section className="bg-white mt-4 sm:mt-6 w-full px-4 sm:px-6">
-  <div className="border-b flex flex-wrap gap-4 sm:gap-6 pt-4 text-sm">
-    {[
-      { label: "Attendance Overview", key: "overview" },
-      { label: "Log Details", key: "logdetails" },
-      { label: "Leave Requests", key: "leaverequests" },
-      { label: "Daily Attendance", key: "dailyAttendance" },
-      { label: "Muster Roll", key: "musterRoll" },
-      { label: "Regularization", key: "regularization" },
-
-    ].map((tab) => (
-      <button
-        key={tab.key}
-        onClick={() => setActiveTab(tab.key)}
-        className={`pb-2 whitespace-nowrap ${
-          activeTab === tab.key
-            ? "border-b-2 border-black font-medium text-black"
-            : "text-[#AFAFAF]"
-        }`}
-      >
-        {tab.label}
-      </button>
-    ))}
-  </div>
-</section>
-
+      <section className="bg-white mt-4 sm:mt-6 w-full px-4 sm:px-6">
+        <div className="border-b flex flex-wrap gap-4 sm:gap-6 pt-4 text-sm">
+          {[
+            { label: "Attendance Overview", key: "overview" },
+            { label: "Log Details", key: "logdetails" },
+            { label: "Leave Requests", key: "leaverequests" },
+            { label: "Daily Attendance", key: "dailyAttendance" },
+            { label: "Muster Roll", key: "musterRoll" },
+            { label: "Regularization", key: "regularization" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`pb-2 whitespace-nowrap ${
+                activeTab === tab.key
+                  ? "border-b-2 border-black font-medium text-black"
+                  : "text-[#AFAFAF]"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

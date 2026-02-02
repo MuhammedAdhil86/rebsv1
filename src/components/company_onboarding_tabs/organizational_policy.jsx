@@ -43,29 +43,35 @@ const OrganizationalPolicy = () => {
       </div>
 
       {/* ================= CONTENT CONTAINER ================= */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm">
+      <div className=" rounded-2xl p-1">
         {/* WORK SHIFT */}
         {activeTab === "work-shift" && (
           <>
             <div className="flex gap-4 border-b border-gray-200 mb-4">
-              {["Shifts", "Shift Bulk Allocation", "Attendance Policy"].map((subTab) => (
-                <button
-                  key={subTab}
-                  onClick={() => setActiveWorkShiftTab(subTab)}
-                  className={`pb-2 text-sm font-medium transition-all relative
+              {["Shifts", "Shift Bulk Allocation", "Attendance Policy"].map(
+                (subTab) => (
+                  <button
+                    key={subTab}
+                    onClick={() => setActiveWorkShiftTab(subTab)}
+                    className={`pb-2 text-sm font-medium transition-all relative
                     ${activeWorkShiftTab === subTab ? "text-gray-900" : "text-gray-400 hover:text-gray-600"}`}
-                >
-                  {subTab}
-                  {activeWorkShiftTab === subTab && (
-                    <div className="absolute bottom-0 left-0 w-full h-[2px] bg-red-500" />
-                  )}
-                </button>
-              ))}
+                  >
+                    {subTab}
+                    {activeWorkShiftTab === subTab && (
+                      <div className="absolute bottom-0 left-0 w-full h-[2px] bg-red-500" />
+                    )}
+                  </button>
+                ),
+              )}
             </div>
             <div>
               {activeWorkShiftTab === "Shifts" && <Shifts />}
-              {activeWorkShiftTab === "Shift Bulk Allocation" && <ShiftBulkAllocation />}
-              {activeWorkShiftTab === "Attendance Policy" && <AttendancePolicy />}
+              {activeWorkShiftTab === "Shift Bulk Allocation" && (
+                <ShiftBulkAllocation />
+              )}
+              {activeWorkShiftTab === "Attendance Policy" && (
+                <AttendancePolicy />
+              )}
             </div>
           </>
         )}
@@ -120,9 +126,12 @@ const OrganizationalPolicy = () => {
         )}
 
         {/* OTHER PLACEHOLDERS */}
-        {!["work-shift", "leaves-holidays", "email-templates"].includes(activeTab) && (
+        {!["work-shift", "leaves-holidays", "email-templates"].includes(
+          activeTab,
+        ) && (
           <div className="py-10 text-center text-gray-400 italic">
-            {tabs.find((t) => t.id === activeTab)?.label} content is under development.
+            {tabs.find((t) => t.id === activeTab)?.label} content is under
+            development.
           </div>
         )}
       </div>

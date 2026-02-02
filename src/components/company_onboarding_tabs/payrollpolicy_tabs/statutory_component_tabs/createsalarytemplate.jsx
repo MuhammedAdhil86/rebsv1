@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axiosInstance from "../../../../service/axiosinstance";
 import toast, { Toaster } from "react-hot-toast";
 import { ChevronLeft, X, Plus } from "lucide-react";
+import { v4 as uuidv4 } from "uuid"; // For unique mapping IDs
 
 export default function CreateSalaryTemplate() {
   const [form, setForm] = useState({
@@ -14,7 +15,7 @@ export default function CreateSalaryTemplate() {
   const [components, setComponents] = useState([]);
   const [mappings, setMappings] = useState([
     {
-      id: Date.now() + Math.random(),
+      id: uuidv4(),
       component_id: "",
       calculation_type: "",
       value: "",
@@ -28,7 +29,7 @@ export default function CreateSalaryTemplate() {
     const fetchComponents = async () => {
       try {
         const res = await axiosInstance.get(
-          "api/payroll/components?limit=50&offset=0"
+          "api/payroll/components?limit=50&offset=0",
         );
         setComponents(res.data?.data?.items || []);
       } catch (err) {
@@ -42,7 +43,7 @@ export default function CreateSalaryTemplate() {
   const getBasicAnnual = (arr) => {
     const basic = arr.find((m) => {
       const comp = components.find(
-        (c) => String(c.id) === String(m.component_id)
+        (c) => String(c.id) === String(m.component_id),
       );
       return comp?.name?.toLowerCase().includes("basic");
     });
@@ -58,9 +59,9 @@ export default function CreateSalaryTemplate() {
       const val = Number(m.value || 0);
 
       if (m.calculation_type === "percentage_ctc") {
-        annual = (val / 100) * ctc; // Annual = % of CTC
+        annual = (val / 100) * ctc;
       } else if (m.calculation_type === "flat") {
-        annual = val; // Annual = flat value
+        annual = val;
       }
 
       const monthly = Math.round(annual / 12);
@@ -96,7 +97,6 @@ export default function CreateSalaryTemplate() {
     const { name, value } = e.target;
 
     if (name === "component_id") {
-      // Fetch component details from API
       try {
         const res = await axiosInstance.get(`api/payroll/components/${value}`);
         const data = res.data?.data;
@@ -117,7 +117,6 @@ export default function CreateSalaryTemplate() {
       return;
     }
 
-    // For value or calculation_type changes
     setMappings((prev) => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [name]: value };
@@ -131,7 +130,7 @@ export default function CreateSalaryTemplate() {
         [
           ...prev,
           {
-            id: Date.now() + Math.random(),
+            id: uuidv4(),
             component_id: "",
             calculation_type: "",
             value: "",
@@ -139,32 +138,34 @@ export default function CreateSalaryTemplate() {
             annual_amount: 0,
           },
         ],
-        form.annual_ctc
-      )
+        form.annual_ctc,
+      ),
     );
   };
 
   const deleteMapping = (id) => {
     setMappings((prev) =>
-      computeAmounts(prev.filter((m) => m.id !== id), form.annual_ctc)
+      computeAmounts(
+        prev.filter((m) => m.id !== id),
+        form.annual_ctc,
+      ),
     );
   };
 
   // ---------- Submit Template ----------
   const submitTemplate = async () => {
     try {
-      // Filter valid mappings
       const validMappings = mappings.filter(
         (m) =>
           m.component_id &&
           m.calculation_type &&
           m.value !== "" &&
-          !isNaN(Number(m.value))
+          !isNaN(Number(m.value)),
       );
 
       if (!form.name || !form.annual_ctc || validMappings.length === 0) {
         toast.error(
-          "Please fill all required fields and add at least one component"
+          "Please fill all required fields and add at least one component",
         );
         return;
       }
@@ -195,7 +196,7 @@ export default function CreateSalaryTemplate() {
   // ---------- Totals ----------
   const totalAnnual = mappings.reduce(
     (s, m) => s + Number(m.annual_amount || 0),
-    0
+    0,
   );
   const totalMonthly = Math.round(totalAnnual / 12);
 
@@ -210,14 +211,18 @@ export default function CreateSalaryTemplate() {
       {/* Navigation Header */}
       <div className="flex items-center gap-2 mb-8 border-b border-gray-200 pb-4">
         <ChevronLeft size={18} className="cursor-pointer text-black" />
-        <h1 className="text-[14px] font-normal text-black">New Salary Template</h1>
+        <h1 className="text-[14px] font-normal text-black">
+          New Salary Template
+        </h1>
       </div>
 
       <div className="max-w-full mx-auto">
         {/* Top Header Inputs */}
         <div className="grid grid-cols-3 gap-6 mb-10">
           <div className="space-y-1">
-            <label className="text-[12px] text-black font-normal">Template Name</label>
+            <label className="text-[12px] text-black font-normal">
+              Template Name
+            </label>
             <input
               name="name"
               className="w-full bg-[#F3F4F6] border-none rounded-md p-2.5 text-[12px] font-normal outline-none text-black placeholder:text-black"
@@ -227,7 +232,9 @@ export default function CreateSalaryTemplate() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[12px] text-black font-normal">Description</label>
+            <label className="text-[12px] text-black font-normal">
+              Description
+            </label>
             <input
               name="description"
               className="w-full bg-[#F3F4F6] border-none rounded-md p-2.5 text-[12px] font-normal outline-none text-black placeholder:text-black"
@@ -237,7 +244,9 @@ export default function CreateSalaryTemplate() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[12px] text-black font-normal">Annual CTC</label>
+            <label className="text-[12px] text-black font-normal">
+              Annual CTC
+            </label>
             <div className="flex items-center bg-[#F3F4F6] rounded-md px-3">
               <span className="text-[12px] text-black">₹</span>
               <input
@@ -266,7 +275,9 @@ export default function CreateSalaryTemplate() {
 
         {/* Mappings */}
         <div className="space-y-0">
-          <div className="text-[12px] font-normal text-black px-2 py-2">Earning</div>
+          <div className="text-[12px] font-normal text-black px-2 py-2">
+            Earning
+          </div>
           {mappings.map((m, index) => (
             <div
               key={m.id}
@@ -280,8 +291,8 @@ export default function CreateSalaryTemplate() {
                   onChange={(e) => handleMappingChange(index, e)}
                 >
                   <option value="">Select Component</option>
-                  {components.map((c) => (
-                    <option key={c.id} value={c.id}>
+                  {components.map((c, idx) => (
+                    <option key={`${c.id}-${idx}`} value={c.id}>
                       {c.name}
                     </option>
                   ))}
@@ -340,7 +351,9 @@ export default function CreateSalaryTemplate() {
 
         {/* Footer Totals */}
         <div className="mt-8 bg-[#F3F4F6] rounded-lg p-5 border-t border-b border-gray-200 flex justify-between items-center">
-          <span className="text-[12px] font-normal text-black">Cost to Company</span>
+          <span className="text-[12px] font-normal text-black">
+            Cost to Company
+          </span>
           <div className="flex gap-20 pr-12 text-[12px] font-normal text-black">
             <span>₹ {totalMonthly.toLocaleString()}</span>
             <span>₹ {totalAnnual.toLocaleString()}</span>

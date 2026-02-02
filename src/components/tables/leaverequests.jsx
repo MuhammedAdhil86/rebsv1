@@ -5,7 +5,8 @@ import LeaveRequest from "../../ui/approve";
 import UniversalTable from "../../ui/universal_table";
 
 function LeaveRequestes() {
-  const { leaves, fetchLeaves, connectWebSocket, loading, error } = useLeaveStore();
+  const { leaves, fetchLeaves, connectWebSocket, loading, error } =
+    useLeaveStore();
 
   const [filterStatus, setFilterStatus] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,37 +20,49 @@ function LeaveRequestes() {
     connectWebSocket(token);
   }, [fetchLeaves, connectWebSocket, token]);
 
+  // ===== Filtered & searched leaves =====
   const filteredLeaves = useMemo(() => {
     let arr = Array.isArray(leaves) ? [...leaves] : [];
 
+    // Filter by status
     if (filterStatus !== "All") {
       arr = arr.filter((req) => {
-        const st = req.status?.toLowerCase() ?? "";
+        const st = (req.status ?? "").toString().toLowerCase();
         if (filterStatus === "Pending") return st.includes("pending");
         return st === filterStatus.toLowerCase();
       });
     }
 
+    // Search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       arr = arr.filter((req) => {
         return (
-          req.name?.toLowerCase().includes(q) ||
-          req.reason?.toLowerCase().includes(q) ||
-          req.type?.toLowerCase().includes(q)
+          (req.name ?? "").toLowerCase().includes(q) ||
+          (req.reason ?? "").toLowerCase().includes(q) ||
+          (req.type ?? "").toLowerCase().includes(q)
         );
       });
     }
 
-    arr.sort((a, b) => new Date(b.applied_on) - new Date(a.applied_on));
+    // Sort by applied_on
+    arr.sort((a, b) => {
+      const dateA = a.applied_on ? new Date(a.applied_on) : new Date(0);
+      const dateB = b.applied_on ? new Date(b.applied_on) : new Date(0);
+      return dateB - dateA;
+    });
 
     return arr;
   }, [leaves, filterStatus, searchQuery]);
 
   const getStatusColor = (status) => {
-    if (status === "Approved") return "bg-green-100 text-green-600";
-    if (status?.toLowerCase().includes("pending")) return "bg-orange-100 text-orange-600";
-    return "bg-red-100 text-red-600";
+    if (!status) return "bg-gray-100 text-gray-600";
+    const s = status.toString().toLowerCase();
+    if (s.includes("approved")) return "bg-green-100 text-green-600";
+    if (s.includes("pending")) return "bg-orange-100 text-orange-600";
+    if (s.includes("rejected") || s.includes("inactive"))
+      return "bg-red-100 text-red-600";
+    return "bg-gray-100 text-gray-600";
   };
 
   const columns = [
@@ -59,7 +72,7 @@ function LeaveRequestes() {
       width: 160,
       render: (val, row) => {
         const imageSrc =
-          row.image && row.image.trim() !== ""
+          row?.image && row.image.trim() !== ""
             ? row.image
             : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJFYyBlkZfPY6Jb_BDM0gAW2jdMCFsYWxgeQ&s";
 
@@ -70,7 +83,7 @@ function LeaveRequestes() {
               alt="avatar"
               className="w-7 h-7 rounded-full object-cover"
             />
-            <span className="whitespace-nowrap">{val}</span>
+            <span className="whitespace-nowrap">{val ?? "-"}</span>
           </div>
         );
       },
@@ -84,7 +97,7 @@ function LeaveRequestes() {
         const shortDes = des.length > 12 ? des.substring(0, 12) + "…" : des;
         return (
           <span className="truncate block max-w-[120px]" title={des}>
-            {shortDes}
+            {shortDes || "-"}
           </span>
         );
       },
@@ -116,8 +129,11 @@ function LeaveRequestes() {
       label: "Remark",
       width: 120,
       render: (val) => (
-        <span className="truncate block max-w-[100px]" title={val ? val : "Not available"}>
-          {val ? val : "Not available"}
+        <span
+          className="truncate block max-w-[100px]"
+          title={val ? val : "Not available"}
+        >
+          {val || "Not available"}
         </span>
       ),
     },
@@ -133,12 +149,13 @@ function LeaveRequestes() {
       width: 120,
       render: (val) => {
         const status = val ?? "";
-        const shortStatus = status.length > 8 ? status.substring(0, 8) + "…" : status;
+        const shortStatus =
+          status.length > 8 ? status.substring(0, 8) + "…" : status;
         return (
           <span
             title={status}
-            className={`px-3 py-1 rounded-full text-[11px] font-normal font-poppins whitespace-nowrap inline-block max-w-[100px] text-center ${getStatusColor(
-              status
+            className={`px-3 py-1 rounded-full text-[11px] font-normal whitespace-nowrap inline-block max-w-[100px] text-center ${getStatusColor(
+              status,
             )}`}
           >
             {shortStatus}
@@ -150,12 +167,11 @@ function LeaveRequestes() {
 
   return (
     <div className="flex-1 grid grid-cols-1 gap-4 px-4 pb-4 bg-[#f9fafb] rounded-xl w-full mx-auto">
-
+      {/* Header: title + filters + search */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h3 className="text-base font-medium text-gray-800">Leave Requests</h3>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-
           <div className="flex flex-wrap items-center gap-2">
             {["All", "Pending", "Approved", "Rejected"].map((status) => (
               <button
@@ -188,26 +204,30 @@ function LeaveRequestes() {
         </div>
       </div>
 
+      {/* Table */}
       {loading ? (
         <div className="flex justify-center py-12">
           <div className="w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin" />
         </div>
       ) : (
-  <UniversalTable
-  columns={columns}
-  data={filteredLeaves}
-  rowsPerPage={10}
-  rowClickHandler={(row) => {
-    setSelectedLeave(row);
-    setDrawerOpen(true);
-  }}
-/>
-
+        <UniversalTable
+          columns={columns}
+          data={filteredLeaves}
+          rowsPerPage={10}
+          rowClickHandler={(row) => {
+            setSelectedLeave(row);
+            setDrawerOpen(true);
+          }}
+        />
       )}
 
+      {/* Drawer for selected leave */}
       {drawerOpen && (
         <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setDrawerOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setDrawerOpen(false)}
+          />
           <div className="absolute top-0 right-0 h-full bg-white shadow-2xl rounded-l-2xl w-[600px] max-w-[90vw] overflow-y-auto">
             <button
               onClick={() => setDrawerOpen(false)}
@@ -217,9 +237,14 @@ function LeaveRequestes() {
             </button>
             <div className="p-4">
               {selectedLeave ? (
-                <LeaveRequest user={selectedLeave} handleClose={() => setDrawerOpen(false)} />
+                <LeaveRequest
+                  user={selectedLeave}
+                  handleClose={() => setDrawerOpen(false)}
+                />
               ) : (
-                <p className="text-center text-gray-500 mt-20">No leave selected.</p>
+                <p className="text-center text-gray-500 mt-20">
+                  No leave selected.
+                </p>
               )}
             </div>
           </div>

@@ -27,8 +27,7 @@ const ManagePayrollPolicy = () => {
 
   return (
     <div className="min-h-screen font-[Poppins] text-sm">
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
-
+      <div className=" border  rounded-2xl shadow-sm p-5">
         {/* Tabs + Create Button */}
         <div className="flex justify-between items-center mb-5">
           <div className="flex flex-wrap items-center gap-1">

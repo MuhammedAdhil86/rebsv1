@@ -28,11 +28,20 @@ function StatusCell({ value, row }) {
   };
 
   return (
-    <div className="flex items-center justify-center gap-2 w-full text-[13px]" ref={ref}>
-      <span className={`flex items-center gap-2 px-2 py-1 rounded-full text-[11px] ${statusStyles[value] || ""}`}>
+    <div
+      className="flex items-center justify-center gap-2 w-full text-[13px]"
+      ref={ref}
+    >
+      <span
+        className={`flex items-center gap-2 px-2 py-1 rounded-full text-[11px] ${statusStyles[value] || ""}`}
+      >
         <span className="w-4 h-4 rounded-full flex items-center justify-center">
-          {value === "Accepted" && <span className="text-green-600 text-sm">✔</span>}
-          {value === "Rejected" && <span className="text-red-600 text-sm">✖</span>}
+          {value === "Accepted" && (
+            <span className="text-green-600 text-sm">✔</span>
+          )}
+          {value === "Rejected" && (
+            <span className="text-red-600 text-sm">✖</span>
+          )}
         </span>
         {value || "N/A"}
       </span>
@@ -52,7 +61,9 @@ function StatusCell({ value, row }) {
             >
               View
             </button>
-            <button className="px-3 py-1 w-full hover:bg-gray-100 text-left text-[13px]">Edit</button>
+            <button className="px-3 py-1 w-full hover:bg-gray-100 text-left text-[13px]">
+              Edit
+            </button>
           </div>
         )}
       </div>
@@ -69,8 +80,11 @@ function UniversalTable({ columns, data, rowsPerPage = 6, searchTerm }) {
   const filteredData = searchTerm
     ? data.filter((row) =>
         columns.some((col) =>
-          row[col.key]?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-        )
+          row[col.key]
+            ?.toString()
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()),
+        ),
       )
     : data;
 
@@ -82,7 +96,7 @@ function UniversalTable({ columns, data, rowsPerPage = 6, searchTerm }) {
   useEffect(() => {
     if (headerRef.current) {
       const widths = Array.from(headerRef.current.querySelectorAll("th")).map(
-        (th) => th.offsetWidth
+        (th) => th.offsetWidth,
       );
       setColWidths(widths);
     }
@@ -100,14 +114,18 @@ function UniversalTable({ columns, data, rowsPerPage = 6, searchTerm }) {
               <th
                 key={col.key}
                 className={`px-4 py-3 font-medium text-gray-700 text-center whitespace-nowrap ${
-                  idx === 0 ? "rounded-tl-2xl" : idx === columns.length - 1 ? "rounded-tr-2xl" : ""
+                  idx === 0
+                    ? "rounded-tl-2xl"
+                    : idx === columns.length - 1
+                      ? "rounded-tr-2xl"
+                      : ""
                 }`}
                 style={{
                   width: colWidths[idx]
                     ? `${colWidths[idx]}px`
                     : col.width
-                    ? `${col.width}px`
-                    : "auto",
+                      ? `${col.width}px`
+                      : "auto",
                 }}
               >
                 {col.label}
@@ -123,7 +141,10 @@ function UniversalTable({ columns, data, rowsPerPage = 6, searchTerm }) {
         <tbody className="divide-y divide-gray-100">
           {currentData.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="py-4 text-center text-gray-500">
+              <td
+                colSpan={columns.length}
+                className="py-4 text-center text-gray-500"
+              >
                 No data available
               </td>
             </tr>
@@ -138,8 +159,8 @@ function UniversalTable({ columns, data, rowsPerPage = 6, searchTerm }) {
                       width: colWidths[colIdx]
                         ? `${colWidths[colIdx]}px`
                         : col.width
-                        ? `${col.width}px`
-                        : "auto",
+                          ? `${col.width}px`
+                          : "auto",
                     }}
                   >
                     {col.render
@@ -156,18 +177,25 @@ function UniversalTable({ columns, data, rowsPerPage = 6, searchTerm }) {
               <td colSpan={columns.length}>
                 <div className="flex justify-between items-center px-4 py-3 text-[12px]">
                   <span className="text-gray-500">
-                    Showing {startIdx + 1}-{Math.min(endIdx, filteredData.length)} of {filteredData.length}
+                    Showing {startIdx + 1}-
+                    {Math.min(endIdx, filteredData.length)} of{" "}
+                    {filteredData.length}
                   </span>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                      onClick={() =>
+                        currentPage > 1 && setCurrentPage(currentPage - 1)
+                      }
                       disabled={currentPage === 1}
                       className="p-2 rounded disabled:opacity-50 hover:bg-gray-300"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+                      onClick={() =>
+                        currentPage < totalPages &&
+                        setCurrentPage(currentPage + 1)
+                      }
                       disabled={currentPage === totalPages}
                       className="p-2 rounded disabled:opacity-50 hover:bg-gray-300"
                     >
@@ -218,7 +246,10 @@ export default function AttendanceReports() {
 
   // Set initial default month range
   useEffect(() => {
-    const [from, to] = getDefaultDates(today.getMonth() + 1, today.getFullYear());
+    const [from, to] = getDefaultDates(
+      today.getMonth() + 1,
+      today.getFullYear(),
+    );
     setFromDate(from);
     setToDate(to);
   }, []);
@@ -233,24 +264,25 @@ export default function AttendanceReports() {
   // API integration
   useEffect(() => {
     axiosInstance
-      .get(`/admin/staff/fullreport/${selectedMonth}/${selectedYear}`, {
-        params: { from: fromDate, to: toDate },
-      })
+      .get(`/admin/staff/fullreport/${selectedMonth}/${selectedYear}`, {})
       .then((res) => {
-        const mapped = res.data?.data?.map((item) => ({
-          name: item.name || "N/A",
-          designation: item.designation || "N/A",
-          user_id: item.user_id || "N/A",
-          department: item.department || "N/A",
-          doj: item.doj
-            ? (() => {
-                const d = new Date(item.doj);
-                return isNaN(d.getTime()) ? "N/A" : d.toISOString().split("T")[0];
-              })()
-            : "N/A",
-          net_salary: item.net_salary != null ? item.net_salary : "N/A",
-          status: item.net_salary > 0 ? "Accepted" : "Pending",
-        })) || [];
+        const mapped =
+          res.data?.data?.map((item) => ({
+            name: item.name || "N/A",
+            designation: item.designation || "N/A",
+            user_id: item.user_id || "N/A",
+            department: item.department || "N/A",
+            doj: item.doj
+              ? (() => {
+                  const d = new Date(item.doj);
+                  return isNaN(d.getTime())
+                    ? "N/A"
+                    : d.toISOString().split("T")[0];
+                })()
+              : "N/A",
+            net_salary: item.net_salary != null ? item.net_salary : "N/A",
+            status: item.net_salary > 0 ? "Accepted" : "Pending",
+          })) || [];
         setApiData(mapped);
       })
       .catch((err) => {
@@ -264,7 +296,9 @@ export default function AttendanceReports() {
       {/* Header */}
       <div className="flex justify-between items-center mb-2 flex-wrap gap-3 w-full px-2">
         <div className="text-[16px] font-medium">
-          {new Date(selectedYear, selectedMonth - 1).toLocaleString("default", { month: "short" })}{" "}
+          {new Date(selectedYear, selectedMonth - 1).toLocaleString("default", {
+            month: "short",
+          })}{" "}
           {selectedYear}
         </div>
 
@@ -288,7 +322,10 @@ export default function AttendanceReports() {
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
           >
-            {Array.from({ length: 5 }, (_, i) => today.getFullYear() - 2 + i).map((yr) => (
+            {Array.from(
+              { length: 5 },
+              (_, i) => today.getFullYear() - 2 + i,
+            ).map((yr) => (
               <option key={yr} value={yr}>
                 {yr}
               </option>
@@ -303,7 +340,10 @@ export default function AttendanceReports() {
               onChange={(e) => setFromDate(e.target.value)}
               className="remove-default-icon border border-gray-300 bg-white rounded px-3 py-1 w-full pr-8"
             />
-            <Icon icon="solar:calendar-linear" className="absolute right-2 top-1/2 -translate-y-1/2 text-lg" />
+            <Icon
+              icon="solar:calendar-linear"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-lg"
+            />
           </div>
 
           <span className="text-[13px] font-medium mx-1">to</span>
@@ -316,13 +356,18 @@ export default function AttendanceReports() {
               onChange={(e) => setToDate(e.target.value)}
               className="remove-default-icon border border-gray-300 bg-white rounded px-3 py-1 w-full pr-8"
             />
-            <Icon icon="solar:calendar-linear" className="absolute right-2 top-1/2 -translate-y-1/2 text-lg" />
+            <Icon
+              icon="solar:calendar-linear"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-lg"
+            />
           </div>
 
           {/* Download */}
           <button
             className="flex items-center px-4 py-1 bg-black text-white rounded"
-            onClick={() => console.log("Download clicked. Current data:", apiData)}
+            onClick={() =>
+              console.log("Download clicked. Current data:", apiData)
+            }
           >
             <FiDownload className="mr-2" /> Download
           </button>
@@ -336,14 +381,22 @@ export default function AttendanceReports() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-1 w-full pr-8"
             />
-            <Icon icon="mynaui:search" className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-lg" />
+            <Icon
+              icon="mynaui:search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-lg"
+            />
           </div>
         </div>
       </div>
 
       {/* Table */}
       <div className="overflow-auto scrollbar-hide">
-        <UniversalTable columns={columns} data={apiData} rowsPerPage={5} searchTerm={searchTerm} />
+        <UniversalTable
+          columns={columns}
+          data={apiData}
+          rowsPerPage={5}
+          searchTerm={searchTerm}
+        />
       </div>
     </div>
   );

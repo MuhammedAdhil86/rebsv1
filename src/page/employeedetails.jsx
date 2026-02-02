@@ -49,11 +49,11 @@ export default function EmployeeProfile() {
       const newStatus = !isActive;
 
       await axiosInstance.put(
-        `/staff/toggle-activate/${selectedEmployee.uuid}?activate=${newStatus}`
+        `/staff/toggle-activate/${selectedEmployee.uuid}?activate=${newStatus}`,
       );
 
       toast.success(
-        `Employee ${newStatus ? "activated" : "deactivated"} successfully!`
+        `Employee ${newStatus ? "activated" : "deactivated"} successfully!`,
       );
 
       await fetchEmployeeById(selectedEmployee.id);
@@ -95,7 +95,7 @@ export default function EmployeeProfile() {
     { name: "Attachments", icon: "subway:pin" },
     { name: "Manage Shift", icon: "ic:twotone-manage-history" },
     { name: "Privilege", icon: "carbon:ibm-knowledge-catalog-premium" },
-    { name: "Notifications", icon: "hugeicons:notification-02" }, 
+    { name: "Notifications", icon: "hugeicons:notification-02" },
     { name: "Settings", icon: "solar:settings-linear" },
   ];
 
@@ -202,11 +202,16 @@ export default function EmployeeProfile() {
             ) : activeTab === "Personal Info" ? (
               <PersonalInfoTab employee={selectedEmployee} />
             ) : activeTab === "Attachments" ? (
-              <AttachmentsTab attachments={selectedEmployee?.attachments || []} />
+              <AttachmentsTab
+                attachments={selectedEmployee?.attachments || []}
+              />
             ) : activeTab === "Privilege" ? (
               <Privilege employee={selectedEmployee} />
             ) : activeTab === "Settings" ? (
-              <SettingsTab employee={selectedEmployee} />
+              <SettingsTab
+                employee={selectedEmployee}
+                employeeUUID={selectedEmployee?.uuid}
+              />
             ) : (
               <div className="p-6 bg-white rounded-xl shadow-md text-gray-500">
                 {activeTab} content coming soon...

@@ -8,31 +8,33 @@ import CompliancesDeductions from "../company_onboarding_tabs/settings_tabs/comp
 import Salary from "../company_onboarding_tabs/settings_tabs/salary";
 
 // Lazy-loaded heavy components
-const LeavesVacation = lazy(() =>
-  import("../company_onboarding_tabs/settings_tabs/leavesandvacation")
-);
-const PayrollTemplates = lazy(() =>
-  import("../company_onboarding_tabs/settings_tabs/payrolltemplate")
+const LeavesVacation = lazy(
+  () => import("../company_onboarding_tabs/settings_tabs/leavesandvacation"),
 );
 
 export default function SettingsTab({ employee }) {
+  // Guard against undefined employee
+  const employeeUUID = employee?.uuid;
+
+  if (!employeeUUID) {
+    return <div className="text-gray-500 p-4">Loading settings...</div>;
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-1">
       {/* Lightweight components */}
-      <ManagePreferences
-        uuid={employee?.uuid}
-        initialPreferences={employee}
-      />
+      <ManagePreferences uuid={employeeUUID} initialPreferences={employee} />
       <ActionCenter employee={employee} />
-      <ManagePrivileges uuid={employee?.uuid} />
+      <ManagePrivileges uuid={employeeUUID} />
       <CompliancesDeductions employee={employee} />
       <Salary employee={employee} />
 
       {/* Lazy-loaded components with fallback */}
-      <Suspense fallback={<div className="text-gray-500">Loading Leaves...</div>}>
+      <Suspense
+        fallback={<div className="text-gray-500">Loading Leaves...</div>}
+      >
         <LeavesVacation employee={employee} />
       </Suspense>
-
     </div>
   );
 }

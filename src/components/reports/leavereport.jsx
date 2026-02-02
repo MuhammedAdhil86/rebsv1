@@ -45,11 +45,14 @@ export default function LeaveReports() {
         from: from || undefined,
         to: to || (from ? from : undefined),
         is_half_day: selectedFilter === "isHalfDay" ? isHalfDay : undefined,
-        half_day_type: selectedFilter === "halfDayType" ? halfDayType : undefined,
+        half_day_type:
+          selectedFilter === "halfDayType" ? halfDayType : undefined,
         status: selectedFilter === "status" ? status : undefined,
       };
 
-      const res = await axiosInstance.get("admin/leave/employee/leave/report", { params });
+      const res = await axiosInstance.get("admin/leave/employee/leave/report", {
+        params,
+      });
       const list = res.data?.data?.records || [];
 
       // Process fields for table
@@ -148,8 +151,15 @@ export default function LeaveReports() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Leave Reports");
 
-    const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true });
-    saveAs(new Blob([buffer], { type: "application/octet-stream" }), `leave_report_${from || "all"}_${to || "all"}.xlsx`);
+    const buffer = XLSX.write(wb, {
+      bookType: "xlsx",
+      type: "array",
+      cellStyles: true,
+    });
+    saveAs(
+      new Blob([buffer], { type: "application/octet-stream" }),
+      `leave_report_${from || "all"}_${to || "all"}.xlsx`,
+    );
   };
 
   return (
@@ -206,25 +216,38 @@ export default function LeaveReports() {
           {/* Conditional Filters */}
           {selectedFilter === "isHalfDay" && (
             <label className="flex items-center gap-2 text-xs">
-              <input type="checkbox" checked={isHalfDay} onChange={(e) => setIsHalfDay(e.target.checked)} className="w-4 h-4" />
+              <input
+                type="checkbox"
+                checked={isHalfDay}
+                onChange={(e) => setIsHalfDay(e.target.checked)}
+                className="w-4 h-4"
+              />
               Half Day Leave
             </label>
           )}
           {selectedFilter === "halfDayType" && (
-            <select value={halfDayType} onChange={(e) => setHalfDayType(e.target.value)} className="border rounded-lg px-3 sm:px-4 py-2 text-xs">
+            <select
+              value={halfDayType}
+              onChange={(e) => setHalfDayType(e.target.value)}
+              className="border rounded-lg px-3 sm:px-4 py-2 text-xs"
+            >
               <option value="">Half Day Type</option>
               <option value="1">First Half</option>
               <option value="2">Second Half</option>
             </select>
           )}
           {selectedFilter === "status" && (
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className="border rounded-lg px-3 sm:px-4 py-2 text-xs">
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="border rounded-lg px-3 sm:px-4 py-2 text-xs"
+            >
               <option value="">Select Status</option>
               <option value="APPROVED">Approved</option>
               <option value="PENDING">Pending</option>
               <option value="REJECTED">Rejected</option>
             </select>
-          )}z
+          )}
 
           {/* Download Button */}
           <button
@@ -254,7 +277,7 @@ export default function LeaveReports() {
           >
             {hoverText}
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );

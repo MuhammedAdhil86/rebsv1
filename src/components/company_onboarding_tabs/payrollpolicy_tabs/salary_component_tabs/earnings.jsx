@@ -14,7 +14,7 @@ const Earnings = ({ onEdit }) => {
     setLoading(true);
     try {
       const res = await axiosInstance.get(
-        "api/payroll/components?limit=10&offset=0"
+        "api/payroll/components?limit=10&offset=0",
       );
 
       const items = res.data?.data?.items || [];
@@ -59,7 +59,13 @@ const Earnings = ({ onEdit }) => {
       label: "Calculation Type",
       align: "left",
       render: (value) => (
-        <div style={{ whiteSpace: "normal", wordBreak: "break-word", maxWidth: "300px" }}>
+        <div
+          style={{
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            maxWidth: "300px",
+          }}
+        >
           {value}
         </div>
       ),
@@ -85,7 +91,7 @@ const Earnings = ({ onEdit }) => {
   ];
 
   return (
-    <div className="p-4">
+    <div className="p-1">
       {loading ? (
         <div className="text-center py-10 text-gray-500">Loading...</div>
       ) : (
