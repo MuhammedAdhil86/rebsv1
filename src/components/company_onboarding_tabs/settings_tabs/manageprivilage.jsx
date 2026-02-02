@@ -6,6 +6,7 @@ import {
   fetchUserPayrollTemplates,
   allocatePayrollTemplate,
 } from "../../../service/staffservice";
+import toast, { Toaster } from "react-hot-toast"; // <-- import toast
 
 /* --------------------------
    Reverse Geocode Helper
@@ -25,10 +26,10 @@ const getPlaceName = async (latitude, longitude) => {
   }
 };
 
+/* --------------------------
+   Main Component
+-------------------------- */
 export default function ManagePrivilegesSection({ uuid }) {
-  /* --------------------------
-     State
-  -------------------------- */
   const [userType, setUserType] = useState("-");
   const [shift, setShift] = useState("");
   const [device, setDevice] = useState("-");
@@ -37,11 +38,20 @@ export default function ManagePrivilegesSection({ uuid }) {
   const [shifts, setShifts] = useState([]);
   const [templates, setTemplates] = useState([]);
 
-  const [selectedTemplateId, setSelectedTemplateId] = useState("");
-  const [effectiveFrom, setEffectiveFrom] = useState("");
-  const [effectiveTo, setEffectiveTo] = useState("");
+  // Modal states
+  const [showShiftModal, setShowShiftModal] = useState(false);
+  const [showPayrollModal, setShowPayrollModal] = useState(false);
 
-  const [isEditing, setIsEditing] = useState(false);
+  // Shift modal state
+  const [selectedShiftId, setSelectedShiftId] = useState("");
+  const [shiftFrom, setShiftFrom] = useState("");
+  const [shiftTo, setShiftTo] = useState("");
+
+  // Payroll modal state
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [payrollFrom, setPayrollFrom] = useState("");
+  const [payrollTo, setPayrollTo] = useState("");
+
   const [loading, setLoading] = useState(true);
 
   /* --------------------------
@@ -54,13 +64,14 @@ export default function ManagePrivilegesSection({ uuid }) {
         setShifts(res.data?.data || []);
       } catch (error) {
         console.error("Failed to fetch shifts:", error);
+        toast.error("Failed to fetch shifts");
       }
     };
     fetchShifts();
   }, []);
 
   /* --------------------------
-     Fetch salary templates
+     Fetch payroll templates
   -------------------------- */
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -69,6 +80,7 @@ export default function ManagePrivilegesSection({ uuid }) {
         setTemplates(data || []);
       } catch (err) {
         console.error("Failed to fetch templates", err);
+        toast.error("Failed to fetch payroll templates");
       }
     };
     fetchTemplates();
@@ -83,15 +95,14 @@ export default function ManagePrivilegesSection({ uuid }) {
     const fetchPrivileges = async () => {
       setLoading(true);
       try {
-        // User Type & Shift
         const shiftRes = await axiosInstance.get(
           `/master/shift-attendance-user-type/${uuid}`,
         );
         const shiftData = shiftRes.data?.data || {};
         setUserType(shiftData.user_type || "-");
         setShift(shiftData.shift_name || "");
+        setSelectedShiftId(shiftData.shift_id || "");
 
-        // Device & Location
         const locRes = await axiosInstance.get(
           `/master/location-device/${uuid}`,
         );
@@ -108,15 +119,14 @@ export default function ManagePrivilegesSection({ uuid }) {
           setLocation("-");
         }
 
-        // Current payroll template
         const templateData = await fetchUserPayrollTemplates(uuid);
         const currentTemplate = templateData?.allocation?.template?.name || "-";
         const currentTemplateId = templateData?.allocation?.template?.id || "";
-
         setPayrollTemplate(currentTemplate);
         setSelectedTemplateId(currentTemplateId);
       } catch (error) {
         console.error("Failed to fetch privileges:", error);
+        toast.error("Failed to fetch user privileges");
       } finally {
         setLoading(false);
       }
@@ -126,157 +136,221 @@ export default function ManagePrivilegesSection({ uuid }) {
   }, [uuid]);
 
   /* --------------------------
-     Save handler
+     Save Shift Allocation
   -------------------------- */
-  const handleSave = async () => {
-    if (!uuid) return;
+  const saveShift = async () => {
+    if (!selectedShiftId || !shiftFrom) {
+      toast.error("Please select shift and Effective From date.");
+      return;
+    }
 
-    if (!effectiveFrom) {
-      alert("Effective From date is required");
+    if (shiftTo && shiftFrom > shiftTo) {
+      toast.error("Effective To date cannot be before Effective From date.");
       return;
     }
 
     try {
-      // Update shift
-      await axiosInstance.put(`/master/update-shift/${uuid}`, {
-        shift_name: shift,
-      });
+      const payload = {
+        shift_id: selectedShiftId,
+        staff_id: uuid,
+        from_date: new Date(shiftFrom).toISOString(),
+        to_date: shiftTo ? new Date(shiftTo).toISOString() : null,
+      };
 
-      // Allocate payroll template
-      await allocatePayrollTemplate({
-        user_id: uuid,
-        template_id: selectedTemplateId,
-        effective_from: new Date(effectiveFrom).toISOString(),
-        effective_to: effectiveTo ? new Date(effectiveTo).toISOString() : null,
-      });
+      console.log("Shift allocation payload:", payload);
 
-      const selectedTemplate = templates.find(
-        (t) => t.id === Number(selectedTemplateId),
-      );
+      await axiosInstance.post("/shifts/allocate", payload);
 
-      setPayrollTemplate(selectedTemplate?.name || "-");
-      setIsEditing(false);
+      const shiftObj = shifts.find((s) => s.id === selectedShiftId);
+      setShift(shiftObj?.shift_name || "-");
+      setShowShiftModal(false);
+      toast.success("Shift updated successfully!");
     } catch (error) {
-      console.error("Failed to save privileges:", error);
+      console.error("Failed to save shift:", error.response?.data || error);
+      toast.error(
+        error.response?.data?.message || "Failed to upsert shift allocation",
+      );
     }
   };
 
-  if (!uuid) {
-    return <div className="text-gray-500 p-4">Loading privileges...</div>;
-  }
-
   /* --------------------------
-     Render
+     Save Payroll Template
   -------------------------- */
+  const savePayroll = async () => {
+    if (!selectedTemplateId || !payrollFrom) {
+      toast.error("Please select template and Effective From date.");
+      return;
+    }
+
+    if (payrollTo && payrollFrom > payrollTo) {
+      toast.error("Effective To date cannot be before Effective From date.");
+      return;
+    }
+
+    try {
+      const payload = {
+        user_id: uuid,
+        template_id: selectedTemplateId,
+        effective_from: new Date(payrollFrom).toISOString(),
+        effective_to: payrollTo ? new Date(payrollTo).toISOString() : null,
+      };
+
+      console.log("Payroll allocation payload:", payload);
+
+      await allocatePayrollTemplate(payload);
+
+      const templateObj = templates.find(
+        (t) => t.id === Number(selectedTemplateId),
+      );
+      setPayrollTemplate(templateObj?.name || "-");
+      setShowPayrollModal(false);
+      toast.success("Payroll template updated successfully!");
+    } catch (error) {
+      console.error("Failed to save payroll:", error.response?.data || error);
+      toast.error(error.response?.data?.message || "Failed to save payroll");
+    }
+  };
+
+  if (loading)
+    return <div className="text-gray-500 p-4">Loading privileges...</div>;
+
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium text-gray-800 text-[14px]">
-          Manage Privileges
-        </h3>
-        {isEditing ? (
-          <button
-            onClick={handleSave}
-            className="text-sm text-blue-600 font-medium hover:underline"
-          >
-            Save
-          </button>
-        ) : (
-          <Icon
-            icon="basil:edit-outline"
-            className="w-5 h-5 text-gray-400 cursor-pointer"
-            onClick={() => setIsEditing(true)}
-          />
-        )}
-      </div>
+    <div className="bg-white rounded-xl p-4 shadow-sm border w-full space-y-4">
+      {/* Toast Container */}
+      <Toaster position="top-right" />
 
-      {loading ? (
-        <p className="text-gray-500 text-sm">Loading privileges...</p>
-      ) : (
-        <div className="text-sm space-y-2">
-          {/* User Type */}
-          <Row label="User Type" value={userType} />
+      <div className="text-sm space-y-2">
+        <Row label="User Type" value={userType} />
 
-          {/* Work Shift */}
-          <div className="flex justify-between items-center border-b border-gray-100 py-2">
-            <span className="text-gray-500 text-[12px]">Work Shift</span>
-            {isEditing ? (
-              <select
-                value={shift}
-                onChange={(e) => setShift(e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1 text-[13px] w-[180px]"
-              >
-                <option value="">Select Shift</option>
-                {shifts.map((s) => (
-                  <option key={s.id} value={s.shift_name}>
-                    {s.shift_name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <span className="font-medium text-gray-800 text-[13px]">
-                {shift || "-"}
-              </span>
-            )}
-          </div>
-
-          <Row label="Registered Device" value={device} />
-          <Row label="Location" value={location} />
-
-          {/* Payroll Template */}
-          <div className="flex flex-col gap-2 border-b border-gray-100 py-2">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500 text-[12px]">
-                Payroll Template
-              </span>
-              {isEditing ? (
-                <select
-                  value={selectedTemplateId}
-                  onChange={(e) => setSelectedTemplateId(e.target.value)}
-                  className="border border-gray-300 rounded px-2 py-1 text-[13px] w-[180px]"
-                >
-                  <option value="">Select Template</option>
-                  {templates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="font-medium text-gray-800 text-[13px]">
-                  {payrollTemplate}
-                </span>
-              )}
-            </div>
-
-            {/* Date pickers */}
-            {isEditing && selectedTemplateId && (
-              <div className="flex gap-2 justify-end">
-                <input
-                  type="date"
-                  value={effectiveFrom}
-                  onChange={(e) => setEffectiveFrom(e.target.value)}
-                  required
-                  className="border rounded px-2 py-1 text-[12px]"
-                />
-                <input
-                  type="date"
-                  value={effectiveTo}
-                  onChange={(e) => setEffectiveTo(e.target.value)}
-                  className="border rounded px-2 py-1 text-[12px]"
-                />
-              </div>
-            )}
+        <div className="flex justify-between items-center border-b border-gray-100 py-2">
+          <span className="text-gray-500 text-[12px]">Work Shift</span>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-gray-800 text-[13px]">
+              {shift || "-"}
+            </span>
+            <button
+              className="text-blue-600 text-[12px] hover:underline"
+              onClick={() => {
+                setSelectedShiftId(
+                  shifts.find((s) => s.shift_name === shift)?.id || "",
+                );
+                setShiftFrom(new Date().toISOString().split("T")[0]);
+                setShiftTo("");
+                setShowShiftModal(true);
+              }}
+            >
+              Change Shift
+            </button>
           </div>
         </div>
+
+        <div className="flex justify-between items-center border-b border-gray-100 py-2">
+          <span className="text-gray-500 text-[12px]">Payroll Template</span>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-gray-800 text-[13px]">
+              {payrollTemplate || "-"}
+            </span>
+            <button
+              className="text-blue-600 text-[12px] hover:underline"
+              onClick={() => {
+                setPayrollFrom(new Date().toISOString().split("T")[0]);
+                setPayrollTo("");
+                setShowPayrollModal(true);
+              }}
+            >
+              Change Payroll Template
+            </button>
+          </div>
+        </div>
+
+        <Row label="Registered Device" value={device} />
+        <Row label="Location" value={location} />
+      </div>
+
+      {/* Shift Modal */}
+      {showShiftModal && (
+        <Modal title="Change Shift" onClose={() => setShowShiftModal(false)}>
+          <div className="flex flex-col gap-2">
+            <select
+              value={selectedShiftId}
+              onChange={(e) => setSelectedShiftId(Number(e.target.value))}
+              className="border rounded px-2 py-1"
+            >
+              <option value="">Select Shift</option>
+              {shifts.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.shift_name}
+                </option>
+              ))}
+            </select>
+            <input
+              type="date"
+              value={shiftFrom}
+              onChange={(e) => setShiftFrom(e.target.value)}
+              className="border rounded px-2 py-1"
+            />
+            <input
+              type="date"
+              value={shiftTo}
+              onChange={(e) => setShiftTo(e.target.value)}
+              className="border rounded px-2 py-1"
+            />
+            <button
+              className="bg-blue-600 text-white px-4 py-1 rounded mt-2"
+              onClick={saveShift}
+            >
+              Save Shift
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Payroll Modal */}
+      {showPayrollModal && (
+        <Modal
+          title="Change Payroll Template"
+          onClose={() => setShowPayrollModal(false)}
+        >
+          <div className="flex flex-col gap-2">
+            <select
+              value={selectedTemplateId}
+              onChange={(e) => setSelectedTemplateId(Number(e.target.value))}
+              className="border rounded px-2 py-1"
+            >
+              <option value="">Select Template</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            <input
+              type="date"
+              value={payrollFrom}
+              onChange={(e) => setPayrollFrom(e.target.value)}
+              className="border rounded px-2 py-1"
+            />
+            <input
+              type="date"
+              value={payrollTo}
+              onChange={(e) => setPayrollTo(e.target.value)}
+              className="border rounded px-2 py-1"
+            />
+            <button
+              className="bg-blue-600 text-white px-4 py-1 rounded mt-2"
+              onClick={savePayroll}
+            >
+              Save Payroll
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );
 }
 
 /* --------------------------
-   Reusable Row
+   Reusable Row Component
 -------------------------- */
 function Row({ label, value }) {
   return (
@@ -285,6 +359,25 @@ function Row({ label, value }) {
       <span className="font-medium text-gray-800 text-[13px] max-w-[220px] truncate">
         {value || "-"}
       </span>
+    </div>
+  );
+}
+
+/* --------------------------
+   Simple Modal Component
+-------------------------- */
+function Modal({ title, onClose, children }) {
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-4 w-[300px] space-y-2">
+        <div className="flex justify-between items-center">
+          <h3 className="font-medium">{title}</h3>
+          <button className="text-gray-500" onClick={onClose}>
+            ✕
+          </button>
+        </div>
+        <div>{children}</div>
+      </div>
     </div>
   );
 }

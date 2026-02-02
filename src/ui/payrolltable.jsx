@@ -38,18 +38,18 @@ export default function PayrollTable({
   }, [data, searchTerm, columns]);
 
   return (
-    <section className="p-2 rounded-2xl overflow-x-auto relative w-full bg-gray-50">
+    <section className=" rounded-lg overflow-x-auto relative w-full bg-gray-50">
       {/* ===== HEADER TABLE ===== */}
       <table
         ref={headerRef}
-        className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl overflow-hidden"
+        className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0  overflow-hidden"
       >
-        <thead className="bg-white text-gray-600 text-[12.5px]">
+        <thead className="bg-white text-black text-[12.5px]">
           <tr>
             {columns.map((col, idx) => (
               <th
                 key={col.key}
-                className={`px-4 py-3 font-medium text-gray-700 text-center whitespace-nowrap align-middle
+                className={`px-4 py-3 font-medium text-black text-center whitespace-nowrap align-middle
                 ${
                   idx === 0
                     ? "rounded-tl-2xl"
@@ -76,7 +76,7 @@ export default function PayrollTable({
       <div className="h-2" />
 
       {/* ===== BODY TABLE ===== */}
-      <table className="w-full min-w-[600px] bg-white border-separate border-spacing-0 rounded-2xl overflow-hidden">
+      <table className="w-full min-w-[600px] bg-white border-separate border-spacing-0 rounded-lg overflow-hidden">
         <tbody className="text-gray-800">
           {currentData.length === 0 ? (
             <tr>

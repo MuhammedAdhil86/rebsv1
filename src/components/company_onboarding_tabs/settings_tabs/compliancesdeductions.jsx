@@ -27,7 +27,7 @@ export default function CompliancesSection() {
   ];
 
   const [toggles, setToggles] = useState(
-    complianceItems.reduce((acc, item) => ({ ...acc, [item]: true }), {})
+    complianceItems.reduce((acc, item) => ({ ...acc, [item]: true }), {}),
   );
   const [isEditing, setIsEditing] = useState(false);
 
@@ -44,7 +44,9 @@ export default function CompliancesSection() {
     <div className="bg-white rounded-xl p-4 shadow-sm border w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium text-gray-800 text-[14px]">Compliances & Deductions</h3>
+        <h3 className="font-medium text-gray-800 text-[14px]">
+          Compliances & Deductions
+        </h3>
         <div className="flex items-center gap-2">
           {isEditing ? (
             <button

@@ -91,7 +91,7 @@ const Earnings = ({ onEdit }) => {
   ];
 
   return (
-    <div className="p-1">
+    <div className="">
       {loading ? (
         <div className="text-center py-10 text-gray-500">Loading...</div>
       ) : (

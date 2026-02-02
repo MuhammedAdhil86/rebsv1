@@ -27,7 +27,7 @@ const ManagePayrollPolicy = () => {
 
   return (
     <div className="min-h-screen font-[Poppins] text-sm">
-      <div className=" border  rounded-2xl shadow-sm p-5">
+      <div className=" border  rounded-2xl shadow-sm p-3">
         {/* Tabs + Create Button */}
         <div className="flex justify-between items-center mb-5">
           <div className="flex flex-wrap items-center gap-1">
@@ -38,7 +38,7 @@ const ManagePayrollPolicy = () => {
                   setActiveTab(tab.id);
                   setShowCreate(false);
                 }}
-                className={`px-3 h-[40px] text-xs rounded-md border font-medium transition-all flex items-center justify-center
+                className={`px-3 h-[30px] text-xs rounded-md border font-medium transition-all flex items-center justify-center
                   ${
                     activeTab === tab.id
                       ? "bg-black text-white border-black"
