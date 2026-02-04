@@ -1,42 +1,35 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Calendar, ChevronDown } from "lucide-react";
 import axiosInstance from "../service/axiosinstance";
-import toast from "react-hot-toast"; // toast import
+import toast from "react-hot-toast";
+import ColorPicker from "./colorpicker";
 
 const CreateShiftModal = ({ isOpen, onClose }) => {
-  // Form state
   const [shiftName, setShiftName] = useState("");
   const [shiftCode, setShiftCode] = useState("");
-  const [shiftColour, setShiftColour] = useState("#4CAF50");
+  const [shiftColour, setShiftColour] = useState("");
   const [isCrossShift, setIsCrossShift] = useState(false);
   const [policies, setPolicies] = useState([]);
   const [allPolicies, setAllPolicies] = useState([]);
-  const [remarks, setRemarks] = useState(""); // ✅ Remarks field
+  const [remarks, setRemarks] = useState("");
   const [loading, setLoading] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
   const dropdownRef = useRef(null);
 
-  // Fetch attendance policies
   useEffect(() => {
     const fetchPolicies = async () => {
       try {
         const res = await axiosInstance.get("/attendance-policy/get");
         setAllPolicies(res.data.data || []);
       } catch (err) {
-        console.error(
-          "Error fetching attendance policies:",
-          err.response?.data || err.message
-        );
-        if (err.response?.status === 401) {
-          toast.error("Session expired. Please login again.");
-          window.location.href = "/";
-        }
+        toast.error("Session expired. Please login again.");
+        window.location.href = "/";
       }
     };
     fetchPolicies();
   }, []);
 
-  // Close dropdown if click outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -51,7 +44,7 @@ const CreateShiftModal = ({ isOpen, onClose }) => {
     setPolicies((prev) =>
       prev.includes(policyId)
         ? prev.filter((id) => id !== policyId)
-        : [...prev, policyId]
+        : [...prev, policyId],
     );
   };
 
@@ -63,62 +56,56 @@ const CreateShiftModal = ({ isOpen, onClose }) => {
       is_cross_shift: isCrossShift,
       is_default: false,
       policies,
-      remarks, // ✅ include remarks in payload
+      remarks,
     };
 
     try {
       setLoading(true);
-      const res = await axiosInstance.post("/shifts/add", payload);
-      console.log("Shift created:", res.data);
+      await axiosInstance.post("/shifts/add", payload);
       toast.success("Shift created successfully!");
       onClose();
 
-      // Reset form
       setShiftName("");
       setShiftCode("");
-      setShiftColour("#4CAF50");
+      setShiftColour("");
       setIsCrossShift(false);
       setPolicies([]);
-      setRemarks(""); // ✅ reset remarks
+      setRemarks("");
     } catch (err) {
-      console.error(
-        "Error creating shift:",
-        err.response?.data || err.message
-      );
       toast.error("Error creating shift");
     } finally {
       setLoading(false);
     }
   };
 
-  // Styles
+  // ✅ Unified styles
   const inputStyle =
-    "w-full px-4 py-3 bg-[#F4F6F8] border border-gray-200 rounded-xl text-sm text-[#797979] placeholder:text-[#797979] focus:outline-none focus:ring-1 focus:ring-gray-300 transition-all";
-  const labelStyle = "text-[13px] text-black mb-2 block";
+    "w-full h-11 px-3 bg-[#F4F6F8] border border-gray-200 rounded-xl text-[12px] text-[#797979] font-[Poppins] focus:outline-none focus:ring-1 focus:ring-gray-300 flex items-center";
+
+  const labelStyle = "text-[12px] font-[Poppins] text-black mb-1 block";
 
   return (
     <>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm font-[Poppins]">
           <div className="bg-white w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-[#F4F6F8] rounded-lg text-black border border-gray-100">
-                  <Calendar size={20} />
+                <div className="bg-[#F4F6F8] rounded-lg border border-gray-100 p-1">
+                  <Calendar size={18} />
                 </div>
-                <h2 className="text-lg text-black tracking-tight">Create Shift</h2>
+                <h2 className="text-[16px] font-medium text-black">
+                  Create Shift
+                </h2>
               </div>
-              <button
-                onClick={onClose}
-                className="text-black hover:text-gray-600 transition-colors"
-              >
-                <X size={24} />
+              <button onClick={onClose}>
+                <X size={20} />
               </button>
             </div>
 
             {/* Form Body */}
-            <div className="p-8 grid grid-cols-2 gap-x-10 gap-y-6">
+            <div className="p-4 grid grid-cols-2 gap-x-8 gap-y-5">
               {/* Shift Name */}
               <div>
                 <label className={labelStyle}>Shift Name</label>
@@ -131,14 +118,14 @@ const CreateShiftModal = ({ isOpen, onClose }) => {
                 />
               </div>
 
-              {/* Attendance Policies Dropdown */}
+              {/* Attendance Policies */}
               <div ref={dropdownRef} className="relative">
                 <label className={labelStyle}>Attendance Policies</label>
                 <div
-                  className={`${inputStyle} flex items-center justify-between cursor-pointer`}
-                  onClick={() => setDropdownOpen((prev) => !prev)}
+                  className={`${inputStyle} justify-between cursor-pointer`}
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
-                  <span>
+                  <span className="truncate">
                     {policies.length
                       ? allPolicies
                           .filter((p) => policies.includes(p.id))
@@ -146,15 +133,15 @@ const CreateShiftModal = ({ isOpen, onClose }) => {
                           .join(", ")
                       : "Select policies"}
                   </span>
-                  <ChevronDown size={18} />
+                  <ChevronDown size={16} />
                 </div>
 
                 {dropdownOpen && (
-                  <div className="absolute mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-60 overflow-auto">
+                  <div className="absolute mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-52 overflow-auto text-[12px]">
                     {allPolicies.map((policy) => (
                       <div
                         key={policy.id}
-                        className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                        className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
                         onClick={() => togglePolicy(policy.id)}
                       >
                         <input
@@ -163,7 +150,7 @@ const CreateShiftModal = ({ isOpen, onClose }) => {
                           readOnly
                           className="mr-2"
                         />
-                        <span>{policy.policy_name}</span>
+                        {policy.policy_name}
                       </div>
                     ))}
                   </div>
@@ -185,32 +172,37 @@ const CreateShiftModal = ({ isOpen, onClose }) => {
               {/* Shift Color */}
               <div>
                 <label className={labelStyle}>Shift Color</label>
-                <input
-                  type="color"
-                  className={`${inputStyle} h-12 w-full p-1`}
+                <ColorPicker
                   value={shiftColour}
-                  onChange={(e) => setShiftColour(e.target.value)}
+                  onChange={(color) => setShiftColour(color)}
                 />
               </div>
 
               {/* Is Cross Shift */}
-              <div>
+              <div className="relative">
                 <label className={labelStyle}>Is Cross Shift?</label>
+
                 <select
-                  className={inputStyle}
+                  className={`${inputStyle} appearance-none pr-10 cursor-pointer`}
                   value={isCrossShift}
                   onChange={(e) => setIsCrossShift(e.target.value === "true")}
                 >
                   <option value="false">No</option>
                   <option value="true">Yes</option>
                 </select>
+
+                {/* Custom dropdown arrow */}
+                <ChevronDown
+                  size={16}
+                  className="absolute right-3 top-[38px] text-gray-500 pointer-events-none"
+                />
               </div>
 
-              {/* ✅ Remarks Field */}
+              {/* Remarks */}
               <div className="col-span-2">
                 <label className={labelStyle}>Remarks</label>
                 <textarea
-                  className={`${inputStyle} h-24 resize-none`}
+                  className={`${inputStyle} h-24 resize-none py-2`}
                   placeholder="Add any remarks for this shift"
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
@@ -219,17 +211,17 @@ const CreateShiftModal = ({ isOpen, onClose }) => {
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end gap-4 p-8 border-t border-gray-100 bg-white">
+            <div className="flex justify-end gap-3 px-4 py-3 border-t border-gray-100">
               <button
                 onClick={onClose}
-                className="px-10 py-3 border border-gray-300 rounded-xl text-sm text-black hover:bg-gray-50 transition-colors"
+                className="px-8 py-2 border border-gray-300 rounded-xl text-[12px] hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="px-12 py-3 bg-black text-white rounded-xl text-sm hover:bg-neutral-800 transition-all shadow-sm"
+                className="px-10 py-2 bg-black text-white rounded-xl text-[12px] hover:bg-neutral-800"
               >
                 {loading ? "Creating..." : "Create"}
               </button>

@@ -35,7 +35,7 @@ const LeavesAndVacations = () => {
   const filteredLeaves = leaveData.filter(
     (leave) =>
       leave.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      leave.leave_type?.toLowerCase().includes(searchQuery.toLowerCase())
+      leave.leave_type?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // ✅ Columns for UniversalTable

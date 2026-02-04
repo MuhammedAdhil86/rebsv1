@@ -4,33 +4,45 @@ import UniversalTable from "../../ui/universal_table";
 import { Loader2, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { postPayrollAttendance } from "../../api/api";
+import CustomSelect from "../../ui/customselect";
+
+const monthNames = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const leaveTypes = ["Paid", "Unpaid"];
+const accrualMethods = ["Yearly", "Monthly"];
 
 export default function PayrollAttendanceReport() {
-  // ================= DATE DEFAULTS =================
   const now = new Date();
-
-  const [month, setMonth] = useState(String(now.getMonth() + 1));
+  const [month, setMonth] = useState(monthNames[now.getMonth()]);
   const [year, setYear] = useState(String(now.getFullYear()));
-
-  // ================= STATE =================
+  const [leaveType, setLeaveType] = useState("Paid");
+  const [accrualMethod, setAccrualMethod] = useState("Yearly");
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // ================= FETCH DATA =================
   const fetchData = async () => {
-    if (!month || !year) return;
-
     try {
       setLoading(true);
-
-      const res = await axiosInstance.post(
-        `${axiosInstance.baseURL2}api/payroll/calculate/attendance`,
-        {
-          month: Number(month),
-          year: Number(year),
-        }
-      );
-
+      const res = await axiosInstance.post(postPayrollAttendance, {
+        month: Number(monthNames.indexOf(month) + 1),
+        year: Number(year),
+        leave_type: leaveType.toLowerCase(),
+        accrual_method: accrualMethod.toLowerCase(),
+      });
       setRecords(res.data?.data?.employees || []);
     } catch (err) {
       console.error("Payroll attendance fetch failed:", err);
@@ -39,12 +51,10 @@ export default function PayrollAttendanceReport() {
     }
   };
 
-  // ================= EFFECT =================
   useEffect(() => {
     fetchData();
-  }, [month, year]);
+  }, [month, year, leaveType, accrualMethod]);
 
-  // ================= TABLE COLUMNS =================
   const columns = [
     { label: "User ID", key: "user_id" },
     { label: "Employee Name", key: "user_name" },
@@ -54,10 +64,8 @@ export default function PayrollAttendanceReport() {
     { label: "Net Annual", key: "net_annual" },
   ];
 
-  // ================= EXCEL EXPORT =================
   const handleDownload = () => {
     if (!records.length) return;
-
     const excelData = records.map((r) => ({
       "User ID": r.user_id,
       Employee: r.user_name,
@@ -66,24 +74,16 @@ export default function PayrollAttendanceReport() {
       "Net Monthly": r.net_monthly,
       "Net Annual": r.net_annual,
     }));
-
     const ws = XLSX.utils.json_to_sheet(excelData);
     const wb = XLSX.utils.book_new();
-
     XLSX.utils.book_append_sheet(wb, ws, "Payroll Attendance");
-
-    const buffer = XLSX.write(wb, {
-      bookType: "xlsx",
-      type: "array",
-    });
-
+    const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     saveAs(
       new Blob([buffer], { type: "application/octet-stream" }),
-      `payroll_attendance_${month}_${year}.xlsx`
+      `payroll_attendance_${month}_${year}.xlsx`,
     );
   };
 
-  // ================= RENDER =================
   return (
     <div className="p-1 rounded-xl shadow-sm">
       <h2 className="text-[16px] font-medium mb-3">
@@ -92,31 +92,36 @@ export default function PayrollAttendanceReport() {
 
       {/* ================= FILTERS ================= */}
       <div className="flex gap-3 mb-4 flex-wrap items-center">
-        <select
+        <CustomSelect
+          label="Month"
           value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className="border rounded-lg px-3 py-2 text-xs"
-        >
-          <option value="">Select Month</option>
-          {Array.from({ length: 12 }).map((_, i) => (
-            <option key={i + 1} value={i + 1}>
-              {i + 1}
-            </option>
-          ))}
-        </select>
+          onChange={setMonth}
+          options={monthNames}
+        />
 
-        <select
+        <CustomSelect
+          label="Year"
           value={year}
-          onChange={(e) => setYear(e.target.value)}
-          className="border rounded-lg px-3 py-2 text-xs"
-        >
-          <option value="">Select Year</option>
-          {[2024, 2025, 2026].map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
+          onChange={setYear}
+          options={[2024, 2025, 2026]}
+          minWidth={80} // You can tweak px for year
+        />
+
+        <CustomSelect
+          label="Leave Type"
+          value={leaveType}
+          onChange={setLeaveType}
+          options={leaveTypes}
+          minWidth={100}
+        />
+
+        <CustomSelect
+          label="Accrual Method"
+          value={accrualMethod}
+          onChange={setAccrualMethod}
+          options={accrualMethods}
+          minWidth={100}
+        />
 
         <button
           onClick={handleDownload}
@@ -134,11 +139,7 @@ export default function PayrollAttendanceReport() {
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
       ) : (
-        <UniversalTable
-          columns={columns}
-          data={records}
-          rowsPerPage={8}
-        />
+        <UniversalTable columns={columns} data={records} rowsPerPage={8} />
       )}
     </div>
   );

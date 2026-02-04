@@ -258,5 +258,6 @@ export const getUserPayrollTemplateAllocations = (userId) =>
   `/api/payroll/template-allocations/user?user_id=${userId}`;
 
 
+export const postPayrollAttendance = "/api/payroll/calculate/attendance";
 
 

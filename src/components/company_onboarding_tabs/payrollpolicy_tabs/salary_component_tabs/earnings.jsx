@@ -13,13 +13,23 @@ const Earnings = ({ onEdit }) => {
   const fetchComponents = async () => {
     setLoading(true);
     try {
-      const res = await axiosInstance.get(
-        "api/payroll/components?limit=10&offset=0",
-      );
+      const res = await axiosInstance.get("api/payroll/components");
+
+      // ✅ FULL API RESPONSE
+      console.log("Full API Response:", res);
+
+      // ✅ DATA OBJECT
+      console.log("res.data:", res.data);
 
       const items = res.data?.data?.items || [];
 
-      const formatted = items.map((item) => {
+      // ✅ ITEMS ARRAY
+      console.log("Items Array:", items);
+
+      const formatted = items.map((item, index) => {
+        // ✅ EACH ITEM
+        console.log(`Item ${index}:`, item);
+
         let calculationText = "-";
         if (item.calculation_type === "percentage_ctc") {
           calculationText = `Fixed, ${item.value}% of CTC`;
@@ -40,7 +50,8 @@ const Earnings = ({ onEdit }) => {
         };
       });
 
-      console.log("Formatted Data:", formatted); // ✅ console log added
+      // ✅ FINAL FORMATTED DATA
+      console.log("Formatted Data:", formatted);
 
       setData(formatted);
     } catch (err) {

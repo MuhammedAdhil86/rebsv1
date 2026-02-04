@@ -31,7 +31,9 @@ function StatusCell({ value, row }) {
       ref={ref}
     >
       <span
-        className={`flex items-center gap-2 px-2 py-1 rounded-full text-[11px] ${statusStyles[value] || ""}`}
+        className={`flex items-center gap-2 px-2 py-1 rounded-full text-[11px] ${
+          statusStyles[value] || ""
+        }`}
       >
         <span className="w-4 h-4 rounded-full flex items-center justify-center">
           {value === "Accepted" && (
@@ -93,12 +95,22 @@ export default function AttendanceReports() {
 
   // Fetch API data whenever month/year changes
   useEffect(() => {
+    console.log(
+      `%cFetching data for month: ${selectedMonth}, year: ${selectedYear}`,
+      "color: blue; font-weight: bold;",
+    );
+
     axiosInstance
       .get(`admin/staff/fullreport/${selectedMonth}/${selectedYear}`)
       .then((res) => {
+        console.log(
+          "%cRaw API response:",
+          "color: orange; font-weight: bold;",
+          res.data,
+        );
+
         const mapped =
           res.data?.data?.map((item) => {
-            // Safe DOJ formatting
             let dojFormatted = "N/A";
             if (item.doj) {
               const d = new Date(item.doj);
@@ -116,13 +128,30 @@ export default function AttendanceReports() {
               status: item.net_salary > 0 ? "Accepted" : "Pending",
             };
           }) || [];
+
         setApiData(mapped);
+
+        // Log mapped table data
+        console.log(
+          "%cMapped table data:",
+          "color: green; font-weight: bold;",
+          mapped,
+        );
       })
       .catch((err) => {
         console.error(err);
         setApiData([]);
       });
   }, [selectedMonth, selectedYear]);
+
+  // Log current apiData whenever it updates
+  useEffect(() => {
+    console.log(
+      "%cCurrent table data (apiData state):",
+      "color: purple; font-weight: bold;",
+      apiData,
+    );
+  }, [apiData]);
 
   return (
     <div className="flex flex-col gap-4 text-[13px]">
@@ -169,7 +198,11 @@ export default function AttendanceReports() {
           <button
             className="flex items-center px-4 py-1 bg-black text-white rounded"
             onClick={() =>
-              console.log("Download clicked. Current data:", apiData)
+              console.log(
+                "%cDownload clicked. Data:",
+                "color: red; font-weight: bold;",
+                apiData,
+              )
             }
           >
             <FiDownload className="mr-2" /> Download
@@ -194,6 +227,13 @@ export default function AttendanceReports() {
 
       {/* Table */}
       <div className="overflow-auto scrollbar-hide">
+        {/* Log before table render */}
+        {console.log(
+          "%cRendering table with data:",
+          "color: teal; font-weight: bold;",
+          apiData,
+        )}
+
         <UniversalTable
           columns={columns}
           data={apiData}

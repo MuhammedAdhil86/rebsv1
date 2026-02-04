@@ -20,14 +20,11 @@ export default function LeaveReports() {
   const [to, setTo] = useState("");
 
   // Dynamic filter
-  const [mainFilter, setMainFilter] = useState(""); // Leave Type / Status / Manager Approval
+  const [mainFilter, setMainFilter] = useState(""); // Status / Manager Approval
   const [dynamicValue, setDynamicValue] = useState(""); // selected value of the dynamic dropdown
 
-  // Half Day for Leave Type
-  const [leaveTypeHalfFull, setLeaveTypeHalfFull] = useState(""); // Half Day / Full Day
-
   // Helper: truncate text
-  const truncate = (text, limit = 17) => {
+  const truncate = (text, limit = 10) => {
     if (!text) return "";
     return text.length > limit ? text.substring(0, limit) + "…" : text;
   };
@@ -40,7 +37,6 @@ export default function LeaveReports() {
         user_id: searchUser || undefined,
         from: from || undefined,
         to: to || undefined,
-        leave_type: mainFilter === "leaveType" ? leaveTypeHalfFull : undefined,
         status: mainFilter === "status" ? dynamicValue : undefined,
         manager_approval:
           mainFilter === "managerApproval" ? dynamicValue : undefined,
@@ -55,11 +51,18 @@ export default function LeaveReports() {
 
       const processed = list.map((r) => ({
         ...r,
-        designation_short: truncate(r.designation),
-        reason_short: truncate(r.reason),
+        department_short: truncate(r.department_name), // 10 chars
+        designation_short: truncate(r.designation), // 10 chars
+        reason_short: truncate(r.reason), // 10 chars
+        leave_policy_short:
+          r.leave_policy_name === "Casual Leave"
+            ? "Casual"
+            : r.leave_policy_name,
       }));
 
       setRecords(processed);
+
+      console.log("Full data for table:", processed); // Optional: full data log
     } catch (err) {
       console.error("Error fetching data:", err);
       setRecords([]);
@@ -70,20 +73,37 @@ export default function LeaveReports() {
 
   useEffect(() => {
     fetchData();
-  }, [searchUser, from, to, mainFilter, dynamicValue, leaveTypeHalfFull]);
+  }, [searchUser, from, to, mainFilter, dynamicValue]);
 
   // Table columns
   const columns = [
     { label: "Date", key: "date" },
     { label: "Employee", key: "employee_name" },
-    { label: "Department", key: "department_name" },
+    {
+      label: "Department",
+      key: "department_short",
+      render: (value, row) => (
+        <div
+          onMouseEnter={(e) => {
+            if (row.department_name?.length > 10) {
+              const rect = e.target.getBoundingClientRect();
+              setTooltipPos({ x: rect.left, y: rect.top - 30 });
+              setHoverText(row.department_name);
+            }
+          }}
+          onMouseLeave={() => setHoverText(null)}
+        >
+          {value}
+        </div>
+      ),
+    },
     {
       label: "Designation",
       key: "designation_short",
       render: (value, row) => (
         <div
           onMouseEnter={(e) => {
-            if (row.designation?.length > 17) {
+            if (row.designation?.length > 10) {
               const rect = e.target.getBoundingClientRect();
               setTooltipPos({ x: rect.left, y: rect.top - 30 });
               setHoverText(row.designation);
@@ -101,7 +121,7 @@ export default function LeaveReports() {
       render: (value, row) => (
         <div
           onMouseEnter={(e) => {
-            if (row.reason?.length > 17) {
+            if (row.reason?.length > 10) {
               const rect = e.target.getBoundingClientRect();
               setTooltipPos({ x: rect.left, y: rect.top - 30 });
               setHoverText(row.reason);
@@ -113,7 +133,24 @@ export default function LeaveReports() {
         </div>
       ),
     },
-    { label: "Leave Type", key: "leave_type" },
+    {
+      label: "Leave Policy",
+      key: "leave_policy_short",
+      render: (value, row) => (
+        <div
+          onMouseEnter={(e) => {
+            if (row.leave_policy_name?.length > 10) {
+              const rect = e.target.getBoundingClientRect();
+              setTooltipPos({ x: rect.left, y: rect.top - 30 });
+              setHoverText(row.leave_policy_name);
+            }
+          }}
+          onMouseLeave={() => setHoverText(null)}
+        >
+          {value}
+        </div>
+      ),
+    },
     { label: "Status", key: "status" },
     { label: "Manager Approval", key: "manager_approval" },
   ];
@@ -129,7 +166,7 @@ export default function LeaveReports() {
       Department: r.department_name,
       Designation: r.designation,
       Reason: r.reason,
-      "Leave Type": r.leave_type,
+      "Leave Policy": r.leave_policy_name,
       Status: r.status,
       "Manager Approval": r.manager_approval,
     }));
@@ -176,29 +213,15 @@ export default function LeaveReports() {
             onChange={(e) => {
               setMainFilter(e.target.value);
               setDynamicValue("");
-              setLeaveTypeHalfFull("");
             }}
             className="border rounded-lg px-3 py-2 text-xs"
           >
             <option value="">Filter</option>
-            <option value="leaveType">Leave Type</option>
             <option value="status">Status</option>
             <option value="managerApproval">Manager Approval</option>
           </select>
 
           {/* Dynamic sub-filter */}
-          {mainFilter === "leaveType" && (
-            <select
-              value={leaveTypeHalfFull}
-              onChange={(e) => setLeaveTypeHalfFull(e.target.value)}
-              className="border rounded-lg px-3 py-2 text-xs"
-            >
-              <option value="">Select Leave</option>
-              <option value="Full Day">Full Day</option>
-              <option value="Half Day">Half Day</option>
-            </select>
-          )}
-
           {mainFilter === "status" && (
             <select
               value={dynamicValue}

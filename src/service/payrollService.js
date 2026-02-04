@@ -143,6 +143,41 @@ getSalaryTemplates: async () => {
       throw err;
     }
   },
+
+  // ---------------- SALARY COMPONENTS ----------------
+createSalaryComponent: async (payload) => {
+  try {
+    const res = await axiosInstance.post("api/payroll/components", payload);
+
+    console.log("Create Salary Component Response:", res);
+    console.log("Create Salary Component Data:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Error in createSalaryComponent:", err.response || err);
+    throw err;
+  }
+},
+
+
+// ---------------- LEAVE POLICY ----------------
+addLeavePolicy: async (payload) => {
+  try {
+    const res = await axiosInstance.post("/leave-policy/add", payload);
+
+    console.log("Add Leave Policy Response:", res);
+    console.log("Add Leave Policy Data:", res.data);
+
+    return res.data;
+  } catch (err) {
+    console.error("Error in addLeavePolicy:", err.response || err);
+    throw err;
+  }
+},
+
 };
+
+
+
 
 export default payrollService;

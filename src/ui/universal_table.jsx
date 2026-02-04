@@ -11,7 +11,7 @@ function UniversalTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
   const filteredData = data.filter((row) => {
     const term = searchTerm.toLowerCase();
     return columns.some((col) =>
-      row[col.key]?.toString().toLowerCase().includes(term)
+      row[col.key]?.toString().toLowerCase().includes(term),
     );
   });
 
@@ -25,7 +25,7 @@ function UniversalTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
   useEffect(() => {
     if (headerRef.current) {
       const widths = Array.from(headerRef.current.querySelectorAll("th")).map(
-        (th) => th.offsetWidth
+        (th) => th.offsetWidth,
       );
       setColWidths(widths);
     }
@@ -33,7 +33,6 @@ function UniversalTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
 
   return (
     <section className="p-1 rounded-2xl overflow-x-auto relative z-[1] w-full">
-
       {/* Header */}
       <table
         className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 rounded-2xl overflow-hidden"
@@ -49,15 +48,15 @@ function UniversalTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
                   idx === 0
                     ? "rounded-tl-2xl"
                     : idx === columns.length - 1
-                    ? "rounded-tr-2xl"
-                    : ""
+                      ? "rounded-tr-2xl"
+                      : ""
                 } `}
                 style={{
                   width: colWidths[idx]
                     ? `${colWidths[idx]}px`
                     : col.width
-                    ? `${col.width}px`
-                    : "auto",
+                      ? `${col.width}px`
+                      : "auto",
                 }}
               >
                 {col.label}
@@ -74,7 +73,10 @@ function UniversalTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
         <tbody className="text-gray-800">
           {currentData.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="text-center py-4 text-gray-500 border-b border-gray-300">
+              <td
+                colSpan={columns.length}
+                className="text-center py-4 text-gray-500 border-b border-gray-300"
+              >
                 No data available
               </td>
             </tr>
@@ -96,8 +98,8 @@ function UniversalTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
                         width: colWidths[colIdx]
                           ? `${colWidths[colIdx]}px`
                           : col.width
-                          ? `${col.width}px`
-                          : "auto",
+                            ? `${col.width}px`
+                            : "auto",
                       }}
                     >
                       {col.render ? col.render(value, row, rowIdx) : value}
@@ -114,12 +116,15 @@ function UniversalTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
               <td colSpan={columns.length}>
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-2 px-4 py-3 text-[12.5px]">
                   <span className="text-gray-500">
-                    Showing {startIdx + 1}-{Math.min(endIdx, filteredData.length)} of{" "}
+                    Showing {startIdx + 1}-
+                    {Math.min(endIdx, filteredData.length)} of{" "}
                     {filteredData.length}
                   </span>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                      onClick={() =>
+                        currentPage > 1 && setCurrentPage(currentPage - 1)
+                      }
                       disabled={currentPage === 1}
                       className="p-2 rounded disabled:opacity-50 hover:bg-gray-300"
                     >
@@ -127,7 +132,8 @@ function UniversalTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
                     </button>
                     <button
                       onClick={() =>
-                        currentPage < totalPages && setCurrentPage(currentPage + 1)
+                        currentPage < totalPages &&
+                        setCurrentPage(currentPage + 1)
                       }
                       disabled={currentPage === totalPages}
                       className="p-2 rounded disabled:opacity-50 hover:bg-gray-300"

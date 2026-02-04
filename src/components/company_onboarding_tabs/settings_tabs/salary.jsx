@@ -31,7 +31,9 @@ export default function SalarySection({ uuid }) {
         setTemplates(data || []);
       } catch (err) {
         console.error("Failed to fetch templates:", err);
-        toast.error("Failed to fetch payroll templates");
+        toast.error(
+          err?.response?.data?.message || "Failed to fetch payroll templates",
+        );
       }
     };
     fetchTemplates();
@@ -47,8 +49,6 @@ export default function SalarySection({ uuid }) {
       setIsLoading(true);
       try {
         const templateData = await fetchUserPayrollTemplates(uuid);
-
-        // ✅ Debug log
         console.log("fetchUserPayrollTemplates response:", templateData);
 
         const currentTemplate = templateData?.allocation?.template?.name || "-";
@@ -58,7 +58,9 @@ export default function SalarySection({ uuid }) {
         setSelectedTemplateId(currentTemplateId);
       } catch (error) {
         console.error("Error fetching payroll template:", error);
-        toast.error("Failed to fetch payroll template");
+        toast.error(
+          error?.response?.data?.message || "Failed to fetch payroll template",
+        );
       } finally {
         setIsLoading(false);
       }
@@ -90,21 +92,21 @@ export default function SalarySection({ uuid }) {
 
       console.log("Payroll allocation payload:", payload);
 
-      await allocatePayrollTemplate(payload);
+      const response = await allocatePayrollTemplate(payload);
+
+      // Show backend message if available
+      const message = response?.data?.message;
+      if (message) toast.success(message);
 
       const templateObj = templates.find(
         (t) => t.id === Number(selectedTemplateId),
       );
-      console.log("Selected template after save:", templateObj);
-
       setTemplateName(templateObj?.name || "-");
       setShowPayrollModal(false);
       setIsEditing(false);
-
-      toast.success("Payroll template updated successfully!");
     } catch (error) {
       console.error("Failed to save payroll:", error);
-      toast.error("Failed to save payroll");
+      toast.error(error?.response?.data?.message || "Failed to save payroll");
     }
   };
 
