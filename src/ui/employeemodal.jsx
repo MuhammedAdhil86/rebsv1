@@ -83,7 +83,7 @@ function EmployeeModal({ data, employee, onClose }) {
                   {/* Left Date Label */}
                   <div className="w-20 flex flex-col justify-start bg-[#F8F9FA] rounded-xl">
                     <div
-                      className="bg-[#F8F9FA] rounded-2xl flex flex-col items-center justify-center border border-gray-50"
+                      className="rounded-2xl flex flex-col items-center justify-center border border-gray-50"
                       style={{
                         height: `${attendanceCount * 60}px`, // match the height of attendance cards
                       }}
@@ -99,6 +99,19 @@ function EmployeeModal({ data, employee, onClose }) {
                           weekday: "long",
                         })}
                       </p>
+
+                      {/* Checkout Status Badge */}
+                      {day.checkout_status && (
+                        <span
+                          className={`mt-2 px-2 py-0.5 text-[9px] font-medium rounded ${
+                            day.checkout_status === "Full Day"
+                              ? "bg-green-100 text-green-600"
+                              : "bg-orange-100 text-orange-500"
+                          }`}
+                        >
+                          {day.checkout_status}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -156,21 +169,6 @@ function EmployeeModal({ data, employee, onClose }) {
           <h3 className="text-[11px] font-medium text-gray-400 mb-6 uppercase tracking-[0.2em]">
             Previous Days
           </h3>
-
-          <div className="opacity-60 flex gap-4">
-            <div className="w-20">
-              <div className="bg-[#F8F9FA] rounded-2xl py-4 flex flex-col items-center justify-center">
-                <p className="text-sm font-medium text-gray-800">Dec 25</p>
-                <p className="text-[10px] font-normal text-gray-400">Sunday</p>
-                <span className="mt-2 px-2 py-0.5 bg-orange-100 text-orange-500 text-[8px] font-medium rounded">
-                  Delay
-                </span>
-              </div>
-            </div>
-            <div className="flex-1 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 h-24 flex items-center justify-center text-[10px] font-normal text-gray-400 italic">
-              Previous history records...
-            </div>
-          </div>
         </div>
       </div>
     </>

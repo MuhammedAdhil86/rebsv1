@@ -15,7 +15,6 @@ export const fetchAllEmployees = async (activeDate) => {
 };
 
 
-// ✅ NEW FUNCTION (uuid = user_id, month from date)
 export const fetchEmployeeAttendanceByMonth = async (uuid, selectedDate) => {
   try {
     const month = new Date(selectedDate).getMonth() + 1;
@@ -30,9 +29,13 @@ export const fetchEmployeeAttendanceByMonth = async (uuid, selectedDate) => {
       body
     );
 
+    // ✅ Log the returned data
+    console.log("Attendance data fetched for user:", uuid, "Month:", month, response.data);
+
     return response.data;
   } catch (error) {
     console.error("Error fetching employee attendance:", error);
     return null;
   }
 };
+

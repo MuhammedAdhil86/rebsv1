@@ -18,8 +18,18 @@ function MusterRoll() {
 
   // -------------------- STATIC LABELS --------------------
   const monthNames = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
   const years = [2024, 2025, 2026];
 
@@ -31,9 +41,9 @@ function MusterRoll() {
   const loadAttendance = async () => {
     const data = await fetchEmployeeCalendar(month, year);
 
-    const formatted = data.map((emp) => ({
-      ...emp,
-      attendance: emp.attendance.map((d) => ({
+    const formatted = data.map((emp) => {
+      // Format existing attendance
+      const attendance = emp.attendance.map((d) => ({
         ...d,
         in_time: convertToTime(d.in),
         out_time: convertToTime(d.out),
@@ -41,8 +51,25 @@ function MusterRoll() {
           !d.total_hour || d.total_hour === "0000-01-01T00:00:00Z"
             ? "00:00:00"
             : convertToTimeWithSeconds(d.total_hour),
-      })),
-    }));
+      }));
+
+      // Fill missing days up to 31
+      const filledAttendance = Array.from({ length: 31 }, (_, i) => {
+        return (
+          attendance[i] || {
+            status: "--",
+            in_time: "--",
+            out_time: "--",
+            total_hour: "00:00:00",
+          }
+        );
+      });
+
+      return {
+        ...emp,
+        attendance: filledAttendance,
+      };
+    });
 
     setAttendanceData(formatted);
   };
@@ -89,24 +116,18 @@ function MusterRoll() {
       case "On Time":
       case "Holt Day":
         return "bg-[#00AB2E1F] text-[#00AB2E]";
-
       case "EARLY CHECK-IN":
         return "bg-yellow-200 text-yellow-600";
-
       case "Absent":
         return "bg-[#FF666833] text-[#FF6668]";
-
       case "Sick Leave":
         return "outline outline-1 outline-red-600 text-red-600 bg-transparent";
-
       case "Casual Leave":
         return "outline outline-1 outline-orange-600 text-orange-600 bg-transparent";
-
       case "Late":
         return "bg-[#4F4C9133] text-[#4F4C91]";
-
       default:
-        return "bg-gray-100 text-gray-600";
+        return "bg-gray-100 text-gray-600"; // Handles "--" or missing data
     }
   };
 
@@ -118,7 +139,7 @@ function MusterRoll() {
 
   // -------------------- FILTER EMPLOYEES --------------------
   const filteredEmployees = attendanceData.filter((emp) =>
-    emp.user_name.toLowerCase().includes(searchTerm.toLowerCase())
+    emp.user_name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   // -------------------- TABLE HEADER COMPONENT --------------------
@@ -137,13 +158,11 @@ function MusterRoll() {
   // -------------------- UI --------------------
   return (
     <div className="bg-[#f9fafb] rounded-lg pt-0 px-4 pb-4 w-full">
-
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-3">
         <h2 className="text-base font-medium text-gray-800">Muster Roll</h2>
 
         <div className="flex flex-wrap items-center gap-1.5">
-
           {/* Month */}
           <select
             value={month}
@@ -197,7 +216,9 @@ function MusterRoll() {
       </div>
 
       {/* TABLE */}
-      <div className={`overflow-x-auto scrollbar-none rounded-lg shadow-sm bg-white ${isFullView ? "w-[1080px]" : "w-full"}`}>
+      <div
+        className={`overflow-x-auto scrollbar-none rounded-lg shadow-sm bg-white ${isFullView ? "w-[1080px]" : "w-full"}`}
+      >
         <table className="min-w-full text-sm border-collapse">
           <thead className="bg-white text-gray-500 text-xs uppercase">
             <tr>
@@ -221,11 +242,8 @@ function MusterRoll() {
           <tbody className="divide-y bg-white text-center">
             {filteredEmployees.map((emp, idx) => (
               <tr key={idx} className="hover:bg-gray-50">
-
                 {/* NAME CELL */}
                 <td className="px-4 py-3 sticky left-0 bg-white text-left w-40 sm:w-56 border-r flex items-center gap-3 h-[105px]">
-
-                  {/* ⭐ Dynamic Avatar Fallback ADDED HERE */}
                   <img
                     src={emp.image || `https://i.pravatar.cc/40?img=${idx + 1}`}
                     onError={(e) => {
@@ -235,7 +253,6 @@ function MusterRoll() {
                     className="w-10 h-10 rounded-full"
                     alt={emp.user_name}
                   />
-
                   <div>
                     <p className="font-medium text-[13px]">{emp.user_name}</p>
                   </div>
@@ -254,7 +271,7 @@ function MusterRoll() {
                     <div className="flex flex-col items-center justify-center h-full space-y-1.5">
                       <span
                         className={`px-3 py-0.5 rounded text-[10px] tracking-wider ${getStatusClasses(
-                          d.status
+                          d.status,
                         )}`}
                       >
                         {d.status === "EARLY CHECK-IN" ? "EARLY" : d.status}
@@ -280,7 +297,7 @@ function MusterRoll() {
       <div className="flex justify-end mt-2">
         {visibleDates < 31 ? (
           <button
-            onClick={() => setVisibleNames(31)}
+            onClick={() => setVisibleDates(31)}
             className="px-3 py-1 bg-gray-800 text-white rounded-md text-xs"
           >
             Show All Days

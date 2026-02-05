@@ -23,6 +23,7 @@ import {
   postDivision,
   postDesignation,
   postShiftcreate,
+  companyPreview,
   getAttendancepolicy,
   getAllLeavePolicy
 } from "../api/api";
@@ -446,6 +447,17 @@ export const fetchAllLeavePolicy = async () => {
     return response.data.data;
   } catch (error) {
     console.error("Error fetching all leave policies:", error);
+    throw error;
+  }
+};
+
+export const getCompanyPreview = async () => {
+  try {
+    const response = await axiosInstance.get(companyPreview);
+    console.log("Company preview response:", response);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching company preview:", error);
     throw error;
   }
 };

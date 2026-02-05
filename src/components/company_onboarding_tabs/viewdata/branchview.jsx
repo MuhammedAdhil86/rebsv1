@@ -9,7 +9,7 @@ const getPlaceName = async (latitude, longitude) => {
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`,
-      { headers: { "User-Agent": "BranchViewApp" } }
+      { headers: { "User-Agent": "BranchViewApp" } },
     );
     const data = await response.json();
     return data.display_name || "-";
@@ -98,9 +98,7 @@ const BranchView = () => {
         if (val.revealed) {
           if (val.loading)
             return (
-              <span className="text-gray-400 animate-pulse">
-                Loading...
-              </span>
+              <span className="text-gray-400 animate-pulse">Loading...</span>
             );
 
           return (
@@ -135,27 +133,39 @@ const BranchView = () => {
         );
       },
     },
-    { key: "code", label: "Branch Code" },
-    { key: "address", label: "Address" },
+    {
+      key: "code",
+      label: "Branch Code",
+    },
+    {
+      key: "address",
+      label: "Address",
+      render: (value) => (
+        <div className="relative group max-w-[150px]">
+          <span>{value.length > 10 ? value.slice(0, 10) + "..." : value}</span>
+          {value.length > 10 && (
+            <div
+              className="absolute left-0 bottom-full mb-1 hidden group-hover:block 
+                            bg-gray-700 text-white text-xs px-2 py-1 rounded shadow-lg 
+                            max-w-xs break-words z-10"
+            >
+              {value}
+            </div>
+          )}
+        </div>
+      ),
+    },
   ];
 
   return (
     <>
-      <div className="min-h-screen bg-[#f9fafb] p-6">
-        <h2 className="text-lg font-medium text-gray-800 mb-4">
-          Branches
-        </h2>
+      <div className="min-h-screen bg-[#f9fafb] p-6 mt-5">
+        <h2 className="text-lg font-medium text-gray-800 mb-4">Branches</h2>
 
         {loading ? (
-          <div className="text-gray-500 text-center py-10">
-            Loading...
-          </div>
+          <div className="text-gray-500 text-center py-10">Loading...</div>
         ) : (
-          <UniversalTable
-            columns={columns}
-            data={tableData}
-            rowsPerPage={6}
-          />
+          <UniversalTable columns={columns} data={tableData} rowsPerPage={6} />
         )}
       </div>
 

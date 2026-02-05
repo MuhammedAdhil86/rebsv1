@@ -22,14 +22,22 @@ export default function CustomSelect({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="appearance-none border rounded-lg px-3 py-2 text-xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-black"
+          className="appearance-none border px-3 py-2 text-xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-black"
           style={{
             width: `${widthCh}ch`,
-            minWidth: `${minWidth}px`, // ensures short options like year have enough space
+            minWidth: `${minWidth}px`,
+            borderRadius: "12px", // ✅ options box radius
           }}
         >
-          {options.map((opt) => (
-            <option key={opt.value ?? opt} value={opt.value ?? opt}>
+          {options.map((opt, index) => (
+            <option
+              key={opt.value ?? opt}
+              value={opt.value ?? opt}
+              style={{
+                borderBottom: "1px solid #e5e7eb", // ✅ every option border bottom
+                padding: "8px",
+              }}
+            >
               {opt.label ?? opt}
             </option>
           ))}

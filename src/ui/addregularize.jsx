@@ -5,7 +5,10 @@ import "react-datepicker/dist/react-datepicker.css";
 import { format, isValid } from "date-fns";
 
 import axiosInstance from "../service/axiosinstance";
-import { getStaffDetails, fetchShiftAllocation } from "../service/employeeService";
+import {
+  getStaffDetails,
+  fetchShiftAllocation,
+} from "../service/employeeService";
 import toast from "react-hot-toast";
 
 function AddRegularizeModal({ open, data, onClose, onSuccess }) {
@@ -107,7 +110,7 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
 
     return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(
       2,
-      "0"
+      "0",
     )}:${String(secs).padStart(2, "0")}`;
   }, [form.date, form.checkIn, form.checkOut]);
 
@@ -131,7 +134,7 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
       await axiosInstance.post(
         "/admin/attendance/regularize/request",
         payload,
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       toast.success("Attendance regularized successfully!");
@@ -149,7 +152,6 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl">
-
         {/* HEADER */}
         <div className="flex justify-between items-center px-6 py-4 border-b">
           <h3 className="font-semibold text-sm">Attendance Regularization</h3>
@@ -160,7 +162,6 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
 
         {/* BODY */}
         <div className="p-6 grid grid-cols-2 gap-6 text-sm">
-
           {/* STAFF */}
           <div>
             <label className="text-gray-500 text-xs">Staff</label>
@@ -213,29 +214,69 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
           {/* CHECK IN */}
           <div className="relative">
             <label className="text-gray-500 text-xs">Check In</label>
-            <input readOnly value={form.checkIn} className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50" />
-            <Clock size={16} onClick={() => checkInRef.current?.showPicker()} className="absolute right-4 top-9 cursor-pointer text-gray-400" />
-            <input ref={checkInRef} type="time" className="hidden" value={form.checkIn} onChange={(e) => setForm((p) => ({ ...p, checkIn: e.target.value }))} />
+            <input
+              readOnly
+              value={form.checkIn}
+              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50"
+            />
+            <Clock
+              size={16}
+              onClick={() => checkInRef.current?.showPicker()}
+              className="absolute right-4 top-9 cursor-pointer text-gray-400"
+            />
+            <input
+              ref={checkInRef}
+              type="time"
+              className="hidden"
+              value={form.checkIn}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, checkIn: e.target.value }))
+              }
+            />
           </div>
 
           {/* CHECK OUT */}
           <div className="relative">
             <label className="text-gray-500 text-xs">Check Out</label>
-            <input readOnly value={form.checkOut} className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50" />
-            <Clock size={16} onClick={() => checkOutRef.current?.showPicker()} className="absolute right-4 top-9 cursor-pointer text-gray-400" />
-            <input ref={checkOutRef} type="time" className="hidden" value={form.checkOut} onChange={(e) => setForm((p) => ({ ...p, checkOut: e.target.value }))} />
+            <input
+              readOnly
+              value={form.checkOut}
+              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50"
+            />
+            <Clock
+              size={16}
+              onClick={() => checkOutRef.current?.showPicker()}
+              className="absolute right-4 top-9 cursor-pointer text-gray-400"
+            />
+            <input
+              ref={checkOutRef}
+              type="time"
+              className="hidden"
+              value={form.checkOut}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, checkOut: e.target.value }))
+              }
+            />
           </div>
 
           {/* SHIFT */}
           <div>
             <label className="text-gray-500 text-xs">Shift</label>
-            <input readOnly value={shiftName} className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50" />
+            <input
+              readOnly
+              value={shiftName}
+              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50"
+            />
           </div>
 
           {/* WORK HOURS */}
           <div>
             <label className="text-gray-500 text-xs">Work Hours</label>
-            <input readOnly value={workHours} className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50 font-medium" />
+            <input
+              readOnly
+              value={workHours}
+              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50 font-medium"
+            />
           </div>
 
           {/* REMARKS */}
@@ -253,14 +294,20 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
 
         {/* FOOTER */}
         <div className="flex justify-end gap-3 px-6 py-4 border-t">
-          <button onClick={() => onClose(false)} className="px-6 py-2 border rounded-lg">
+          <button
+            onClick={() => onClose(false)}
+            className="px-6 py-2 border rounded-lg"
+          >
             Cancel
           </button>
-          <button disabled={loading} onClick={handleSubmit} className="px-6 py-2 bg-black text-white rounded-lg">
+          <button
+            disabled={loading}
+            onClick={handleSubmit}
+            className="px-6 py-2 bg-black text-white rounded-lg"
+          >
             {loading ? "Submitting..." : "Apply"}
           </button>
         </div>
-
       </div>
     </div>
   );

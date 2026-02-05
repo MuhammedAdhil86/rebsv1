@@ -11,7 +11,7 @@ export const Login = "/staff/login"
 export const getTotalEmployee = "/admin/staffstatus/list"
 export const putStatusUpdate = "/admin/attendance/status/update"
 
-export const postEmployeeListbyMonth ="/admin/attendance/listbymonth "
+export const postEmployeeListbyMonth ="/admin/attendance/listbymonth"
 
 //leaveapproval
 

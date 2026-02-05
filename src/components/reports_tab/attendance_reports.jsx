@@ -1,89 +1,40 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { FiDownload } from "react-icons/fi";
 import { Icon } from "@iconify/react";
 import UniversalTable from "../../ui/universal_table";
 import axiosInstance from "../../service/axiosinstance";
+import CustomSelect from "../../ui/customselect";
 
-// StatusCell component for Status column
-function StatusCell({ value, row }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  const statusStyles = {
-    Pending: "bg-yellow-100 text-yellow-800",
-    Rejected: "bg-red-100 text-red-800",
-    Accepted: "bg-green-100 text-green-800",
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleView = () => console.log("View row data:", row);
-
-  return (
-    <div
-      className="flex items-center justify-center gap-2 w-full text-[13px]"
-      ref={ref}
-    >
-      <span
-        className={`flex items-center gap-2 px-2 py-1 rounded-full text-[11px] ${
-          statusStyles[value] || ""
-        }`}
-      >
-        <span className="w-4 h-4 rounded-full flex items-center justify-center">
-          {value === "Accepted" && (
-            <span className="text-green-600 text-sm">✔</span>
-          )}
-          {value === "Rejected" && (
-            <span className="text-red-600 text-sm">✖</span>
-          )}
-        </span>
-        {value || "N/A"}
-      </span>
-
-      <div className="relative">
-        <span
-          className="flex items-center justify-center w-5 h-5 rounded-full hover:bg-gray-100 cursor-pointer"
-          onClick={() => setOpen(!open)}
-        >
-          ⋮
-        </span>
-        {open && (
-          <div className="absolute right-0 mt-1 w-24 bg-white border border-gray-200 shadow-lg rounded z-10">
-            <button
-              className="px-3 py-1 w-full hover:bg-gray-100 text-left text-[13px]"
-              onClick={handleView}
-            >
-              View
-            </button>
-            <button className="px-3 py-1 w-full hover:bg-gray-100 text-left text-[13px]">
-              Edit
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Columns definition
+// Columns definition with truncated name and designation
 const columns = [
-  { key: "name", label: "Name" },
-  { key: "designation", label: "Designation" },
   { key: "user_id", label: "User ID" },
-  { key: "department", label: "Department" },
-  { key: "doj", label: "DOJ" },
-  { key: "net_salary", label: "Net Salary" },
   {
-    key: "status",
-    label: "Status",
-    render: (value, row) => <StatusCell value={value} row={row} />,
+    key: "name",
+    label: "Name",
+    render: (value) => (
+      <span
+        className="block max-w-[10ch] truncate"
+        title={value} // Hover shows full text
+      >
+        {value}
+      </span>
+    ),
   },
+  {
+    key: "designation",
+    label: "Designation",
+    render: (value) => (
+      <span className="block max-w-[21ch] truncate" title={value}>
+        {value}
+      </span>
+    ),
+  },
+  { key: "department", label: "Department" },
+  { key: "working_days", label: "Working Days" },
+  { key: "present_days", label: "Days Present" },
+  { key: "absent_days", label: "Days Absent" },
+  { key: "net_salary", label: "Net Salary" },
+  { key: "lop", label: "LOP" },
 ];
 
 export default function AttendanceReports() {
@@ -110,28 +61,19 @@ export default function AttendanceReports() {
         );
 
         const mapped =
-          res.data?.data?.map((item) => {
-            let dojFormatted = "N/A";
-            if (item.doj) {
-              const d = new Date(item.doj);
-              if (!isNaN(d.getTime()))
-                dojFormatted = d.toISOString().split("T")[0];
-            }
-
-            return {
-              name: item.name || "N/A",
-              designation: item.designation || "N/A",
-              user_id: item.user_id || "N/A",
-              department: item.department || "N/A",
-              doj: dojFormatted,
-              net_salary: item.net_salary != null ? item.net_salary : "N/A",
-              status: item.net_salary > 0 ? "Accepted" : "Pending",
-            };
-          }) || [];
+          res.data?.data?.map((item) => ({
+            user_id: item.user_id || "N/A",
+            name: item.name || "N/A",
+            designation: item.designation || "N/A",
+            department: item.department || "N/A",
+            working_days: item.total_working_days || "0",
+            present_days: item.present || "0.0",
+            absent_days: item.absent || "0.0",
+            net_salary: item.net_salary != null ? item.net_salary : "N/A",
+            lop: item.absent_cut != null ? item.absent_cut : 0,
+          })) || [];
 
         setApiData(mapped);
-
-        // Log mapped table data
         console.log(
           "%cMapped table data:",
           "color: green; font-weight: bold;",
@@ -166,33 +108,30 @@ export default function AttendanceReports() {
 
         <div className="flex gap-3 flex-wrap items-center justify-end flex-1">
           {/* Month selector */}
-          <select
-            className="border border-gray-300 rounded px-3 py-1 w-[110px]"
+          <CustomSelect
+            label=""
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-          >
-            {Array.from({ length: 12 }, (_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {new Date(0, i).toLocaleString("default", { month: "long" })}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setSelectedMonth(Number(val))}
+            options={Array.from({ length: 12 }, (_, i) => ({
+              value: i + 1,
+              label: new Date(0, i).toLocaleString("default", {
+                month: "long",
+              }),
+            }))}
+            minWidth={110}
+          />
 
           {/* Year selector */}
-          <select
-            className="border border-gray-300 rounded px-3 py-1 w-[90px]"
+          <CustomSelect
+            label=""
             value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-          >
-            {Array.from(
-              { length: 5 },
-              (_, i) => today.getFullYear() - 2 + i,
-            ).map((yr) => (
-              <option key={yr} value={yr}>
-                {yr}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setSelectedYear(Number(val))}
+            options={Array.from({ length: 5 }, (_, i) => {
+              const yr = today.getFullYear() - 2 + i;
+              return { value: yr, label: yr };
+            })}
+            minWidth={90}
+          />
 
           {/* Download button */}
           <button
@@ -227,13 +166,6 @@ export default function AttendanceReports() {
 
       {/* Table */}
       <div className="overflow-auto scrollbar-hide">
-        {/* Log before table render */}
-        {console.log(
-          "%cRendering table with data:",
-          "color: teal; font-weight: bold;",
-          apiData,
-        )}
-
         <UniversalTable
           columns={columns}
           data={apiData}

@@ -3,14 +3,15 @@ import { Plus } from "lucide-react";
 import CreateShiftModal from "../../../ui/createshiftmodal";
 import { ShiftDataGet } from "../../../service/companyService";
 import PayrollTable from "../../../ui/payrolltable";
+import CustomSelect from "../../../ui/customselect";
 
 const Shifts = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [shiftData, setShiftData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState(""); // search term state
-  const [filterStatus, setFilterStatus] = useState("all"); // optional status filter
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
 
   const formatTime = (timeStr) => {
     if (!timeStr) return "N/A";
@@ -59,9 +60,8 @@ const Shifts = () => {
           status: shift.allocated_employees > 0 ? "Active" : "Inactive",
         }));
 
-        // Optional status filter
         const filtered = mappedData.filter((item) => {
-          if (filterStatus === "all") return true;
+          if (!filterStatus) return true;
           return item.status.toLowerCase() === filterStatus;
         });
 
@@ -77,7 +77,6 @@ const Shifts = () => {
     fetchShiftsData();
   }, [filterStatus]);
 
-  // Columns for PayrollTable
   const columns = [
     { key: "name", label: "Shift Name", align: "left" },
     { key: "duration", label: "Duration" },
@@ -103,20 +102,21 @@ const Shifts = () => {
 
   return (
     <div className="w-full">
-      {/* Header: Filter + Search + Create */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
         {/* Filter + Search */}
         <div className="flex flex-wrap gap-2 items-center">
-          <label className="text-sm">Status:</label>
-          <select
+          <CustomSelect
+            placeholder="Status"
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="border px-2 py-1 rounded text-sm"
-          >
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+            onChange={setFilterStatus}
+            options={[
+              { label: "All", value: "" },
+              { label: "Active", value: "active" },
+              { label: "Inactive", value: "inactive" },
+            ]}
+            minWidth={120}
+          />
 
           <input
             type="text"
@@ -147,7 +147,7 @@ const Shifts = () => {
             columns={columns}
             data={shiftData}
             rowsPerPage={6}
-            searchTerm={searchTerm} // pass searchTerm to table
+            searchTerm={searchTerm}
             rowClickHandler={(row) => console.log("Clicked row:", row)}
           />
         )}

@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import { FiUpload } from "react-icons/fi";
 import { Icon } from "@iconify/react";
-
+import GlowButton from "../helpers/glowbutton";
 /* ===== API SERVICES ===== */
 import {
   getOrganisationDetails,
   updateCompanyDetails,
   OrganizationType,
   getCountryName,
+  getCompanyPreview, // ✅ added preview api
 } from "../../service/companyService";
 import { fetchTimeZone } from "../../service/eventservice";
 
@@ -44,37 +45,43 @@ const AddBasicInformation = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [company, countryRes, orgRes, tzRes] = await Promise.all([
-          getOrganisationDetails(companyId),
+        console.log("Calling APIs...");
+
+        const [previewRes, countryRes, orgRes, tzRes] = await Promise.all([
+          getCompanyPreview(), // ✅ preview api
           getCountryName(),
           OrganizationType(),
           fetchTimeZone(),
         ]);
+
+        console.log("FULL COMPANY PREVIEW DATA:", previewRes);
+
+        const company = previewRes.company; // ✅ map company object
 
         setCountries(countryRes || []);
         setOrgTypes(orgRes || []);
         setTimeZones(tzRes || []);
 
         setFormData({
-          name: company.name || "",
-          country: String(company.country_id || ""),
-          website: company.website || "",
-          description: company.description || "",
-          organizationType: String(company.organisation_type_id || ""),
-          locationName: company.location || "",
-          address: company.address || "",
-          timeZone: String(company.time_zone_id || ""),
-          contactPerson: company.contact_person || "",
-          contactNumber: company.phone_number || "",
-          contactEmail: company.email || "",
+          name: company?.name || "",
+          country: String(company?.country_id || ""),
+          website: company?.website || "",
+          description: company?.description || "",
+          organizationType: String(company?.organisation_type_id || ""),
+          locationName: company?.location || "",
+          address: company?.address || "",
+          timeZone: String(company?.time_zone_id || ""),
+          contactPerson: company?.contact_person || "",
+          contactNumber: company?.phone_number || "",
+          contactEmail: company?.email || "",
         });
       } catch (err) {
-        console.error("Failed to fetch company data", err);
+        console.error("Failed to fetch company preview data", err);
       }
     };
 
-    if (companyId) loadData();
-  }, [companyId]);
+    loadData(); // ✅ no companyId condition
+  }, []);
 
   /* ================= HANDLERS ================= */
   const handleChange = (e) => {
@@ -113,8 +120,9 @@ const AddBasicInformation = () => {
       country_id: formData.country,
       organisation_type_id: formData.organizationType,
       time_zone_id: formData.timeZone,
-      // TODO: Handle logo & horizontal_logo upload using FormData
     };
+
+    console.log("UPDATE PAYLOAD:", payload);
 
     try {
       await updateCompanyDetails(payload);
@@ -408,18 +416,16 @@ const AddBasicInformation = () => {
 
           {/* Footer Buttons */}
           <div className="flex justify-end gap-4 pt-4">
+            {/* Cancel Button stays the same */}
             <button
               type="button"
-              className="border border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm hover:bg-gray-100 transition"
+              className="border border-gray-300 text-gray-700 px-6 rounded-md text-sm hover:bg-gray-100 transition"
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              className="bg-black text-white px-6 py-2 rounded-md text-sm hover:bg-gray-800 transition"
-            >
-              Save
-            </button>
+
+            {/* Save Button uses GlowButton */}
+            <GlowButton onClick={handleSubmit}>Save</GlowButton>
           </div>
         </form>
       </div>

@@ -1,14 +1,16 @@
 import React, { useState } from "react";
+import TabsSwitch from "../../ui/tabswitch";
+
 import AddBranchForm from "./corganizational_structure_tab/addbranchform";
 import AddDivisionForm from "./corganizational_structure_tab/adddivisionform";
 import AddDepartmentForm from "./corganizational_structure_tab/adddepartmentform";
 import AddDesignationForm from "./corganizational_structure_tab/adddesignationform";
+
 import BranchView from "./viewdata/branchview";
 import DepartmentView from "./viewdata/departmentview";
 import DesignationView from "./viewdata/designationview";
 
 const OrganizationalStructure = () => {
-  const [activeTab, setActiveTab] = useState("branch");
   const [showAdded, setShowAdded] = useState(false);
 
   const tabs = [
@@ -18,66 +20,72 @@ const OrganizationalStructure = () => {
     { id: "designation", label: "Add Designation" },
   ];
 
-  return (
-    <div className="min-h-screen  bg-gray-50">
-      <div className="bg-white rounded-2xl border border-gray-200 p-8">
-        {/* Header Tabs */}
-        <div className="flex justify-between items-center mb-6">
-          {/* Tab Buttons */}
-          <div className="flex flex-wrap gap-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  setShowAdded(false);
-                }}
-                className={`px-3 h-[40px] text-xs rounded-md border font-medium transition-all flex items-center justify-center
-                  ${
-                    activeTab === tab.id && !showAdded
-                      ? "bg-black text-white border-black"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                  }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Show Added Button */}
-          <button
-            onClick={() => setShowAdded((prev) => !prev)}
-            className="px-3 h-[40px] text-xs rounded-md border font-normal transition-all flex items-center justify-center
-  border-gray-300 text-gray-700 hover:bg-gray-100 font-[Poppins]"
-          >
-            {activeTab === "branch"
-              ? "Added Branches"
-              : activeTab === "division"
-                ? "Added Divisions"
-                : activeTab === "department"
-                  ? "Added Departments"
-                  : activeTab === "designation"
-                    ? "Added Designations"
-                    : "Added Branches"}
-          </button>
-        </div>
-
-        {/* Conditional Rendering */}
-        {activeTab === "branch" && !showAdded && <AddBranchForm />}
-        {activeTab === "branch" && showAdded && <BranchView />}
-
-        {activeTab === "division" && !showAdded && <AddDivisionForm />}
-        {activeTab === "division" && showAdded && (
-          <div className="text-gray-500 text-center py-10">
-            Division Table Coming Soon...
-          </div>
+  const renderTabContent = (activeTab) => {
+    return (
+      <>
+        {/* -------- BRANCH -------- */}
+        {activeTab === "branch" && (
+          <>
+            <AddBranchForm />
+            {showAdded && <BranchView />}
+          </>
         )}
 
-        {activeTab === "department" && !showAdded && <AddDepartmentForm />}
-        {activeTab === "department" && showAdded && <DepartmentView />}
+        {/* -------- DIVISION -------- */}
+        {activeTab === "division" && (
+          <>
+            <AddDivisionForm />
+            {showAdded && (
+              <div className="text-gray-500 text-center py-10">
+                Division Table Coming Soon...
+              </div>
+            )}
+          </>
+        )}
 
-        {activeTab === "designation" && !showAdded && <AddDesignationForm />}
-        {activeTab === "designation" && showAdded && <DesignationView />}
+        {/* -------- DEPARTMENT -------- */}
+        {activeTab === "department" && (
+          <>
+            <AddDepartmentForm />
+            {showAdded && <DepartmentView />}
+          </>
+        )}
+
+        {/* -------- DESIGNATION -------- */}
+        {activeTab === "designation" && (
+          <>
+            <AddDesignationForm />
+            {showAdded && <DesignationView />}
+          </>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white rounded-2xl border border-gray-200 p-8">
+        <TabsSwitch
+          tabs={tabs}
+          initialTab="branch"
+          renderTabContent={renderTabContent}
+          extraButtons={(activeTab) => (
+            <button
+              onClick={() => setShowAdded((prev) => !prev)}
+              className={`px-3 h-[30px] text-xs rounded-md border  transition-all flex items-center justify-center`}
+            >
+              {showAdded
+                ? "Hide Added"
+                : activeTab === "branch"
+                  ? "Added Branches"
+                  : activeTab === "division"
+                    ? "Added Divisions"
+                    : activeTab === "department"
+                      ? "Added Departments"
+                      : "Added Designations"}
+            </button>
+          )}
+        />
       </div>
     </div>
   );

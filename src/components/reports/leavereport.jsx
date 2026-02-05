@@ -5,6 +5,7 @@ import { Search, Loader2, Download } from "lucide-react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { createPortal } from "react-dom";
+import CustomSelect from "../../ui/customselect";
 
 export default function LeaveReports() {
   const [records, setRecords] = useState([]);
@@ -20,16 +21,14 @@ export default function LeaveReports() {
   const [to, setTo] = useState("");
 
   // Dynamic filter
-  const [mainFilter, setMainFilter] = useState(""); // Status / Manager Approval
-  const [dynamicValue, setDynamicValue] = useState(""); // selected value of the dynamic dropdown
+  const [mainFilter, setMainFilter] = useState("");
+  const [dynamicValue, setDynamicValue] = useState("");
 
-  // Helper: truncate text
   const truncate = (text, limit = 10) => {
     if (!text) return "";
     return text.length > limit ? text.substring(0, limit) + "…" : text;
   };
 
-  // Fetch data from backend
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -51,9 +50,9 @@ export default function LeaveReports() {
 
       const processed = list.map((r) => ({
         ...r,
-        department_short: truncate(r.department_name), // 10 chars
-        designation_short: truncate(r.designation), // 10 chars
-        reason_short: truncate(r.reason), // 10 chars
+        department_short: truncate(r.department_name),
+        designation_short: truncate(r.designation),
+        reason_short: truncate(r.reason),
         leave_policy_short:
           r.leave_policy_name === "Casual Leave"
             ? "Casual"
@@ -61,8 +60,6 @@ export default function LeaveReports() {
       }));
 
       setRecords(processed);
-
-      console.log("Full data for table:", processed); // Optional: full data log
     } catch (err) {
       console.error("Error fetching data:", err);
       setRecords([]);
@@ -75,87 +72,17 @@ export default function LeaveReports() {
     fetchData();
   }, [searchUser, from, to, mainFilter, dynamicValue]);
 
-  // Table columns
   const columns = [
     { label: "Date", key: "date" },
     { label: "Employee", key: "employee_name" },
-    {
-      label: "Department",
-      key: "department_short",
-      render: (value, row) => (
-        <div
-          onMouseEnter={(e) => {
-            if (row.department_name?.length > 10) {
-              const rect = e.target.getBoundingClientRect();
-              setTooltipPos({ x: rect.left, y: rect.top - 30 });
-              setHoverText(row.department_name);
-            }
-          }}
-          onMouseLeave={() => setHoverText(null)}
-        >
-          {value}
-        </div>
-      ),
-    },
-    {
-      label: "Designation",
-      key: "designation_short",
-      render: (value, row) => (
-        <div
-          onMouseEnter={(e) => {
-            if (row.designation?.length > 10) {
-              const rect = e.target.getBoundingClientRect();
-              setTooltipPos({ x: rect.left, y: rect.top - 30 });
-              setHoverText(row.designation);
-            }
-          }}
-          onMouseLeave={() => setHoverText(null)}
-        >
-          {value}
-        </div>
-      ),
-    },
-    {
-      label: "Reason",
-      key: "reason_short",
-      render: (value, row) => (
-        <div
-          onMouseEnter={(e) => {
-            if (row.reason?.length > 10) {
-              const rect = e.target.getBoundingClientRect();
-              setTooltipPos({ x: rect.left, y: rect.top - 30 });
-              setHoverText(row.reason);
-            }
-          }}
-          onMouseLeave={() => setHoverText(null)}
-        >
-          {value}
-        </div>
-      ),
-    },
-    {
-      label: "Leave Policy",
-      key: "leave_policy_short",
-      render: (value, row) => (
-        <div
-          onMouseEnter={(e) => {
-            if (row.leave_policy_name?.length > 10) {
-              const rect = e.target.getBoundingClientRect();
-              setTooltipPos({ x: rect.left, y: rect.top - 30 });
-              setHoverText(row.leave_policy_name);
-            }
-          }}
-          onMouseLeave={() => setHoverText(null)}
-        >
-          {value}
-        </div>
-      ),
-    },
+    { label: "Department", key: "department_short" },
+    { label: "Designation", key: "designation_short" },
+    { label: "Reason", key: "reason_short" },
+    { label: "Leave Policy", key: "leave_policy_short" },
     { label: "Status", key: "status" },
     { label: "Manager Approval", key: "manager_approval" },
   ];
 
-  // Excel download
   const handleDownload = () => {
     if (!records.length) return;
 
@@ -178,8 +105,8 @@ export default function LeaveReports() {
     const buffer = XLSX.write(wb, {
       bookType: "xlsx",
       type: "array",
-      cellStyles: true,
     });
+
     saveAs(
       new Blob([buffer], { type: "application/octet-stream" }),
       `leave_report_${from || "all"}_${to || "all"}.xlsx`,
@@ -193,13 +120,13 @@ export default function LeaveReports() {
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2 items-center mb-4">
-          {/* From / To Dates */}
           <input
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
             className="border rounded-lg px-3 py-2 text-xs"
           />
+
           <input
             type="date"
             value={to}
@@ -207,60 +134,51 @@ export default function LeaveReports() {
             className="border rounded-lg px-3 py-2 text-xs"
           />
 
-          {/* Main dynamic filter */}
-          <select
+          <CustomSelect
+            placeholder="Filter"
             value={mainFilter}
-            onChange={(e) => {
-              setMainFilter(e.target.value);
+            onChange={(val) => {
+              setMainFilter(val);
               setDynamicValue("");
             }}
-            className="border rounded-lg px-3 py-2 text-xs"
-          >
-            <option value="">Filter</option>
-            <option value="status">Status</option>
-            <option value="managerApproval">Manager Approval</option>
-          </select>
+            options={[
+              { label: "Status", value: "status" },
+              { label: "Manager Approval", value: "managerApproval" },
+            ]}
+            minWidth={140}
+          />
 
-          {/* Dynamic sub-filter */}
           {mainFilter === "status" && (
-            <select
+            <CustomSelect
+              placeholder="Select Status"
               value={dynamicValue}
-              onChange={(e) => setDynamicValue(e.target.value)}
-              className="border rounded-lg px-3 py-2 text-xs"
-            >
-              <option value="">Select Status</option>
-              <option value="Approved">Approved</option>
-              <option value="Pending">Pending</option>
-              <option value="Rejected">Rejected</option>
-            </select>
+              onChange={setDynamicValue}
+              options={["Approved", "Pending", "Rejected"]}
+              minWidth={140}
+            />
           )}
 
           {mainFilter === "managerApproval" && (
-            <select
+            <CustomSelect
+              placeholder="Select Approval"
               value={dynamicValue}
-              onChange={(e) => setDynamicValue(e.target.value)}
-              className="border rounded-lg px-3 py-2 text-xs"
-            >
-              <option value="">Select Approval</option>
-              <option value="Approved">Approved</option>
-              <option value="Pending">Pending</option>
-              <option value="Rejected">Rejected</option>
-            </select>
+              onChange={setDynamicValue}
+              options={["Approved", "Pending", "Rejected"]}
+              minWidth={160}
+            />
           )}
 
-          {/* Search Staff */}
           <div className="relative">
             <input
               type="text"
               placeholder="Search Staff"
               value={searchUser}
               onChange={(e) => setSearchUser(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-xs"
+              className="border rounded-lg px-3 py-2 text-xs"
             />
-            <Search className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
+            <Search className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
           </div>
 
-          {/* Download */}
           <button
             onClick={handleDownload}
             className="flex items-center gap-2 px-3 py-2 text-xs rounded-lg border bg-black text-white"
@@ -269,7 +187,6 @@ export default function LeaveReports() {
           </button>
         </div>
 
-        {/* Table */}
         {loading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="w-8 h-8 animate-spin" />
@@ -279,7 +196,6 @@ export default function LeaveReports() {
         )}
       </div>
 
-      {/* Tooltip */}
       {hoverText &&
         createPortal(
           <div

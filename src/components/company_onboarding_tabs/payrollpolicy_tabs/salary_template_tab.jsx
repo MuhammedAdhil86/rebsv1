@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 
+// Services
 import payrollService from "../../../service/payrollService";
-import PayrollTable from "../../../ui/payrolltable";
-import CommonButton from "../../../ui/bottom";
 
-import SalaryComponents from "./salary_components_tab";
-import StatutoryComponents from "./statutorycomponents";
-import CreateSalaryTemplate from "./statutory_component_tabs/createsalarytemplate";
-import CreateSalaryComponent from "./statutory_component_tabs/createsalarycomponents";
+// UI Components
+import PayrollTable from "../../../ui/payrolltable.jsx";
+import CommonButton from "../../../ui/bottom.jsx";
+import TabsSwitch from "../../../ui/tabswitch.jsx";
 
-import TabsSwitch from "../../../ui/tabswitch";
+// Tabs
+import SalaryComponents from "./salary_components_tab.jsx";
+import StatutoryComponents from "./statutorycomponents.jsx";
+import CreateSalaryTemplate from "./statutory_component_tabs/createsalarytemplate.jsx";
+import CreateSalaryComponent from "./statutory_component_tabs/createsalarycomponents.jsx";
 
 export default function SalaryTemplate() {
   const [tableData, setTableData] = useState([]);
@@ -97,7 +100,9 @@ export default function SalaryTemplate() {
       align: "center",
       render: (value) => (
         <span
-          className={`font-medium ${value === "Active" ? "text-green-600" : "text-red-600"}`}
+          className={`font-medium ${
+            value === "Active" ? "text-green-600" : "text-red-600"
+          }`}
         >
           {value}
         </span>
