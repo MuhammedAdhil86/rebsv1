@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { FiUpload } from "react-icons/fi";
 import { Icon } from "@iconify/react";
-import GlowButton from "../helpers/glowbutton";
+import GlowButton from "../helpers/glowbutton.jsx";
 /* ===== API SERVICES ===== */
 import {
   getOrganisationDetails,
