@@ -5,6 +5,8 @@ import {
   addDepartment,
   getDepartmentData,
 } from "../../../service/companyService";
+import GlowButton from "../../helpers/glowbutton";
+import CancelButton from "../../helpers/cancelbutton";
 
 const AddDepartmentForm = () => {
   const [parentDepartments, setParentDepartments] = useState([]);
@@ -55,10 +57,7 @@ const AddDepartmentForm = () => {
       newErrors.departmentName = "Department name is required";
     }
 
-    if (
-      formData.email &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-    ) {
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Invalid email format";
     }
 
@@ -228,9 +227,7 @@ const AddDepartmentForm = () => {
 
         {/* Footer */}
         <div className="flex justify-end gap-4 pt-6">
-          <button
-            type="button"
-            className="border border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm hover:bg-gray-100"
+          <CancelButton
             onClick={() =>
               setFormData({
                 departmentName: "",
@@ -243,14 +240,9 @@ const AddDepartmentForm = () => {
             }
           >
             Cancel
-          </button>
+          </CancelButton>
 
-          <button
-            type="submit"
-            className="bg-black text-white px-6 py-2 rounded-md text-sm hover:bg-gray-800"
-          >
-            Save
-          </button>
+          <GlowButton type="submit">Save</GlowButton>
         </div>
       </form>
     </>

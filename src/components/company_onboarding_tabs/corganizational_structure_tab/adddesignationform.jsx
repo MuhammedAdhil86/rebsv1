@@ -3,6 +3,9 @@ import { Icon } from "@iconify/react";
 import toast, { Toaster } from "react-hot-toast";
 import { addDesignation } from "../../../service/companyService";
 
+import GlowButton from "../../helpers/glowbutton";
+import CancelButton from "../../helpers/cancelbutton";
+
 const AddDesignationForm = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -34,10 +37,7 @@ const AddDesignationForm = () => {
       newErrors.name = "Designation name is required";
     }
 
-    if (
-      formData.email &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-    ) {
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Invalid email format";
     }
 
@@ -149,8 +149,7 @@ const AddDesignationForm = () => {
 
         {/* Buttons */}
         <div className="flex justify-end gap-2 pt-4">
-          <button
-            type="button"
+          <CancelButton
             onClick={() =>
               setFormData({
                 name: "",
@@ -158,17 +157,11 @@ const AddDesignationForm = () => {
                 email: "",
               })
             }
-            className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 transition"
           >
             Cancel
-          </button>
+          </CancelButton>
 
-          <button
-            type="submit"
-            className="px-4 py-2 text-sm bg-black text-white rounded-md hover:bg-gray-800 transition"
-          >
-            Save
-          </button>
+          <GlowButton type="submit">Save</GlowButton>
         </div>
       </form>
     </>

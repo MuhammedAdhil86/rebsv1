@@ -6,12 +6,12 @@ const LabourWelfareFundTab = ({
   enabled,
   onEnable,
   onDisable,
-  onEdit,      // ✅ ADD THIS
-  loading
+  onEdit, // ✅ ADD THIS
+  loading,
 }) => {
   const [stateInput, setStateInput] = useState(lwfData?.state || "");
   const [deductionCycle, setDeductionCycle] = useState(
-    lwfData?.deduction_cycle || "monthly"
+    lwfData?.deduction_cycle || "monthly",
   );
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState("");
@@ -39,9 +39,7 @@ const LabourWelfareFundTab = ({
       }
     } catch (err) {
       setError(
-        err?.response?.data?.error ||
-        err?.message ||
-        "Failed to enable LWF."
+        err?.response?.data?.error || err?.message || "Failed to enable LWF.",
       );
     } finally {
       setFormLoading(false);
@@ -111,9 +109,7 @@ const LabourWelfareFundTab = ({
         <span className="font-normal text-xs">(Ensures social welfare)</span>
       </h3>
 
-      <p className="mt-3 text-[12px] text-gray-600">
-        State: {lwfData?.state}
-      </p>
+      <p className="mt-3 text-[12px] text-gray-600">State: {lwfData?.state}</p>
 
       <div className="mt-3 space-y-5 text-sm text-gray-700">
         <div className="flex gap-3">
@@ -124,16 +120,12 @@ const LabourWelfareFundTab = ({
         </div>
 
         <div className="flex gap-3">
-          <span className="w-[180px] text-gray-600">
-            Employer Contribution
-          </span>
+          <span className="w-[180px] text-gray-600">Employer Contribution</span>
           <span>₹ {lwfData?.employer_contribution || 0}</span>
         </div>
 
         <div className="flex gap-3">
-          <span className="w-[180px] text-gray-600">
-            Deduction Cycle
-          </span>
+          <span className="w-[180px] text-gray-600">Deduction Cycle</span>
           <span>{lwfData?.deduction_cycle}</span>
         </div>
       </div>

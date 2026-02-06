@@ -4,31 +4,20 @@ import { Icon } from "@iconify/react";
 import UniversalTable from "../../ui/universal_table";
 import axiosInstance from "../../service/axiosinstance";
 import CustomSelect from "../../ui/customselect";
+import * as XLSX from "xlsx-js-style";
 
-// Columns definition with truncated name and designation
+import {
+  titleStyle,
+  headerStyle,
+  textCellStyle,
+  numberCellStyle,
+  totalRowStyle,
+} from "../helpers/exelsheet";
+
 const columns = [
   { key: "user_id", label: "User ID" },
-  {
-    key: "name",
-    label: "Name",
-    render: (value) => (
-      <span
-        className="block max-w-[10ch] truncate"
-        title={value} // Hover shows full text
-      >
-        {value}
-      </span>
-    ),
-  },
-  {
-    key: "designation",
-    label: "Designation",
-    render: (value) => (
-      <span className="block max-w-[21ch] truncate" title={value}>
-        {value}
-      </span>
-    ),
-  },
+  { key: "name", label: "Name" },
+  { key: "designation", label: "Designation" },
   { key: "department", label: "Department" },
   { key: "working_days", label: "Working Days" },
   { key: "present_days", label: "Days Present" },
@@ -37,6 +26,16 @@ const columns = [
   { key: "lop", label: "LOP" },
 ];
 
+// helper for truncate + hover
+const TruncatedCell = ({ text }) => {
+  if (!text) return "N/A";
+  return (
+    <span title={text} className="cursor-pointer">
+      {text.length > 10 ? text.slice(0, 10) + "..." : text}
+    </span>
+  );
+};
+
 export default function AttendanceReports() {
   const today = new Date();
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
@@ -44,72 +43,135 @@ export default function AttendanceReports() {
   const [searchTerm, setSearchTerm] = useState("");
   const [apiData, setApiData] = useState([]);
 
-  // Fetch API data whenever month/year changes
-  useEffect(() => {
-    console.log(
-      `%cFetching data for month: ${selectedMonth}, year: ${selectedYear}`,
-      "color: blue; font-weight: bold;",
-    );
+  const monthName = new Date(selectedYear, selectedMonth - 1).toLocaleString(
+    "default",
+    { month: "long" },
+  );
 
+  useEffect(() => {
     axiosInstance
       .get(`admin/staff/fullreport/${selectedMonth}/${selectedYear}`)
       .then((res) => {
-        console.log(
-          "%cRaw API response:",
-          "color: orange; font-weight: bold;",
-          res.data,
-        );
+        // ✅ console logs for full data
+        console.log("Full API Response:", res);
+        console.log("Full Data Array:", res.data?.data);
 
         const mapped =
-          res.data?.data?.map((item) => ({
-            user_id: item.user_id || "N/A",
-            name: item.name || "N/A",
-            designation: item.designation || "N/A",
-            department: item.department || "N/A",
-            working_days: item.total_working_days || "0",
-            present_days: item.present || "0.0",
-            absent_days: item.absent || "0.0",
-            net_salary: item.net_salary != null ? item.net_salary : "N/A",
-            lop: item.absent_cut != null ? item.absent_cut : 0,
-          })) || [];
+          res.data?.data?.map((item, index) => {
+            console.log("Row Data:", index + 1, {
+              user_id: item.user_id,
+              total_working_days: item.total_working_days,
+              present: item.present,
+              absent: item.absent,
+              net_salary: item.net_salary,
+              lop: item.absent_cut,
+            });
+
+            return {
+              user_id: item.user_id || "N/A",
+
+              name: <TruncatedCell text={item.name || "N/A"} />,
+              designation: <TruncatedCell text={item.designation || "N/A"} />,
+              department: <TruncatedCell text={item.department || "N/A"} />,
+
+              working_days: Number(item.total_working_days || 0),
+              present_days: Number(item.present || 0),
+              absent_days: Number(item.absent || 0),
+              net_salary: Number(item.net_salary || 0),
+              lop: Number(item.absent_cut || 0),
+            };
+          }) || [];
+
+        console.log("Mapped Data:", mapped);
 
         setApiData(mapped);
-        console.log(
-          "%cMapped table data:",
-          "color: green; font-weight: bold;",
-          mapped,
-        );
       })
       .catch((err) => {
-        console.error(err);
+        console.error("API Error:", err);
         setApiData([]);
       });
   }, [selectedMonth, selectedYear]);
 
-  // Log current apiData whenever it updates
-  useEffect(() => {
-    console.log(
-      "%cCurrent table data (apiData state):",
-      "color: purple; font-weight: bold;",
-      apiData,
+  const handleDownload = () => {
+    if (!apiData.length) return;
+
+    const headerRow = columns.map((c) => c.label);
+
+    const dataRows = apiData.map((row, i) => [
+      i + 1,
+      row.name?.props?.text || row.name,
+      row.designation?.props?.text || row.designation,
+      row.department?.props?.text || row.department,
+      row.working_days,
+      row.present_days,
+      row.absent_days,
+      row.net_salary,
+      row.lop,
+    ]);
+
+    const totalSalary = apiData.reduce(
+      (sum, row) => sum + Number(row.net_salary || 0),
+      0,
     );
-  }, [apiData]);
+
+    const sheetData = [
+      [`MONTH OF ${monthName.toUpperCase()}`],
+      headerRow,
+      ...dataRows,
+      ["", "", "", "", "", "", "TOTAL", totalSalary, ""],
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+    ws["!merges"] = [
+      {
+        s: { r: 0, c: 0 },
+        e: { r: 0, c: headerRow.length - 1 },
+      },
+    ];
+
+    ws["!cols"] = [
+      { wch: 6 },
+      { wch: 28 },
+      { wch: 28 },
+      { wch: 28 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 13 },
+    ];
+
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+
+    for (let R = range.s.r; R <= range.e.r; R++) {
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!ws[cellRef]) continue;
+
+        if (R === 0) ws[cellRef].s = titleStyle;
+        else if (R === 1) ws[cellRef].s = headerStyle;
+        else if (R === range.e.r) ws[cellRef].s = totalRowStyle;
+        else if (typeof ws[cellRef].v === "number")
+          ws[cellRef].s = numberCellStyle;
+        else ws[cellRef].s = textCellStyle;
+      }
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+    XLSX.writeFile(wb, `Attendance_${monthName}_${selectedYear}.xlsx`);
+  };
 
   return (
     <div className="flex flex-col gap-4 text-[13px]">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-2 flex-wrap gap-3 w-full px-2">
+      <div className="flex justify-between items-center mb-2 px-2">
         <div className="text-[16px] font-medium">
-          {new Date(selectedYear, selectedMonth - 1).toLocaleString("default", {
-            month: "short",
-          })}{" "}
-          {selectedYear}
+          {monthName} {selectedYear}
         </div>
 
-        <div className="flex gap-3 flex-wrap items-center justify-end flex-1">
-          {/* Month selector */}
+        <div className="flex gap-3 items-center">
           <CustomSelect
-            label=""
             value={selectedMonth}
             onChange={(val) => setSelectedMonth(Number(val))}
             options={Array.from({ length: 12 }, (_, i) => ({
@@ -118,61 +180,46 @@ export default function AttendanceReports() {
                 month: "long",
               }),
             }))}
-            minWidth={110}
           />
 
-          {/* Year selector */}
           <CustomSelect
-            label=""
             value={selectedYear}
             onChange={(val) => setSelectedYear(Number(val))}
             options={Array.from({ length: 5 }, (_, i) => {
               const yr = today.getFullYear() - 2 + i;
               return { value: yr, label: yr };
             })}
-            minWidth={90}
           />
 
-          {/* Download button */}
           <button
             className="flex items-center px-4 py-1 bg-black text-white rounded"
-            onClick={() =>
-              console.log(
-                "%cDownload clicked. Data:",
-                "color: red; font-weight: bold;",
-                apiData,
-              )
-            }
+            onClick={handleDownload}
           >
             <FiDownload className="mr-2" /> Download
           </button>
 
-          {/* Search input */}
           <div className="relative w-[200px]">
             <input
               type="text"
               placeholder="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-1 w-full pr-8"
+              className="border px-3 py-1 rounded w-full"
             />
             <Icon
               icon="mynaui:search"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-lg"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
             />
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-auto scrollbar-hide">
-        <UniversalTable
-          columns={columns}
-          data={apiData}
-          rowsPerPage={5}
-          searchTerm={searchTerm}
-        />
-      </div>
+      <UniversalTable
+        columns={columns}
+        data={apiData}
+        rowsPerPage={5}
+        searchTerm={searchTerm}
+      />
     </div>
   );
 }

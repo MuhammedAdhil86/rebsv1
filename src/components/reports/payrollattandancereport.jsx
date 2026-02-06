@@ -2,10 +2,16 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../../service/axiosinstance";
 import UniversalTable from "../../ui/universal_table";
 import { Loader2, Download } from "lucide-react";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
+import * as XLSX from "xlsx-js-style";
 import { postPayrollAttendance } from "../../api/api";
 import CustomSelect from "../../ui/customselect";
+
+import {
+  titleStyle,
+  headerStyle,
+  textCellStyle,
+  numberCellStyle,
+} from "../helpers/exelsheet";
 
 const monthNames = [
   "January",
@@ -38,7 +44,7 @@ export default function PayrollAttendanceReport() {
     try {
       setLoading(true);
       const res = await axiosInstance.post(postPayrollAttendance, {
-        month: Number(monthNames.indexOf(month) + 1),
+        month: monthNames.indexOf(month) + 1,
         year: Number(year),
         leave_type: leaveType.toLowerCase(),
         accrual_method: accrualMethod.toLowerCase(),
@@ -46,6 +52,7 @@ export default function PayrollAttendanceReport() {
       setRecords(res.data?.data?.employees || []);
     } catch (err) {
       console.error("Payroll attendance fetch failed:", err);
+      setRecords([]);
     } finally {
       setLoading(false);
     }
@@ -66,22 +73,66 @@ export default function PayrollAttendanceReport() {
 
   const handleDownload = () => {
     if (!records.length) return;
-    const excelData = records.map((r) => ({
-      "User ID": r.user_id,
-      Employee: r.user_name,
-      "Gross Monthly": r.gross_monthly,
-      "Total Deductions": r.total_deductions_monthly,
-      "Net Monthly": r.net_monthly,
-      "Net Annual": r.net_annual,
-    }));
-    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    const headerRow = [
+      "User ID",
+      "Employee Name",
+      "Gross Monthly",
+      "Total Deductions",
+      "Net Monthly",
+      "Net Annual",
+    ];
+
+    const dataRows = records.map((r) => [
+      r.user_id,
+      r.user_name,
+      r.gross_monthly,
+      r.total_deductions_monthly,
+      r.net_monthly,
+      r.net_annual,
+    ]);
+
+    const sheetData = [
+      [`PAYROLL ATTENDANCE REPORT - ${month.toUpperCase()} ${year}`],
+      headerRow,
+      ...dataRows,
+    ];
+
     const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+    // merge title row
+    ws["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: headerRow.length - 1 } },
+    ];
+
+    // column widths (bigger for Employee Name)
+    ws["!cols"] = [
+      { wch: 12 }, // User ID
+      { wch: 30 }, // Employee Name
+      { wch: 18 }, // Gross Monthly
+      { wch: 20 }, // Total Deductions
+      { wch: 16 }, // Net Monthly
+      { wch: 16 }, // Net Annual
+    ];
+
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+
+    for (let R = range.s.r; R <= range.e.r; R++) {
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!ws[cellRef]) continue;
+
+        if (R === 0) ws[cellRef].s = titleStyle;
+        else if (R === 1) ws[cellRef].s = headerStyle;
+        else if (typeof ws[cellRef].v === "number")
+          ws[cellRef].s = numberCellStyle;
+        else ws[cellRef].s = textCellStyle;
+      }
+    }
+
     XLSX.utils.book_append_sheet(wb, ws, "Payroll Attendance");
-    const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    saveAs(
-      new Blob([buffer], { type: "application/octet-stream" }),
-      `payroll_attendance_${month}_${year}.xlsx`,
-    );
+    XLSX.writeFile(wb, `payroll_attendance_${month}_${year}.xlsx`);
   };
 
   return (
@@ -90,7 +141,7 @@ export default function PayrollAttendanceReport() {
         Payroll Attendance Report
       </h2>
 
-      {/* ================= FILTERS ================= */}
+      {/* Filters */}
       <div className="flex gap-3 mb-4 flex-wrap items-center">
         <CustomSelect
           label="Month"
@@ -104,7 +155,7 @@ export default function PayrollAttendanceReport() {
           value={year}
           onChange={setYear}
           options={[2024, 2025, 2026]}
-          minWidth={80} // You can tweak px for year
+          minWidth={80}
         />
 
         <CustomSelect
@@ -133,7 +184,7 @@ export default function PayrollAttendanceReport() {
         </button>
       </div>
 
-      {/* ================= TABLE ================= */}
+      {/* Table */}
       {loading ? (
         <div className="flex justify-center py-10">
           <Loader2 className="w-8 h-8 animate-spin" />

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Search, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fetchEmployeeCalendar } from "../../service/employeeService";
+import CustomSelect from "../../ui/customselect";
 
 function MusterRoll() {
   const navigate = useNavigate();
@@ -42,7 +43,6 @@ function MusterRoll() {
     const data = await fetchEmployeeCalendar(month, year);
 
     const formatted = data.map((emp) => {
-      // Format existing attendance
       const attendance = emp.attendance.map((d) => ({
         ...d,
         in_time: convertToTime(d.in),
@@ -53,7 +53,6 @@ function MusterRoll() {
             : convertToTimeWithSeconds(d.total_hour),
       }));
 
-      // Fill missing days up to 31
       const filledAttendance = Array.from({ length: 31 }, (_, i) => {
         return (
           attendance[i] || {
@@ -127,7 +126,7 @@ function MusterRoll() {
       case "Late":
         return "bg-[#4F4C9133] text-[#4F4C91]";
       default:
-        return "bg-gray-100 text-gray-600"; // Handles "--" or missing data
+        return "bg-gray-100 text-gray-600";
     }
   };
 
@@ -164,30 +163,26 @@ function MusterRoll() {
 
         <div className="flex flex-wrap items-center gap-1.5">
           {/* Month */}
-          <select
+          <CustomSelect
             value={month}
-            onChange={(e) => setMonth(Number(e.target.value))}
-            className="border rounded-md px-2.5 py-1.5 text-xs bg-white"
-          >
-            {monthNames.map((name, index) => (
-              <option key={index + 1} value={index + 1}>
-                {name}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setMonth(Number(val))}
+            options={monthNames.map((name, index) => ({
+              label: name,
+              value: index + 1,
+            }))}
+            minWidth={120}
+          />
 
           {/* Year */}
-          <select
+          <CustomSelect
             value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-            className="border rounded-md px-2.5 py-1.5 text-xs bg-white"
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setYear(Number(val))}
+            options={years.map((y) => ({
+              label: y,
+              value: y,
+            }))}
+            minWidth={100}
+          />
 
           {/* Download */}
           <button className="bg-black text-white px-3 py-1.5 rounded-md text-xs flex items-center gap-1">
@@ -217,7 +212,9 @@ function MusterRoll() {
 
       {/* TABLE */}
       <div
-        className={`overflow-x-auto scrollbar-none rounded-lg shadow-sm bg-white ${isFullView ? "w-[1080px]" : "w-full"}`}
+        className={`overflow-x-auto scrollbar-none rounded-lg shadow-sm bg-white ${
+          isFullView ? "w-[1080px]" : "w-full"
+        }`}
       >
         <table className="min-w-full text-sm border-collapse">
           <thead className="bg-white text-gray-500 text-xs uppercase">
@@ -229,8 +226,8 @@ function MusterRoll() {
                   key={idx}
                   className={`px-3 py-3 text-center text-xs font-medium uppercase tracking-wider ${
                     typeof day === "string" && day.includes("(Today)")
-                      ? "text-black font-bold"
-                      : "text-gray-500"
+                      ? "text-yellow-400 font-bold"
+                      : "text-gray-700"
                   }`}
                 >
                   {day}

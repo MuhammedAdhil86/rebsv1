@@ -5,6 +5,9 @@ import { addDivision, getBranchData } from "../../../service/companyService";
 import { fetchTimeZone } from "../../../service/eventservice";
 import { getGeolocation } from "../../../utils/geolocation";
 
+import GlowButton from "../../helpers/glowbutton";
+import CancelButton from "../../helpers/cancelbutton";
+
 const AddDivisionForm = () => {
   const [branches, setBranches] = useState([]);
   const [timeZones, setTimeZones] = useState([]);
@@ -122,7 +125,7 @@ const AddDivisionForm = () => {
       () => {
         toast.error("Location permission denied");
         setLoadingLocation(false);
-      }
+      },
     );
   };
 
@@ -189,9 +192,7 @@ const AddDivisionForm = () => {
               className="w-full border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm"
             />
             {errors.divisionName && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.divisionName}
-              </p>
+              <p className="text-red-500 text-xs mt-1">{errors.divisionName}</p>
             )}
           </div>
 
@@ -209,9 +210,7 @@ const AddDivisionForm = () => {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-700 mb-1">
-              Location
-            </label>
+            <label className="block text-sm text-gray-700 mb-1">Location</label>
             <input
               type="text"
               name="location"
@@ -235,9 +234,7 @@ const AddDivisionForm = () => {
               className="w-full h-[120px] border border-gray-300 bg-gray-50 rounded-md px-3 py-2 text-sm resize-none"
             />
             {errors.description && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.description}
-              </p>
+              <p className="text-red-500 text-xs mt-1">{errors.description}</p>
             )}
           </div>
 
@@ -282,9 +279,7 @@ const AddDivisionForm = () => {
                 />
               </div>
               {errors.timeZone && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.timeZone}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.timeZone}</p>
               )}
             </div>
           </div>
@@ -340,31 +335,27 @@ const AddDivisionForm = () => {
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer Buttons */}
         <div className="flex justify-end gap-4 pt-6">
-          <button
-            type="button"
-            onClick={() => setFormData({
-              divisionName: "",
-              divisionCode: "",
-              location: "",
-              description: "",
-              address: "",
-              latitude: "",
-              longitude: "",
-              timeZone: "",
-              parentBranch: "",
-            })}
-            className="border px-6 py-2 rounded-md"
+          <CancelButton
+            onClick={() =>
+              setFormData({
+                divisionName: "",
+                divisionCode: "",
+                location: "",
+                description: "",
+                address: "",
+                latitude: "",
+                longitude: "",
+                timeZone: "",
+                parentBranch: "",
+              })
+            }
           >
             Cancel
-          </button>
-          <button
-            type="submit"
-            className="bg-black text-white px-6 py-2 rounded-md"
-          >
-            Save
-          </button>
+          </CancelButton>
+
+          <GlowButton type="submit">Save</GlowButton>
         </div>
       </form>
     </>
