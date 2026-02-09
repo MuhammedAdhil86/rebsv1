@@ -5,7 +5,6 @@ import { ChevronLeft, X, Plus } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
 export default function CreateSalaryTemplate() {
-  // --- YOUR EXISTING STATE (UNTOUCHED) ---
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -15,7 +14,6 @@ export default function CreateSalaryTemplate() {
   const [components, setComponents] = useState([]);
   const [mappings, setMappings] = useState([]);
 
-  // --- YOUR EXISTING LOGIC (UNTOUCHED) ---
   useEffect(() => {
     const fetchComponents = async () => {
       try {
@@ -69,6 +67,7 @@ export default function CreateSalaryTemplate() {
   }, [components]);
 
   const round2 = (num) => Number(Number(num).toFixed(2));
+
   const getBasicAnnual = (arr) => {
     const basic = arr.find((m) => {
       const comp = components.find(
@@ -81,22 +80,30 @@ export default function CreateSalaryTemplate() {
 
   const computeAmounts = (rawMappings, annualCTC) => {
     const ctc = Number(annualCTC) || 0;
+
     let temp = rawMappings.map((m) => {
       if (m.isFixed) return { ...m, annual_amount: 0, monthly_amount: 0 };
+
       let annual = 0;
       const val = Number(m.value || 0);
+
       if (m.calculation_type === "percentage_ctc") {
         annual = (val / 100) * ctc;
-      } else if (m.calculation_type === "flat") {
-        annual = val;
       }
+      // ✅ flat is monthly → convert to annual
+      else if (m.calculation_type === "flat") {
+        annual = val * 12;
+      }
+
       return {
         ...m,
         annual_amount: Number(annual.toFixed(2)),
         monthly_amount: Number((annual / 12).toFixed(2)),
       };
     });
+
     const basicAnnual = getBasicAnnual(temp);
+
     temp = temp.map((m) => {
       if (m.calculation_type === "percentage_basic") {
         const annual = (Number(m.value || 0) / 100) * basicAnnual;
@@ -108,14 +115,17 @@ export default function CreateSalaryTemplate() {
       }
       return m;
     });
+
     const totalWithoutFixed = temp
       .filter((m) => !m.isFixed)
       .reduce((sum, m) => sum + Number(m.annual_amount || 0), 0);
+
     let remaining = Number((ctc - totalWithoutFixed).toFixed(2));
     if (remaining < 0) {
       toast.error("Total exceeds Annual CTC");
       return rawMappings;
     }
+
     temp = temp.map((m) => {
       if (m.isFixed) {
         return {
@@ -127,11 +137,14 @@ export default function CreateSalaryTemplate() {
       }
       return m;
     });
+
     const totalAnnual = temp.reduce(
       (sum, m) => sum + Number(m.annual_amount || 0),
       0,
     );
+
     const difference = Number((ctc - totalAnnual).toFixed(2));
+
     if (Math.abs(difference) > 0) {
       temp = temp.map((m) => {
         if (m.isFixed) {
@@ -148,6 +161,7 @@ export default function CreateSalaryTemplate() {
         return m;
       });
     }
+
     return temp;
   };
 
@@ -158,6 +172,7 @@ export default function CreateSalaryTemplate() {
 
   const handleMappingChange = async (index, e) => {
     const { name, value } = e.target;
+
     if (name === "component_id") {
       try {
         const res = await axiosInstance.get(`api/payroll/components/${value}`);
@@ -177,6 +192,7 @@ export default function CreateSalaryTemplate() {
       }
       return;
     }
+
     setMappings((prev) => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [name]: value };
@@ -223,6 +239,7 @@ export default function CreateSalaryTemplate() {
       toast.error("Template name and Annual CTC are required");
       return;
     }
+
     const payload = {
       template: {
         name: form.name,
@@ -230,12 +247,22 @@ export default function CreateSalaryTemplate() {
         annual_ctc: Number(form.annual_ctc),
         status: form.status,
       },
-      mappings: mappings.map((m) => ({
-        component_id: m.component_id,
-        calculation_type: m.calculation_type,
-        value: Number(m.value || 0),
-      })),
+      mappings: mappings.map((m) => {
+        let valueToSend = Number(m.value || 0);
+
+        // ✅ flat → send annual / 12
+        if (m.calculation_type === "flat") {
+          valueToSend = Number((m.annual_amount / 12).toFixed(2));
+        }
+
+        return {
+          component_id: m.component_id,
+          calculation_type: m.calculation_type,
+          value: valueToSend,
+        };
+      }),
     };
+
     try {
       const res = await axiosInstance.post("/api/payroll/templates", payload);
       toast.success(res.data?.message || "Salary template saved successfully!");
@@ -244,16 +271,15 @@ export default function CreateSalaryTemplate() {
     }
   };
 
-  // --- UI RENDER WITH 12PX POPPINS ---
   return (
     <div
-      className="min-h-screen bg-white p-6 font-['Poppins'] text-[#111827]"
+      className="min-h-screen bg-white rounded- p-6 font-['Poppins'] text-[#111827]"
       style={{ fontSize: "12px" }}
     >
       <Toaster position="top-right" />
 
       {/* Header */}
-      <div className="flex items-center gap-2 mb-6 border-b pb-4">
+      <div className="flex items-center gap-2 mb-6 pb-4">
         <ChevronLeft size={16} className="text-gray-600 cursor-pointer" />
         <span className="font-medium text-[12px]">New Salary Template</span>
       </div>
@@ -267,39 +293,39 @@ export default function CreateSalaryTemplate() {
             placeholder="Enter name"
             value={form.name}
             onChange={handleTemplateChange}
-            className="bg-[#F3F4F6] border-none p-2.5 rounded-lg focus:ring-1  outline-none text-[12px]"
+            className="bg-[#F3F4F6] border-none p-2.5 rounded-lg outline-none text-[12px]"
           />
         </div>
+
         <div className="flex flex-col gap-1.5">
-          <label className="">Description</label>
+          <label>Description</label>
           <input
             name="description"
             placeholder="Enter description"
             value={form.description}
             onChange={handleTemplateChange}
-            className="bg-[#F3F4F6] border-none p-2.5 rounded-lg focus:ring-1 focus:ring-gray-300 outline-none text-[12px]"
+            className="bg-[#F3F4F6] border-none p-2.5 rounded-lg outline-none text-[12px]"
           />
         </div>
+
         <div className="flex flex-col gap-1.5">
           <label className="text-gray-400">Annual CTC</label>
-          <div className="relative flex items-center bg-[#F3F4F6] rounded-lg overflow-hidden px-3">
+          <div className="relative flex items-center bg-[#F3F4F6] rounded-lg px-3">
             <span className="text-gray-500 mr-2">₹</span>
             <input
               name="annual_ctc"
               type="number"
               value={form.annual_ctc}
               onChange={handleTemplateChange}
-              className="bg-transparent border-none py-2.5 w-full focus:ring-0 outline-none text-[12px]"
+              className="bg-transparent border-none py-2.5 w-full outline-none text-[12px]"
             />
-            <span className="text-gray-400 whitespace-nowrap ml-2">
-              per year
-            </span>
+            <span className="text-gray-400 ml-2">per year</span>
           </div>
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="grid grid-cols-12 gap-4 px-1 mb-4 font-medium text-gray-500 uppercase tracking-tight">
+      {/* Table */}
+      <div className="grid grid-cols-12 gap-4 px-1 mb-4 font-medium text-gray-500 uppercase">
         <div className="col-span-4">Salary Components</div>
         <div className="col-span-3">Calculation Type</div>
         <div className="col-span-2 text-center">Monthly Amount</div>
@@ -308,14 +334,10 @@ export default function CreateSalaryTemplate() {
       </div>
 
       <div className="space-y-4">
-        {/* Earnings Group Label */}
         <div className="font-semibold text-gray-800 px-1 py-1">Earning</div>
 
         {mappings.map((m, index) => (
-          <div
-            key={m.id}
-            className="grid grid-cols-12 gap-4 items-center group"
-          >
+          <div key={m.id} className="grid grid-cols-12 gap-4 items-center">
             <div className="col-span-4">
               {m.isDefault || m.isFixed ? (
                 <div className="p-2 text-gray-700">
@@ -327,7 +349,7 @@ export default function CreateSalaryTemplate() {
                   name="component_id"
                   value={m.component_id}
                   onChange={(e) => handleMappingChange(index, e)}
-                  className="w-full bg-white border border-gray-100 p-2 rounded-lg outline-none text-[12px]"
+                  className="w-full bg-white border p-2 rounded-lg text-[12px]"
                 >
                   <option value="">Select Component</option>
                   {components
@@ -342,14 +364,14 @@ export default function CreateSalaryTemplate() {
             </div>
 
             <div className="col-span-3">
-              <div className="flex overflow-hidden rounded-lg bg-[#F3F4F6]">
+              <div className="flex rounded-lg bg-[#F3F4F6]">
                 <input
                   type="number"
                   name="value"
                   value={m.value}
                   onChange={(e) => handleMappingChange(index, e)}
                   disabled={m.isFixed}
-                  className="w-1/2 bg-transparent p-2 text-[12px] outline-none border-r border-gray-200 text-center"
+                  className="w-1/2 p-2 text-center bg-transparent outline-none"
                 />
                 <div className="w-1/2 p-2 text-[10px] text-gray-500 flex items-center justify-center uppercase">
                   {m.calculation_type?.split("_").join(" ") || "Fixed Amount"}
@@ -357,74 +379,51 @@ export default function CreateSalaryTemplate() {
               </div>
             </div>
 
-            <div className="col-span-2 flex justify-center">
-              <div className="bg-[#F3F4F6] w-full p-2 rounded-lg text-center">
-                {m.monthly_amount.toLocaleString("en-IN")}
-              </div>
+            <div className="col-span-2 text-center bg-[#F3F4F6] p-2 rounded-lg">
+              {m.monthly_amount.toLocaleString("en-IN")}
             </div>
 
-            <div className="col-span-2 text-center text-gray-700">
+            <div className="col-span-2 text-center">
               {m.annual_amount.toLocaleString("en-IN")}
             </div>
 
-            <div className="col-span-1 flex justify-center">
+            <div className="col-span-1 text-center">
               {!m.isDefault && !m.isFixed && (
                 <X
                   size={14}
-                  className="text-gray-400 cursor-pointer hover:text-red-500"
+                  className="cursor-pointer text-gray-400 hover:text-red-500"
                   onClick={() => deleteMapping(m.id)}
                 />
               )}
             </div>
           </div>
         ))}
-
-        {/* Deduction Label Placeholder (Matches screenshot) */}
-        <div className="font-semibold text-gray-800 px-1 py-1 mt-4 border-t pt-4">
-          Deductions
-        </div>
       </div>
 
-      {/* Add Component Action */}
+      {/* Add Component */}
       <div
-        className="mt-4 flex items-center gap-1 cursor-pointer text-gray-800 font-semibold"
+        className="mt-4 flex items-center gap-1 cursor-pointer font-semibold"
         onClick={addComponent}
       >
-        <Plus size={14} className="text-gray-900" />
-        <span className="border-b border-gray-900 pb-0.5">Add Components</span>
+        <Plus size={14} />
+        <span className="border-b">Add Components</span>
       </div>
 
-      {/* Summary Cost Bar */}
-      <div className="mt-10 bg-[#F3F4F6] rounded-lg p-4 flex justify-between items-center font-semibold">
-        <span className="text-gray-800">Cost to Company</span>
+      {/* Summary */}
+      <div className="mt-10 bg-[#F3F4F6] rounded-lg p-4 flex justify-between">
+        <span>Cost to Company</span>
         <div className="flex gap-20">
-          <div className="flex items-center gap-2">
-            <span className="text-gray-500">₹</span>
-            <span>
-              {totalMonthly.toLocaleString("en-IN", {
-                minimumFractionDigits: 2,
-              })}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-gray-500">₹</span>
-            <span>
-              {totalAnnual.toLocaleString("en-IN", {
-                minimumFractionDigits: 2,
-              })}
-            </span>
-          </div>
+          <span>₹ {totalMonthly.toLocaleString("en-IN")}</span>
+          <span>₹ {totalAnnual.toLocaleString("en-IN")}</span>
         </div>
       </div>
 
       {/* Actions */}
       <div className="flex justify-end gap-3 mt-8">
-        <button className="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 text-[12px]">
-          Cancel
-        </button>
+        <button className="px-6 py-2 border rounded-lg">Cancel</button>
         <button
           onClick={handleSave}
-          className="px-8 py-2 bg-[#0F172A] text-white rounded-lg hover:bg-black transition-colors text-[12px]"
+          className="px-8 py-2 bg-[#0F172A] text-white rounded-lg"
         >
           Save
         </button>
