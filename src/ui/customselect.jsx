@@ -22,7 +22,7 @@ export default function CustomSelect({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="appearance-none border px-3 py-2 text-xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-black"
+          className="appearance-none border px-3 py-2 text-xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-black "
           style={{
             width: `${widthCh}ch`,
             minWidth: `${minWidth}px`,
