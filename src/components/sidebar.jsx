@@ -68,7 +68,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
         },
         {
           title: "Payroll",
-          path: userId ? `/u/${userId}/${userNameSlug}/payroll` : "#",
+          path: userId ? `/payroll` : "#",
           icon: icons.payroll,
         },
         { title: "Manage Shift", path: `/shift`, icon: icons.manageShift },
@@ -116,9 +116,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
         },
         {
           title: "Interview Process",
-          path: userId
-            ? `/u/${userId}/${userNameSlug}/interviewprocess`
-            : "#",
+          path: userId ? `/u/${userId}/${userNameSlug}/interviewprocess` : "#",
           icon: icons.interview,
         },
       ],
@@ -183,10 +181,16 @@ function SideBar({ isCollapsed, toggleSidebar }) {
               ${isCollapsed ? "w-12 h-12" : "w-[90%] px-4 h-14"}
               ${
                 !isCollapsed &&
-                (isProfileOpen ? "bg-gray-600" : "bg-gray-800 hover:bg-gray-600")
+                (isProfileOpen
+                  ? "bg-gray-600"
+                  : "bg-gray-800 hover:bg-gray-600")
               }`}
           >
-            <img src={avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full" />
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="w-8 h-8 rounded-full"
+            />
             {!isCollapsed && (
               <div className="flex-1 text-left ml-3">
                 <span className="block text-sm">{displayName}</span>
@@ -207,31 +211,30 @@ function SideBar({ isCollapsed, toggleSidebar }) {
             )}
           </div>
 
-       {/* Profile Dropdown */}
-{!isCollapsed && isProfileOpen && (
-  <div className="mt-2 w-[90%] bg-[#1C2526] rounded-lg flex flex-col space-y-1 px-2 py-1">
-    <Link
-      to="/settings"
-      className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
-    >
-      <Settings size={20} />
-      <span className="text-sm flex-1 text-left">Settings</span>
-    </Link>
+          {/* Profile Dropdown */}
+          {!isCollapsed && isProfileOpen && (
+            <div className="mt-2 w-[90%] bg-[#1C2526] rounded-lg flex flex-col space-y-1 px-2 py-1">
+              <Link
+                to="/settings"
+                className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
+              >
+                <Settings size={20} />
+                <span className="text-sm flex-1 text-left">Settings</span>
+              </Link>
 
-    <button
-      onClick={() => {
-        // ✅ Logout: remove token and redirect to login
-        localStorage.removeItem("token"); // or whatever key you use
-        window.location.href = "/login"; // redirect to login page
-      }}
-      className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
-    >
-      <Icon icon="material-symbols:logout" width="20" height="20" />
-      <span className="text-sm flex-1 text-left">Logout</span>
-    </button>
-  </div>
-)}
-
+              <button
+                onClick={() => {
+                  // ✅ Logout: remove token and redirect to login
+                  localStorage.removeItem("token"); // or whatever key you use
+                  window.location.href = "/login"; // redirect to login page
+                }}
+                className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
+              >
+                <Icon icon="material-symbols:logout" width="20" height="20" />
+                <span className="text-sm flex-1 text-left">Logout</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Sidebar Menu */}

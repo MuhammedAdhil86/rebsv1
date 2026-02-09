@@ -24,6 +24,8 @@ export default function SalaryTemplate() {
   const [showCreateComponent, setShowCreateComponent] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
 
+  const [activeTab, setActiveTab] = useState("salary-template");
+
   const [filterOptions, setFilterOptions] = useState({
     active: true,
     inactive: true,
@@ -110,18 +112,8 @@ export default function SalaryTemplate() {
     },
   ];
 
-  const renderTabContent = (activeTab) => {
-    if (showCreateTemplate)
-      return <CreateSalaryTemplate setShowCreate={setShowCreateTemplate} />;
-    if (showCreateComponent)
-      return (
-        <CreateSalaryComponent
-          componentId={null}
-          onCancel={() => setShowCreateComponent(false)}
-        />
-      );
-
-    switch (activeTab) {
+  const renderTabContent = (tab) => {
+    switch (tab) {
       case "salary-template":
         return (
           <>
@@ -157,8 +149,8 @@ export default function SalaryTemplate() {
     }
   };
 
-  const extraButtons = (activeTab) => {
-    if (activeTab === "salary-template") {
+  const extraButtons = (tab) => {
+    if (tab === "salary-template") {
       return (
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -197,7 +189,7 @@ export default function SalaryTemplate() {
       );
     }
 
-    if (activeTab === "salary-components") {
+    if (tab === "salary-components") {
       return (
         <CommonButton
           onClick={() => setShowCreateComponent(true)}
@@ -212,12 +204,22 @@ export default function SalaryTemplate() {
 
   return (
     <div className="border rounded-2xl shadow-sm p-3 min-h-screen font-[Poppins] text-sm">
-      <TabsSwitch
-        tabs={tabs}
-        initialTab="salary-template"
-        renderTabContent={renderTabContent}
-        extraButtons={extraButtons}
-      />
+      {showCreateTemplate ? (
+        <CreateSalaryTemplate setShowCreate={setShowCreateTemplate} />
+      ) : showCreateComponent ? (
+        <CreateSalaryComponent
+          componentId={null}
+          onCancel={() => setShowCreateComponent(false)}
+        />
+      ) : (
+        <TabsSwitch
+          tabs={tabs}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          renderTabContent={renderTabContent}
+          extraButtons={extraButtons}
+        />
+      )}
     </div>
   );
 }

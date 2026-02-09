@@ -22,6 +22,7 @@ import Reports from "../page/resports";
 import JobCreation from "../page/jobcreation";
 import Requests from "../page/requests";
 import EmployeeCalendar from "../page/activitycalander";
+import Payroll from "../page/payroll";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ element: Element }) => {
@@ -43,22 +44,50 @@ function AppRoutes() {
       <Route path="/forgetpass" element={<ForgotPasswordUI />} />
       <Route path="/otp" element={<OtpUi />} />
       <Route path="/newpassword" element={<NewPasswordUI />} />
-     
 
       {/* --- Protected Routes --- */}
-      <Route path="/dashboard" element={<ProtectedRoute element={Dashboard} />} />
-      <Route path="/employeeonboarding" element={<ProtectedRoute element={EmployeeOnboarding} />} />
+      <Route
+        path="/dashboard"
+        element={<ProtectedRoute element={Dashboard} />}
+      />
+      <Route
+        path="/employeeonboarding"
+        element={<ProtectedRoute element={EmployeeOnboarding} />}
+      />
       <Route path="/settings" element={<ProtectedRoute element={Settings} />} />
-      <Route path="/manageemployee" element={<ProtectedRoute element={ManageEmployees} />} />
+      <Route
+        path="/manageemployee"
+        element={<ProtectedRoute element={ManageEmployees} />}
+      />
       <Route path="/test" element={<ProtectedRoute element={LogPage} />} />
-<Route path="/details/:id" element={<ProtectedRoute element={EmployeeProfile} />} />
-<Route path="/consoildate" element={<ProtectedRoute element={ConsolidatedData} />} />
-<Route path="/shift" element={<ProtectedRoute element={ManageEmployeeShifts} />} />
-<Route path="/onboarding" element={<ProtectedRoute element={OrganizationOnboarding} />} />
-<Route path="/reports" element={<ProtectedRoute element={Reports} />} />
-<Route path="/job" element={<ProtectedRoute element={JobCreation} />} />
-<Route path="/Requests" element={<ProtectedRoute element={Requests} />} />
-<Route path="/activity" element={<ProtectedRoute element={EmployeeCalendar} />} />
+      <Route
+        path="/details/:id"
+        element={<ProtectedRoute element={EmployeeProfile} />}
+      />
+      <Route
+        path="/consoildate"
+        element={<ProtectedRoute element={ConsolidatedData} />}
+      />
+      <Route
+        path="/shift"
+        element={<ProtectedRoute element={ManageEmployeeShifts} />}
+      />
+      <Route
+        path="/onboarding"
+        element={<ProtectedRoute element={OrganizationOnboarding} />}
+      />
+      <Route path="/reports" element={<ProtectedRoute element={Reports} />} />
+      <Route path="/job" element={<ProtectedRoute element={JobCreation} />} />
+      <Route path="/Requests" element={<ProtectedRoute element={Requests} />} />
+      <Route
+        path="/activity"
+        element={<ProtectedRoute element={EmployeeCalendar} />}
+      />
+      <Route
+        path="/activity"
+        element={<ProtectedRoute element={EmployeeCalendar} />}
+      />
+      <Route path="/payroll" element={<ProtectedRoute element={Payroll} />} />
 
       {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
 

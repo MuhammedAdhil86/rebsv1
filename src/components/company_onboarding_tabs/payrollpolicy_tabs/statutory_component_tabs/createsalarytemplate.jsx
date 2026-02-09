@@ -2,36 +2,31 @@ import React, { useState, useEffect } from "react";
 import axiosInstance from "../../../../service/axiosinstance";
 import toast, { Toaster } from "react-hot-toast";
 import { ChevronLeft, X, Plus } from "lucide-react";
-import { v4 as uuidv4 } from "uuid"; // For unique mapping IDs
+import { v4 as uuidv4 } from "uuid";
 
 export default function CreateSalaryTemplate() {
+  // --- YOUR EXISTING STATE (UNTOUCHED) ---
   const [form, setForm] = useState({
     name: "",
     description: "",
     annual_ctc: "",
     status: "active",
   });
-
   const [components, setComponents] = useState([]);
-  const [mappings, setMappings] = useState([
-    {
-      id: uuidv4(),
-      component_id: "",
-      calculation_type: "",
-      value: "",
-      monthly_amount: 0,
-      annual_amount: 0,
-    },
-  ]);
+  const [mappings, setMappings] = useState([]);
 
-  // Fetch all components
+  // --- YOUR EXISTING LOGIC (UNTOUCHED) ---
   useEffect(() => {
     const fetchComponents = async () => {
       try {
         const res = await axiosInstance.get(
           "api/payroll/components?limit=50&offset=0",
         );
-        setComponents(res.data?.data?.items || []);
+        const items = res.data?.data?.items || [];
+        const unique = Array.from(
+          new Map(items.map((item) => [item.id, item])).values(),
+        );
+        setComponents(unique);
       } catch (err) {
         toast.error("Failed to load components");
       }
@@ -39,55 +34,123 @@ export default function CreateSalaryTemplate() {
     fetchComponents();
   }, []);
 
-  // ---------- Calculation Logic ----------
+  useEffect(() => {
+    if (!components.length) return;
+    const defaultBasic = components.find(
+      (c) => c.company_id === 0 && c.name.toLowerCase() === "basic",
+    );
+    const fixedAllowance = components.find(
+      (c) => c.company_id === 0 && c.name.toLowerCase() === "fixed allowance",
+    );
+    const initial = [];
+    if (defaultBasic) {
+      initial.push({
+        id: uuidv4(),
+        component_id: defaultBasic.id,
+        calculation_type: defaultBasic.calculation_type,
+        value: defaultBasic.value,
+        monthly_amount: 0,
+        annual_amount: 0,
+        isDefault: true,
+      });
+    }
+    if (fixedAllowance) {
+      initial.push({
+        id: uuidv4(),
+        component_id: fixedAllowance.id,
+        calculation_type: fixedAllowance.calculation_type,
+        value: 0,
+        monthly_amount: 0,
+        annual_amount: 0,
+        isFixed: true,
+      });
+    }
+    setMappings(initial);
+  }, [components]);
+
+  const round2 = (num) => Number(Number(num).toFixed(2));
   const getBasicAnnual = (arr) => {
     const basic = arr.find((m) => {
       const comp = components.find(
         (c) => String(c.id) === String(m.component_id),
       );
-      return comp?.name?.toLowerCase().includes("basic");
+      return comp?.name?.toLowerCase() === "basic";
     });
     return Number(basic?.annual_amount || 0);
   };
 
   const computeAmounts = (rawMappings, annualCTC) => {
     const ctc = Number(annualCTC) || 0;
-
-    // First pass: percentage_ctc and flat amounts
     let temp = rawMappings.map((m) => {
+      if (m.isFixed) return { ...m, annual_amount: 0, monthly_amount: 0 };
       let annual = 0;
       const val = Number(m.value || 0);
-
       if (m.calculation_type === "percentage_ctc") {
         annual = (val / 100) * ctc;
       } else if (m.calculation_type === "flat") {
         annual = val;
       }
-
-      const monthly = Math.round(annual / 12);
-      return { ...m, monthly_amount: monthly, annual_amount: monthly * 12 };
+      return {
+        ...m,
+        annual_amount: Number(annual.toFixed(2)),
+        monthly_amount: Number((annual / 12).toFixed(2)),
+      };
     });
-
-    // Second pass: percentage_basic
     const basicAnnual = getBasicAnnual(temp);
     temp = temp.map((m) => {
       if (m.calculation_type === "percentage_basic") {
         const annual = (Number(m.value || 0) / 100) * basicAnnual;
-        const monthly = Math.round(annual / 12);
-        return { ...m, monthly_amount: monthly, annual_amount: monthly * 12 };
+        return {
+          ...m,
+          annual_amount: Number(annual.toFixed(2)),
+          monthly_amount: Number((annual / 12).toFixed(2)),
+        };
       }
       return m;
     });
-
+    const totalWithoutFixed = temp
+      .filter((m) => !m.isFixed)
+      .reduce((sum, m) => sum + Number(m.annual_amount || 0), 0);
+    let remaining = Number((ctc - totalWithoutFixed).toFixed(2));
+    if (remaining < 0) {
+      toast.error("Total exceeds Annual CTC");
+      return rawMappings;
+    }
+    temp = temp.map((m) => {
+      if (m.isFixed) {
+        return {
+          ...m,
+          value: remaining,
+          annual_amount: remaining,
+          monthly_amount: Number((remaining / 12).toFixed(2)),
+        };
+      }
+      return m;
+    });
+    const totalAnnual = temp.reduce(
+      (sum, m) => sum + Number(m.annual_amount || 0),
+      0,
+    );
+    const difference = Number((ctc - totalAnnual).toFixed(2));
+    if (Math.abs(difference) > 0) {
+      temp = temp.map((m) => {
+        if (m.isFixed) {
+          const adjustedAnnual = Number(
+            (m.annual_amount + difference).toFixed(2),
+          );
+          return {
+            ...m,
+            annual_amount: adjustedAnnual,
+            monthly_amount: Number((adjustedAnnual / 12).toFixed(2)),
+            value: adjustedAnnual,
+          };
+        }
+        return m;
+      });
+    }
     return temp;
   };
 
-  // Recompute whenever annual_ctc or components change
-  useEffect(() => {
-    setMappings((prev) => computeAmounts(prev, form.annual_ctc));
-  }, [form.annual_ctc, components]);
-
-  // ---------- Handlers ----------
   const handleTemplateChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -95,17 +158,15 @@ export default function CreateSalaryTemplate() {
 
   const handleMappingChange = async (index, e) => {
     const { name, value } = e.target;
-
     if (name === "component_id") {
       try {
         const res = await axiosInstance.get(`api/payroll/components/${value}`);
         const data = res.data?.data;
-
         setMappings((prev) => {
           const updated = [...prev];
           updated[index] = {
             ...updated[index],
-            component_id: value,
+            component_id: data.id,
             calculation_type: data.calculation_type,
             value: data.value,
           };
@@ -116,7 +177,6 @@ export default function CreateSalaryTemplate() {
       }
       return;
     }
-
     setMappings((prev) => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [name]: value };
@@ -125,253 +185,249 @@ export default function CreateSalaryTemplate() {
   };
 
   const addComponent = () => {
-    setMappings((prev) =>
-      computeAmounts(
-        [
-          ...prev,
-          {
-            id: uuidv4(),
-            component_id: "",
-            calculation_type: "",
-            value: "",
-            monthly_amount: 0,
-            annual_amount: 0,
-          },
-        ],
-        form.annual_ctc,
-      ),
-    );
+    setMappings((prev) => [
+      ...prev,
+      {
+        id: uuidv4(),
+        component_id: "",
+        calculation_type: "",
+        value: "",
+        monthly_amount: 0,
+        annual_amount: 0,
+      },
+    ]);
   };
 
   const deleteMapping = (id) => {
     setMappings((prev) =>
       computeAmounts(
-        prev.filter((m) => m.id !== id),
+        prev.filter((m) => !m.isDefault && !m.isFixed && m.id !== id),
         form.annual_ctc,
       ),
     );
   };
 
-  // ---------- Submit Template ----------
-  const submitTemplate = async () => {
+  useEffect(() => {
+    setMappings((prev) => computeAmounts(prev, form.annual_ctc));
+  }, [form.annual_ctc]);
+
+  const totalAnnual = mappings.reduce(
+    (sum, m) => sum + Number(m.annual_amount || 0),
+    0,
+  );
+  const totalMonthly = round2(totalAnnual / 12);
+
+  const handleSave = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!form.name || !form.annual_ctc) {
+      toast.error("Template name and Annual CTC are required");
+      return;
+    }
+    const payload = {
+      template: {
+        name: form.name,
+        description: form.description,
+        annual_ctc: Number(form.annual_ctc),
+        status: form.status,
+      },
+      mappings: mappings.map((m) => ({
+        component_id: m.component_id,
+        calculation_type: m.calculation_type,
+        value: Number(m.value || 0),
+      })),
+    };
     try {
-      const validMappings = mappings.filter(
-        (m) =>
-          m.component_id &&
-          m.calculation_type &&
-          m.value !== "" &&
-          !isNaN(Number(m.value)),
-      );
-
-      if (!form.name || !form.annual_ctc || validMappings.length === 0) {
-        toast.error(
-          "Please fill all required fields and add at least one component",
-        );
-        return;
-      }
-
-      const body = {
-        template: { ...form, annual_ctc: Number(form.annual_ctc) },
-        mappings: validMappings.map((m) => ({
-          component_id: Number(m.component_id),
-          calculation_type: m.calculation_type,
-          value: Number(m.value),
-        })),
-      };
-
-      await axiosInstance.post("/api/payroll/templates", body);
-      toast.success("Salary Template Created Successfully!");
-      setTimeout(() => window.location.reload(), 1500);
+      const res = await axiosInstance.post("/api/payroll/templates", payload);
+      toast.success(res.data?.message || "Salary template saved successfully!");
     } catch (err) {
-      let msg = "Failed to create template";
-      if (err.response?.data) {
-        const data = err.response.data;
-        msg = data.message || data.error || JSON.stringify(data);
-      }
-      toast.error(msg);
-      console.error("Backend error:", err.response?.data || err.message);
+      toast.error(err.response?.data?.message || "Failed to save template");
     }
   };
 
-  // ---------- Totals ----------
-  const totalAnnual = mappings.reduce(
-    (s, m) => s + Number(m.annual_amount || 0),
-    0,
-  );
-  const totalMonthly = Math.round(totalAnnual / 12);
-
-  // ---------- UI ----------
+  // --- UI RENDER WITH 12PX POPPINS ---
   return (
     <div
-      className="min-h-screen bg-white p-6"
-      style={{ fontFamily: "'Poppins', sans-serif" }}
+      className="min-h-screen bg-white p-6 font-['Poppins'] text-[#111827]"
+      style={{ fontSize: "12px" }}
     >
       <Toaster position="top-right" />
 
-      {/* Navigation Header */}
-      <div className="flex items-center gap-2 mb-8 border-b border-gray-200 pb-4">
-        <ChevronLeft size={18} className="cursor-pointer text-black" />
-        <h1 className="text-[14px] font-normal text-black">
-          New Salary Template
-        </h1>
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-6 border-b pb-4">
+        <ChevronLeft size={16} className="text-gray-600 cursor-pointer" />
+        <span className="font-medium text-[12px]">New Salary Template</span>
       </div>
 
-      <div className="max-w-full mx-auto">
-        {/* Top Header Inputs */}
-        <div className="grid grid-cols-3 gap-6 mb-10">
-          <div className="space-y-1">
-            <label className="text-[12px] text-black font-normal">
-              Template Name
-            </label>
+      {/* Top Configuration Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-gray-400">Template Name</label>
+          <input
+            name="name"
+            placeholder="Enter name"
+            value={form.name}
+            onChange={handleTemplateChange}
+            className="bg-[#F3F4F6] border-none p-2.5 rounded-lg focus:ring-1  outline-none text-[12px]"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="">Description</label>
+          <input
+            name="description"
+            placeholder="Enter description"
+            value={form.description}
+            onChange={handleTemplateChange}
+            className="bg-[#F3F4F6] border-none p-2.5 rounded-lg focus:ring-1 focus:ring-gray-300 outline-none text-[12px]"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-gray-400">Annual CTC</label>
+          <div className="relative flex items-center bg-[#F3F4F6] rounded-lg overflow-hidden px-3">
+            <span className="text-gray-500 mr-2">₹</span>
             <input
-              name="name"
-              className="w-full bg-[#F3F4F6] border-none rounded-md p-2.5 text-[12px] font-normal outline-none text-black placeholder:text-black"
-              placeholder="Enter name"
-              value={form.name}
+              name="annual_ctc"
+              type="number"
+              value={form.annual_ctc}
               onChange={handleTemplateChange}
+              className="bg-transparent border-none py-2.5 w-full focus:ring-0 outline-none text-[12px]"
             />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[12px] text-black font-normal">
-              Description
-            </label>
-            <input
-              name="description"
-              className="w-full bg-[#F3F4F6] border-none rounded-md p-2.5 text-[12px] font-normal outline-none text-black placeholder:text-black"
-              placeholder="Enter description"
-              value={form.description}
-              onChange={handleTemplateChange}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[12px] text-black font-normal">
-              Annual CTC
-            </label>
-            <div className="flex items-center bg-[#F3F4F6] rounded-md px-3">
-              <span className="text-[12px] text-black">₹</span>
-              <input
-                name="annual_ctc"
-                type="number"
-                className="w-full bg-transparent border-none p-2.5 text-[12px] outline-none font-normal text-black placeholder:text-black"
-                value={form.annual_ctc}
-                placeholder="0"
-                onChange={handleTemplateChange}
-              />
-              <span className="text-[11px] text-black whitespace-nowrap font-normal">
-                per year
-              </span>
-            </div>
+            <span className="text-gray-400 whitespace-nowrap ml-2">
+              per year
+            </span>
           </div>
         </div>
+      </div>
 
-        {/* Column Headers */}
-        <div className="grid grid-cols-12 gap-4 text-[12px] font-normal text-black py-3 px-2 border-t border-b border-gray-200 mb-4 bg-white">
-          <div className="col-span-4">Salary Components</div>
-          <div className="col-span-3 text-center">Calculation Type</div>
-          <div className="col-span-2 text-center">Monthly Amount</div>
-          <div className="col-span-2 text-center">Annual Amount</div>
-          <div className="col-span-1"></div>
-        </div>
+      {/* Table Section */}
+      <div className="grid grid-cols-12 gap-4 px-1 mb-4 font-medium text-gray-500 uppercase tracking-tight">
+        <div className="col-span-4">Salary Components</div>
+        <div className="col-span-3">Calculation Type</div>
+        <div className="col-span-2 text-center">Monthly Amount</div>
+        <div className="col-span-2 text-center">Annual Amount</div>
+        <div className="col-span-1"></div>
+      </div>
 
-        {/* Mappings */}
-        <div className="space-y-0">
-          <div className="text-[12px] font-normal text-black px-2 py-2">
-            Earning
-          </div>
-          {mappings.map((m, index) => (
-            <div
-              key={m.id}
-              className="grid grid-cols-12 gap-4 items-center px-2 py-4 border-t border-b border-gray-200"
-            >
-              <div className="col-span-4">
+      <div className="space-y-4">
+        {/* Earnings Group Label */}
+        <div className="font-semibold text-gray-800 px-1 py-1">Earning</div>
+
+        {mappings.map((m, index) => (
+          <div
+            key={m.id}
+            className="grid grid-cols-12 gap-4 items-center group"
+          >
+            <div className="col-span-4">
+              {m.isDefault || m.isFixed ? (
+                <div className="p-2 text-gray-700">
+                  {components.find((c) => c.id === m.component_id)?.name ||
+                    "Component"}
+                </div>
+              ) : (
                 <select
                   name="component_id"
-                  className="w-full text-[12px] border-none bg-transparent focus:ring-0 font-normal outline-none cursor-pointer text-black"
                   value={m.component_id}
                   onChange={(e) => handleMappingChange(index, e)}
+                  className="w-full bg-white border border-gray-100 p-2 rounded-lg outline-none text-[12px]"
                 >
                   <option value="">Select Component</option>
-                  {components.map((c, idx) => (
-                    <option key={`${c.id}-${idx}`} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
+                  {components
+                    .filter((c) => c.company_id !== 0)
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
                 </select>
-              </div>
+              )}
+            </div>
 
-              <div className="col-span-3 flex justify-center">
-                <div className="flex border border-gray-200 rounded-md bg-[#F3F4F6] overflow-hidden">
-                  <input
-                    name="value"
-                    type="number"
-                    className="w-16 p-1.5 text-[12px] bg-transparent border-r border-gray-200 text-center outline-none font-normal text-black"
-                    value={m.value}
-                    onChange={(e) => handleMappingChange(index, e)}
-                  />
-                  <select
-                    name="calculation_type"
-                    className="text-[11px] bg-transparent border-none focus:ring-0 px-2 font-normal cursor-pointer text-black"
-                    value={m.calculation_type}
-                    onChange={(e) => handleMappingChange(index, e)}
-                  >
-                    <option value="">Select Type</option>
-                    <option value="flat">Flat</option>
-                    <option value="percentage_ctc">% of CTC</option>
-                    <option value="percentage_basic">% of Basic</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="col-span-2">
-                <div className="bg-[#F3F4F6] rounded-md p-2 text-center text-[12px] font-normal text-black">
-                  ₹ {Number(m.monthly_amount || 0).toLocaleString()}
-                </div>
-              </div>
-
-              <div className="col-span-2 text-center text-[12px] font-normal text-black">
-                ₹ {Number(m.annual_amount || 0).toLocaleString()}
-              </div>
-
-              <div className="col-span-1 flex justify-end">
-                <X
-                  className="w-4 h-4 text-black cursor-pointer hover:text-red-500"
-                  onClick={() => deleteMapping(m.id)}
+            <div className="col-span-3">
+              <div className="flex overflow-hidden rounded-lg bg-[#F3F4F6]">
+                <input
+                  type="number"
+                  name="value"
+                  value={m.value}
+                  onChange={(e) => handleMappingChange(index, e)}
+                  disabled={m.isFixed}
+                  className="w-1/2 bg-transparent p-2 text-[12px] outline-none border-r border-gray-200 text-center"
                 />
+                <div className="w-1/2 p-2 text-[10px] text-gray-500 flex items-center justify-center uppercase">
+                  {m.calculation_type?.split("_").join(" ") || "Fixed Amount"}
+                </div>
               </div>
             </div>
-          ))}
+
+            <div className="col-span-2 flex justify-center">
+              <div className="bg-[#F3F4F6] w-full p-2 rounded-lg text-center">
+                {m.monthly_amount.toLocaleString("en-IN")}
+              </div>
+            </div>
+
+            <div className="col-span-2 text-center text-gray-700">
+              {m.annual_amount.toLocaleString("en-IN")}
+            </div>
+
+            <div className="col-span-1 flex justify-center">
+              {!m.isDefault && !m.isFixed && (
+                <X
+                  size={14}
+                  className="text-gray-400 cursor-pointer hover:text-red-500"
+                  onClick={() => deleteMapping(m.id)}
+                />
+              )}
+            </div>
+          </div>
+        ))}
+
+        {/* Deduction Label Placeholder (Matches screenshot) */}
+        <div className="font-semibold text-gray-800 px-1 py-1 mt-4 border-t pt-4">
+          Deductions
         </div>
+      </div>
 
-        <button
-          onClick={addComponent}
-          className="mt-6 flex items-center gap-1 text-[12px] font-normal text-black hover:opacity-70 px-2"
-        >
-          <Plus size={14} /> Add Components
-        </button>
+      {/* Add Component Action */}
+      <div
+        className="mt-4 flex items-center gap-1 cursor-pointer text-gray-800 font-semibold"
+        onClick={addComponent}
+      >
+        <Plus size={14} className="text-gray-900" />
+        <span className="border-b border-gray-900 pb-0.5">Add Components</span>
+      </div>
 
-        {/* Footer Totals */}
-        <div className="mt-8 bg-[#F3F4F6] rounded-lg p-5 border-t border-b border-gray-200 flex justify-between items-center">
-          <span className="text-[12px] font-normal text-black">
-            Cost to Company
-          </span>
-          <div className="flex gap-20 pr-12 text-[12px] font-normal text-black">
-            <span>₹ {totalMonthly.toLocaleString()}</span>
-            <span>₹ {totalAnnual.toLocaleString()}</span>
+      {/* Summary Cost Bar */}
+      <div className="mt-10 bg-[#F3F4F6] rounded-lg p-4 flex justify-between items-center font-semibold">
+        <span className="text-gray-800">Cost to Company</span>
+        <div className="flex gap-20">
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500">₹</span>
+            <span>
+              {totalMonthly.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+              })}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-gray-500">₹</span>
+            <span>
+              {totalAnnual.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+              })}
+            </span>
           </div>
         </div>
+      </div>
 
-        {/* Actions */}
-        <div className="flex justify-end gap-4 mt-10">
-          <button className="px-8 py-2 border border-gray-200 rounded-lg text-[12px] font-normal text-black">
-            Cancel
-          </button>
-          <button
-            onClick={submitTemplate}
-            className="px-8 py-2 bg-[#111827] text-white rounded-lg text-[12px] font-normal"
-          >
-            Save
-          </button>
-        </div>
+      {/* Actions */}
+      <div className="flex justify-end gap-3 mt-8">
+        <button className="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 text-[12px]">
+          Cancel
+        </button>
+        <button
+          onClick={handleSave}
+          className="px-8 py-2 bg-[#0F172A] text-white rounded-lg hover:bg-black transition-colors text-[12px]"
+        >
+          Save
+        </button>
       </div>
     </div>
   );

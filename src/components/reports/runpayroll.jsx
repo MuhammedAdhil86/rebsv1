@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import axiosInstance from "../../service/axiosinstance";
 import UniversalTable from "../../ui/universal_table";
-import { Loader2, Download } from "lucide-react";
+import { Loader2, Download, Play } from "lucide-react";
 import * as XLSX from "xlsx-js-style";
 import { postPayrollAttendance } from "../../api/api";
 import CustomSelect from "../../ui/customselect";
@@ -31,7 +31,7 @@ const monthNames = [
 const leaveTypes = ["Paid", "Unpaid"];
 const accrualMethods = ["Yearly", "Monthly"];
 
-export default function PayrollAttendanceReport() {
+export default function PayrollRunning() {
   const now = new Date();
   const [month, setMonth] = useState(monthNames[now.getMonth()]);
   const [year, setYear] = useState(String(now.getFullYear()));
@@ -40,6 +40,7 @@ export default function PayrollAttendanceReport() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // API call only on Run button
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -58,10 +59,7 @@ export default function PayrollAttendanceReport() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [month, year, leaveType, accrualMethod]);
-
+  // Table columns
   const columns = [
     { label: "User ID", key: "user_id" },
     { label: "Employee Name", key: "user_name" },
@@ -71,6 +69,7 @@ export default function PayrollAttendanceReport() {
     { label: "Net Annual", key: "net_annual" },
   ];
 
+  // Download Excel
   const handleDownload = () => {
     if (!records.length) return;
 
@@ -82,7 +81,6 @@ export default function PayrollAttendanceReport() {
       "Net Monthly",
       "Net Annual",
     ];
-
     const dataRows = records.map((r) => [
       r.user_id,
       r.user_name,
@@ -101,28 +99,23 @@ export default function PayrollAttendanceReport() {
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
-    // merge title row
     ws["!merges"] = [
       { s: { r: 0, c: 0 }, e: { r: 0, c: headerRow.length - 1 } },
     ];
-
-    // column widths (bigger for Employee Name)
     ws["!cols"] = [
-      { wch: 12 }, // User ID
-      { wch: 30 }, // Employee Name
-      { wch: 18 }, // Gross Monthly
-      { wch: 20 }, // Total Deductions
-      { wch: 16 }, // Net Monthly
-      { wch: 16 }, // Net Annual
+      { wch: 12 },
+      { wch: 30 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 16 },
+      { wch: 16 },
     ];
 
     const range = XLSX.utils.decode_range(ws["!ref"]);
-
     for (let R = range.s.r; R <= range.e.r; R++) {
       for (let C = range.s.c; C <= range.e.c; C++) {
         const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
         if (!ws[cellRef]) continue;
-
         if (R === 0) ws[cellRef].s = titleStyle;
         else if (R === 1) ws[cellRef].s = headerStyle;
         else if (typeof ws[cellRef].v === "number")
@@ -136,20 +129,15 @@ export default function PayrollAttendanceReport() {
   };
 
   return (
-    <div className="p-1 rounded-xl shadow-sm">
-      <h2 className="text-[16px] font-medium mb-3">
-        Payroll Attendance Report
-      </h2>
-
-      {/* Filters */}
-      <div className="flex gap-3 mb-4 flex-wrap items-center">
+    <div className="p-4 bg-white rounded-lg shadow-sm">
+      {/* Filters + Run + Download */}
+      <div className="flex flex-wrap gap-3 mb-4 items-center">
         <CustomSelect
           label="Month"
           value={month}
           onChange={setMonth}
           options={monthNames}
         />
-
         <CustomSelect
           label="Year"
           value={year}
@@ -157,7 +145,6 @@ export default function PayrollAttendanceReport() {
           options={[2024, 2025, 2026]}
           minWidth={80}
         />
-
         <CustomSelect
           label="Leave Type"
           value={leaveType}
@@ -165,7 +152,6 @@ export default function PayrollAttendanceReport() {
           options={leaveTypes}
           minWidth={100}
         />
-
         <CustomSelect
           label="Accrual Method"
           value={accrualMethod}
@@ -174,10 +160,21 @@ export default function PayrollAttendanceReport() {
           minWidth={100}
         />
 
+        {/* Run Button */}
+        <button
+          onClick={fetchData}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-green-600 text-white disabled:opacity-50"
+        >
+          <Play className="w-4 h-4" />
+          Run
+        </button>
+
+        {/* Download Button */}
         <button
           onClick={handleDownload}
           disabled={!records.length || loading}
-          className="ml-auto flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-black text-white disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-black text-white disabled:opacity-50"
         >
           <Download className="w-4 h-4" />
           Download

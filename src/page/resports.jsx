@@ -5,7 +5,7 @@ import DashboardLayout from "../ui/pagelayout";
 // Reports
 import AttendanceReports from "../components/reports_tab/attendance_reports";
 import LeaveReports from "../components/reports/leavereport";
-import PayrollAttendanceReport from "../components/reports/payrollattandancereport";
+import PayrollAttendanceReport from "../components/reports_tab/payrollattendancereport";
 
 const avatar =
   "https://ui-avatars.com/api/?name=Admin&background=000000&color=ffffff";
