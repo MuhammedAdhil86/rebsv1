@@ -6,7 +6,7 @@ import SalaryTemplate from "./payrollpolicy_tabs/salary_template_tab";
 const ManagePayrollPolicy = () => {
   return (
     <div className="min-h-screen font-[Poppins] text-sm">
-      <div className="rounded-2xl shadow-sm p-3">
+      <div className="rounded-2xl shadow-sm">
         <SalaryTemplate />
       </div>
     </div>

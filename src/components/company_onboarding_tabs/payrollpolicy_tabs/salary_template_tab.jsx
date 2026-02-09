@@ -203,7 +203,7 @@ export default function SalaryTemplate() {
   };
 
   return (
-    <div className="border rounded-2xl shadow-sm p-3 min-h-screen font-[Poppins] text-sm">
+    <div className=" rounded-2xl shadow-sm  min-h-screen font-[Poppins] text-sm">
       {showCreateTemplate ? (
         <CreateSalaryTemplate setShowCreate={setShowCreateTemplate} />
       ) : showCreateComponent ? (

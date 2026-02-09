@@ -3,6 +3,7 @@ import axiosInstance from "../../../../service/axiosinstance";
 import toast, { Toaster } from "react-hot-toast";
 import { ChevronLeft, X, Plus } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import GlowButton from "../../../helpers/glowbutton";
 
 export default function CreateSalaryTemplate() {
   const [form, setForm] = useState({
@@ -89,9 +90,7 @@ export default function CreateSalaryTemplate() {
 
       if (m.calculation_type === "percentage_ctc") {
         annual = (val / 100) * ctc;
-      }
-      // ✅ flat is monthly → convert to annual
-      else if (m.calculation_type === "flat") {
+      } else if (m.calculation_type === "flat") {
         annual = val * 12;
       }
 
@@ -137,30 +136,6 @@ export default function CreateSalaryTemplate() {
       }
       return m;
     });
-
-    const totalAnnual = temp.reduce(
-      (sum, m) => sum + Number(m.annual_amount || 0),
-      0,
-    );
-
-    const difference = Number((ctc - totalAnnual).toFixed(2));
-
-    if (Math.abs(difference) > 0) {
-      temp = temp.map((m) => {
-        if (m.isFixed) {
-          const adjustedAnnual = Number(
-            (m.annual_amount + difference).toFixed(2),
-          );
-          return {
-            ...m,
-            annual_amount: adjustedAnnual,
-            monthly_amount: Number((adjustedAnnual / 12).toFixed(2)),
-            value: adjustedAnnual,
-          };
-        }
-        return m;
-      });
-    }
 
     return temp;
   };
@@ -249,12 +224,9 @@ export default function CreateSalaryTemplate() {
       },
       mappings: mappings.map((m) => {
         let valueToSend = Number(m.value || 0);
-
-        // ✅ flat → send annual / 12
         if (m.calculation_type === "flat") {
           valueToSend = Number((m.annual_amount / 12).toFixed(2));
         }
-
         return {
           component_id: m.component_id,
           calculation_type: m.calculation_type,
@@ -273,21 +245,24 @@ export default function CreateSalaryTemplate() {
 
   return (
     <div
-      className="min-h-screen bg-white rounded- p-6 font-['Poppins'] text-[#111827]"
+      className="min-h-screen bg-white rounded-xl p-6 font-['Poppins'] text-[#111827]"
       style={{ fontSize: "12px" }}
     >
       <Toaster position="top-right" />
 
       {/* Header */}
-      <div className="flex items-center gap-2 mb-6 pb-4">
-        <ChevronLeft size={16} className="text-gray-600 cursor-pointer" />
+      <div
+        className="flex items-center gap-2 mb-6 pb-4 cursor-pointer border-b border-gray-200"
+        onClick={() => window.history.back()}
+      >
+        <ChevronLeft size={16} className="cursor-pointer" />
         <span className="font-medium text-[12px]">New Salary Template</span>
       </div>
 
       {/* Top Configuration Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="flex flex-col gap-1.5">
-          <label className="text-gray-400">Template Name</label>
+          <label className="">Template Name</label>
           <input
             name="name"
             placeholder="Enter name"
@@ -309,23 +284,25 @@ export default function CreateSalaryTemplate() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-gray-400">Annual CTC</label>
-          <div className="relative flex items-center bg-[#F3F4F6] rounded-lg px-3">
+          <label className="">Annual CTC</label>
+          <div className="relative flex items-center bg-[#F3F4F6] rounded-lg px-3 whitespace-nowrap">
             <span className="text-gray-500 mr-2">₹</span>
             <input
               name="annual_ctc"
               type="number"
               value={form.annual_ctc}
               onChange={handleTemplateChange}
-              className="bg-transparent border-none py-2.5 w-full outline-none text-[12px]"
+              className="bg-transparent border-none py-2.5 w-full outline-none text-[12px] min-w-0"
             />
-            <span className="text-gray-400 ml-2">per year</span>
+            <span className="text-gray-400 ml-2 whitespace-nowrap">
+              per year
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="grid grid-cols-12 gap-4 px-1 mb-4 font-medium text-gray-500 uppercase">
+      {/* Table Heading with top & bottom border */}
+      <div className="grid grid-cols-12 gap-4 px-1 mb-4 font-medium text-black uppercase border-t border-b py-2">
         <div className="col-span-4">Salary Components</div>
         <div className="col-span-3">Calculation Type</div>
         <div className="col-span-2 text-center">Monthly Amount</div>
@@ -421,12 +398,7 @@ export default function CreateSalaryTemplate() {
       {/* Actions */}
       <div className="flex justify-end gap-3 mt-8">
         <button className="px-6 py-2 border rounded-lg">Cancel</button>
-        <button
-          onClick={handleSave}
-          className="px-8 py-2 bg-[#0F172A] text-white rounded-lg"
-        >
-          Save
-        </button>
+        <GlowButton onClick={handleSave}>Save</GlowButton>
       </div>
     </div>
   );
