@@ -13,6 +13,15 @@ import DashboardLayout from "../../ui/pagelayout";
 import avatar from "../../assets/img/avatar.svg";
 import { fetchConsolidatedData } from "../../service/employeeService";
 
+// IMPORT EXCEL LOGIC AND STYLES
+import * as XLSX from "xlsx-js-style";
+import {
+  titleStyle,
+  headerStyle,
+  textCellStyle,
+  numberCellStyle,
+} from "../helpers/exelsheet";
+
 const ConsolidatedData = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
@@ -35,7 +44,9 @@ const ConsolidatedData = () => {
       setCurrentPage(1);
     } catch (err) {
       console.error("❌ Error fetching consolidated data:", err);
-      setError("Failed to load consolidated data. Please check your token or network.");
+      setError(
+        "Failed to load consolidated data. Please check your token or network.",
+      );
     } finally {
       setLoading(false);
     }
@@ -46,15 +57,19 @@ const ConsolidatedData = () => {
   }, [month, year]);
 
   const filteredData = data.filter((item) =>
-    item.user_name?.toLowerCase().includes(search.toLowerCase())
+    item.user_name?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedData = filteredData.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
 
   const handlePrev = () => currentPage > 1 && setCurrentPage(currentPage - 1);
-  const handleNext = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
+  const handleNext = () =>
+    currentPage < totalPages && setCurrentPage(currentPage + 1);
 
   const getBadgeColor = (key) => {
     switch (key) {
@@ -71,42 +86,75 @@ const ConsolidatedData = () => {
     }
   };
 
+  // NEW STYLED EXCEL DOWNLOAD LOGIC
   const handleDownload = () => {
-    const csv = [
-      [
-        "Name",
-        "Designation",
-        "Department",
-        "On Time",
-        "Late",
-        "Delay",
-        "Absent",
-        "Worked Days",
-        "Total Work Days",
-        "Total Days",
-      ],
-      ...data.map((item) => [
-        item.user_name,
-        item.designation,
-        item.department,
-        item.on_time,
-        item.late_days,
-        item.delay_days,
-        item.absent_days,
-        item.total_worked_days,
-        item.total_work_days,
-        item.total_days,
-      ]),
-    ]
-      .map((row) => row.join(","))
-      .join("\n");
+    if (!data.length) return;
 
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `consolidated_${month}_${year}.csv`;
-    a.click();
+    const headerRow = [
+      "Employee Name",
+      "On Time",
+      "Delay Days",
+      "Late Days",
+      "Absent Days",
+      "Worked Days",
+      "Total Work Days",
+      "Total Days",
+    ];
+
+    const dataRows = data.map((item) => [
+      item.user_name || "",
+      item.on_time || 0,
+      item.delay_days || 0,
+      item.late_days || 0,
+      item.absent_days || 0,
+      item.total_worked_days || 0,
+      item.total_work_days || 0,
+      item.total_days || 0,
+    ]);
+
+    const sheetData = [
+      ["CONSOLIDATED ATTENDANCE REPORT"],
+      headerRow,
+      ...dataRows,
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+    // Merging the Title Row
+    ws["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: headerRow.length - 1 } },
+    ];
+
+    // Column Widths
+    ws["!cols"] = [
+      { wch: 30 }, // Name
+      { wch: 12 }, // On Time
+      { wch: 12 }, // Delay
+      { wch: 12 }, // Late
+      { wch: 12 }, // Absent
+      { wch: 15 }, // Worked
+      { wch: 15 }, // Work Days
+      { wch: 15 }, // Total Days
+    ];
+
+    // Applying Styles loop
+    const range = XLSX.utils.decode_range(ws["!ref"]);
+    for (let R = range.s.r; R <= range.e.r; R++) {
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!ws[cellRef]) continue;
+
+        if (R === 0) ws[cellRef].s = titleStyle;
+        else if (R === 1) ws[cellRef].s = headerStyle;
+        else if (typeof ws[cellRef].v === "number")
+          ws[cellRef].s = numberCellStyle;
+        else ws[cellRef].s = textCellStyle;
+      }
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, "Consolidated Report");
+    XLSX.writeFile(wb, `consolidated_report_${month}_${year}.xlsx`);
   };
 
   return (
@@ -138,65 +186,70 @@ const ConsolidatedData = () => {
           </div>
         </header>
 
-       {/* Filters */}
-<div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+        {/* Filters */}
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-1.5 h-8 text-xs bg-white font-medium text-gray-700 cursor-pointer"
+            >
+              {[
+                "01",
+                "02",
+                "03",
+                "04",
+                "05",
+                "06",
+                "07",
+                "08",
+                "09",
+                "10",
+                "11",
+                "12",
+              ].map((m, idx) => (
+                <option key={m} value={m}>
+                  {new Date(0, idx).toLocaleString("default", {
+                    month: "long",
+                  })}
+                </option>
+              ))}
+            </select>
 
-  {/* Left Filters */}
-  <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-1.5 h-8 text-xs bg-white font-medium text-gray-700 cursor-pointer"
+            >
+              {[2023, 2024, 2025, 2026].map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
 
-    {/* Month */}
-    <select
-      value={month}
-      onChange={(e) => setMonth(e.target.value)}
-      className="border border-gray-300 rounded-md px-3 py-1.5 h-8 text-xs bg-white font-medium text-gray-700 cursor-pointer"
-    >
-      {["01","02","03","04","05","06","07","08","09","10","11","12"].map(
-        (m, idx) => (
-          <option key={m} value={m}>
-            {new Date(0, idx).toLocaleString("default", { month: "long" })}
-          </option>
-        )
-      )}
-    </select>
+            <button
+              onClick={handleDownload}
+              className="bg-black text-white px-3 py-1.5 h-8 rounded-md text-xs flex items-center gap-1 hover:bg-gray-800 transition shadow-sm"
+            >
+              <Download className="w-3.5 h-3.5" /> Download
+            </button>
+          </div>
 
-    {/* Year */}
-    <select
-      value={year}
-      onChange={(e) => setYear(e.target.value)}
-      className="border border-gray-300 rounded-md px-3 py-1.5 h-8 text-xs bg-white font-medium text-gray-700 cursor-pointer"
-    >
-      {[2023, 2024, 2025, 2026].map((y) => (
-        <option key={y} value={y}>
-          {y}
-        </option>
-      ))}
-    </select>
+          {/* Search */}
+          <div className="flex items-center gap-1 border px-2 py-1.5 h-8 rounded-md bg-gray-50 text-xs w-36 sm:w-48">
+            <input
+              type="text"
+              placeholder="Search by name"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="bg-transparent w-full focus:outline-none text-xs"
+            />
+            <Search className="w-3.5 h-3.5 text-gray-400" />
+          </div>
+        </div>
 
-    {/* Download Button */}
-    <button
-      onClick={handleDownload}
-      className="bg-black text-white px-3 py-1.5 h-8 rounded-md text-xs flex items-center gap-1 hover:bg-gray-800 transition shadow-sm"
-    >
-      <Download className="w-3.5 h-3.5" /> Download
-    </button>
-  </div>
-
-  {/* Search */}
-  <div className="flex items-center gap-1 border px-2 py-1.5 h-8 rounded-md bg-gray-50 text-xs w-36 sm:w-48">
-    <input
-      type="text"
-      placeholder="Search by name"
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      className="bg-transparent w-full focus:outline-none text-xs"
-    />
-    <Search className="w-3.5 h-3.5 text-gray-400" />
-  </div>
-
-</div>
-
-
-        {/* Table */}
+        {/* Table Section */}
         {loading ? (
           <div className="flex justify-center items-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
@@ -211,7 +264,7 @@ const ConsolidatedData = () => {
               className="min-w-full text-[12px] font-[Poppins] border-separate"
               style={{ borderSpacing: "0 10px" }}
             >
-              <thead className="text-gray-500 text-[12px] font-normal ">
+              <thead className="text-black text-[12px] font-normal">
                 <tr className="bg-white shadow-sm">
                   <th className="text-left px-4 py-3 rounded-tl-lg">Name</th>
                   <th className="text-center px-4 py-3">On Time</th>
@@ -220,37 +273,52 @@ const ConsolidatedData = () => {
                   <th className="text-center px-4 py-3">Absent</th>
                   <th className="text-center px-4 py-3">Worked</th>
                   <th className="text-center px-4 py-3">Work Days</th>
-                  <th className="text-center px-4 py-3 rounded-tr-lg">Total Days</th>
+                  <th className="text-center px-4 py-3 rounded-tr-lg">
+                    Total Days
+                  </th>
                 </tr>
               </thead>
-
               <tbody className="text-gray-700 font-normal">
                 {paginatedData.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="text-center py-8 text-gray-500 text-[12px]">
+                    <td colSpan="8" className="text-center py-8 text-gray-500">
                       No records found
                     </td>
                   </tr>
                 ) : (
                   paginatedData.map((item, index) => (
-                    <tr key={index} className="hover:bg-gray-50 transition bg-white shadow-sm text-[12px]">
-                      <td className="px-4 py-3 text-left text-gray-900 rounded-l-lg">
+                    <tr
+                      key={index}
+                      className="hover:bg-gray-50 transition bg-white shadow-sm"
+                    >
+                      <td className="px-4 py-3 text-left text-gray-900 rounded-l-lg font-medium">
                         {item.user_name}
                       </td>
-                      {["on_time", "delay_days", "late_days", "absent_days"].map((key) => (
+                      {[
+                        "on_time",
+                        "delay_days",
+                        "late_days",
+                        "absent_days",
+                      ].map((key) => (
                         <td key={key} className="px-4 py-3 text-center">
                           <span
                             className={`inline-flex items-center justify-center ${getBadgeColor(
-                              key
-                            )} text-[12px]  w-7 h-7 rounded-full`}
+                              key,
+                            )} w-7 h-7 rounded-full`}
                           >
                             {item[key]}
                           </span>
                         </td>
                       ))}
-                      <td className="px-4 py-3 text-center">{item.total_worked_days}</td>
-                      <td className="px-4 py-3 text-center">{item.total_work_days}</td>
-                      <td className="px-4 py-3 text-center rounded-r-lg">{item.total_days}</td>
+                      <td className="px-4 py-3 text-center">
+                        {item.total_worked_days}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {item.total_work_days}
+                      </td>
+                      <td className="px-4 py-3 text-center rounded-r-lg">
+                        {item.total_days}
+                      </td>
                     </tr>
                   ))
                 )}
@@ -263,30 +331,18 @@ const ConsolidatedData = () => {
                 <button
                   onClick={handlePrev}
                   disabled={currentPage === 1}
-                  className={`flex items-center gap-1 rounded-md text-sm font-medium transition ${
-                    currentPage === 1
-                      ? ""
-                      : ""
-                  }`}
+                  className="disabled:opacity-30"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  
                 </button>
-
                 <span className="text-sm font-medium text-gray-700">
                   Page {currentPage} of {totalPages}
                 </span>
-
                 <button
                   onClick={handleNext}
                   disabled={currentPage === totalPages}
-                  className={`flex items-center gap-1  rounded-md text-sm font-medium transition ${
-                    currentPage === totalPages
-                      ? ""
-                      : ""
-                  }`}
+                  className="disabled:opacity-30"
                 >
-                  
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

@@ -6,14 +6,26 @@ export default function PayrollTable({
   data = [],
   rowsPerPage = 6,
   rowClickHandler,
-  searchTerm = "", // receive search term from parent
+  searchTerm = "",
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [colWidths, setColWidths] = useState([]);
+  const [tableData, setTableData] = useState([]);
   const headerRef = useRef(null);
 
-  // ✅ Filter data based on parent searchTerm
-  const filteredData = (data || []).filter((row) => {
+  // ✅ Normalize data (important fix)
+  useEffect(() => {
+    if (Array.isArray(data)) {
+      setTableData(data);
+    } else if (Array.isArray(data?.data)) {
+      setTableData(data.data);
+    } else {
+      setTableData([]);
+    }
+  }, [data]);
+
+  // ✅ Filter safely
+  const filteredData = tableData.filter((row) => {
     const term = (searchTerm || "").toLowerCase();
     return (columns || []).some((col) => {
       const value = row?.[col.key];
@@ -35,14 +47,14 @@ export default function PayrollTable({
       );
       setColWidths(widths);
     }
-  }, [data, searchTerm, columns]);
+  }, [tableData, searchTerm, columns]);
 
   return (
-    <section className=" rounded-lg overflow-x-auto relative w-full bg-gray-50">
+    <section className="rounded-lg overflow-x-auto relative w-full bg-gray-50">
       {/* ===== HEADER TABLE ===== */}
       <table
         ref={headerRef}
-        className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0  overflow-hidden"
+        className="w-full min-w-[600px] text-[12px] bg-white border-separate border-spacing-0 overflow-hidden"
       >
         <thead className="bg-white text-black text-[12.5px]">
           <tr>

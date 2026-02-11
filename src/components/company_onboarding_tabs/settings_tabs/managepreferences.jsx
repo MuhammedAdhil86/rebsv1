@@ -49,12 +49,10 @@ export default function ManagePreferencesSection({ uuid, initialPreferences }) {
     const fetchAttendanceRule = async () => {
       try {
         const response = await axiosInstance.get(
-          axiosInstance.defaults.baseURL2 +
-            `master/shift-attendance-user-type/${uuid}`
+          `master/shift-attendance-user-type/${uuid}`,
         );
 
         const data = response.data?.data;
-
         if (data) {
           setPreferences((prev) => ({
             ...prev,
@@ -64,7 +62,18 @@ export default function ManagePreferencesSection({ uuid, initialPreferences }) {
           }));
         }
       } catch (error) {
-        toast.error("Failed to load attendance settings");
+        // Check if it's the specific "no shift" error
+        const serverMessage = error.response?.data?.data;
+
+        if (serverMessage === "no shift allocated for the user so far") {
+          console.warn(
+            "User has no shift allocated; defaulting attendance to false.",
+          );
+          setPreferences((prev) => ({ ...prev, attendanceRequired: false }));
+        } else {
+          // Only show toast for actual connection/server issues
+          toast.error("Failed to load attendance settings");
+        }
       }
     };
 
@@ -107,7 +116,7 @@ export default function ManagePreferencesSection({ uuid, initialPreferences }) {
 
       if (preferences.userActive !== originalPref.userActive) {
         const response = await axiosInstance.put(
-          `staff/toggle-activate/${uuid}?activate=${preferences.userActive}`
+          `staff/toggle-activate/${uuid}?activate=${preferences.userActive}`,
         );
         backendMessage =
           response.data?.message || "User status updated successfully";
@@ -122,7 +131,7 @@ export default function ManagePreferencesSection({ uuid, initialPreferences }) {
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          "Failed to save changes. Try again later."
+          "Failed to save changes. Try again later.",
       );
     } finally {
       setSaving(false);
@@ -146,15 +155,13 @@ export default function ManagePreferencesSection({ uuid, initialPreferences }) {
         headers: { "Content-Type": "application/json" },
       });
 
-      toast.success(
-        response.data?.message || "Employee deleted successfully"
-      );
+      toast.success(response.data?.message || "Employee deleted successfully");
 
       setTimeout(() => navigate("/manageemployee"), 1000);
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          "Failed to delete employee. Try again later."
+          "Failed to delete employee. Try again later.",
       );
     } finally {
       setDeleting(false);

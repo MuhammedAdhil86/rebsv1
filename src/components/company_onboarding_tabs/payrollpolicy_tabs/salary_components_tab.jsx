@@ -1,46 +1,12 @@
-import React, { useState } from "react";
-import Earnings from "./salary_component_tabs/earnings_tab";
-import EditEarning from "./salary_component_tabs/edit_earning ";
+import React, { useState, useEffect } from "react";
+import axiosInstance from "../../../service/axiosinstance";
+import Earnings from "./salary_component_tabs/component_earnings_tab";
 
 const SalaryComponents = () => {
   const [activeSubTab, setActiveSubTab] = useState("earnings");
-  const [editingData, setEditingData] = useState(null);
-
-  // Dummy earnings data
-  const [earningsData, setEarningsData] = useState([
-    {
-      id: 1,
-      name: "Basic Pay",
-      internal_name: "basic_pay",
-      payslip_name: "Basic",
-      calculation_type: "percentage_basic",
-      value: 50,
-      active: true,
-      taxable: true,
-      part_of_salary_structure: true,
-      pro_rata: false,
-      flexible_benefit: false,
-      consider_epf: true,
-      consider_esi: true,
-      show_in_payslip: true,
-    },
-    {
-      id: 2,
-      name: "Bonus",
-      internal_name: "bonus",
-      payslip_name: "Bonus",
-      calculation_type: "flat",
-      value: 1000,
-      active: true,
-      taxable: false,
-      part_of_salary_structure: false,
-      pro_rata: false,
-      flexible_benefit: false,
-      consider_epf: false,
-      consider_esi: false,
-      show_in_payslip: true,
-    },
-  ]);
+  const [earningsData, setEarningsData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const subTabs = [
     { id: "earnings", label: "Earnings" },
@@ -49,40 +15,70 @@ const SalaryComponents = () => {
     { id: "reimbursements", label: "Reimbursements" },
   ];
 
-  // Open Edit form
-  const handleEdit = (row) => {
-    setEditingData(row);
-  };
+  useEffect(() => {
+    const fetchEarnings = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-  // Cancel editing
-  const handleCancelEdit = () => {
-    setEditingData(null);
-  };
+        const response = await axiosInstance.get("/api/payroll/components");
 
-  // Save updated row
-  const handleSave = (updatedRow) => {
-    const updatedData = earningsData.map((row) =>
-      row.id === updatedRow.id ? updatedRow : row,
+        // 1. Log the full response object from Axios
+        console.log("Full Axios Response:", response);
+
+        // 2. Log the actual data coming from your Postman URL
+        console.log("Response Data Root:", response.data);
+
+        const apiData = response.data?.data?.items;
+
+        // 3. Log specifically what you are trying to set to state
+        console.log("Extracted Items Array:", apiData);
+
+        if (Array.isArray(apiData)) {
+          setEarningsData(apiData);
+        } else {
+          setEarningsData([]);
+          console.error("Data structure mismatch: 'items' is not an array.");
+        }
+      } catch (err) {
+        console.error("API Fetch Error:", err);
+        setError(err.response?.data?.message || "Failed to fetch components.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEarnings();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div className="text-gray-500 animate-pulse font-medium">
+          Loading components...
+        </div>
+      </div>
     );
-    setEarningsData(updatedData);
-    setEditingData(null);
-  };
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center text-red-500 font-medium">{error}</div>
+    );
+  }
 
   return (
     <div className="w-full p-4">
-      {/* SUB TABS */}
+      {/* Tabs */}
       <div className="flex border-b border-gray-200 mb-4">
         {subTabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => {
-              setActiveSubTab(tab.id);
-              setEditingData(null);
-            }}
-            className={`px-4 py-2 text-sm font-medium border-b-2 ${
+            onClick={() => setActiveSubTab(tab.id)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeSubTab === tab.id
                 ? "border-pink-500 text-pink-600"
-                : "border-transparent text-gray-500"
+                : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
             {tab.label}
@@ -90,27 +86,17 @@ const SalaryComponents = () => {
         ))}
       </div>
 
-      {/* EARNINGS TAB */}
-      {activeSubTab === "earnings" && (
-        <>
-          {!editingData ? (
-            <Earnings data={earningsData} onEdit={handleEdit} />
-          ) : (
-            <EditEarning
-              data={editingData}
-              onCancel={handleCancelEdit}
-              onSave={handleSave}
-            />
-          )}
-        </>
-      )}
-
-      {/* PLACEHOLDER TABS */}
-      {activeSubTab !== "earnings" && (
-        <div className="py-6 text-center text-sm text-gray-500">
-          {subTabs.find((t) => t.id === activeSubTab)?.label} coming soon
-        </div>
-      )}
+      {/* Tab Content */}
+      <div className="fade-in">
+        {activeSubTab === "earnings" ? (
+          <Earnings data={earningsData} />
+        ) : (
+          <div className="py-20 text-center text-sm text-gray-400 italic">
+            {subTabs.find((t) => t.id === activeSubTab)?.label} configuration
+            coming soon.
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 
-export default function EditEarning({ data, onCancel, onSave }) {
+export default function ComponentsEditearnings({ data, onCancel, onSave }) {
   const [earningType, setEarningType] = useState("");
   const [salaryName, setSalaryName] = useState("");
   const [payslipName, setPayslipName] = useState("");

@@ -183,9 +183,7 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
           },
           {
             label: "Total Absents",
-            value:
-              dashboardData.total_staff -
-                (dashboardData.present_today + dashboardData.on_leave) || "0",
+            value: "_" || "0",
             bg: "#FFDADA",
             icon: "mdi:account-remove-outline",
           },

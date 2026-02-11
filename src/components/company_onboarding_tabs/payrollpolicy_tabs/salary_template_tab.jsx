@@ -33,8 +33,6 @@ export default function SalaryTemplate() {
     inactive: true,
   });
 
-  const hasFetched = useRef(false); // ✅ ensures fetch only once
-
   const tabs = [
     { id: "salary-template", label: "Salary Template" },
     { id: "salary-components", label: "Salary Components" },
@@ -51,8 +49,8 @@ export default function SalaryTemplate() {
 
   // ---------------- FETCH DATA ----------------
   useEffect(() => {
-    if (hasFetched.current) return; // already fetched
-    hasFetched.current = true;
+    // Only fetch if the active tab is the salary template tab
+    if (activeTab !== "salary-template") return;
 
     const fetchTemplates = async () => {
       setLoading(true);
@@ -65,6 +63,7 @@ export default function SalaryTemplate() {
           response?.items ||
           response ||
           [];
+
         const formatted = rawItems.map((item, index) => ({
           id: item.id ?? index,
           name: item.name || "-",
@@ -86,7 +85,7 @@ export default function SalaryTemplate() {
     };
 
     fetchTemplates();
-  }, []);
+  }, [activeTab, showCreateTemplate]); // Reloads when tab changes or when returning from Create Template
 
   // ---------------- FILTERED DATA ----------------
   const filteredData = tableData.filter((item) => {

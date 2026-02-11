@@ -264,6 +264,17 @@ export const getEmployeeBankInfo = "/staff/employees/bank-info";
 
 export const getPayrollAnalyticsRun = "/api/payroll/analytics/run";
 
+// Attendance Policy
+export const postAttendancePolicyAdd = "/attendance-policy/add";
 
+export const getShiftAttendanceUserType = (uuid) =>
+  `/master/shift-attendance-user-type/${uuid}`;
+
+
+export const putToggleUserActivate = (uuid, activate) =>
+  `/staff/toggle-activate/${uuid}?activate=${activate}`;
+
+export const deleteStaffUser = (uuid) =>
+  `/staff/delete/${uuid}`;
 
 
