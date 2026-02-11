@@ -26,7 +26,7 @@ export default function CustomSelect({
           style={{
             width: `${widthCh}ch`,
             minWidth: `${minWidth}px`,
-            borderRadius: "12px", // ✅ options box radius
+            borderRadius: "6px", // ✅ options box radius
           }}
         >
           {options.map((opt, index) => (

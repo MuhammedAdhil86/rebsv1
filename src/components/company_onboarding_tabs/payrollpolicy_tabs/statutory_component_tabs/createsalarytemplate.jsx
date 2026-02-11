@@ -1,3 +1,4 @@
+// CreateSalaryTemplate.jsx
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../../../service/axiosinstance";
 import toast, { Toaster } from "react-hot-toast";
@@ -5,16 +6,19 @@ import { ChevronLeft, X, Plus } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import GlowButton from "../../../helpers/glowbutton";
 
-export default function CreateSalaryTemplate() {
+export default function CreateSalaryTemplate({ onCancel }) {
+  // ---------------- STATE ----------------
   const [form, setForm] = useState({
     name: "",
     description: "",
     annual_ctc: "",
     status: "active",
   });
+
   const [components, setComponents] = useState([]);
   const [mappings, setMappings] = useState([]);
 
+  // ---------------- FETCH COMPONENTS ----------------
   useEffect(() => {
     const fetchComponents = async () => {
       try {
@@ -33,14 +37,17 @@ export default function CreateSalaryTemplate() {
     fetchComponents();
   }, []);
 
+  // ---------------- SET DEFAULT MAPPINGS ----------------
   useEffect(() => {
     if (!components.length) return;
+
     const defaultBasic = components.find(
       (c) => c.company_id === 0 && c.name.toLowerCase() === "basic",
     );
     const fixedAllowance = components.find(
       (c) => c.company_id === 0 && c.name.toLowerCase() === "fixed allowance",
     );
+
     const initial = [];
     if (defaultBasic) {
       initial.push({
@@ -53,6 +60,7 @@ export default function CreateSalaryTemplate() {
         isDefault: true,
       });
     }
+
     if (fixedAllowance) {
       initial.push({
         id: uuidv4(),
@@ -64,9 +72,11 @@ export default function CreateSalaryTemplate() {
         isFixed: true,
       });
     }
+
     setMappings(initial);
   }, [components]);
 
+  // ---------------- UTILS ----------------
   const round2 = (num) => Number(Number(num).toFixed(2));
 
   const getBasicAnnual = (arr) => {
@@ -140,6 +150,7 @@ export default function CreateSalaryTemplate() {
     return temp;
   };
 
+  // ---------------- HANDLERS ----------------
   const handleTemplateChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -208,6 +219,7 @@ export default function CreateSalaryTemplate() {
   );
   const totalMonthly = round2(totalAnnual / 12);
 
+  // ---------------- SAVE ----------------
   const handleSave = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (!form.name || !form.annual_ctc) {
@@ -238,11 +250,15 @@ export default function CreateSalaryTemplate() {
     try {
       const res = await axiosInstance.post("/api/payroll/templates", payload);
       toast.success(res.data?.message || "Salary template saved successfully!");
+
+      // ✅ Close form and go back to Salary Template tab
+      if (onCancel) onCancel();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to save template");
     }
   };
 
+  // ---------------- RENDER ----------------
   return (
     <div
       className="min-h-screen bg-white rounded-xl p-6 font-['Poppins'] text-[#111827]"
@@ -253,16 +269,16 @@ export default function CreateSalaryTemplate() {
       {/* Header */}
       <div
         className="flex items-center gap-2 mb-6 pb-4 cursor-pointer border-b border-gray-200"
-        onClick={() => window.history.back()}
+        onClick={onCancel} // ✅ back button
       >
         <ChevronLeft size={16} className="cursor-pointer" />
         <span className="font-medium text-[12px]">New Salary Template</span>
       </div>
 
-      {/* Top Configuration Bar */}
+      {/* Form Top */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="flex flex-col gap-1.5">
-          <label className="">Template Name</label>
+          <label>Template Name</label>
           <input
             name="name"
             placeholder="Enter name"
@@ -284,7 +300,7 @@ export default function CreateSalaryTemplate() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="">Annual CTC</label>
+          <label>Annual CTC</label>
           <div className="relative flex items-center bg-[#F3F4F6] rounded-lg px-3 whitespace-nowrap">
             <span className="text-gray-500 mr-2">₹</span>
             <input
@@ -301,7 +317,7 @@ export default function CreateSalaryTemplate() {
         </div>
       </div>
 
-      {/* Table Heading with top & bottom border */}
+      {/* Components Table Header */}
       <div className="grid grid-cols-12 gap-4 px-1 mb-4 font-medium text-black uppercase border-t border-b py-2">
         <div className="col-span-4">Salary Components</div>
         <div className="col-span-3">Calculation Type</div>
@@ -310,9 +326,9 @@ export default function CreateSalaryTemplate() {
         <div className="col-span-1"></div>
       </div>
 
+      {/* Components Table */}
       <div className="space-y-4">
         <div className="font-semibold text-gray-800 px-1 py-1">Earning</div>
-
         {mappings.map((m, index) => (
           <div key={m.id} className="grid grid-cols-12 gap-4 items-center">
             <div className="col-span-4">
@@ -397,7 +413,9 @@ export default function CreateSalaryTemplate() {
 
       {/* Actions */}
       <div className="flex justify-end gap-3 mt-8">
-        <button className="px-6 py-2 border rounded-lg">Cancel</button>
+        <button className="px-6 py-2 border rounded-lg" onClick={onCancel}>
+          Cancel
+        </button>
         <GlowButton onClick={handleSave}>Save</GlowButton>
       </div>
     </div>

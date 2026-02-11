@@ -3,16 +3,97 @@ import { ChevronLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import payrollService from "../../../../service/payrollService";
 
+// ==========================================
+// SUB-COMPONENTS (Internal to this file)
+// ==========================================
+
+const CustomRadio = ({ label, checked, onClick }) => (
+  <label
+    className="flex items-center gap-2.5 cursor-pointer group"
+    onClick={onClick}
+  >
+    <div
+      className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${
+        checked ? "bg-black border-black" : "bg-white border-gray-300"
+      }`}
+    >
+      {checked && (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="w-3 h-3"
+        >
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      )}
+    </div>
+    <span className="text-gray-800 font-medium capitalize">
+      {label.replace(/_/g, " ")}
+    </span>
+  </label>
+);
+
+const CheckboxOption = ({
+  label,
+  description,
+  checked,
+  onChange,
+  isGreenLabel,
+}) => (
+  <div className="flex items-start gap-3">
+    <div className="relative flex items-center pt-0.5">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="peer h-[18px] w-[18px] cursor-pointer appearance-none rounded border border-gray-300 transition-all checked:bg-black checked:border-black"
+      />
+      <svg
+        className="absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    <div className="flex flex-col">
+      <label
+        className={`leading-tight cursor-pointer font-medium ${
+          isGreenLabel && checked ? "text-green-500" : "text-gray-700"
+        }`}
+      >
+        {label}
+      </label>
+      {description && (
+        <p className="text-gray-400 mt-1 max-w-sm leading-normal">
+          {description}
+        </p>
+      )}
+    </div>
+  </div>
+);
+
+// ==========================================
+// MAIN COMPONENT
+// ==========================================
+
 export default function CreateSalaryComponent({ onCancel }) {
-  // =========================
-  // FORM STATE
-  // =========================
+  // --- FORM STATE ---
   const [salaryName, setSalaryName] = useState("");
   const [payslipName, setPayslipName] = useState("");
-
   const [calculationType, setCalculationType] = useState("percentage_ctc");
   const [value, setValue] = useState(0);
 
+  // --- CONFIGURATION STATE ---
   const [active, setActive] = useState(true);
   const [taxable, setTaxable] = useState(true);
   const [partSalary, setPartSalary] = useState(true);
@@ -21,13 +102,9 @@ export default function CreateSalaryComponent({ onCancel }) {
   const [epf, setEpf] = useState(true);
   const [esi, setEsi] = useState(true);
   const [showPayslip, setShowPayslip] = useState(true);
-
-  // EPF applicability
   const [epfApplicability, setEpfApplicability] = useState("ALWAYS");
 
-  // =========================
-  // SAVE HANDLER
-  // =========================
+  // --- SAVE HANDLER ---
   const handleSave = async () => {
     const payload = {
       name: salaryName,
@@ -46,13 +123,13 @@ export default function CreateSalaryComponent({ onCancel }) {
       value: Number(value),
     };
 
-    console.log("Salary Component Payload:", payload);
+    // Logging the payload to the console for your inspection
+    console.log("Final Payload being sent to API:", payload);
 
     const loadingToast = toast.loading("Saving salary component...");
 
     try {
       const res = await payrollService.createSalaryComponent(payload);
-
       toast.dismiss(loadingToast);
 
       if (res?.ok) {
@@ -63,125 +140,44 @@ export default function CreateSalaryComponent({ onCancel }) {
       }
     } catch (err) {
       toast.dismiss(loadingToast);
-
-      console.error(err);
-
+      console.error("API Error:", err);
       const errorMessage =
         err?.response?.data?.message ||
         err?.message ||
         "Something went wrong. Please try again.";
-
       toast.error(errorMessage);
     }
   };
 
-  // =========================
-  // CUSTOM UI COMPONENTS
-  // =========================
-  const CustomRadio = ({ label, checked, onClick }) => (
-    <label
-      className="flex items-center gap-2.5 cursor-pointer group"
-      onClick={onClick}
-    >
-      <div
-        className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${
-          checked ? "bg-black border-black" : "bg-white border-gray-300"
-        }`}
-      >
-        {checked && (
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="w-3 h-3"
-          >
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-        )}
-      </div>
-      <span className="text-gray-800 font-medium">{label}</span>
-    </label>
-  );
-
-  const CheckboxOption = ({
-    label,
-    description,
-    checked,
-    onChange,
-    isGreenLabel,
-  }) => (
-    <div className="flex items-start gap-3">
-      <div className="relative flex items-center pt-0.5">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={onChange}
-          className="peer h-[18px] w-[18px] cursor-pointer appearance-none rounded border border-gray-300 transition-all checked:bg-black checked:border-black"
-        />
-        <svg
-          className="absolute h-3 w-3 text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-      </div>
-      <div className="flex flex-col">
-        <label
-          className={`leading-tight cursor-pointer font-medium ${
-            isGreenLabel && checked ? "text-green-500" : "text-gray-700"
-          }`}
-        >
-          {label}
-        </label>
-        {description && (
-          <p className="text-gray-400 mt-1 max-w-sm leading-normal">
-            {description}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-
-  // =========================
-  // RENDER
-  // =========================
   return (
     <div className="w-full bg-white min-h-screen font-poppins text-[12px] font-normal p-3 rounded-md">
       {/* HEADER */}
-      <div className="flex items-center gap-3  border-b border-gray-50">
+      <div className="flex items-center gap-3 border-b border-gray-50 pb-4">
         <button
           onClick={onCancel}
           className="p-1 hover:bg-gray-100 rounded-full transition-colors"
         >
           <ChevronLeft size={20} className="text-gray-600" />
         </button>
-        <h2 className="font-semibold text-gray-900">
-          Create Earning{" "}
+        <h2 className="font-semibold text-gray-900 text-sm">
+          Create Earning
           <span className="text-red-500 font-normal ml-2">
-            *Indicates mandatory fields
+            * Indicates mandatory fields
           </span>
         </h2>
       </div>
 
       <div className="px-10 py-5 max-w-7xl mx-auto">
         {/* INPUT GRID */}
-        <div className="grid grid-cols-2 gap-8 mb-2">
+        <div className="grid grid-cols-2 gap-8 mb-6">
           <div className="flex flex-col gap-1.5">
             <label className="font-medium text-gray-600">Component name*</label>
             <input
               type="text"
+              placeholder="e.g. Basic Pay"
               value={salaryName}
               onChange={(e) => setSalaryName(e.target.value)}
-              className="h-11 px-4 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gray-400"
+              className="h-11 px-4 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-black transition-all"
             />
           </div>
 
@@ -191,17 +187,18 @@ export default function CreateSalaryComponent({ onCancel }) {
             </label>
             <input
               type="text"
+              placeholder="e.g. BASIC"
               value={payslipName}
               onChange={(e) => setPayslipName(e.target.value)}
-              className="h-11 px-4 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gray-400"
+              className="h-11 px-4 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-black transition-all"
             />
           </div>
         </div>
 
         {/* CALCULATION TYPE */}
         <div className="mb-1 py-8 border-y border-gray-100">
-          <label className="font-semibold text-gray-700 block mb-6">
-            CALCULATION TYPE*
+          <label className="font-semibold text-gray-700 block mb-6 uppercase tracking-wider">
+            Calculation Type*
           </label>
           <div className="flex items-center gap-12">
             {["flat", "percentage_basic", "percentage_ctc"].map((type) => (
@@ -212,13 +209,16 @@ export default function CreateSalaryComponent({ onCancel }) {
                   onClick={() => setCalculationType(type)}
                 />
                 {calculationType === type && (
-                  <div className="flex items-center h-10 border border-gray-200 rounded-md bg-gray-50 overflow-hidden">
+                  <div className="flex items-center h-10 border border-gray-200 rounded-md bg-white shadow-sm overflow-hidden animate-in fade-in zoom-in duration-200">
                     <input
                       type="number"
                       value={value}
                       onChange={(e) => setValue(Number(e.target.value))}
-                      className="w-24 px-3 bg-transparent outline-none font-medium text-right"
+                      className="w-20 px-3 bg-transparent outline-none font-medium text-right"
                     />
+                    <span className="bg-gray-100 px-2 h-full flex items-center text-gray-500 border-l border-gray-200">
+                      {type === "flat" ? "₹" : "%"}
+                    </span>
                   </div>
                 )}
               </div>
@@ -227,7 +227,9 @@ export default function CreateSalaryComponent({ onCancel }) {
         </div>
 
         {/* OTHER CONFIG */}
-        <h3 className="font-bold text-gray-900 mb-8">Other Configurations</h3>
+        <h3 className="font-bold text-gray-900 mb-8 mt-8 text-sm">
+          Other Configurations
+        </h3>
 
         <div className="grid grid-cols-2 gap-x-20 gap-y-8 mb-16">
           <div className="space-y-6">
@@ -260,16 +262,16 @@ export default function CreateSalaryComponent({ onCancel }) {
               checked={fbp}
               onChange={() => setFbp(!fbp)}
             />
-            {/* EPF */}
+
+            {/* EPF SECTION */}
             <div>
               <CheckboxOption
                 label="Consider for EPF Contribution"
                 checked={epf}
                 onChange={() => setEpf(!epf)}
               />
-
               {epf && (
-                <div className="ml-6 mt-3 space-y-2">
+                <div className="ml-8 mt-4 space-y-3 p-3 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                   <CustomRadio
                     label="Always"
                     checked={epfApplicability === "ALWAYS"}
@@ -283,6 +285,7 @@ export default function CreateSalaryComponent({ onCancel }) {
                 </div>
               )}
             </div>
+
             <CheckboxOption
               label="Consider for ESI Contribution"
               checked={esi}
@@ -300,15 +303,15 @@ export default function CreateSalaryComponent({ onCancel }) {
         <div className="flex justify-end gap-4 py-8 border-t border-gray-100">
           <button
             onClick={onCancel}
-            className="px-8 py-2.5 font-medium border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="px-8 py-2.5 font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-10 py-2.5 font-medium bg-black text-white rounded-lg hover:bg-gray-800"
+            className="px-10 py-2.5 font-medium bg-black text-white rounded-lg hover:bg-gray-800 transition-all active:scale-95"
           >
-            Save
+            Save Component
           </button>
         </div>
       </div>

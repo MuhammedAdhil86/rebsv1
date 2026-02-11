@@ -93,7 +93,6 @@ export const fetchUserPayrollTemplates = async (userId) => {
 export const allocatePayrollTemplate = async (payload) => {
   try {
     const res = await axiosInstance.post(postAllocatePayarollTemplate, payload);
-
     console.log("Allocate Payroll Template Response:", res);
     return res?.data;
   } catch (error) {

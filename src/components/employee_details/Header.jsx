@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import { FiBell } from "react-icons/fi"; // React icon for bell
 
 const Header = ({ pageTitle, tabs, activeTab, onTabChange, onTabNavigate }) => {
@@ -17,8 +17,8 @@ const Header = ({ pageTitle, tabs, activeTab, onTabChange, onTabNavigate }) => {
                 }}
                 className={`px-4 py-2 font-poppins font-medium text-sm border-b-2 transition-colors duration-300 ${
                   activeTab === tab
-                    ? 'border-black text-black'
-                    : 'border-transparent text-gray-600 hover:text-gray-800'
+                    ? "border-black text-black"
+                    : "border-transparent text-gray-600 hover:text-gray-800"
                 }`}
               >
                 {tab}
@@ -44,8 +44,8 @@ const Header = ({ pageTitle, tabs, activeTab, onTabChange, onTabNavigate }) => {
 
         {/* Right Side */}
         <div className="flex items-center gap-4">
-          <div className='p-2 rounded-full border border-neutral-400'>
-            <FiBell className="w-4 h-4 text-black"/>
+          <div className="p-2 rounded-full border border-neutral-400">
+            <FiBell className="w-4 h-4 text-black" />
           </div>
           <button className="bg-white text-black text-xs px-6 py-2 4xl:px-6 4xl:py-2 border border-gray-400 rounded-3xl">
             Settings

@@ -116,7 +116,7 @@ const ShiftBulkAllocation = () => {
 
   /* ================= SEARCH ================= */
   const filteredUsers = users.filter((user) =>
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   /* ================= SHIFT CHANGE ================= */
@@ -157,7 +157,7 @@ const ShiftBulkAllocation = () => {
 
   /* ================= RENDER ================= */
   return (
-    <div className="flex gap-6 w-full min-h-screen bg-[#F9FAFB] p-1 font-normal">
+    <div className="flex gap-4 w-full min-h-screen bg-[#F9FAFB]  font-normal ">
       <LeftSidebar
         shifts={shifts}
         selectedShift={selectedShift}

@@ -14,14 +14,13 @@ const LeftSidebar = ({
   handleClearAll,
   selectedPolicy,
   selectedUsersCount, // Count of selected users
-  handleAllocate,     // Allocate button callback
+  handleAllocate, // Allocate button callback
 }) => {
   return (
     <div className="w-[240px] space-y-6">
       {/* Allocation Controls */}
-      <div className="bg-[#F4981833] border border-[#FFD9A7] rounded-2xl p-5">
+      <div className="bg-[#F4981833] border border-[#FFD9A7] rounded-2xl p-3">
         <div className="space-y-4">
-
           {/* Select Shift */}
           <div className="relative">
             <label className="text-[11px] text-gray-800 block mb-2 font-normal">

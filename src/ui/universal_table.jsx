@@ -50,7 +50,7 @@ function UniversalTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
                     : idx === columns.length - 1
                       ? "rounded-tr-2xl"
                       : ""
-                } `}
+                }`}
                 style={{
                   width: colWidths[idx]
                     ? `${colWidths[idx]}px`
@@ -84,7 +84,9 @@ function UniversalTable({ columns, data, rowsPerPage = 6, rowClickHandler }) {
             currentData.map((row, rowIdx) => (
               <tr
                 key={rowIdx}
-                className={`hover:bg-gray-50 text-center relative z-[0] border-b border-gray-300 ${rowClickHandler ? "cursor-pointer" : ""}`}
+                className={`hover:bg-gray-50 text-center relative z-[0] border-b border-gray-300 ${
+                  rowClickHandler ? "cursor-pointer" : ""
+                }`}
                 onClick={() => rowClickHandler && rowClickHandler(row)}
               >
                 {columns.map((col, colIdx) => {

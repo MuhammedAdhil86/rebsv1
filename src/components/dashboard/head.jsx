@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import dashboardService from "../../service/dashboardService";
 import { Icon } from "@iconify/react";
-import RegularizationTab from "../requests_tab/regularization_tab";
 
 function DashboardHead({ userName, activeTab, setActiveTab }) {
   const [dashboardData, setDashboardData] = useState({
@@ -45,6 +44,64 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
     );
   }
 
+  // ---------------- GlowButton Component ----------------
+  const GlowButton = ({ children = "Edit in Chat", onClick }) => (
+    <button
+      className="chat-btn relative overflow-visible rounded-lg px-5 py-3 text-xs font-poppins font-light bg-black text-white flex items-center gap-2"
+      onClick={onClick}
+    >
+      {children}
+      <span className="glow" />
+      <style>{`
+        .chat-btn {
+          position: relative;
+          overflow: visible;
+          cursor: pointer;
+          transition: transform 180ms cubic-bezier(.22, .61, .36, 1);
+        }
+        .chat-btn::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          padding: 0px 0px 3px 0px;
+          border-radius: 8px;
+          background: linear-gradient(90deg, #6d7cff, #a855f7, #ec4899, #6d7cff);
+          background-size: 300% 100%;
+          animation: slide 3s linear infinite;
+          transition: padding 180ms cubic-bezier(.22, .61, .36, 1);
+          -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+        }
+        .chat-btn:hover::before {
+          padding: 1px 1px 5px 1px;
+        }
+        .chat-btn:hover .glow {
+          opacity: 0.8;
+          filter: blur(18px);
+        }
+        .glow {
+          position: absolute;
+          left: 12%;
+          right: 12%;
+          bottom: -8px;
+          height: 10px;
+          border-radius: 9999px;
+          background: linear-gradient(90deg, #6d7cff, #a855f7, #ec4899, #6d7cff);
+          background-size: 300% 100%;
+          animation: slide 3s linear infinite;
+          filter: blur(16px);
+          opacity: 0.55;
+          transition: opacity 180ms ease, filter 180ms ease;
+        }
+        @keyframes slide {
+          from { background-position: 0% 0; }
+          to { background-position: 300% 0; }
+        }
+      `}</style>
+    </button>
+  );
+
   return (
     <div className="w-full bg-white">
       {/* ---------------- HEADER ---------------- */}
@@ -83,9 +140,13 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
 
         {/* Top Action Buttons */}
         <div className="flex flex-wrap gap-2">
-          <button className="px-3 sm:px-4 py-3 text-xs rounded-lg border bg-black text-white font-poppins font-normal">
-            + Add Leave
-          </button>
+          {/* GlowButton directly used */}
+          <GlowButton onClick={() => console.log("Announce clicked")}>
+            <div className="flex items-center gap-2">
+              <Icon icon="mdi:bullhorn" className="w-4 h-4" />
+              Announce
+            </div>
+          </GlowButton>
 
           <button className="px-3 sm:px-4 py-3 text-xs rounded-lg border bg-black text-white font-poppins font-normal">
             + Add Leave
@@ -94,7 +155,7 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
       </div>
 
       {/* ---------------- KPI CARDS ---------------- */}
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full px-4 sm:px-6 mt-4">
+      <section className="grid grid-cols-2 sm:grid-cols-5 gap-4 w-full px-4 sm:px-6 mt-4">
         {[
           {
             label: "Total Employees",
@@ -119,6 +180,14 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
             value: dashboardData.happiness_rate || "0%",
             bg: "#FFFBDB",
             icon: "cil:smile",
+          },
+          {
+            label: "Total Absents",
+            value:
+              dashboardData.total_staff -
+                (dashboardData.present_today + dashboardData.on_leave) || "0",
+            bg: "#FFDADA",
+            icon: "mdi:account-remove-outline",
           },
         ].map((card, idx) => (
           <div

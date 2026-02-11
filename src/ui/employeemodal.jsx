@@ -70,48 +70,64 @@ function EmployeeModal({ data, employee, onClose }) {
           </button>
 
           {/* Activity Log */}
-          <h3 className="text-[11px] font-medium text-gray-400 mb-6 uppercase tracking-[0.2em] ">
+          <h3 className="text-[11px] font-medium text-gray-400 mb-6 uppercase tracking-[0.2em]">
             Activity Log
           </h3>
 
           <div className="flex flex-col gap-4 mb-8">
             {data.map((day) => {
-              const attendanceCount = day.attendance.length;
-
               return (
                 <div key={day.date} className="flex gap-4">
-                  {/* Left Date Label */}
-                  <div className="w-20 flex flex-col justify-start bg-[#F8F9FA] rounded-xl">
-                    <div
-                      className="rounded-2xl flex flex-col items-center justify-center border border-gray-50"
-                      style={{
-                        height: `${attendanceCount * 60}px`, // match the height of attendance cards
-                      }}
-                    >
-                      <p className="text-sm font-medium text-gray-800">
-                        {new Date(day.date).toLocaleDateString([], {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </p>
-                      <p className="text-[10px] font-normal text-gray-400">
-                        {new Date(day.date).toLocaleDateString([], {
-                          weekday: "long",
-                        })}
-                      </p>
+                  {/* Left Date Box */}
+                  <div className="w-24 flex flex-col justify-start bg-[#F8F9FA] rounded-xl">
+                    {/* Fixed-size inside box */}
+                    <div className="relative w-full h-44 rounded-2xl border border-gray-50 flex flex-col items-center justify-center px-2">
+                      {/* Status top right */}
+                      <span
+                        className={`absolute top-1 right-1 px-2 py-0.5 text-[8px] font-medium rounded-full ${
+                          day.status === "On time"
+                            ? "bg-[#00C582] text-white"
+                            : "bg-orange-500 text-white"
+                        }`}
+                      >
+                        {day.status}
+                      </span>
 
-                      {/* Checkout Status Badge */}
-                      {day.checkout_status && (
-                        <span
-                          className={`mt-2 px-2 py-0.5 text-[9px] font-medium rounded ${
-                            day.checkout_status === "Full Day"
-                              ? "bg-green-100 text-green-600"
-                              : "bg-orange-100 text-orange-500"
-                          }`}
-                        >
-                          {day.checkout_status}
-                        </span>
-                      )}
+                      {/* Centered content */}
+                      <div className="flex flex-col items-center justify-center gap-1">
+                        {/* Work hours */}
+                        <p className="text-[10px] font-medium text-gray-700 tabular-nums">
+                          {day.total_work_time || "00:00:00"}
+                        </p>
+
+                        {/* Date */}
+                        <p className="text-sm font-medium text-gray-800">
+                          {new Date(day.date).toLocaleDateString([], {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </p>
+
+                        {/* Weekday */}
+                        <p className="text-[10px] font-normal text-gray-400">
+                          {new Date(day.date).toLocaleDateString([], {
+                            weekday: "long",
+                          })}
+                        </p>
+
+                        {/* Checkout Status */}
+                        {day.checkout_status && (
+                          <span
+                            className={`px-2 py-0.5 text-[9px] font-medium rounded ${
+                              day.checkout_status === "Full Day"
+                                ? "bg-green-100 text-green-600"
+                                : "bg-orange-100 text-orange-500"
+                            }`}
+                          >
+                            {day.checkout_status}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 

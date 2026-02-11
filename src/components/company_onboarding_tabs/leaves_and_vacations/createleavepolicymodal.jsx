@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { X, ChevronDown, Info, Palmtree } from "lucide-react";
+import { ChevronLeft, ChevronDown, Info, Palmtree } from "lucide-react";
 import ColorPicker from "../../../ui/colorpicker";
 import payrollService from "../../../service/payrollService";
 import toast from "react-hot-toast";
 
-const CreateLeavePolicyModal = ({ isOpen, onClose }) => {
+const CreateLeavePolicyTab = ({ onClose }) => {
   const [formData, setFormData] = useState({
     name: "",
     code: "",
@@ -32,11 +32,8 @@ const CreateLeavePolicyModal = ({ isOpen, onClose }) => {
     is_active: true,
   });
 
-  // UI-only state for logic toggles
   const [pastLimitType, setPastLimitType] = useState("set");
   const [futureLimitType, setFutureLimitType] = useState("set");
-
-  if (!isOpen) return null;
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -44,7 +41,6 @@ const CreateLeavePolicyModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = async () => {
     try {
-      // Clean the body to match exactly your requirement
       const requestBody = {
         ...formData,
         employee_accrues: Number(formData.employee_accrues),
@@ -69,36 +65,39 @@ const CreateLeavePolicyModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const labelClass = "text-[12px] font-medium text-gray-700 mb-1.5 block";
-  const inputClass =
-    "w-full px-4 py-2 bg-[#F4F6F8] border border-gray-200 rounded-xl text-[12px] focus:outline-none focus:ring-1 focus:ring-gray-300 transition-all";
-  const sectionTitle = "text-[13px] font-semibold text-gray-800 mb-4";
+  // Typography Styles: Poppins Regular 12px, No Bold
+  const globalFont = "font-['Poppins'] font-normal text-[12px]";
+  const labelClass = `${globalFont} text-gray-700 mb-1.5 block`;
+  const inputClass = `w-full px-4 py-2 bg-[#F4F6F8] border border-gray-200 rounded-xl ${globalFont} focus:outline-none focus:ring-1 focus:ring-gray-300 transition-all`;
+  const sectionTitle = `${globalFont} text-gray-800 mb-4 uppercase tracking-wide`;
   const cardClass = "bg-white p-5 rounded-2xl border border-gray-200 shadow-sm";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-[#F9FAFB] w-full max-w-6xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[98vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between p-5 bg-white border-b border-gray-200">
-          <div className="flex items-center gap-2">
-            <Palmtree className="text-gray-800" size={24} />
-            <h2 className="text-[15px] font-semibold text-gray-800">
-              Create a leave policy
-            </h2>
-          </div>
+    <div
+      className={`w-full bg-[#F9FAFB] rounded-2xl shadow-inner  ${globalFont}`}
+    >
+      <div className="bg-[#F9FAFB] w-full max-w6xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[98vh]">
+        {/* Header - X moved to Top Left */}
+        <div className="flex items-center p-5 bg-white border-b border-gray-200 gap-4">
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <X size={22} />
+            <ChevronLeft size={20} />
           </button>
+
+          <div className="flex items-center gap-2">
+            <Palmtree className="text-gray-800" size={20} />
+            <h2 className={`${globalFont} text-gray-800`}>
+              Create a leave policy
+            </h2>
+          </div>
         </div>
 
         {/* Scrollable Body */}
-        <div className="p-6 overflow-y-auto grid grid-cols-2 gap-6">
-          {/* Top Left: Basic Info */}
+        <div className="p-3 overflow-y-auto grid grid-cols-2 gap-3">
+          {/* Top Right: Basic Info (Same as before) */}
           <div className={cardClass}>
-            <h3 className={sectionTitle}>Applicability and Validity</h3>
             <div className="space-y-4">
               <div>
                 <label className={labelClass}>Leave Name</label>
@@ -110,6 +109,7 @@ const CreateLeavePolicyModal = ({ isOpen, onClose }) => {
                   onChange={(e) => handleChange("name", e.target.value)}
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>Policy Code</label>
@@ -129,6 +129,7 @@ const CreateLeavePolicyModal = ({ isOpen, onClose }) => {
                   />
                 </div>
               </div>
+
               <div>
                 <label className={labelClass}>Leave Type</label>
                 <div className="relative">
@@ -148,8 +149,7 @@ const CreateLeavePolicyModal = ({ isOpen, onClose }) => {
               </div>
             </div>
           </div>
-
-          {/* Top Right: Accrual Rules */}
+          {/* Top Left: Accrual Method (Same as before) */}
           <div className={cardClass}>
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
@@ -166,23 +166,24 @@ const CreateLeavePolicyModal = ({ isOpen, onClose }) => {
                     <option value="yearly">Yearly</option>
                   </select>
                   <ChevronDown
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-none"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                     size={14}
                   />
                 </div>
               </div>
+
               <div>
                 <label className={labelClass}>Employee Accrues</label>
                 <div className="flex border border-gray-200 rounded-xl overflow-hidden bg-[#F4F6F8]">
                   <input
                     type="number"
-                    className="w-full px-4 py-2 bg-transparent text-[12px] focus:outline-none"
+                    className="w-full px-4 py-2 bg-transparent text-[12px] focus:outline-none font-normal"
                     value={formData.employee_accrues}
                     onChange={(e) =>
                       handleChange("employee_accrues", e.target.value)
                     }
                   />
-                  <span className="border-l border-gray-200 px-3 py-2 text-[10px] font-bold text-gray-400 flex items-center bg-gray-50">
+                  <span className="border-l border-gray-200 px-3 py-2 text-[10px] text-gray-400 flex items-center bg-gray-50">
                     DAYS
                   </span>
                 </div>
@@ -278,6 +279,7 @@ const CreateLeavePolicyModal = ({ isOpen, onClose }) => {
                     />
                   </div>
                 </div>
+
                 <div className="flex items-center justify-between">
                   <CheckboxRow
                     label="Encash remaining leave days?"
@@ -302,47 +304,8 @@ const CreateLeavePolicyModal = ({ isOpen, onClose }) => {
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Bottom Left: Applicability Filters */}
-          <div className={cardClass}>
-            <h3 className={sectionTitle}>Applicability and Validity</h3>
-            {/* Applicability button toggles omitted for brevity, assuming Criteria-based UI */}
-            <div className="space-y-3">
-              {["Work Locations", "Departments", "Designation", "Gender"].map(
-                (label) => (
-                  <div
-                    key={label}
-                    className="flex border border-gray-200 rounded-xl overflow-hidden h-10 shadow-sm"
-                  >
-                    <div className="w-1/3 px-4 flex items-center text-[11px] font-medium text-gray-600 border-r border-gray-200 bg-gray-50">
-                      {label}
-                    </div>
-                    <div className="w-2/3 px-4 flex justify-between items-center text-[11px] text-gray-400 bg-white cursor-pointer">
-                      Select <ChevronDown size={14} />
-                    </div>
-                  </div>
-                ),
-              )}
-            </div>
-
-            <div className="flex gap-4 mt-10">
-              <button
-                onClick={onClose}
-                className="px-12 py-2.5 border border-gray-300 rounded-xl text-[13px] font-medium hover:bg-gray-50 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                className="px-12 py-2.5 bg-black text-white rounded-xl text-[13px] font-medium hover:bg-zinc-800 shadow-lg active:scale-95 transition-all"
-              >
-                Create
-              </button>
-            </div>
-          </div>
-
-          {/* Bottom Right: Request Preferences */}
+          </div>{" "}
+          {/* Bottom Left: Employee Leave Request Preferences (MOVED HERE) */}
           <div className={cardClass}>
             <h3 className={sectionTitle}>Employee Leave Request Preferences</h3>
             <div className="space-y-6">
@@ -359,7 +322,7 @@ const CreateLeavePolicyModal = ({ isOpen, onClose }) => {
                     Consider as
                   </span>
                   <select
-                    className="bg-transparent text-[11px] font-bold focus:outline-none"
+                    className="bg-transparent text-[11px] focus:outline-none"
                     value={formData.consider_negative_balance}
                     onChange={(e) =>
                       handleChange("consider_negative_balance", e.target.value)
@@ -438,6 +401,42 @@ const CreateLeavePolicyModal = ({ isOpen, onClose }) => {
               </div>
             </div>
           </div>
+          {/* Bottom Right: Applicability and Validity (MOVED HERE) */}
+          <div className={cardClass}>
+            <h3 className={sectionTitle}>Applicability and Validity</h3>
+            <div className="space-y-3">
+              {["Work Locations", "Departments", "Designation", "Gender"].map(
+                (label) => (
+                  <div
+                    key={label}
+                    className="flex border border-gray-200 rounded-xl overflow-hidden h-10 shadow-sm"
+                  >
+                    <div className="w-1/3 px-4 flex items-center text-[11px] text-gray-600 border-r border-gray-200 bg-gray-50">
+                      {label}
+                    </div>
+                    <div className="w-2/3 px-4 flex justify-between items-center text-[11px] text-gray-400 bg-white cursor-pointer">
+                      Select <ChevronDown size={14} />
+                    </div>
+                  </div>
+                ),
+              )}
+            </div>
+
+            <div className="flex gap-4 mt-10">
+              <button
+                onClick={onClose}
+                className="px-12 py-2.5 border border-gray-300 rounded-xl text-[12px] hover:bg-gray-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="px-12 py-2.5 bg-black text-white rounded-xl text-[12px] hover:bg-zinc-800 shadow-lg active:scale-95 transition-all"
+              >
+                Create
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -452,23 +451,23 @@ const CheckboxRow = ({ label, checked, onChange }) => (
       onChange={onChange}
       className="accent-black w-4 h-4 rounded border-gray-200 shadow-sm"
     />
-    <span className="text-[11px] font-medium text-gray-700">{label}</span>
+    <span className="text-[11px] text-gray-700 font-normal">{label}</span>
   </div>
 );
 
 const RadioRow = ({ label, checked, onClick }) => (
   <div className="flex items-center gap-2 cursor-pointer" onClick={onClick}>
     <div
-      className={`w-3.5 h-3.5 border rounded-full flex items-center justify-center ${checked ? "border-black" : "border-gray-300 shadow-inner"}`}
+      className={`w-3.5 h-3.5 border rounded-full flex items-center justify-center ${checked ? "border-black" : "border-gray-300"}`}
     >
       {checked && <div className="w-2 h-2 bg-black rounded-full" />}
     </div>
     <span
-      className={`text-[11px] ${checked ? "text-gray-900 font-medium" : "text-gray-500"}`}
+      className={`text-[11px] font-normal ${checked ? "text-gray-900" : "text-gray-500"}`}
     >
       {label}
     </span>
   </div>
 );
 
-export default CreateLeavePolicyModal;
+export default CreateLeavePolicyTab;

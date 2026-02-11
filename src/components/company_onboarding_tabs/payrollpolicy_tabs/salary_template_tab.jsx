@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+// SalaryTemplate.jsx
+import React, { useEffect, useState, useRef } from "react";
 import { Icon } from "@iconify/react";
 
 // Services
@@ -16,6 +17,7 @@ import CreateSalaryTemplate from "./statutory_component_tabs/createsalarytemplat
 import CreateSalaryComponent from "./statutory_component_tabs/createsalarycomponents.jsx";
 
 export default function SalaryTemplate() {
+  // ---------------- STATE ----------------
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,6 +33,8 @@ export default function SalaryTemplate() {
     inactive: true,
   });
 
+  const hasFetched = useRef(false); // ✅ ensures fetch only once
+
   const tabs = [
     { id: "salary-template", label: "Salary Template" },
     { id: "salary-components", label: "Salary Components" },
@@ -40,13 +44,15 @@ export default function SalaryTemplate() {
     { id: "approvals", label: "Approvals" },
   ];
 
+  // ---------------- FILTER ----------------
   const toggleFilterOption = (option) => {
     setFilterOptions((prev) => ({ ...prev, [option]: !prev[option] }));
   };
 
-  // Fetch Salary Templates
+  // ---------------- FETCH DATA ----------------
   useEffect(() => {
-    let isMounted = true;
+    if (hasFetched.current) return; // already fetched
+    hasFetched.current = true;
 
     const fetchTemplates = async () => {
       setLoading(true);
@@ -71,27 +77,25 @@ export default function SalaryTemplate() {
               ? "Active"
               : "Inactive",
         }));
-        if (isMounted) setTableData(formatted);
+        setTableData(formatted);
       } catch (err) {
-        if (isMounted) setError("Failed to load salary templates.");
+        setError("Failed to load salary templates.");
       } finally {
-        if (isMounted) setLoading(false);
+        setLoading(false);
       }
     };
 
     fetchTemplates();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
+  // ---------------- FILTERED DATA ----------------
   const filteredData = tableData.filter((item) => {
     if (item.status === "Active" && filterOptions.active) return true;
     if (item.status === "Inactive" && filterOptions.inactive) return true;
     return false;
   });
 
+  // ---------------- TABLE COLUMNS ----------------
   const columns = [
     { key: "name", label: "Template Name", align: "left" },
     { key: "description", label: "Description", align: "left" },
@@ -112,6 +116,7 @@ export default function SalaryTemplate() {
     },
   ];
 
+  // ---------------- RENDER TAB CONTENT ----------------
   const renderTabContent = (tab) => {
     switch (tab) {
       case "salary-template":
@@ -149,6 +154,7 @@ export default function SalaryTemplate() {
     }
   };
 
+  // ---------------- EXTRA BUTTONS ----------------
   const extraButtons = (tab) => {
     if (tab === "salary-template") {
       return (
@@ -202,10 +208,11 @@ export default function SalaryTemplate() {
     return null;
   };
 
+  // ---------------- RENDER ----------------
   return (
-    <div className=" rounded-2xl shadow-sm  min-h-screen font-[Poppins] text-sm">
+    <div className="rounded-2xl shadow-sm min-h-screen font-[Poppins] text-sm">
       {showCreateTemplate ? (
-        <CreateSalaryTemplate setShowCreate={setShowCreateTemplate} />
+        <CreateSalaryTemplate onCancel={() => setShowCreateTemplate(false)} />
       ) : showCreateComponent ? (
         <CreateSalaryComponent
           componentId={null}

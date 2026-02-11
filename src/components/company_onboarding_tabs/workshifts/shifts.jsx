@@ -13,6 +13,7 @@ const Shifts = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 
+  // Format time to 12-hour
   const formatTime = (timeStr) => {
     if (!timeStr) return "N/A";
     const [hour, minute] = timeStr.split(":");
@@ -100,6 +101,20 @@ const Shifts = () => {
     },
   ];
 
+  // =========================
+  // FULL-PAGE CREATE SHIFT FORM
+  // =========================
+  if (isModalOpen) {
+    return (
+      <div className="w-full min-h-screen bg-white p-6 rounded-md shadow-md">
+        <CreateShiftModal onClose={() => setIsModalOpen(false)} />
+      </div>
+    );
+  }
+
+  // =========================
+  // NORMAL TABLE VIEW
+  // =========================
   return (
     <div className="w-full">
       {/* Header */}
@@ -136,7 +151,7 @@ const Shifts = () => {
         </button>
       </div>
 
-      {/* PayrollTable */}
+      {/* Payroll Table */}
       <div className="overflow-x-auto">
         {loading ? (
           <p className="text-gray-500 text-[12px]">Loading shifts...</p>
@@ -152,12 +167,6 @@ const Shifts = () => {
           />
         )}
       </div>
-
-      {/* Create Shift Modal */}
-      <CreateShiftModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
     </div>
   );
 };

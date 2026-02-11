@@ -1,116 +1,73 @@
-import React, { useEffect, useState } from "react";
-import axiosInstance from "../../../../service/axiosinstance";
+import React from "react";
 import PayrollTable from "../../../../ui/payrolltable";
 
-const Earnings = ({ onEdit }) => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchComponents();
-  }, []);
-
-  const fetchComponents = async () => {
-    setLoading(true);
-    try {
-      const res = await axiosInstance.get("api/payroll/components");
-
-      // ✅ FULL API RESPONSE
-      console.log("Full API Response:", res);
-
-      // ✅ DATA OBJECT
-      console.log("res.data:", res.data);
-
-      const items = res.data?.data?.items || [];
-
-      // ✅ ITEMS ARRAY
-      console.log("Items Array:", items);
-
-      const formatted = items.map((item, index) => {
-        // ✅ EACH ITEM
-        console.log(`Item ${index}:`, item);
-
-        let calculationText = "-";
-        if (item.calculation_type === "percentage_ctc") {
-          calculationText = `Fixed, ${item.value}% of CTC`;
-        } else if (item.calculation_type === "percentage_basic") {
-          calculationText = `Fixed, ${item.value}% of Basic`;
-        } else if (item.calculation_type === "flat") {
-          calculationText = `Fixed, Flat Amount of ${item.value}`;
-        }
-
-        return {
-          id: item.id,
-          template: item.payslip_name || "-",
-          earningType: item.name || "-",
-          calculationType: calculationText,
-          epf: item.consider_epf ? "Yes" : "No",
-          esi: item.consider_esi ? "Yes" : "No",
-          status: item.active ? "Active" : "Inactive",
-        };
-      });
-
-      // ✅ FINAL FORMATTED DATA
-      console.log("Formatted Data:", formatted);
-
-      setData(formatted);
-    } catch (err) {
-      console.error("Error loading payroll components:", err.response || err);
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+const Earnings = ({ data, onEdit }) => {
   const columns = [
-    { key: "template", label: "Template Name", align: "left" },
-    { key: "earningType", label: "Earning Type", align: "left" },
+    { key: "payslip_name", label: "Template Name", align: "left" },
+    { key: "name", label: "Earning Type", align: "left" },
     {
-      key: "calculationType",
+      key: "calculation_type",
       label: "Calculation Type",
       align: "left",
-      render: (value) => (
-        <div
-          style={{
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-            maxWidth: "300px",
-          }}
-        >
-          {value}
-        </div>
-      ),
+      render: (value, row) => {
+        let text = "-";
+        if (value === "percentage_ctc") text = `Fixed, ${row.value}% of CTC`;
+        else if (value === "percentage_basic")
+          text = `Fixed, ${row.value}% of Basic`;
+        else if (value === "flat") text = `Fixed, Flat Amount of ${row.value}`;
+        return (
+          <div
+            style={{
+              whiteSpace: "normal",
+              wordBreak: "break-word",
+              maxWidth: "300px",
+            }}
+          >
+            {text}
+          </div>
+        );
+      },
     },
-    { key: "epf", label: "EPF", align: "center" },
-    { key: "esi", label: "ESI", align: "center" },
     {
-      key: "status",
+      key: "consider_epf",
+      label: "EPF",
+      align: "center",
+      render: (v) => (v ? "Yes" : "No"),
+    },
+    {
+      key: "consider_esi",
+      label: "ESI",
+      align: "center",
+      render: (v) => (v ? "Yes" : "No"),
+    },
+    {
+      key: "active",
       label: "Status",
       align: "center",
-      render: (value) => (
+      render: (v) => (
         <span
           className={
-            value === "Active"
-              ? "text-green-600 font-medium"
-              : "text-red-600 font-medium"
+            v ? "text-green-600 font-medium" : "text-red-600 font-medium"
           }
         >
-          {value}
+          {v ? "Active" : "Inactive"}
         </span>
       ),
     },
   ];
 
   return (
-    <div className="">
-      {loading ? (
-        <div className="text-center py-10 text-gray-500">Loading...</div>
+    <div>
+      {data.length === 0 ? (
+        <div className="text-center py-10 text-gray-500">
+          No components found
+        </div>
       ) : (
         <PayrollTable
           columns={columns}
           data={data}
           rowsPerPage={6}
-          rowClickHandler={(row) => onEdit && onEdit(row.id)}
+          rowClickHandler={(row) => onEdit && onEdit(row)}
         />
       )}
     </div>
