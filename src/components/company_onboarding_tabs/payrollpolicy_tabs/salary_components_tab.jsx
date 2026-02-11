@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Earnings from "./salary_component_tabs/Earnings";
+import Earnings from "./salary_component_tabs/earnings_tab";
 import EditEarning from "./salary_component_tabs/edit_earning ";
 
 const SalaryComponents = () => {
