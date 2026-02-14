@@ -23,6 +23,7 @@ import JobCreation from "../page/jobcreation";
 import Requests from "../page/requests";
 import EmployeeCalendar from "../page/activitycalander";
 import Payroll from "../page/payroll";
+import Payslip from "../page/payslip";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ element: Element }) => {
@@ -88,6 +89,7 @@ function AppRoutes() {
         element={<ProtectedRoute element={EmployeeCalendar} />}
       />
       <Route path="/payroll" element={<ProtectedRoute element={Payroll} />} />
+      <Route path="/payslip" element={<ProtectedRoute element={Payslip} />} />
 
       {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
 

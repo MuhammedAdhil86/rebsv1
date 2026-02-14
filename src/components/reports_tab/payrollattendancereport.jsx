@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from "react";
-import UniversalTable from "../../ui/universal_table";
+import { useNavigate } from "react-router-dom";
 import { Loader2, Download } from "lucide-react";
 import * as XLSX from "xlsx-js-style";
 import CustomSelect from "../../ui/customselect";
+import ReportTable from "../../ui/reporttable";
 
+// ✅ Helper imports for Excel styling
 import {
   headerStyle,
   textCellStyle,
   numberCellStyle,
 } from "../helpers/exelsheet";
 
-// ✅ IMPORT PAYROLL ANALYTICS API
+// ✅ API Service
 import { fetchPayrollAnalytics } from "../../service/reportsService";
 
 const monthNames = [
@@ -31,7 +33,10 @@ const monthNames = [
 const SALARY_ACCOUNT_NUMBER = "7049968193";
 
 export default function PayrollAttendanceReport() {
+  const navigate = useNavigate();
   const now = new Date();
+
+  // States
   const [month, setMonth] = useState(monthNames[now.getMonth()]);
   const [year, setYear] = useState(String(now.getFullYear()));
   const [records, setRecords] = useState([]);
@@ -41,21 +46,33 @@ export default function PayrollAttendanceReport() {
   const fetchData = async () => {
     try {
       setLoading(true);
-
       const data = await fetchPayrollAnalytics(
         monthNames.indexOf(month) + 1,
         Number(year),
       );
 
-      // ✅ Map employees to include full_name from nested bank_info
       const processedRecords = Array.isArray(data.employees)
         ? data.employees.map((emp) => {
             const info = emp.bank_info || {};
+            const stat = emp.statutory || {};
+
             return {
               ...emp,
               full_name:
-                `${info.first_name || ""} ${info.last_name || ""}`.trim(),
+                `${info.first_name || ""} ${info.last_name || ""}`.trim() ||
+                info.account_holder_name ||
+                "N/A",
+              bank_name: info.bank_name || "N/A",
+              account_no: info.account_number || "N/A",
+              ifsc: info.ifsc || "N/A",
+              branch: info.bank_branch || "N/A",
+              pt: stat.pt || 0,
+              epf: stat.epf_employee || 0,
+              esi: stat.esi_employee || 0,
               total_deductions_monthly: emp.total_deductions || 0,
+              attendance_pct: emp.attendance_factor
+                ? `${(emp.attendance_factor * 100).toFixed(2)}%`
+                : "0%",
             };
           })
         : [];
@@ -73,17 +90,29 @@ export default function PayrollAttendanceReport() {
     fetchData();
   }, [month, year]);
 
-  // ================== TABLE COLUMNS (Designation/Dept Removed) ==================
+  // ================== NAVIGATION LOGIC ==================
+  const handleRowClick = (row) => {
+    // Navigates to /payslip and passes the clicked row data
+    navigate("/payslip", { state: { employeeData: row } });
+  };
+
+  // ================== TABLE COLUMNS ==================
   const columns = [
     { label: "User ID", key: "user_id" },
     { label: "Employee Name", key: "full_name" },
+    { label: "Attendance", key: "attendance_pct" },
+    { label: "Bank Name", key: "bank_name" },
+    { label: "Account No", key: "account_no" },
+    { label: "IFSC", key: "ifsc" },
     { label: "Gross Monthly", key: "gross_monthly" },
+    { label: "PT", key: "pt" },
+    { label: "EPF", key: "epf" },
     { label: "Total Deductions", key: "total_deductions_monthly" },
     { label: "Net Monthly", key: "net_monthly" },
     { label: "Net Annual", key: "net_annual" },
   ];
 
-  // ================== DOWNLOAD SALARY (WITH HEADER) ==================
+  // ================== EXCEL DOWNLOADS ==================
   const handleDownloadSalary = async () => {
     if (!records.length) return;
     try {
@@ -145,7 +174,6 @@ export default function PayrollAttendanceReport() {
     }
   };
 
-  // ================== DOWNLOAD BANK EXCEL (WITHOUT HEADER) ==================
   const handleDownloadBankExcel = async () => {
     if (!records.length) return;
     try {
@@ -186,6 +214,7 @@ export default function PayrollAttendanceReport() {
         Payroll Attendance Report
       </h2>
 
+      {/* --- Filters & Actions --- */}
       <div className="flex gap-3 mb-4 flex-wrap items-center">
         <CustomSelect
           label="Month"
@@ -201,29 +230,38 @@ export default function PayrollAttendanceReport() {
           minWidth={80}
         />
 
-        <button
-          onClick={handleDownloadSalary}
-          disabled={!records.length || loading}
-          className="ml-auto flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-black text-white disabled:opacity-50"
-        >
-          <Download className="w-4 h-4" /> Download
-        </button>
+        <div className="ml-auto flex gap-2">
+          <button
+            onClick={handleDownloadSalary}
+            disabled={!records.length || loading}
+            className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-black text-white disabled:opacity-50 hover:bg-gray-800 transition-colors"
+          >
+            <Download className="w-4 h-4" /> Download
+          </button>
 
-        <button
-          onClick={handleDownloadBankExcel}
-          disabled={!records.length || loading}
-          className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-blue-600 text-white disabled:opacity-50"
-        >
-          <Download className="w-4 h-4" /> Download for Bank
-        </button>
+          <button
+            onClick={handleDownloadBankExcel}
+            disabled={!records.length || loading}
+            className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-blue-600 text-white disabled:opacity-50 hover:bg-blue-700 transition-colors"
+          >
+            <Download className="w-4 h-4" /> Download for Bank
+          </button>
+        </div>
       </div>
 
+      {/* --- Table Section --- */}
       {loading ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="w-8 h-8 animate-spin" />
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <p className="mt-2 text-sm text-gray-500">Fetching payroll data...</p>
         </div>
       ) : (
-        <UniversalTable columns={columns} data={records} rowsPerPage={8} />
+        <ReportTable
+          columns={columns}
+          data={records}
+          rowsPerPage={8}
+          onRowClick={handleRowClick} // This triggers navigation
+        />
       )}
     </div>
   );

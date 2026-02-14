@@ -63,6 +63,12 @@ export const fetchPayrollAnalytics = async (month, year) => {
       },
     });
 
+    // 👇 log full response
+    console.log("Full payroll analytics response:", response);
+
+    // or if you only want the data part
+    console.log("Response data:", response.data);
+
     return response.data?.data ?? [];
   } catch (error) {
     console.error(
