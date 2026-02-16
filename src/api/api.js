@@ -277,4 +277,8 @@ export const putToggleUserActivate = (uuid, activate) =>
 export const deleteStaffUser = (uuid) =>
   `/staff/delete/${uuid}`;
 
+export const getpolicyLookup = "/staff/get-by/single-filter";
+
+export const updatePolicyStatus = "/leave-policy/status";
+
 

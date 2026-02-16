@@ -1,42 +1,81 @@
-// src/components/company_onboarding_tabs/leaves_and_vacations/leavepolicy.jsx
 import React, { useEffect, useState } from "react";
-import { Plus, Search, MoreHorizontal } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Plus, Search, MoreHorizontal, Power } from "lucide-react";
 import UniversalTable from "../../../ui/universal_table";
 import { fetchAllLeavePolicy } from "../../../service/companyService";
-import CreateLeavePolicyTab from "../leaves_and_vacations/createleavepolicymodal"; // tab version of modal
+import payrollService from "../../../service/payrollService";
+import CreateLeavePolicyTab from "../leaves_and_vacations/createleavepolicymodal";
+import toast from "react-hot-toast";
 
 const LeavesAndVacations = () => {
-  const [showCreateTab, setShowCreateTab] = useState(false); // toggle tab
+  const [showCreateTab, setShowCreateTab] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [leaveData, setLeaveData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadLeavePolicies = async () => {
-      try {
-        const data = await fetchAllLeavePolicy();
-        setLeaveData(data || []);
-      } catch (error) {
-        console.error("Error fetching leave policies:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadLeavePolicies();
-  }, []);
+  const [menuPosition, setMenuPosition] = useState(null);
+  const [selectedRow, setSelectedRow] = useState(null);
 
-  // Refetch after creation
-  const handleCloseCreate = async () => {
-    setShowCreateTab(false);
+  // 1. Fetch Data
+  const loadLeavePolicies = async () => {
     setLoading(true);
     try {
-      const data = await fetchAllLeavePolicy();
-      setLeaveData(data || []);
+      const response = await fetchAllLeavePolicy();
+      setLeaveData(response?.data || response || []);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching leave policies:", error);
+      toast.error("Failed to load leave policies");
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    loadLeavePolicies();
+  }, []);
+
+  // 2. Status Toggle API Logic
+  const handleToggleStatus = async () => {
+    if (!selectedRow) return;
+
+    try {
+      const newStatusValue = selectedRow.status !== "active";
+
+      // Using your camelCase API method
+      await payrollService.updatePolicyStatus(selectedRow.id, newStatusValue);
+
+      toast.success(
+        `Policy ${newStatusValue ? "Activated" : "Deactivated"} successfully`,
+      );
+
+      closeMenu();
+      loadLeavePolicies();
+    } catch (error) {
+      const msg = error.response?.data?.message || "Failed to update status";
+      toast.error(msg);
+      console.error(error);
+    }
+  };
+
+  // 3. Menu Controls
+  const openMenu = (event, row) => {
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    setMenuPosition({
+      top: rect.bottom + window.scrollY + 5,
+      left: rect.right + window.scrollX - 150,
+    });
+    setSelectedRow(row);
+  };
+
+  const closeMenu = () => {
+    setMenuPosition(null);
+    setSelectedRow(null);
+  };
+
+  const handleCloseCreate = () => {
+    setShowCreateTab(false);
+    loadLeavePolicies();
   };
 
   const filteredLeaves = leaveData.filter(
@@ -67,7 +106,15 @@ const LeavesAndVacations = () => {
       label: "Count",
       render: (_, row) => `${row.employee_accrues}/${row.accrual_method}`,
     },
-    { key: "description", label: "Description" },
+    {
+      key: "description",
+      label: "Description",
+      render: (value) => (
+        <div className="max-w-[200px] truncate cursor-pointer" title={value}>
+          {value}
+        </div>
+      ),
+    },
     {
       key: "status",
       label: "Status",
@@ -86,8 +133,11 @@ const LeavesAndVacations = () => {
     {
       key: "action",
       label: "Action",
-      render: () => (
-        <button className="text-gray-400 hover:text-gray-900 transition-colors">
+      render: (_, row) => (
+        <button
+          onClick={(e) => openMenu(e, row)}
+          className="text-gray-400 hover:text-gray-900 transition-colors p-1"
+        >
           <MoreHorizontal size={18} />
         </button>
       ),
@@ -95,20 +145,21 @@ const LeavesAndVacations = () => {
   ];
 
   return (
-    <div className="w-full">
-      {/* Header */}
+    <div className="w-full relative">
       {!showCreateTab && (
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-[16px] font-medium text-gray-900">All Leaves</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-[16px] font-medium text-gray-900 font-['Poppins']">
+            All Leaves
+          </h2>
 
           <div className="flex items-center gap-3">
-            <button className="px-5 py-2 bg-black text-white rounded-lg text-[12px] font-medium hover:bg-zinc-800 transition-all">
+            <button className="px-5 py-2 bg-black text-white rounded-lg text-[12px] font-medium hover:bg-zinc-800 transition-all font-['Poppins']">
               Leave Templates
             </button>
 
             <button
               onClick={() => setShowCreateTab(true)}
-              className="flex items-center gap-2 px-5 py-2 bg-black text-white rounded-lg text-[12px] font-medium hover:bg-zinc-800 transition-all"
+              className="flex items-center gap-2 px-5 py-2 bg-black text-white rounded-lg text-[12px] font-medium hover:bg-zinc-800 transition-all font-['Poppins']"
             >
               <Plus size={14} /> Create Policy
             </button>
@@ -119,7 +170,7 @@ const LeavesAndVacations = () => {
                 placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-4 pr-10 py-2 border border-gray-100 bg-[#f9f9f9] rounded-lg text-[12px] w-64 focus:outline-none focus:ring-1 focus:ring-gray-200"
+                className="pl-4 pr-10 py-2 border border-gray-100 bg-[#f9f9f9] rounded-lg text-[12px] w-64 focus:outline-none focus:ring-1 focus:ring-gray-200 font-['Poppins']"
               />
               <Search
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -130,14 +181,13 @@ const LeavesAndVacations = () => {
         </div>
       )}
 
-      {/* Main Content */}
       {showCreateTab ? (
         <CreateLeavePolicyTab isOpen={true} onClose={handleCloseCreate} />
       ) : loading ? (
-        <p className="text-gray-400 text-[12px]">Loading...</p>
-      ) : filteredLeaves.length === 0 ? (
-        <div className="text-center py-10 text-gray-400 text-[12px]">
-          No matching leaves found.
+        <div className="flex items-center justify-center py-20">
+          <p className="text-gray-400 text-[12px] font-['Poppins'] animate-pulse">
+            Loading leave policies...
+          </p>
         </div>
       ) : (
         <UniversalTable
@@ -146,6 +196,46 @@ const LeavesAndVacations = () => {
           rowsPerPage={6}
         />
       )}
+
+      {/* ACTION MENU PORTAL */}
+      {menuPosition &&
+        createPortal(
+          <>
+            {/* Backdrop: Clicking outside the box closes it */}
+            <div
+              className="fixed inset-0 z-[999998] bg-transparent"
+              onClick={closeMenu}
+            />
+
+            <div
+              style={{
+                position: "absolute",
+                top: menuPosition.top,
+                left: menuPosition.left,
+                zIndex: 999999,
+              }}
+              className="w-40 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+            >
+              <div className="p-1">
+                <button
+                  className={`w-full text-left px-3 py-2 text-[11px] font-['Poppins'] transition-colors flex items-center gap-2 rounded-lg
+                    ${
+                      selectedRow?.status === "active"
+                        ? "text-red-600 hover:bg-red-50"
+                        : "text-green-600 hover:bg-green-50"
+                    }`}
+                  onClick={handleToggleStatus}
+                >
+                  <Power size={14} />
+                  {selectedRow?.status === "active"
+                    ? "Deactivate Policy"
+                    : "Activate Policy"}
+                </button>
+              </div>
+            </div>
+          </>,
+          document.body,
+        )}
     </div>
   );
 };

@@ -1,20 +1,37 @@
 import axiosInstance from "./axiosinstance";
 
+import { getpolicyLookup,updatePolicyStatus } from "../api/api";
+
 const payrollService = {
+  // ---------------- POLICY LOOKUPS ----------------
+  /**
+   * Fetches dropdown data for Leave Policy Applicability
+   * @param {string} filterType - e.g., 'department_id', 'branch_id', 'designation_id', or 'gender'
+   * @param {string} value - defaults to 'lookup'
+   */
+  getPolicyLookupData: async (filterType, value = "lookup") => {
+    try {
+      // Constructs: /staff/get-by/single-filter?department_id=lookup
+      const res = await axiosInstance.get(`${getpolicyLookup}?${filterType}=${value}`);
+      return res.data || [];
+    } catch (err) {
+      console.error(`Error in getPolicyLookupData (${filterType}):`, err.response || err);
+      throw err;
+    }
+  },
+
   // ---------------- SALARY TEMPLATES ----------------
-getSalaryTemplates: async () => {
-  try {
-    const res = await axiosInstance.get("api/payroll/templates?status=active");
-
-    console.log("Salary Templates API Response:", res); // 👈 full response
-    console.log("Salary Templates Items:", res.data?.data?.items); // 👈 actual data
-
-    return res.data?.data?.items || [];
-  } catch (err) {
-    console.error("Error in getSalaryTemplates:", err.response || err);
-    throw err;
-  }
-},
+  getSalaryTemplates: async () => {
+    try {
+      const res = await axiosInstance.get("api/payroll/templates?status=active");
+      console.log("Salary Templates API Response:", res);
+      console.log("Salary Templates Items:", res.data?.data?.items);
+      return res.data?.data?.items || [];
+    } catch (err) {
+      console.error("Error in getSalaryTemplates:", err.response || err);
+      throw err;
+    }
+  },
 
   // ---------------- EPF ----------------
   getEPF: async () => {
@@ -145,39 +162,45 @@ getSalaryTemplates: async () => {
   },
 
   // ---------------- SALARY COMPONENTS ----------------
-createSalaryComponent: async (payload) => {
-  try {
-    const res = await axiosInstance.post("api/payroll/components", payload);
+  createSalaryComponent: async (payload) => {
+    try {
+      const res = await axiosInstance.post("api/payroll/components", payload);
+      console.log("Create Salary Component Response:", res);
+      console.log("Create Salary Component Data:", res.data);
+      return res.data;
+    } catch (err) {
+      console.error("Error in createSalaryComponent:", err.response || err);
+      throw err;
+    }
+  },
 
-    console.log("Create Salary Component Response:", res);
-    console.log("Create Salary Component Data:", res.data);
+  // ---------------- LEAVE POLICY ----------------
+  addLeavePolicy: async (payload) => {
+    try {
+      const res = await axiosInstance.post("/leave-policy/add", payload);
+      console.log("Add Leave Policy Response:", res);
+      console.log("Add Leave Policy Data:", res.data);
+      return res.data;
+    } catch (err) {
+      console.error("Error in addLeavePolicy:", err.response || err);
+      throw err;
+    }
+  },
 
-    return res.data;
-  } catch (err) {
-    console.error("Error in createSalaryComponent:", err.response || err);
-    throw err;
-  }
-},
+  updatePolicyStatus: async (id) => {
+    try {
+      const res = await axiosInstance.patch(
+        `${updatePolicyStatus}/${id}`
+      );
 
-
-// ---------------- LEAVE POLICY ----------------
-addLeavePolicy: async (payload) => {
-  try {
-    const res = await axiosInstance.post("/leave-policy/add", payload);
-
-    console.log("Add Leave Policy Response:", res);
-    console.log("Add Leave Policy Data:", res.data);
-
-    return res.data;
-  } catch (err) {
-    console.error("Error in addLeavePolicy:", err.response || err);
-    throw err;
-  }
-},
+      console.log("Status Update Response:", res.data);
+      return res.data;
+    } catch (err) {
+      console.error("Error in updatePolicyStatus:", err.response || err);
+      throw err;
+    }
+  },
 
 };
-
-
-
 
 export default payrollService;
