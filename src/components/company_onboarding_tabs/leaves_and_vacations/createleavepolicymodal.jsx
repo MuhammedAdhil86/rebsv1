@@ -119,7 +119,7 @@ const CreateLeavePolicyTab = ({ onClose }) => {
     <div
       className={`w-full bg-[#F9FAFB] rounded-2xl shadow-inner ${globalFont}`}
     >
-      <div className="bg-[#F9FAFB] w-full max-w6xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[98vh]">
+      <div className="bg-[#F9FAFB] w-full max-w6xl rounded-2xl shadow-2xl overflow-hidden flex flex-col ">
         <div className="flex items-center p-5 bg-white border-b border-gray-200 gap-4">
           <button
             onClick={onClose}

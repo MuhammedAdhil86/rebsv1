@@ -5,7 +5,7 @@ import {
   labelClass,
   inputClass,
   CheckboxRow,
-} from "../../../helpers/leavepolicyutils"; // IMPORT FROM LOCAL UTILS
+} from "../../../helpers/leavepolicyutils";
 
 const AccrualPolicyCard = ({ formData, handleChange }) => {
   return (
@@ -16,7 +16,7 @@ const AccrualPolicyCard = ({ formData, handleChange }) => {
           <div className="relative">
             <select
               className={`${inputClass} appearance-none`}
-              value={formData.accrual_method}
+              value={formData.accrual_method || "monthly"}
               onChange={(e) => handleChange("accrual_method", e.target.value)}
             >
               <option value="monthly">Monthly</option>
@@ -35,7 +35,7 @@ const AccrualPolicyCard = ({ formData, handleChange }) => {
             <input
               type="number"
               className="w-full px-4 py-2 bg-transparent text-[12px] focus:outline-none font-normal"
-              value={formData.employee_accrues}
+              value={formData.employee_accrues || ""}
               onChange={(e) => handleChange("employee_accrues", e.target.value)}
             />
             <span className="border-l border-gray-200 px-3 py-2 text-[10px] text-gray-400 flex items-center bg-gray-50">
@@ -46,26 +46,31 @@ const AccrualPolicyCard = ({ formData, handleChange }) => {
       </div>
 
       <div className="space-y-4">
+        {/* 1. Pro-rate */}
         <CheckboxRow
           label="Pro-rate leave balance for new joinees based on their date of joining"
-          checked={formData.prorate_for_new_joiners}
+          checked={formData.prorate_for_new_joiners || false}
           onChange={(e) =>
             handleChange("prorate_for_new_joiners", e.target.checked)
           }
         />
 
+        {/* 2. Postpone Accrual */}
         <div className="flex items-center justify-between">
           <CheckboxRow
             label="Postpone leave accrued for employees"
-            checked={formData.postpone_accrual}
+            checked={formData.postpone_accrual || false}
             onChange={(e) => handleChange("postpone_accrual", e.target.checked)}
           />
-          <div className="flex items-center gap-2">
+          <div
+            className={`flex items-center gap-2 transition-opacity ${!formData.postpone_accrual ? "opacity-40 pointer-events-none" : ""}`}
+          >
             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-[#F4F6F8]">
               <input
-                type="text"
+                type="number"
+                disabled={!formData.postpone_accrual}
                 className="w-10 py-1 bg-transparent text-center text-[11px] focus:outline-none"
-                value={formData.postpone_accrual_value}
+                value={formData.postpone_accrual_value || ""}
                 onChange={(e) =>
                   handleChange("postpone_accrual_value", e.target.value)
                 }
@@ -79,20 +84,24 @@ const AccrualPolicyCard = ({ formData, handleChange }) => {
           </div>
         </div>
 
+        {/* 3. Reset Balance */}
         <div className="flex items-center justify-between">
           <CheckboxRow
             label="Reset the leave balances of employees"
-            checked={formData.reset_leave_balance}
+            checked={formData.reset_leave_balance || false}
             onChange={(e) =>
               handleChange("reset_leave_balance", e.target.checked)
             }
           />
-          <div className="flex items-center gap-2">
+          <div
+            className={`flex items-center gap-2 transition-opacity ${!formData.reset_leave_balance ? "opacity-40 pointer-events-none" : ""}`}
+          >
             <span className="text-[11px] text-gray-500">Every</span>
             <div className="relative">
               <select
+                disabled={!formData.reset_leave_balance}
                 className="bg-[#F4F6F8] border border-gray-200 text-[11px] px-3 py-1 rounded-lg w-28 appearance-none focus:outline-none"
-                value={formData.reset_leave_period}
+                value={formData.reset_leave_period || "yearly"}
                 onChange={(e) =>
                   handleChange("reset_leave_period", e.target.value)
                 }
@@ -109,21 +118,28 @@ const AccrualPolicyCard = ({ formData, handleChange }) => {
           </div>
         </div>
 
-        <div className="ml-8 space-y-3 pt-2">
+        {/* Nested options for Reset */}
+        <div
+          className={`ml-8 space-y-3 pt-2 transition-opacity ${!formData.reset_leave_balance ? "opacity-40 pointer-events-none" : ""}`}
+        >
+          {/* Carry Forward */}
           <div className="flex items-center justify-between">
             <CheckboxRow
               label="Carry forward unused leave balance upon reset?"
-              checked={formData.carry_forward}
+              checked={formData.carry_forward || false}
               onChange={(e) => handleChange("carry_forward", e.target.checked)}
             />
-            <div className="flex items-center gap-2">
+            <div
+              className={`flex items-center gap-2 transition-opacity ${!formData.carry_forward ? "opacity-40 pointer-events-none" : ""}`}
+            >
               <div className="text-[10px] text-gray-400 bg-gray-50 border border-gray-100 px-3 py-1 rounded-lg">
                 Max days
               </div>
               <input
-                type="text"
+                type="number"
+                disabled={!formData.carry_forward}
                 className="w-10 py-1 bg-[#F4F6F8] border border-gray-200 rounded-lg text-center text-[11px] focus:outline-none"
-                value={formData.carry_forward_limit}
+                value={formData.carry_forward_limit || ""}
                 onChange={(e) =>
                   handleChange("carry_forward_limit", e.target.value)
                 }
@@ -131,20 +147,24 @@ const AccrualPolicyCard = ({ formData, handleChange }) => {
             </div>
           </div>
 
+          {/* Encashment */}
           <div className="flex items-center justify-between">
             <CheckboxRow
               label="Encash remaining leave days?"
-              checked={formData.encash_leave}
+              checked={formData.encash_leave || false}
               onChange={(e) => handleChange("encash_leave", e.target.checked)}
             />
-            <div className="flex items-center gap-2">
+            <div
+              className={`flex items-center gap-2 transition-opacity ${!formData.encash_leave ? "opacity-40 pointer-events-none" : ""}`}
+            >
               <div className="text-[10px] text-gray-400 bg-gray-50 border border-gray-200 px-3 py-1 rounded-lg">
                 Max days
               </div>
               <input
-                type="text"
+                type="number"
+                disabled={!formData.encash_leave}
                 className="w-10 py-1 bg-[#F4F6F8] border border-gray-200 rounded-lg text-center text-[11px] focus:outline-none"
-                value={formData.encash_limit}
+                value={formData.encash_limit || ""}
                 onChange={(e) => handleChange("encash_limit", e.target.value)}
               />
             </div>
