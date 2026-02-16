@@ -10,11 +10,8 @@ import {
   Check,
 } from "lucide-react";
 // Import both staff and department APIs
-import {
-  getStaffDetails,
-  getDepartmentData,
-} from "../../service/employeeService";
-
+import { getStaffDetails } from "../../service/employeeService";
+import { getDepartmentData } from "../../service/companyService";
 const AnnouncementModal = ({ isOpen, onClose }) => {
   const [staff, setStaff] = useState([]);
   const [departments, setDepartments] = useState([]);
