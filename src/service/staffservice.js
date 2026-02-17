@@ -6,7 +6,6 @@ import {
   postShiftcreate,
   getShifts,
   getUserPayrollTemplateAllocations,
-
   postAllocatePayarollTemplate
 } from "../api/api";
 
@@ -16,7 +15,6 @@ import {
 export const getAllStaff = async () => {
   try {
     const res = await axiosInstance.get("staff/get-by/filter");
-
     return Array.isArray(res?.data?.data) ? res.data.data : [];
   } catch (error) {
     console.error("Error fetching all staff:", error);
@@ -64,7 +62,6 @@ export const createShift = async (shiftData) => {
   }
 };
 
-
 export const getShiftList = async () => {
   try {
     const res = await axiosInstance.get(getShifts);
@@ -80,20 +77,16 @@ export const getShiftList = async () => {
 export const fetchUserPayrollTemplates = async (userId) => {
   try {
     const res = await axiosInstance.get(getUserPayrollTemplateAllocations(userId));
-    
-    console.log("Payroll API Response:", res);            // Full Axios response
-    console.log("Payroll Template Data:", res?.data?.data); // Only useful data
-
     return res?.data?.data || [];
   } catch (error) {
     console.error(`Error fetching payroll templates for user ${userId}:`, error);
     return [];
   }
 };
+
 export const allocatePayrollTemplate = async (payload) => {
   try {
     const res = await axiosInstance.post(postAllocatePayarollTemplate, payload);
-    console.log("Allocate Payroll Template Response:", res);
     return res?.data;
   } catch (error) {
     console.error("Error allocating payroll template:", error);

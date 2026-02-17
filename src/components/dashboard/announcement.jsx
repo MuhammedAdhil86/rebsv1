@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   X,
   Paperclip,
@@ -8,44 +8,70 @@ import {
   Building2,
   Search,
   Check,
+  Loader2,
+  FileText,
 } from "lucide-react";
-// Import both staff and department APIs
+
 import { getStaffDetails } from "../../service/employeeService";
 import { getDepartmentData } from "../../service/companyService";
+import announceService from "../../service/announceService";
+
 const AnnouncementModal = ({ isOpen, onClose }) => {
+  const fileInputRef = useRef(null);
   const [staff, setStaff] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filePreview, setFilePreview] = useState(null);
+
   const [formData, setFormData] = useState({
     title: "",
     content: "",
-    audienceType: "all",
-    selectedEmployees: [], // Array to store IDs of checked employees
+    audienceType: "all", // internal state: all, department, specific
+    selectedEmployees: [],
+    selectedDepartments: [],
     attachment: null,
   });
 
-  // Fetch Data on Open
   useEffect(() => {
     if (isOpen) {
       const fetchData = async () => {
+        setLoading(true);
         try {
-          const [staffData, deptData] = await Promise.all([
+          const [staffRes, deptRes] = await Promise.all([
             getStaffDetails(),
             getDepartmentData(),
           ]);
-          setStaff(staffData || []);
-          setDepartments(deptData || []);
+          const staffList =
+            staffRes?.data?.data ||
+            staffRes?.data ||
+            staffRes?.responsedata ||
+            staffRes ||
+            [];
+          const deptList =
+            deptRes?.data || deptRes?.responsedata || deptRes || [];
+          setStaff(Array.isArray(staffList) ? staffList : []);
+          setDepartments(Array.isArray(deptList) ? deptList : []);
         } catch (err) {
           console.error("Failed to load data", err);
+        } finally {
+          setLoading(false);
         }
       };
       fetchData();
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  const filteredStaff = useMemo(() => {
+    return staff.filter((emp) => {
+      const fullName = (
+        emp.name || `${emp.first_name || ""} ${emp.last_name || ""}`
+      ).toLowerCase();
+      return fullName.includes(searchTerm.toLowerCase());
+    });
+  }, [staff, searchTerm]);
 
-  // Toggle Checkbox Logic
   const toggleEmployee = (id) => {
     setFormData((prev) => ({
       ...prev,
@@ -55,47 +81,125 @@ const AnnouncementModal = ({ isOpen, onClose }) => {
     }));
   };
 
+  const toggleDepartment = (id) => {
+    setFormData((prev) => ({
+      ...prev,
+      selectedDepartments: prev.selectedDepartments.includes(id)
+        ? prev.selectedDepartments.filter((deptId) => deptId !== id)
+        : [...prev.selectedDepartments, id],
+    }));
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = (e) => {
-    setFormData((prev) => ({ ...prev, attachment: e.target.files[0] }));
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prev) => ({ ...prev, attachment: file }));
+      if (file.type.startsWith("image/")) {
+        setFilePreview(URL.createObjectURL(file));
+      } else {
+        setFilePreview("file_icon");
+      }
+    }
   };
 
-  const handleSubmit = (e) => {
+  // --- KEY FIX IN THIS FUNCTION ---
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Announcement Payload:", formData);
+    setIsSubmitting(true);
+
+    const payload = new FormData();
+    payload.append("title", formData.title);
+    payload.append("description", formData.content);
+    payload.append("priority", 1);
+
+    // FIXED AUDIENCE TYPE MAPPING
+    let backendAudienceType = "All";
+    if (formData.audienceType === "specific") {
+      backendAudienceType = "specific_employees"; // This is likely what your DB enum expects
+    } else if (formData.audienceType === "department") {
+      backendAudienceType = "department";
+    }
+    payload.append("audience_type", backendAudienceType);
+
+    // FIXED SEND_TO LOGIC
+    if (formData.audienceType === "specific") {
+      payload.append("send_to", JSON.stringify(formData.selectedEmployees));
+    } else if (formData.audienceType === "department") {
+      payload.append("send_to", JSON.stringify(formData.selectedDepartments));
+    } else {
+      payload.append("send_to", JSON.stringify([]));
+    }
+
+    if (formData.attachment) {
+      payload.append("attachment", formData.attachment);
+      const type = formData.attachment.type.split("/")[0];
+      payload.append(
+        "attachment_type",
+        type.charAt(0).toUpperCase() + type.slice(1),
+      );
+    }
+
+    try {
+      const response = await announceService.addAnnouncement(payload);
+      console.log("Success:", response);
+      handleClose();
+    } catch (err) {
+      console.error("Submission failed with details:", err.response?.data);
+      alert(
+        `Error: ${err.response?.data?.data || "Check console for details"}`,
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    setFormData({
+      title: "",
+      content: "",
+      audienceType: "all",
+      selectedEmployees: [],
+      selectedDepartments: [],
+      attachment: null,
+    });
+    setFilePreview(null);
+    setSearchTerm("");
     onClose();
   };
 
-  // Filter staff based on search
-  const filteredStaff = staff.filter((emp) =>
-    emp.name?.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm font-poppins font-normal text-[12px]">
-      <div className="bg-white w-[90%] max-w-[500px] rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
-          <h2 className="text-gray-800 text-[14px] font-medium">
-            Create New Announcement
-          </h2>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm font-poppins text-[12px]">
+      <div className="bg-white w-[95%] max-w-[500px] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+        <div className="px-8 py-5 flex items-center justify-between border-b border-gray-50 bg-white sticky top-0 z-10">
+          <div>
+            <h2 className="text-gray-900 text-[16px] font-bold tracking-tight">
+              Create Announcement
+            </h2>
+            <p className="text-gray-400 text-[10px] font-medium uppercase tracking-wider">
+              Broadcast Updates
+            </p>
+          </div>
           <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            onClick={handleClose}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400"
           >
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
-        {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto">
-          {/* Title */}
+        <form
+          onSubmit={handleSubmit}
+          className="p-8 space-y-6 overflow-y-auto custom-scrollbar"
+        >
           <div>
-            <label className="block text-gray-500 mb-1.5 ml-1">
+            <label className="block text-gray-500 font-semibold mb-2 ml-1 uppercase">
               Announcement Title
             </label>
             <input
@@ -103,32 +207,32 @@ const AnnouncementModal = ({ isOpen, onClose }) => {
               name="title"
               value={formData.title}
               onChange={handleInputChange}
-              placeholder="Enter headline..."
-              className="w-full bg-[#F4F6F8] border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-lime-500 transition-all text-gray-700"
+              placeholder="Enter title..."
+              className="w-full bg-[#F4F6F8] border border-transparent rounded-2xl px-5 py-3.5 outline-none focus:border-lime-500 focus:bg-white transition-all text-gray-700 font-medium"
               required
             />
           </div>
 
-          {/* Content */}
           <div>
-            <label className="block text-gray-500 mb-1.5 ml-1">
+            <label className="block text-gray-500 font-semibold mb-2 ml-1 uppercase">
               Message Content
             </label>
             <textarea
               name="content"
-              rows="3"
+              rows="4"
               value={formData.content}
               onChange={handleInputChange}
-              placeholder="What would you like to announce?"
-              className="w-full bg-[#F4F6F8] border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-lime-500 transition-all text-gray-700 resize-none"
+              placeholder="What is the announcement?"
+              className="w-full bg-[#F4F6F8] border border-transparent rounded-2xl px-5 py-3.5 outline-none focus:border-lime-500 focus:bg-white transition-all text-gray-700 resize-none"
               required
             />
           </div>
 
-          {/* Audience Selection */}
           <div>
-            <label className="block text-gray-500 mb-2 ml-1">Send To</label>
-            <div className="flex flex-wrap gap-3">
+            <label className="block text-gray-500 font-semibold mb-3 ml-1 uppercase">
+              Send To
+            </label>
+            <div className="flex gap-2 p-1 bg-gray-100 rounded-2xl">
               {[
                 { id: "all", label: "Everyone", icon: <Users size={14} /> },
                 {
@@ -144,107 +248,186 @@ const AnnouncementModal = ({ isOpen, onClose }) => {
                   onClick={() =>
                     setFormData((prev) => ({ ...prev, audienceType: type.id }))
                   }
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all text-[11px] font-bold ${
                     formData.audienceType === type.id
-                      ? "bg-lime-50 border-lime-500 text-lime-700 font-medium"
-                      : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                      ? "bg-white text-black shadow-sm"
+                      : "text-gray-400 hover:text-gray-600"
                   }`}
                 >
-                  {type.icon}
-                  {type.label}
+                  {type.icon} {type.label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* SPECIFIC EMPLOYEES LIST - Only shows if 'Specific' is selected */}
           {formData.audienceType === "specific" && (
-            <div className="animate-in slide-in-from-top-2 duration-300">
-              <div className="relative mb-3">
+            <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
+              <div className="relative">
                 <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
                   size={14}
                 />
                 <input
                   type="text"
-                  placeholder="Search employees..."
-                  className="w-full bg-white border border-gray-200 rounded-lg pl-9 pr-4 py-2 outline-none focus:border-lime-500 text-[11px]"
+                  placeholder="Search staff..."
+                  className="w-full bg-white border border-gray-100 rounded-xl pl-10 pr-4 py-2.5 outline-none focus:border-lime-500 text-[11px]"
+                  value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <div className="bg-[#F4F6F8] rounded-xl border border-gray-100 max-h-[180px] overflow-y-auto p-2 space-y-1">
-                {filteredStaff.length > 0 ? (
-                  filteredStaff.map((emp) => (
-                    <div
-                      key={emp.id}
-                      onClick={() => toggleEmployee(emp.id)}
-                      className="flex items-center justify-between p-2 hover:bg-white rounded-lg cursor-pointer transition-all group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-500">
-                          {emp.name?.charAt(0)}
-                        </div>
-                        <span className="text-gray-700">{emp.name}</span>
-                      </div>
+              <div className="bg-gray-50 rounded-2xl border border-gray-100 max-h-[180px] overflow-y-auto p-2 space-y-1">
+                {loading ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="animate-spin text-lime-500" />
+                  </div>
+                ) : filteredStaff.length > 0 ? (
+                  filteredStaff.map((emp) => {
+                    const fullName =
+                      emp.name ||
+                      `${emp.first_name || ""} ${emp.last_name || ""}`;
+                    const empId = emp.uuid || emp.id;
+                    return (
                       <div
-                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                          formData.selectedEmployees.includes(emp.id)
-                            ? "bg-lime-500 border-lime-500 text-white"
-                            : "bg-white border-gray-300"
-                        }`}
+                        key={empId}
+                        onClick={() => toggleEmployee(empId)}
+                        className="flex items-center justify-between p-3 hover:bg-white rounded-xl cursor-pointer transition-all border border-transparent hover:border-gray-100"
                       >
-                        {formData.selectedEmployees.includes(emp.id) && (
-                          <Check size={10} strokeWidth={4} />
-                        )}
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-lime-100 rounded-full flex items-center justify-center text-[10px] font-bold text-lime-700 uppercase">
+                            {fullName.charAt(0)}
+                          </div>
+                          <span className="text-gray-700 font-medium">
+                            {fullName}
+                          </span>
+                        </div>
+                        <div
+                          className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                            formData.selectedEmployees.includes(empId)
+                              ? "bg-lime-500 border-lime-500 text-white"
+                              : "bg-white border-gray-300"
+                          }`}
+                        >
+                          {formData.selectedEmployees.includes(empId) && (
+                            <Check size={12} strokeWidth={4} />
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
-                  <p className="text-center py-4 text-gray-400">
-                    No employees found
-                  </p>
+                  <div className="text-center py-4 text-gray-400">
+                    No staff members found
+                  </div>
                 )}
               </div>
-              <p className="mt-2 text-[10px] text-lime-600 font-medium ml-1">
-                {formData.selectedEmployees.length} employees selected
-              </p>
             </div>
           )}
 
-          {/* Footer Actions */}
-          <div className="pt-2 flex items-center justify-between border-t border-gray-100 mt-4 flex-shrink-0">
+          {formData.audienceType === "department" && (
+            <div className="space-y-3 animate-in slide-in-from-top-2 duration-300">
+              <div className="bg-gray-50 rounded-2xl border border-gray-100 max-h-[180px] overflow-y-auto p-2 space-y-1">
+                {departments.map((dept) => (
+                  <div
+                    key={dept.id}
+                    onClick={() => toggleDepartment(dept.id)}
+                    className="flex items-center justify-between p-3 hover:bg-white rounded-xl cursor-pointer transition-all border border-transparent hover:border-gray-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center text-blue-600">
+                        <Building2 size={14} />
+                      </div>
+                      <span className="text-gray-700 font-medium">
+                        {dept.name}
+                      </span>
+                    </div>
+                    <div
+                      className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                        formData.selectedDepartments.includes(dept.id)
+                          ? "bg-lime-500 border-lime-500 text-white"
+                          : "bg-white border-gray-300"
+                      }`}
+                    >
+                      {formData.selectedDepartments.includes(dept.id) && (
+                        <Check size={12} strokeWidth={4} />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {formData.attachment && (
+            <div className="flex items-center justify-between p-3 bg-lime-50 rounded-2xl border border-lime-100 animate-in zoom-in-95">
+              <div className="flex items-center gap-3 overflow-hidden">
+                {filePreview !== "file_icon" ? (
+                  <img
+                    src={filePreview}
+                    className="w-10 h-10 rounded-lg object-cover"
+                  />
+                ) : (
+                  <FileText className="text-lime-600" size={20} />
+                )}
+                <div className="overflow-hidden">
+                  <p className="text-[11px] font-bold text-lime-900 truncate">
+                    {formData.attachment.name}
+                  </p>
+                  <p className="text-[9px] text-lime-600">
+                    {(formData.attachment.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData((p) => ({ ...p, attachment: null }));
+                  setFilePreview(null);
+                }}
+                className="p-1 hover:bg-lime-100 rounded-full text-lime-600"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          <div className="pt-4 flex items-center justify-between border-t border-gray-100 sticky bottom-0 bg-white">
             <div className="relative">
               <input
                 type="file"
-                id="modal-attach"
+                ref={fileInputRef}
                 className="hidden"
                 onChange={handleFileChange}
               />
-              <label
-                htmlFor="modal-attach"
-                className="flex items-center gap-2 text-gray-500 cursor-pointer hover:text-gray-700 transition-colors bg-gray-100 px-3 py-2 rounded-lg"
-              >
-                <Paperclip size={14} />
-                <span className="max-w-[100px] truncate">
-                  {formData.attachment ? formData.attachment.name : "Attach"}
-                </span>
-              </label>
-            </div>
-
-            <div className="flex gap-3">
               <button
                 type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 text-gray-500 cursor-pointer hover:text-gray-800 transition-colors bg-gray-100 px-4 py-2.5 rounded-2xl border border-transparent"
+              >
+                <Paperclip size={16} />
+                <span className="font-bold">Attach</span>
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-5 py-2 text-gray-400 hover:text-gray-600 font-bold transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="flex items-center gap-2 bg-black text-white px-6 py-2 rounded-xl hover:bg-gray-800 transition-all shadow-sm"
+                disabled={isSubmitting}
+                className="flex items-center gap-2 bg-black text-white px-8 py-3 rounded-2xl hover:bg-gray-800 transition-all shadow-xl shadow-gray-200 disabled:opacity-50"
               >
-                <span>Push Now</span>
-                <Send size={14} />
+                {isSubmitting ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : (
+                  <>
+                    <span className="font-bold text-[13px]">Push Now</span>
+                    <Send size={14} />
+                  </>
+                )}
               </button>
             </div>
           </div>

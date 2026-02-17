@@ -23,6 +23,7 @@ updateContactInfo,
 updatePersonalInfo,
 getStaff,
 getEmployeeCalendar,
+getEmployeePolicy,
 
   getMaritalStatus// make sure you export this from your api.js
 } from "../api/api";

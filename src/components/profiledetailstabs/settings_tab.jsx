@@ -32,7 +32,7 @@ export default function SettingsTab({ employee }) {
       <Suspense
         fallback={<div className="text-gray-500">Loading Leaves...</div>}
       >
-        <LeavesVacation employee={employee} />
+        <LeavesVacation uuid={employeeUUID} initialPreferences={employee} />
       </Suspense>
     </div>
   );

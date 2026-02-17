@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
-import axiosInstance from "../../../service/axiosinstance";
 import toast, { Toaster } from "react-hot-toast";
+import CustomSelect from "../../../ui/customselect";
+import {
+  fetchShifts,
+  fetchUserShiftDetails,
+  fetchUserLocationDevice,
+  allocateShift,
+} from "../../../service/policiesService";
 
 /* --------------------------
    Reverse Geocode Helper
@@ -21,9 +27,6 @@ const getPlaceName = async (latitude, longitude) => {
   }
 };
 
-/* --------------------------
-   Main Component
--------------------------- */
 export default function ManagePrivilegesSection({ uuid }) {
   const [userType, setUserType] = useState("-");
   const [shift, setShift] = useState("");
@@ -34,49 +37,37 @@ export default function ManagePrivilegesSection({ uuid }) {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Shift Modal state
   const [showShiftModal, setShowShiftModal] = useState(false);
   const [selectedShiftId, setSelectedShiftId] = useState("");
   const [shiftFrom, setShiftFrom] = useState("");
   const [shiftTo, setShiftTo] = useState("");
 
-  /* --------------------------
-     Fetch shifts
-  -------------------------- */
   useEffect(() => {
-    const fetchShifts = async () => {
+    const getShifts = async () => {
       try {
-        const res = await axiosInstance.get("/shifts/fetch");
-        setShifts(res.data?.data || []);
+        const data = await fetchShifts();
+        setShifts(data);
       } catch (error) {
-        console.error("Failed to fetch shifts:", error);
         toast.error("Failed to fetch shifts");
       }
     };
-    fetchShifts();
+    getShifts();
   }, []);
 
-  /* --------------------------
-     Fetch user privileges
-  -------------------------- */
   useEffect(() => {
     if (!uuid) return;
 
     const fetchPrivileges = async () => {
       setLoading(true);
       try {
-        const shiftRes = await axiosInstance.get(
-          `/master/shift-attendance-user-type/${uuid}`,
-        );
-        const shiftData = shiftRes.data?.data || {};
+        const [shiftData, locData] = await Promise.all([
+          fetchUserShiftDetails(uuid),
+          fetchUserLocationDevice(uuid),
+        ]);
+
         setUserType(shiftData.user_type || "-");
         setShift(shiftData.shift_name || "");
         setSelectedShiftId(shiftData.shift_id || "");
-
-        const locRes = await axiosInstance.get(
-          `/master/location-device/${uuid}`,
-        );
-        const locData = locRes.data?.data;
         setDevice(locData?.device || "-");
 
         if (locData?.latitude && locData?.longitude) {
@@ -89,7 +80,6 @@ export default function ManagePrivilegesSection({ uuid }) {
           setLocation("-");
         }
       } catch (error) {
-        console.error("Failed to fetch privileges:", error);
         toast.error("Failed to fetch user privileges");
       } finally {
         setLoading(false);
@@ -99,17 +89,9 @@ export default function ManagePrivilegesSection({ uuid }) {
     fetchPrivileges();
   }, [uuid]);
 
-  /* --------------------------
-     Save Shift Allocation
-  -------------------------- */
   const saveShift = async () => {
     if (!selectedShiftId || !shiftFrom) {
       toast.error("Please select shift and Effective From date.");
-      return;
-    }
-
-    if (shiftTo && shiftFrom > shiftTo) {
-      toast.error("Effective To date cannot be before Effective From date.");
       return;
     }
 
@@ -121,9 +103,7 @@ export default function ManagePrivilegesSection({ uuid }) {
         to_date: shiftTo ? new Date(shiftTo).toISOString() : null,
       };
 
-      console.log("Shift allocation payload:", payload);
-
-      await axiosInstance.post("/shifts/allocate", payload);
+      await allocateShift(payload);
 
       const shiftObj = shifts.find((s) => s.id === selectedShiftId);
       setShift(shiftObj?.shift_name || "-");
@@ -131,12 +111,15 @@ export default function ManagePrivilegesSection({ uuid }) {
       setIsEditing(false);
       toast.success("Shift updated successfully!");
     } catch (error) {
-      console.error("Failed to save shift:", error.response?.data || error);
-      toast.error(
-        error.response?.data?.message || "Failed to upsert shift allocation",
-      );
+      toast.error(error.response?.data?.message || "Failed to update shift");
     }
   };
+
+  // Map shifts for CustomSelect
+  const shiftOptions = shifts.map((s) => ({
+    label: s.shift_name,
+    value: s.id,
+  }));
 
   if (loading)
     return <div className="text-gray-500 p-4">Loading privileges...</div>;
@@ -145,13 +128,21 @@ export default function ManagePrivilegesSection({ uuid }) {
     <div className="bg-white rounded-xl p-4 shadow-sm border w-full space-y-4">
       <Toaster position="top-right" />
 
-      {/* Header with title and edit */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium text-gray-800 text-[14px]">Privileges</h3>
-        {!isEditing && (
+        <h3 className="font-medium text-gray-800 text-[14px]">
+          Manage Privileges
+        </h3>
+        {isEditing ? (
+          <button
+            onClick={() => setIsEditing(false)}
+            className="text-red-500 text-[12px] font-medium hover:underline"
+          >
+            Cancel
+          </button>
+        ) : (
           <Icon
             icon="basil:edit-outline"
-            className="w-5 h-5 text-gray-400 cursor-pointer"
+            className="w-5 h-5 text-gray-400 cursor-pointer hover:text-gray-600"
             onClick={() => setIsEditing(true)}
           />
         )}
@@ -160,7 +151,6 @@ export default function ManagePrivilegesSection({ uuid }) {
       <div className="text-sm space-y-2">
         <Row label="User Type" value={userType} />
 
-        {/* Shift Section */}
         <div className="flex justify-between items-center border-b border-gray-100 py-2">
           <span className="text-gray-500 text-[12px]">Work Shift</span>
           <div className="flex items-center gap-2">
@@ -171,11 +161,7 @@ export default function ManagePrivilegesSection({ uuid }) {
               <button
                 className="text-blue-600 text-[12px] hover:underline"
                 onClick={() => {
-                  setSelectedShiftId(
-                    shifts.find((s) => s.shift_name === shift)?.id || "",
-                  );
                   setShiftFrom(new Date().toISOString().split("T")[0]);
-                  setShiftTo("");
                   setShowShiftModal(true);
                 }}
               >
@@ -189,39 +175,51 @@ export default function ManagePrivilegesSection({ uuid }) {
         <Row label="Location" value={location} />
       </div>
 
-      {/* Shift Modal */}
       {showShiftModal && (
-        <Modal title="Change Shift" onClose={() => setShowShiftModal(false)}>
-          <div className="flex flex-col gap-2">
-            <select
-              value={selectedShiftId}
-              onChange={(e) => setSelectedShiftId(Number(e.target.value))}
-              className="border rounded px-2 py-1"
-            >
-              <option value="">Select Shift</option>
-              {shifts.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.shift_name}
-                </option>
-              ))}
-            </select>
-            <input
-              type="date"
-              value={shiftFrom}
-              onChange={(e) => setShiftFrom(e.target.value)}
-              className="border rounded px-2 py-1"
-            />
-            <input
-              type="date"
-              value={shiftTo}
-              onChange={(e) => setShiftTo(e.target.value)}
-              className="border rounded px-2 py-1"
-            />
+        <Modal title="Update Shift" onClose={() => setShowShiftModal(false)}>
+          <div className="flex flex-col gap-3">
+            <div>
+              <label className="text-[11px] text-gray-400 block mb-1">
+                Select Shift
+              </label>
+              {/* USE CUSTOM SELECT HERE */}
+              <CustomSelect
+                value={selectedShiftId}
+                options={shiftOptions}
+                onChange={(val) => setSelectedShiftId(Number(val))}
+                minWidth={290} // Adjusted for modal width
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] text-gray-400 block mb-1">
+                Effective From
+              </label>
+              <input
+                type="date"
+                value={shiftFrom}
+                onChange={(e) => setShiftFrom(e.target.value)}
+                className="w-full border rounded px-2 py-1.5 text-sm outline-none bg-gray-50"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] text-gray-400 block mb-1">
+                Effective To (Optional)
+              </label>
+              <input
+                type="date"
+                value={shiftTo}
+                onChange={(e) => setShiftTo(e.target.value)}
+                className="w-full border rounded px-2 py-1.5 text-sm outline-none bg-gray-50"
+              />
+            </div>
+
             <button
-              className="bg-blue-600 text-white px-4 py-1 rounded mt-2"
+              className="bg-black text-white w-full py-2.5 rounded-lg mt-2 text-sm font-medium hover:bg-gray-800 transition-colors shadow-sm"
               onClick={saveShift}
             >
-              Save Shift
+              Update Shift
             </button>
           </div>
         </Modal>
@@ -230,9 +228,7 @@ export default function ManagePrivilegesSection({ uuid }) {
   );
 }
 
-/* --------------------------
-   Reusable Row Component
--------------------------- */
+/* --- Sub-components --- */
 function Row({ label, value }) {
   return (
     <div className="flex justify-between items-center border-b border-gray-100 py-2">
@@ -244,17 +240,17 @@ function Row({ label, value }) {
   );
 }
 
-/* --------------------------
-   Modal Component
--------------------------- */
 function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-4 w-[300px] space-y-2">
-        <div className="flex justify-between items-center">
-          <h3 className="font-medium">{title}</h3>
-          <button className="text-gray-500" onClick={onClose}>
-            ✕
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] backdrop-blur-[2px]">
+      <div className="bg-white rounded-xl shadow-2xl p-6 w-[340px] animate-in fade-in zoom-in duration-200">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-gray-900 text-[16px]">{title}</h3>
+          <button
+            className="text-gray-400 hover:text-black transition-colors"
+            onClick={onClose}
+          >
+            <Icon icon="material-symbols:close" className="w-6 h-6" />
           </button>
         </div>
         <div>{children}</div>

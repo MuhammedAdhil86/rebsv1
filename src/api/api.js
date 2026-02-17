@@ -281,4 +281,19 @@ export const getpolicyLookup = "/staff/get-by/single-filter";
 
 export const updatePolicyStatus = "/leave-policy/status";
 
+export const getEmployeePolicy = (uuid) => `/leave-policy/employees/${uuid}`;
+
+// Shift & Privilege Endpoints
+export const fetchShiftsUrl = "/shifts/fetch";
+export const allocateShiftUrl = "/shifts/allocate";
+export const userShiftDetailsUrl = (uuid) => `/master/shift-attendance-user-type/${uuid}`;
+export const userLocationDeviceUrl = (uuid) => `/master/location-device/${uuid}`;
+export const getEmployeeLeavePolicy = (uuid) => `/leave-policy/employees/${uuid}`;
+
+export const allocateEmployeePolicy = "/leave-policy/allocate/staffs";
+
+
+
+
+
 
