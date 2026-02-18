@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosinstance";
 
-import { getpolicyLookup,updatePolicyStatus } from "../api/api";
+import { getpolicyLookup,updatePolicyStatus,getDifaultleavePolicy,postCloneLeavePolicy } from "../api/api";
 
 const payrollService = {
   // ---------------- POLICY LOOKUPS ----------------
@@ -197,6 +197,31 @@ const payrollService = {
       return res.data;
     } catch (err) {
       console.error("Error in updatePolicyStatus:", err.response || err);
+      throw err;
+    }
+  },
+
+  getDefaultLeavePolicies: async () => {
+    try {
+      const res = await axiosInstance.get(getDifaultleavePolicy);
+      console.log("Default Leave Policy Response:", res.data);
+      // Adjust the return path based on your API structure (e.g., res.data?.data)
+      return res.data?.data || res.data || [];
+    } catch (err) {
+      console.error("Error in getDefaultLeavePolicies:", err.response || err);
+      throw err;
+    }
+  },
+cloneLeavePolicy: async (ids) => {
+    try {
+      // The API expects: { "leave_policy_ids": [1, 2, 5] }
+      const res = await axiosInstance.post(postCloneLeavePolicy, { 
+        leave_policy_ids: ids 
+      });
+      
+      return res.data;
+    } catch (err) {
+      console.error("Error in cloneLeavePolicy:", err.response || err);
       throw err;
     }
   },

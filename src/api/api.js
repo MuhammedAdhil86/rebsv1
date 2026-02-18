@@ -292,6 +292,8 @@ export const getEmployeeLeavePolicy = (uuid) => `/leave-policy/employees/${uuid}
 
 export const allocateEmployeePolicy = "/leave-policy/allocate/staffs";
 
+export const getDifaultleavePolicy = "/leave-policy/fetch-default";
+export const postCloneLeavePolicy = "/leave-policy/clone-defaults";
 
 
 

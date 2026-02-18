@@ -1,156 +1,345 @@
-import React, { useState, useEffect } from "react";
-import { Icon } from "@iconify/react";
-import toast, { Toaster } from "react-hot-toast";
-import CustomSelect from "../../../ui/customselect";
-import {
-  fetchEmployeePolicy,
-  allocateLeavePolicy,
-} from "../../../service/policiesService";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { Plus, Search, MoreHorizontal, Power } from "lucide-react";
+import UniversalTable from "../../../ui/universal_table";
 import { fetchAllLeavePolicy } from "../../../service/companyService";
+import payrollService from "../../../service/payrollService";
+import CreateLeavePolicyTab from "../leaves_and_vacations/createleavepolicymodal";
+import DefaultTemplatesTable from "./DefaultTemplatesTable";
+import toast, { Toaster } from "react-hot-toast";
 
-export default function LeavesVacation({ uuid }) {
-  const [policyInfo, setPolicyInfo] = useState({ count: 0, policy: null });
-  const [allPolicies, setAllPolicies] = useState([]);
+const LeavesAndVacations = () => {
+  // ---------------- STATE MANAGEMENT ----------------
+  const [activeTab, setActiveTab] = useState("all_leaves");
+  const [showCreateTab, setShowCreateTab] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedPolicyId, setSelectedPolicyId] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
-  const loadData = async () => {
-    if (!uuid) return;
+  const [leaveData, setLeaveData] = useState([]);
+  const [defaultTemplates, setDefaultTemplates] = useState([]);
+
+  const [menuPosition, setMenuPosition] = useState(null);
+  const [selectedRow, setSelectedRow] = useState(null);
+
+  // ---------------- 1. DATA FETCHING ----------------
+  const loadAllData = async () => {
     setLoading(true);
     try {
-      const [empData, globalPoliciesResponse] = await Promise.all([
-        fetchEmployeePolicy(uuid),
+      const [customRes, defaultRes] = await Promise.all([
         fetchAllLeavePolicy(),
+        payrollService.getDefaultLeavePolicies(),
       ]);
 
-      setPolicyInfo(empData);
-
-      const policyList = Array.isArray(globalPoliciesResponse)
-        ? globalPoliciesResponse
-        : globalPoliciesResponse?.data || [];
-
-      // Format options for CustomSelect: [{ label: "...", value: "..." }]
-      const formattedOptions = policyList.map((p) => ({
-        label: p.name || p.policy_name,
-        value: p.id.toString(),
-      }));
-      setAllPolicies(formattedOptions);
-
-      if (empData.policy?.id) {
-        setSelectedPolicyId(empData.policy.id.toString());
-      }
+      setLeaveData(customRes?.data || customRes || []);
+      setDefaultTemplates(defaultRes?.data || defaultRes || []);
     } catch (error) {
-      console.error("Error loading policies:", error);
+      console.error("Error fetching data:", error);
+      toast.error("Failed to load leave policies");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, [uuid]);
+    loadAllData();
+  }, []);
 
-  const handleSave = async () => {
-    if (!selectedPolicyId) return toast.error("Please select a policy");
-    setIsSaving(true);
+  // ---------------- 2. TARGETED CLONE LOGIC ----------------
+  /**
+   * Specifically clones ONLY the clicked policy
+   * @param {Object} template - The specific row object clicked
+   */
+  const handleCloneTemplate = async (template) => {
+    if (!template?.id) return;
+
+    const toastId = "clone-action";
+    toast.loading("Cloning selected policy...", { id: toastId });
+
     try {
-      await allocateLeavePolicy({
-        leave_policy_id: Number(selectedPolicyId),
-        staff_ids: [uuid],
-      });
-      toast.success("Policy allocated!");
-      setIsEditing(false);
-      const updated = await fetchEmployeePolicy(uuid);
-      setPolicyInfo(updated);
+      // The body is specifically formatted to contain only the clicked ID
+      const payload = {
+        leave_policy_ids: [template.id],
+      };
+
+      const response = await payrollService.cloneLeavePolicy(
+        payload.leave_policy_ids,
+      );
+
+      // Handle Success Message from Backend
+      const successMsg = response?.message || "Template cloned successfully!";
+      toast.success(successMsg, { id: toastId });
+
+      // UI Actions
+      setActiveTab("all_leaves");
+      loadAllData();
     } catch (error) {
-      toast.error("Failed to allocate policy");
-    } finally {
-      setIsSaving(false);
+      // Handle Error Message from Backend
+      const errorMsg =
+        error.response?.data?.message || "Failed to clone template";
+      toast.error(errorMsg, { id: toastId });
     }
   };
 
-  if (loading)
-    return <div className="p-4 text-xs text-gray-400">Loading...</div>;
+  // ---------------- 3. STATUS TOGGLE LOGIC ----------------
+  const handleToggleStatus = async () => {
+    if (!selectedRow) return;
+    const toastId = "status-update";
+    try {
+      const newStatusValue = selectedRow.status !== "active";
+      const response = await payrollService.updatePolicyStatus(
+        selectedRow.id,
+        newStatusValue,
+      );
 
-  const currentPolicy = policyInfo.policy;
+      const msg =
+        response?.message ||
+        `Policy ${newStatusValue ? "Activated" : "Deactivated"}`;
+      toast.success(msg, { id: toastId });
+
+      closeMenu();
+      loadAllData();
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.message || "Failed to update status";
+      toast.error(errorMsg, { id: toastId });
+    }
+  };
+
+  // ---------------- 4. MENU CONTROLS ----------------
+  const openMenu = (event, row) => {
+    event.stopPropagation();
+    const rect = event.currentTarget.getBoundingClientRect();
+    setMenuPosition({
+      top: rect.bottom + window.scrollY + 5,
+      left: rect.right + window.scrollX - 150,
+    });
+    setSelectedRow(row);
+  };
+
+  const closeMenu = () => {
+    setMenuPosition(null);
+    setSelectedRow(null);
+  };
+
+  const handleCloseCreate = () => {
+    setShowCreateTab(false);
+    loadAllData();
+  };
+
+  // ---------------- 5. SEARCH/FILTERING ----------------
+  const currentData = activeTab === "all_leaves" ? leaveData : defaultTemplates;
+  const filteredData = currentData.filter(
+    (item) =>
+      item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.leave_type?.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  // ---------------- 6. COLUMNS ----------------
+  const columns = [
+    {
+      key: "name",
+      label: "Leave Name",
+      render: (v) => (
+        <div className="text-center font-['Poppins'] text-black text-[12px]">
+          {v}
+        </div>
+      ),
+    },
+    {
+      key: "leave_type",
+      label: "Type",
+      render: (v) => (
+        <div className="flex justify-center">
+          <span className="bg-[#F1F1F8] text-black px-2 py-0.5 rounded text-[10px] uppercase font-bold font-['Poppins']">
+            {v?.toUpperCase()}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "created_at",
+      label: "Effective From",
+      render: (v) => (
+        <div className="text-center font-['Poppins'] text-black text-[12px]">
+          {new Date(v).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          })}
+        </div>
+      ),
+    },
+    {
+      key: "count",
+      label: "Count",
+      render: (_, row) => (
+        <div className="text-center font-['Poppins'] text-black text-[12px]">
+          {row.employee_accrues}/{row.accrual_method}
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (v) => (
+        <div className="flex justify-center">
+          <span
+            className={`px-4 py-1 rounded-full text-[11px] font-medium font-['Poppins'] ${
+              v === "active"
+                ? "bg-[#E7F7EF] text-[#00B050]"
+                : "bg-[#F1F1F8] text-[#8C8CB1]"
+            }`}
+          >
+            {v === "active" ? "Active" : "Inactive"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "action",
+      label: "Action",
+      render: (_, row) => (
+        <div className="flex justify-center">
+          <button
+            onClick={(e) => openMenu(e, row)}
+            className="text-gray-400 hover:text-black transition-colors p-1"
+          >
+            <MoreHorizontal size={18} />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border w-full space-y-4">
+    <div className="w-full relative">
       <Toaster position="top-right" />
 
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-medium text-gray-800 text-[14px]">
-          {isEditing ? "Manage Leaves" : "Leaves and Vacation"}
-        </h3>
-        {isEditing ? (
-          <div className="flex gap-3">
-            <button
-              onClick={() => setIsEditing(false)}
-              className="text-[12px] text-red-500 hover:underline"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="text-[12px] text-black font-bold hover:underline"
-            >
-              {isSaving ? "Saving..." : "Save"}
-            </button>
+      {/* TAB NAVIGATION */}
+      {!showCreateTab && (
+        <div className="flex items-center gap-8 border-b border-gray-100 mb-6">
+          <button
+            onClick={() => setActiveTab("all_leaves")}
+            className={`pb-3 text-[14px] font-medium font-['Poppins'] transition-all ${
+              activeTab === "all_leaves"
+                ? "text-black border-b-2 border-black"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            All Leaves
+          </button>
+          <button
+            onClick={() => setActiveTab("default_templates")}
+            className={`pb-3 text-[14px] font-medium font-['Poppins'] transition-all ${
+              activeTab === "default_templates"
+                ? "text-black border-b-2 border-black"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            Default Templates
+          </button>
+        </div>
+      )}
+
+      {/* HEADER */}
+      {!showCreateTab && (
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-[16px] font-medium text-gray-900 font-['Poppins']">
+            {activeTab === "all_leaves"
+              ? "Leave Policies"
+              : "Standard Templates"}
+          </h2>
+
+          <div className="flex items-center gap-3">
+            {activeTab === "all_leaves" && (
+              <button
+                onClick={() => setShowCreateTab(true)}
+                className="flex items-center gap-2 px-5 py-2 bg-black text-white rounded-lg text-[12px] font-medium hover:bg-zinc-800 transition-all font-['Poppins']"
+              >
+                <Plus size={14} /> Create Policy
+              </button>
+            )}
+
+            <div className="relative ml-2">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-4 pr-10 py-2 border border-gray-100 bg-[#f9f9f9] rounded-lg text-[12px] w-64 focus:outline-none focus:ring-1 focus:ring-gray-200 font-['Poppins']"
+              />
+              <Search
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={14}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TABLES */}
+      {showCreateTab ? (
+        <CreateLeavePolicyTab isOpen={true} onClose={handleCloseCreate} />
+      ) : activeTab === "all_leaves" ? (
+        loading ? (
+          <div className="flex items-center justify-center py-20">
+            <p className="text-gray-400 text-[12px] font-['Poppins'] animate-pulse">
+              Loading leave policies...
+            </p>
           </div>
         ) : (
-          <Icon
-            icon="basil:edit-outline"
-            className="w-5 h-5 text-gray-400 cursor-pointer"
-            onClick={() => setIsEditing(true)}
+          <UniversalTable
+            columns={columns}
+            data={filteredData}
+            rowsPerPage={8}
           />
-        )}
-      </div>
+        )
+      ) : (
+        <DefaultTemplatesTable
+          data={filteredData}
+          loading={loading}
+          onUseTemplate={handleCloneTemplate}
+        />
+      )}
 
-      <div className="text-sm space-y-1">
-        {/* 1st: Current Policy Name (Using CustomSelect in Edit mode) */}
-        <div className="flex justify-between items-center border-b border-gray-100 py-2 min-h-[45px]">
-          <span className="text-gray-500 text-[12px]">Current Policy</span>
-          {isEditing ? (
-            <CustomSelect
-              value={selectedPolicyId}
-              options={allPolicies}
-              onChange={setSelectedPolicyId}
-              minWidth={200}
+      {/* ACTION PORTAL */}
+      {menuPosition &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-[999998] bg-transparent"
+              onClick={closeMenu}
             />
-          ) : (
-            <span className="font-medium text-black text-[13px]">
-              {currentPolicy?.name ||
-                currentPolicy?.policy_name ||
-                "Not Assigned"}
-            </span>
-          )}
-        </div>
-
-        {/* 2nd: Policy Count */}
-        <Row label="Policy Count" value={policyInfo.count} />
-
-        {/* Leave Limits */}
-        <Row
-          label="Annual Leave"
-          value={`${currentPolicy?.annual_limit || 0} days`}
-        />
-        <Row
-          label="Sick Leave"
-          value={`${currentPolicy?.sick_limit || 0} days`}
-        />
-      </div>
+            <div
+              style={{
+                position: "absolute",
+                top: menuPosition.top,
+                left: menuPosition.left,
+                zIndex: 999999,
+              }}
+              className="w-40 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
+            >
+              <div className="p-1">
+                <button
+                  className={`w-full text-left px-3 py-2 text-[11px] font-['Poppins'] transition-colors flex items-center gap-2 rounded-lg ${
+                    selectedRow?.status === "active"
+                      ? "text-red-600 hover:bg-red-50"
+                      : "text-green-600 hover:bg-green-50"
+                  }`}
+                  onClick={handleToggleStatus}
+                >
+                  <Power size={14} />
+                  {selectedRow?.status === "active"
+                    ? "Deactivate Policy"
+                    : "Activate Policy"}
+                </button>
+              </div>
+            </div>
+          </>,
+          document.body,
+        )}
     </div>
   );
-}
+};
 
-function Row({ label, value }) {
-  return (
-    <div className="flex justify-between items-center border-b border-gray-100 py-2">
-      <span className="text-gray-500 text-[12px]">{label}</span>
-      <span className="font-medium text-gray-800 text-[13px]">{value}</span>
-    </div>
-  );
-}
+export default LeavesAndVacations;

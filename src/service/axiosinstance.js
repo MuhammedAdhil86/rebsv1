@@ -1,12 +1,11 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "https://rebs-hr-cwhyx.ondigitalocean.app/", // main API
+  // ✅ Change this to use the proxy prefix from vite.config.js
+  baseURL: "/api_v1", 
   headers: { "Content-Type": "application/json" },
   timeout: 15000,
 });
-
-
 
 // -------------------- Request Interceptor --------------------
 axiosInstance.interceptors.request.use(
@@ -21,7 +20,6 @@ axiosInstance.interceptors.request.use(
 // -------------------- Response Interceptor --------------------
 axiosInstance.interceptors.response.use(
   (response) => {
-    // Update token if backend sends a new one
     const newToken = response.data?.token;
     if (newToken) localStorage.setItem("authToken", newToken);
     return response;
@@ -29,13 +27,12 @@ axiosInstance.interceptors.response.use(
   (error) => {
     const requestUrl = error.config?.url || "";
 
-    // ✅ Only auto-logout for main API, NOT email API (baseURL2)
     if (
       error.response?.status === 401 &&
       !requestUrl.startsWith(axiosInstance.baseURL2)
     ) {
       localStorage.removeItem("authToken");
-      window.location.href = "/"; // Redirect to login
+      window.location.href = "/"; 
     } else if (error.response?.status === 401) {
       console.warn(
         "Email API returned 401, user will NOT be logged out:",
