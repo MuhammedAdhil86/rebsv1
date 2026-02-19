@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../../service/axiosinstance";
 import Earnings from "./salary_component_tabs/component_earnings_tab";
+import EditSalaryComponent from "./salary_component_tabs/component_edit_earning ";
 
 const SalaryComponents = () => {
   const [activeSubTab, setActiveSubTab] = useState("earnings");
   const [earningsData, setEarningsData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // --- STATE FOR EDIT MODE ---
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedComponent, setSelectedComponent] = useState(null);
 
   const subTabs = [
     { id: "earnings", label: "Earnings" },
@@ -15,61 +20,52 @@ const SalaryComponents = () => {
     { id: "reimbursements", label: "Reimbursements" },
   ];
 
-  useEffect(() => {
-    const fetchEarnings = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const response = await axiosInstance.get("/api/payroll/components");
-
-        // 1. Log the full response object from Axios
-        console.log("Full Axios Response:", response);
-
-        // 2. Log the actual data coming from your Postman URL
-        console.log("Response Data Root:", response.data);
-
-        const apiData = response.data?.data?.items;
-
-        // 3. Log specifically what you are trying to set to state
-        console.log("Extracted Items Array:", apiData);
-
-        if (Array.isArray(apiData)) {
-          setEarningsData(apiData);
-        } else {
-          setEarningsData([]);
-          console.error("Data structure mismatch: 'items' is not an array.");
-        }
-      } catch (err) {
-        console.error("API Fetch Error:", err);
-        setError(err.response?.data?.message || "Failed to fetch components.");
-      } finally {
-        setIsLoading(false);
+  const fetchEarnings = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axiosInstance.get("/api/payroll/components");
+      const apiData = response.data?.data?.items;
+      console.log("Fetched API Data:", apiData); // LOG 1: Initial Fetch
+      if (Array.isArray(apiData)) {
+        setEarningsData(apiData);
       }
-    };
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to fetch components.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchEarnings();
   }, []);
 
-  if (isLoading) {
+  // --- HANDLERS ---
+  const handleEditRow = (rowData) => {
+    console.log("Step 1: Row Clicked. Data:", rowData); // LOG 2: Data from Table
+    setSelectedComponent(rowData);
+    setIsEditing(true);
+  };
+
+  const handleCloseEdit = () => {
+    setIsEditing(false);
+    setSelectedComponent(null);
+    fetchEarnings();
+  };
+
+  if (isEditing) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="text-gray-500 animate-pulse font-medium">
-          Loading components...
-        </div>
-      </div>
+      <EditSalaryComponent
+        data={selectedComponent}
+        onCancel={handleCloseEdit}
+      />
     );
   }
 
-  if (error) {
-    return (
-      <div className="p-8 text-center text-red-500 font-medium">{error}</div>
-    );
-  }
+  if (isLoading) return <div className="p-10 text-center">Loading...</div>;
 
   return (
     <div className="w-full p-4">
-      {/* Tabs */}
       <div className="flex border-b border-gray-200 mb-4">
         {subTabs.map((tab) => (
           <button
@@ -78,7 +74,7 @@ const SalaryComponents = () => {
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeSubTab === tab.id
                 ? "border-pink-500 text-pink-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                : "border-transparent text-gray-500"
             }`}
           >
             {tab.label}
@@ -86,14 +82,12 @@ const SalaryComponents = () => {
         ))}
       </div>
 
-      {/* Tab Content */}
       <div className="fade-in">
         {activeSubTab === "earnings" ? (
-          <Earnings data={earningsData} />
+          <Earnings data={earningsData} onEdit={handleEditRow} />
         ) : (
-          <div className="py-20 text-center text-sm text-gray-400 italic">
-            {subTabs.find((t) => t.id === activeSubTab)?.label} configuration
-            coming soon.
+          <div className="py-20 text-center text-gray-400 italic">
+            Coming soon.
           </div>
         )}
       </div>

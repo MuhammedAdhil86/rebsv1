@@ -295,6 +295,15 @@ export const allocateEmployeePolicy = "/leave-policy/allocate/staffs";
 export const getDifaultleavePolicy = "/leave-policy/fetch-default";
 export const postCloneLeavePolicy = "/leave-policy/clone-defaults";
 
+export const updateSalaryPayrollComponent = (id) => `/api/payroll/components/${id}`;
+
+// Change this:
+// export const updatePayrollSalaryTemplate = (id) => `/api/payroll/templates${id}`;
+
+// To THIS (Notice the "/" before the ID):
+export const updatePayrollSalaryTemplate = (id) => `/api/payroll/templates/${id}`;
+
+export const getPayrollcomponents = "api/payroll/components";
 
 
 

@@ -1,6 +1,12 @@
 import axiosInstance from "./axiosinstance";
 
-import { getpolicyLookup,updatePolicyStatus,getDifaultleavePolicy,postCloneLeavePolicy } from "../api/api";
+import { getpolicyLookup,
+  updatePolicyStatus,
+  getDifaultleavePolicy,
+  postCloneLeavePolicy,
+  updateSalaryPayrollComponent,
+  updatePayrollSalaryTemplate,
+getPayrollcomponents, } from "../api/api";
 
 const payrollService = {
   // ---------------- POLICY LOOKUPS ----------------
@@ -23,12 +29,22 @@ const payrollService = {
   // ---------------- SALARY TEMPLATES ----------------
   getSalaryTemplates: async () => {
     try {
-      const res = await axiosInstance.get("api/payroll/templates?status=active");
+      const res = await axiosInstance.get("api/payroll/templates");
       console.log("Salary Templates API Response:", res);
       console.log("Salary Templates Items:", res.data?.data?.items);
       return res.data?.data?.items || [];
     } catch (err) {
       console.error("Error in getSalaryTemplates:", err.response || err);
+      throw err;
+    }
+  },
+  getPayrollComponents: async () => {
+    try {
+      const res = await axiosInstance.get(getPayrollcomponents);
+      // Adjusting based on common API patterns: returning res.data.data or res.data
+      return res.data?.data || res.data || [];
+    } catch (err) {
+      console.error("Error in getPayrollComponents:", err.response || err);
       throw err;
     }
   },
@@ -225,7 +241,46 @@ cloneLeavePolicy: async (ids) => {
       throw err;
     }
   },
+updateSalaryComponent: async (id, payload) => {
+    try {
+      // 2. Use the exact API constant here
+      const url = updateSalaryPayrollComponent(id);
+      const response = await axiosInstance.put(url, payload);
+      
+      return {
+        ok: response.status === 200 || response.status === 204,
+        message: response.data?.message || "Updated Successfully",
+        data: response.data
+      };
+    } catch (error) {
+      console.error("API Error in updateSalaryComponent:", error);
+      throw error;
+    }
+  },
+ 
 
+  
+updateSalaryTemplate: async (id, payload) => {
+    if (!id) throw new Error("Template ID is missing.");
+
+    try {
+      const url = updatePayrollSalaryTemplate(id); // Generates /api/payroll/templates/58
+      
+      const { data, status } = await axiosInstance.put(url, payload);
+
+      return {
+        success: status >= 200 && status < 300,
+        message: data?.message || "Template updated successfully.",
+        data: data?.data || data,
+      };
+    } catch (err) {
+      // Extract the actual error message from the backend response
+      const errorMessage = err.response?.data?.message || "Failed to update salary template.";
+      console.error(`[PayrollService] Update Error for ID ${id}:`, err.response || err);
+      
+      throw new Error(errorMessage);
+    }
+  },
 };
 
 export default payrollService;

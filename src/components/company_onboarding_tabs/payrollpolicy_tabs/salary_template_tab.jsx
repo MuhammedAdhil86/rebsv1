@@ -1,5 +1,4 @@
-// SalaryTemplate.jsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 
 // Services
@@ -15,6 +14,8 @@ import SalaryComponents from "./salary_components_tab.jsx";
 import StatutoryComponents from "./statutorycomponents.jsx";
 import CreateSalaryTemplate from "./statutory_component_tabs/createsalarytemplate.jsx";
 import CreateSalaryComponent from "./statutory_component_tabs/createsalarycomponents.jsx";
+// NEW: Import the separate Update component
+import UpdateSalaryTemplate from "./salary_component_tabs/updatesalarytemplate.jsx";
 
 export default function SalaryTemplate() {
   // ---------------- STATE ----------------
@@ -24,8 +25,12 @@ export default function SalaryTemplate() {
 
   const [showCreateTemplate, setShowCreateTemplate] = useState(false);
   const [showCreateComponent, setShowCreateComponent] = useState(false);
-  const [showFilter, setShowFilter] = useState(false);
 
+  // --- NEW STATES FOR UPDATING ---
+  const [isEditingTemplate, setIsEditingTemplate] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+
+  const [showFilter, setShowFilter] = useState(false);
   const [activeTab, setActiveTab] = useState("salary-template");
 
   const [filterOptions, setFilterOptions] = useState({
@@ -42,14 +47,19 @@ export default function SalaryTemplate() {
     { id: "approvals", label: "Approvals" },
   ];
 
-  // ---------------- FILTER ----------------
   const toggleFilterOption = (option) => {
     setFilterOptions((prev) => ({ ...prev, [option]: !prev[option] }));
   };
 
-  // ---------------- FETCH DATA ----------------
+  // --- NEW HANDLER FOR TABLE ROW CLICK ---
+  const handleEditClick = (rowData) => {
+    console.log("Template Row Clicked! Data:", rowData);
+    setSelectedTemplate(rowData); // rowData now contains the full fetched object
+    setIsEditingTemplate(true);
+  };
+
+  // ---------------- FETCH DATA (UNTOUCHED LOGIC) ----------------
   useEffect(() => {
-    // Only fetch if the active tab is the salary template tab
     if (activeTab !== "salary-template") return;
 
     const fetchTemplates = async () => {
@@ -65,6 +75,7 @@ export default function SalaryTemplate() {
           [];
 
         const formatted = rawItems.map((item, index) => ({
+          ...item, // KEY: Keep original item data (id, mappings, etc.) for editing
           id: item.id ?? index,
           name: item.name || "-",
           description: item.description || "-",
@@ -85,7 +96,7 @@ export default function SalaryTemplate() {
     };
 
     fetchTemplates();
-  }, [activeTab, showCreateTemplate]); // Reloads when tab changes or when returning from Create Template
+  }, [activeTab, showCreateTemplate, isEditingTemplate]);
 
   // ---------------- FILTERED DATA ----------------
   const filteredData = tableData.filter((item) => {
@@ -94,7 +105,6 @@ export default function SalaryTemplate() {
     return false;
   });
 
-  // ---------------- TABLE COLUMNS ----------------
   const columns = [
     { key: "name", label: "Template Name", align: "left" },
     { key: "description", label: "Description", align: "left" },
@@ -105,9 +115,7 @@ export default function SalaryTemplate() {
       align: "center",
       render: (value) => (
         <span
-          className={`font-medium ${
-            value === "Active" ? "text-green-600" : "text-red-600"
-          }`}
+          className={`font-medium ${value === "Active" ? "text-green-600" : "text-red-600"}`}
         >
           {value}
         </span>
@@ -125,6 +133,7 @@ export default function SalaryTemplate() {
               columns={columns}
               data={filteredData}
               rowsPerPage={6}
+              rowClickHandler={handleEditClick} // TRIGGER UPDATE ON CLICK
             />
             {loading && (
               <div className="text-center py-4 text-gray-500">Loading...</div>
@@ -138,53 +147,21 @@ export default function SalaryTemplate() {
         return <SalaryComponents />;
       case "statutory-components":
         return <StatutoryComponents />;
-      case "payment-schedules":
-        return (
-          <div className="text-gray-500 py-4">
-            Payment Schedules Tab Content
-          </div>
-        );
-      case "tax":
-        return <div className="text-gray-500 py-4">Tax Tab Content</div>;
-      case "approvals":
-        return <div className="text-gray-500 py-4">Approvals Tab Content</div>;
       default:
         return null;
     }
   };
 
-  // ---------------- EXTRA BUTTONS ----------------
   const extraButtons = (tab) => {
     if (tab === "salary-template") {
       return (
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <button
-              onClick={() => setShowFilter((prev) => !prev)}
-              className="p-1 rounded-md hover:bg-gray-100"
-            >
-              <Icon icon="mdi:filter-variant" width={20} height={20} />
-            </button>
-
-            {showFilter && (
-              <div className="absolute right-0 mt-2 w-32 bg-white border rounded-md shadow-md p-2 z-50">
-                {["active", "inactive"].map((option) => (
-                  <label
-                    key={option}
-                    className="flex items-center gap-2 text-sm mb-1"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={filterOptions[option]}
-                      onChange={() => toggleFilterOption(option)}
-                    />
-                    {option.charAt(0).toUpperCase() + option.slice(1)}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-
+          <button
+            onClick={() => setShowFilter(!showFilter)}
+            className="p-1 rounded-md hover:bg-gray-100"
+          >
+            <Icon icon="mdi:filter-variant" width={20} height={20} />
+          </button>
           <CommonButton
             onClick={() => setShowCreateTemplate(true)}
             text="Create Template"
@@ -193,17 +170,6 @@ export default function SalaryTemplate() {
         </div>
       );
     }
-
-    if (tab === "salary-components") {
-      return (
-        <CommonButton
-          onClick={() => setShowCreateComponent(true)}
-          text="Create Component"
-          icon="mdi:plus"
-        />
-      );
-    }
-
     return null;
   };
 
@@ -212,6 +178,15 @@ export default function SalaryTemplate() {
     <div className="rounded-2xl shadow-sm min-h-screen font-[Poppins] text-sm">
       {showCreateTemplate ? (
         <CreateSalaryTemplate onCancel={() => setShowCreateTemplate(false)} />
+      ) : isEditingTemplate && selectedTemplate ? (
+        /* SEPARATE UPDATE COMPONENT */
+        <UpdateSalaryTemplate
+          data={selectedTemplate}
+          onCancel={() => {
+            setIsEditingTemplate(false);
+            setSelectedTemplate(null);
+          }}
+        />
       ) : showCreateComponent ? (
         <CreateSalaryComponent
           componentId={null}
