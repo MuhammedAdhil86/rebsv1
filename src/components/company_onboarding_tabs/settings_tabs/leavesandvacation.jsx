@@ -5,7 +5,7 @@ import UniversalTable from "../../../ui/universal_table";
 import { fetchAllLeavePolicy } from "../../../service/companyService";
 import payrollService from "../../../service/payrollService";
 import CreateLeavePolicyTab from "../leaves_and_vacations/createleavepolicymodal";
-import DefaultTemplatesTable from "./DefaultTemplatesTable";
+import DefaultTemplatesTable from "../leaves_and_vacations/leavepolicy/defaultleave";
 import toast, { Toaster } from "react-hot-toast";
 
 const LeavesAndVacations = () => {
