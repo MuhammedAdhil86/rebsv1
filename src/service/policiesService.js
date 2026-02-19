@@ -22,12 +22,14 @@ export const fetchEmployeePolicy = async (uuid) => {
 
     return {
       count: data?.count || 0,
-      // If policies exist, return the first one, otherwise null
+      // Return the full array so the component can see all names for the hover effect
+      policies: Array.isArray(data?.policies) ? data.policies : [],
+      // Keep 'policy' as the first item for your existing UI logic
       policy: Array.isArray(data?.policies) && data.policies.length > 0 ? data.policies[0] : null
     };
   } catch (error) {
     console.error("Error in fetchEmployeePolicy:", error);
-    return { count: 0, policy: null };
+    return { count: 0, policies: [], policy: null };
   }
 };
 

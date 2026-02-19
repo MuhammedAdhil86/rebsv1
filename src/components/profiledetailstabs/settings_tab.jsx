@@ -6,10 +6,11 @@ import ActionCenter from "../company_onboarding_tabs/settings_tabs/actionCenter"
 import ManagePrivileges from "../company_onboarding_tabs/settings_tabs/manageprivilage";
 import CompliancesDeductions from "../company_onboarding_tabs/settings_tabs/compliancesdeductions";
 import Salary from "../company_onboarding_tabs/settings_tabs/salary";
+import LeavesSettings from "../company_onboarding_tabs/settings_tabs/leaves_settings";
 
 // Lazy-loaded heavy components
 const LeavesVacation = lazy(
-  () => import("../company_onboarding_tabs/settings_tabs/leavesandvacation"),
+  () => import("../company_onboarding_tabs/settings_tabs/leaves_settings"),
 );
 
 export default function SettingsTab({ employee }) {
@@ -32,7 +33,7 @@ export default function SettingsTab({ employee }) {
       <Suspense
         fallback={<div className="text-gray-500">Loading Leaves...</div>}
       >
-        <LeavesVacation uuid={employeeUUID} initialPreferences={employee} />
+        <LeavesSettings uuid={employeeUUID} initialPreferences={employee} />
       </Suspense>
     </div>
   );
