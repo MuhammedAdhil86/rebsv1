@@ -65,7 +65,6 @@ export default function PayrollAttendanceReport() {
               bank_name: info.bank_name || "N/A",
               account_no: info.account_number || "N/A",
               ifsc: info.ifsc || "N/A",
-              branch: info.bank_branch || "N/A",
               pt: stat.pt || 0,
               epf: stat.epf_employee || 0,
               esi: stat.esi_employee || 0,
@@ -90,83 +89,129 @@ export default function PayrollAttendanceReport() {
     fetchData();
   }, [month, year]);
 
-  // ================== NAVIGATION LOGIC ==================
   const handleRowClick = (row) => {
-    // Navigates to /payslip and passes the clicked row data
     navigate("/payslip", { state: { employeeData: row } });
   };
 
-  // ================== TABLE COLUMNS ==================
   const columns = [
-    { label: "User ID", key: "user_id" },
-    { label: "Employee Name", key: "full_name" },
-    { label: "Attendance", key: "attendance_pct" },
-    { label: "Bank Name", key: "bank_name" },
-    { label: "Account No", key: "account_no" },
-    { label: "IFSC", key: "ifsc" },
-    { label: "Gross Monthly", key: "gross_monthly" },
-    { label: "PT", key: "pt" },
-    { label: "EPF", key: "epf" },
-    { label: "Total Deductions", key: "total_deductions_monthly" },
-    { label: "Net Monthly", key: "net_monthly" },
-    { label: "Net Annual", key: "net_annual" },
+    { label: "User ID", key: "user_id", align: "center", width: 100 },
+    { label: "Employee Name", key: "full_name", align: "center", width: 100 },
+    { label: "Attendance", key: "attendance_pct", align: "center", width: 100 },
+    { label: "Bank Name", key: "bank_name", align: "center", width: 100 },
+    { label: "Account No", key: "account_no", align: "center", width: 100 },
+    { label: "IFSC", key: "ifsc", align: "center", width: 140 },
+    {
+      label: "Gross Monthly",
+      key: "gross_monthly",
+      align: "center",
+      width: 140,
+    },
+    { label: "PT", key: "pt", align: "center", width: 80 },
+    { label: "EPF", key: "epf", align: "center", width: 80 },
+    {
+      label: "Total Deductions",
+      key: "total_deductions_monthly",
+      align: "center",
+      width: 160,
+    },
+    { label: "Net Monthly", key: "net_monthly", align: "center", width: 130 },
+    { label: "Net Annual", key: "net_annual", align: "center", width: 130 },
   ];
 
-  // ================== EXCEL DOWNLOADS ==================
+  // ================== UPDATED EXCEL WITH DYNAMIC COMPONENTS ==================
   const handleDownloadSalary = async () => {
     if (!records.length) return;
     try {
       setLoading(true);
-      const today = new Date();
-      const formattedDate = `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
 
-      const headerRow = [
-        "Customer Bank Id",
-        "Remarks",
-        "Mode of Transaction",
-        "Date",
-        "Bank Account #",
-        "Amount",
-        "Bank Code",
-        "Name",
-        "IFSC Code of Receiver",
-        "Salary A/c #",
-      ];
-
-      const dataRows = records.map((r) => {
-        const bank = r.bank_info || {};
-        return [
-          "AEDEN12",
-          "SALPAY",
-          "NEFT",
-          formattedDate,
-          bank.account_number || "",
-          r.net_monthly || 0,
-          "M",
-          r.full_name || "",
-          bank.ifsc || "",
-          SALARY_ACCOUNT_NUMBER,
-        ];
+      // 1. Identify unique components across all records to build headers
+      const componentNames = [];
+      records.forEach((r) => {
+        (r.components || []).forEach((c) => {
+          if (!componentNames.includes(c.name)) componentNames.push(c.name);
+        });
       });
 
-      const sheetData = [headerRow, ...dataRows];
+      // 2. Build Headers (Row 1: Main Names, Row 2: Monthly/Annual labels)
+      const headerRow1 = [
+        "User ID",
+        "Employee Name",
+        "Attendance %",
+        "Bank Name",
+        "Account Number",
+        "IFSC",
+      ];
+      const headerRow2 = ["", "", "", "", "", ""];
+
+      componentNames.forEach((name) => {
+        headerRow1.push(name, ""); // Component name spanning two columns
+        headerRow2.push("Monthly", "Annual");
+      });
+
+      headerRow1.push(
+        "Gross Monthly",
+        "PT",
+        "EPF",
+        "Total Deductions",
+        "Net Monthly",
+      );
+      headerRow2.push("", "", "", "", "");
+
+      // 3. Build Data Rows
+      const dataRows = records.map((r) => {
+        const row = [
+          r.user_id || "N/A",
+          r.full_name || "N/A",
+          r.attendance_pct || "0%",
+          r.bank_name || "N/A",
+          r.account_no || "N/A",
+          r.ifsc || "N/A",
+        ];
+
+        // Fill dynamic component values
+        componentNames.forEach((name) => {
+          const comp = (r.components || []).find((c) => c.name === name);
+          row.push(comp ? comp.monthly_amount : 0);
+          row.push(comp ? comp.annual_amount : 0);
+        });
+
+        row.push(
+          r.gross_monthly || 0,
+          r.pt || 0,
+          r.epf || 0,
+          r.total_deductions_monthly || 0,
+          r.net_monthly || 0,
+        );
+        return row;
+      });
+
+      const sheetData = [headerRow1, headerRow2, ...dataRows];
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+      // Apply styling and Merges for component headers
+      const merges = [];
+      let colIdx = 6; // Components start at 7th column (index 6)
+      componentNames.forEach(() => {
+        merges.push({ s: { r: 0, c: colIdx }, e: { r: 0, c: colIdx + 1 } });
+        colIdx += 2;
+      });
+      ws["!merges"] = merges;
 
       const range = XLSX.utils.decode_range(ws["!ref"]);
       for (let R = range.s.r; R <= range.e.r; R++) {
         for (let C = range.s.c; C <= range.e.c; C++) {
           const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
           if (!ws[cellRef]) continue;
-          if (R === 0) ws[cellRef].s = headerStyle;
+          if (R < 2) ws[cellRef].s = headerStyle;
           else if (typeof ws[cellRef].v === "number")
             ws[cellRef].s = numberCellStyle;
           else ws[cellRef].s = textCellStyle;
         }
       }
 
-      XLSX.utils.book_append_sheet(wb, ws, "Salary Transfer");
-      XLSX.writeFile(wb, `salary_transfer_${month}_${year}.xlsx`);
+      XLSX.utils.book_append_sheet(wb, ws, "Detailed Payroll");
+      XLSX.writeFile(wb, `payroll_report_${month}_${year}.xlsx`);
     } catch (err) {
       console.error("Download failed:", err);
     } finally {
@@ -209,32 +254,32 @@ export default function PayrollAttendanceReport() {
   };
 
   return (
-    <div className="p-1 rounded-xl shadow-sm">
-      <h2 className="text-[16px] font-medium mb-3">
-        Payroll Attendance Report
-      </h2>
+    <div className="p-1 rounded-xl font-poppins text-[12px] ">
+      {/* --- Filters & Actions in a Single Row --- */}
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        {/* Left Side: Filters */}
+        <div className="flex items-center gap-3">
+          <CustomSelect
+            label="Month"
+            value={month}
+            onChange={setMonth}
+            options={monthNames}
+          />
+          <CustomSelect
+            label="Year"
+            value={year}
+            onChange={setYear}
+            options={[2024, 2025, 2026]}
+            minWidth={80}
+          />
+        </div>
 
-      {/* --- Filters & Actions --- */}
-      <div className="flex gap-3 mb-4 flex-wrap items-center">
-        <CustomSelect
-          label="Month"
-          value={month}
-          onChange={setMonth}
-          options={monthNames}
-        />
-        <CustomSelect
-          label="Year"
-          value={year}
-          onChange={setYear}
-          options={[2024, 2025, 2026]}
-          minWidth={80}
-        />
-
-        <div className="ml-auto flex gap-2">
+        {/* Right Side: Buttons */}
+        <div className="flex items-center gap-2">
           <button
             onClick={handleDownloadSalary}
             disabled={!records.length || loading}
-            className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-black text-white disabled:opacity-50 hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-[12px] font-normal rounded-lg border bg-black text-white disabled:opacity-50 hover:bg-gray-800 transition-colors font-poppins"
           >
             <Download className="w-4 h-4" /> Download
           </button>
@@ -242,27 +287,32 @@ export default function PayrollAttendanceReport() {
           <button
             onClick={handleDownloadBankExcel}
             disabled={!records.length || loading}
-            className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-blue-600 text-white disabled:opacity-50 hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-[12px] font-normal rounded-lg border bg-blue-600 text-white disabled:opacity-50 hover:bg-blue-700 transition-colors font-poppins"
           >
             <Download className="w-4 h-4" /> Download for Bank
           </button>
         </div>
       </div>
-
-      {/* --- Table Section --- */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <p className="mt-2 text-sm text-gray-500">Fetching payroll data...</p>
-        </div>
-      ) : (
-        <ReportTable
-          columns={columns}
-          data={records}
-          rowsPerPage={8}
-          onRowClick={handleRowClick} // This triggers navigation
-        />
-      )}
+      <div className="bg-white rounded-lg border border-gray-200">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            <p className="mt-2 text-[12px] text-blue-500">
+              Fetching payroll data...
+            </p>
+          </div>
+        ) : (
+          /* ✅ Added scrollbar-none to the wrapper div */
+          <div className="w-full overflow-x-auto scrollbar-none">
+            <ReportTable
+              columns={columns}
+              data={records}
+              rowsPerPage={10}
+              onRowClick={handleRowClick}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
