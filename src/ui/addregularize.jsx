@@ -3,13 +3,11 @@ import { X, Calendar, Clock } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format, isValid } from "date-fns";
+import toast from "react-hot-toast";
 
 import axiosInstance from "../service/axiosinstance";
-import {
-  getStaffDetails,
-  fetchShiftAllocation,
-} from "../service/employeeService";
-import toast from "react-hot-toast";
+import { getStaffDetails } from "../service/employeeService";
+import { getShiftPolicyById } from "../service/companyService";
 
 function AddRegularizeModal({ open, data, onClose, onSuccess }) {
   if (!open) return null;
@@ -51,13 +49,17 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
     setForm({
       staffId: data.userId || "",
       date: data.date ? new Date(data.date) : null,
-      checkIn: data.checkIn !== "--" ? data.checkIn?.slice(0, 5) : "",
-      checkOut: data.checkOut !== "--" ? data.checkOut?.slice(0, 5) : "",
+      checkIn:
+        data.checkIn && data.checkIn !== "--" ? data.checkIn.slice(0, 5) : "",
+      checkOut:
+        data.checkOut && data.checkOut !== "--"
+          ? data.checkOut.slice(0, 5)
+          : "",
       remarks: data.remarks || "",
     });
   }, [data]);
 
-  /* ================= FETCH SHIFT (VIEW ONLY) ================= */
+  /* ================= FETCH SHIFT (ARRAY-SAFE) ================= */
   useEffect(() => {
     if (!form.staffId) {
       setShiftName("Not Allocated");
@@ -66,9 +68,11 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
 
     const loadShift = async () => {
       try {
-        const res = await fetchShiftAllocation(form.staffId);
-        setShiftName(res?.data?.shift_name || "Not Allocated");
-      } catch {
+        const shiftInfo = await getShiftPolicyById(form.staffId);
+        // Since service now returns the first object, access shift_name directly
+        setShiftName(shiftInfo?.shift_name || "Not Allocated");
+      } catch (err) {
+        console.error("Error loading shift policy:", err);
         setShiftName("Not Allocated");
       }
     };
@@ -82,13 +86,14 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
   };
 
   const buildDateTimeISO = (date, time) => {
+    if (!date || !time) return null;
     const [hours, minutes] = time.split(":");
     const dt = new Date(date);
     dt.setHours(Number(hours), Number(minutes), 0, 0);
     return dt.toISOString();
   };
 
-  /* ================= WORK HOURS (FORMAL HH:MM:SS) ================= */
+  /* ================= WORK HOURS ================= */
   const workHours = useMemo(() => {
     if (!form.date || !form.checkIn || !form.checkOut) return "--";
 
@@ -106,12 +111,8 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
     const diffMs = end - start;
     const hrs = Math.floor(diffMs / 3600000);
     const mins = Math.floor((diffMs % 3600000) / 60000);
-    const secs = Math.floor((diffMs % 60000) / 1000);
 
-    return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(
-      2,
-      "0",
-    )}:${String(secs).padStart(2, "0")}`;
+    return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:00`;
   }, [form.date, form.checkIn, form.checkOut]);
 
   /* ================= SUBMIT ================= */
@@ -130,41 +131,35 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
 
     try {
       setLoading(true);
-
-      await axiosInstance.post(
-        "/admin/attendance/regularize/request",
-        payload,
-        { headers: { "Content-Type": "application/json" } },
-      );
-
+      await axiosInstance.post("/admin/attendance/regularize/request", payload);
       toast.success("Attendance regularized successfully!");
       onSuccess?.();
       onClose(true);
     } catch (err) {
-      console.error("Regularization failed", err);
       toast.error("Failed to submit regularization");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= UI ================= */
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl">
-        {/* HEADER */}
         <div className="flex justify-between items-center px-6 py-4 border-b">
-          <h3 className="font-semibold text-sm">Attendance Regularization</h3>
-          <button onClick={() => onClose(false)}>
+          <h3 className="font-semibold text-sm text-gray-800">
+            Attendance Regularization
+          </h3>
+          <button
+            onClick={() => onClose(false)}
+            className="text-gray-400 hover:text-gray-600"
+          >
             <X size={18} />
           </button>
         </div>
 
-        {/* BODY */}
         <div className="p-6 grid grid-cols-2 gap-6 text-sm">
-          {/* STAFF */}
           <div>
-            <label className="text-gray-500 text-xs">Staff</label>
+            <label className="text-gray-500 text-xs font-medium">Staff</label>
             <select
               name="staffId"
               value={form.staffId}
@@ -180,9 +175,8 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
             </select>
           </div>
 
-          {/* DATE */}
           <div className="relative">
-            <label className="text-gray-500 text-xs">Date</label>
+            <label className="text-gray-500 text-xs font-medium">Date</label>
             <input
               readOnly
               value={
@@ -190,12 +184,8 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
                   ? format(form.date, "dd/MM/yyyy")
                   : ""
               }
-              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50"
-            />
-            <Calendar
-              size={16}
+              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50 cursor-pointer"
               onClick={() => setShowDatePicker(!showDatePicker)}
-              className="absolute right-4 top-9 cursor-pointer text-gray-400"
             />
             {showDatePicker && (
               <div className="absolute z-50 top-full mt-1">
@@ -211,77 +201,56 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
             )}
           </div>
 
-          {/* CHECK IN */}
-          <div className="relative">
-            <label className="text-gray-500 text-xs">Check In</label>
+          <div>
+            <label className="text-gray-500 text-xs font-medium">
+              Check In
+            </label>
             <input
-              readOnly
-              value={form.checkIn}
-              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50"
-            />
-            <Clock
-              size={16}
-              onClick={() => checkInRef.current?.showPicker()}
-              className="absolute right-4 top-9 cursor-pointer text-gray-400"
-            />
-            <input
-              ref={checkInRef}
               type="time"
-              className="hidden"
               value={form.checkIn}
               onChange={(e) =>
                 setForm((p) => ({ ...p, checkIn: e.target.value }))
               }
+              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50"
             />
           </div>
 
-          {/* CHECK OUT */}
-          <div className="relative">
-            <label className="text-gray-500 text-xs">Check Out</label>
+          <div>
+            <label className="text-gray-500 text-xs font-medium">
+              Check Out
+            </label>
             <input
-              readOnly
-              value={form.checkOut}
-              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50"
-            />
-            <Clock
-              size={16}
-              onClick={() => checkOutRef.current?.showPicker()}
-              className="absolute right-4 top-9 cursor-pointer text-gray-400"
-            />
-            <input
-              ref={checkOutRef}
               type="time"
-              className="hidden"
               value={form.checkOut}
               onChange={(e) =>
                 setForm((p) => ({ ...p, checkOut: e.target.value }))
               }
-            />
-          </div>
-
-          {/* SHIFT */}
-          <div>
-            <label className="text-gray-500 text-xs">Shift</label>
-            <input
-              readOnly
-              value={shiftName}
               className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50"
             />
           </div>
 
-          {/* WORK HOURS */}
           <div>
-            <label className="text-gray-500 text-xs">Work Hours</label>
+            <label className="text-gray-500 text-xs font-medium">Shift</label>
             <input
               readOnly
-              value={workHours}
-              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50 font-medium"
+              value={shiftName}
+              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-200"
             />
           </div>
 
-          {/* REMARKS */}
+          <div>
+            <label className="text-gray-500 text-xs font-medium">
+              Work Hours
+            </label>
+            <input
+              readOnly
+              value={workHours}
+              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-200 font-bold"
+            />
+          </div>
+
           <div className="col-span-2">
-            <label className="text-gray-500 text-xs">Remarks</label>
+            <label className="text-gray-500 text-xs font-medium">Remarks</label>
             <textarea
               name="remarks"
               value={form.remarks}
@@ -292,7 +261,6 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
           </div>
         </div>
 
-        {/* FOOTER */}
         <div className="flex justify-end gap-3 px-6 py-4 border-t">
           <button
             onClick={() => onClose(false)}

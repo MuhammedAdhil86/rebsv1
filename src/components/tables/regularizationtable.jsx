@@ -4,10 +4,10 @@ import { Search, MoreVertical, Pencil, Eye, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 
 import UniversalTable from "../../ui/universal_table";
-import {
-  fetchRegularizationRequests,
-  fetchShiftAllocation,
-} from "../../service/employeeService";
+import { fetchRegularizationRequests } from "../../service/employeeService";
+
+// FIXED: Import the correct service for shifts
+import { getShiftPolicyById } from "../../service/companyService";
 
 import AddRegularizeModal from "../../ui/addregularize";
 import RegularizationApprovalModal from "../../ui/regularizationapproval";
@@ -55,7 +55,11 @@ const ActionMenu = ({ row, openMenuId, setOpenMenuId, onEdit }) => {
         createPortal(
           <div
             ref={menuRef}
-            style={{ position: "fixed", top: position.top, left: position.left }}
+            style={{
+              position: "fixed",
+              top: position.top,
+              left: position.left,
+            }}
             className="w-32 bg-white border rounded-lg shadow-xl z-[999999]"
           >
             <button
@@ -66,7 +70,7 @@ const ActionMenu = ({ row, openMenuId, setOpenMenuId, onEdit }) => {
               className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100"
             >
               <Pencil className="w-4 h-4" />
-            Edit
+              Edit
             </button>
 
             <button
@@ -80,7 +84,7 @@ const ActionMenu = ({ row, openMenuId, setOpenMenuId, onEdit }) => {
               View
             </button>
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );
@@ -133,8 +137,7 @@ function RegularizationTable() {
           workingHours: item.total_work_hours || "--",
           status: item.status || "pending",
           avatar:
-            item.user_image ||
-            `https://i.pravatar.cc/40?u=${item.user_id}`,
+            item.user_image || `https://i.pravatar.cc/40?u=${item.user_id}`,
           remarks: item.remarks || "",
           remaining: item.remaining || 0,
         };
@@ -155,9 +158,7 @@ function RegularizationTable() {
   /* ================= OPTIMISTIC STATUS UPDATE ================= */
   const handleOptimisticUpdate = (id, status) => {
     setData((prev) =>
-      prev.map((row) =>
-        row.id === id ? { ...row, status } : row
-      )
+      prev.map((row) => (row.id === id ? { ...row, status } : row)),
     );
   };
 
@@ -181,7 +182,7 @@ function RegularizationTable() {
       width: 180,
       render: (val, row) => (
         <div className="flex items-center gap-2">
-          <img src={row.avatar} className="w-7 h-7 rounded-full" />
+          <img src={row.avatar} className="w-7 h-7 rounded-full" alt="avatar" />
           <span>{val}</span>
         </div>
       ),
@@ -204,8 +205,8 @@ function RegularizationTable() {
       width: 120,
       render: (val) => (
         <span
-          className={`px-3 py-1 rounded-full text-[12px] ${getStatusColor(
-            val
+          className={`px-3 py-1 rounded-full text-[12px] font-medium ${getStatusColor(
+            val,
           )}`}
         >
           {val}
@@ -224,11 +225,11 @@ function RegularizationTable() {
           onEdit={async (row) => {
             setSelectedRow(row);
             try {
-              const shiftResponse = await fetchShiftAllocation(row.userId);
-              setShiftData(
-                shiftResponse?.data || { shift_name: "Not Allocated" }
-              );
-            } catch {
+              // FIXED: Use the correct API function that hits /shifts/staff/get/
+              const shiftInfo = await getShiftPolicyById(row.userId);
+              setShiftData(shiftInfo || { shift_name: "Not Allocated" });
+            } catch (err) {
+              console.error("Shift fetch error:", err);
               setShiftData({ shift_name: "Not Allocated" });
             }
             setModalType("approve");
@@ -246,20 +247,13 @@ function RegularizationTable() {
       (r) =>
         r.name.toLowerCase().includes(q) ||
         r.designation.toLowerCase().includes(q) ||
-        r.status.toLowerCase().includes(q)
+        r.status.toLowerCase().includes(q),
     );
   }, [data, searchTerm]);
 
   /* ================= ADD REGULARIZE ================= */
   const handleRegularizeClick = () => {
-    setSelectedRow({
-      name: "",
-      date: "",
-      checkIn: "",
-      checkOut: "",
-      workingHours: "",
-      remarks: "",
-    });
+    setSelectedRow(null); // Reset for new entry
     setShiftData(null);
     setModalType("add");
   };
@@ -273,15 +267,15 @@ function RegularizationTable() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleRegularizeClick}
-              className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-sm h-10"
+              className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-sm h-10 hover:bg-gray-800 transition-colors"
             >
               <Plus className="w-4 h-4" />
               Regularize
             </button>
 
-            <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white h-10">
+            <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white h-10 shadow-sm focus-within:ring-1 focus-within:ring-black">
               <input
-                className="outline-none text-sm"
+                className="outline-none text-sm w-40"
                 placeholder="Search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -292,28 +286,34 @@ function RegularizationTable() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-10">Loading...</div>
+          <div className="flex justify-center items-center py-20 text-gray-500">
+            Loading requests...
+          </div>
         ) : (
-          <UniversalTable columns={columns} data={filteredData} rowsPerPage={10} />
+          <UniversalTable
+            columns={columns}
+            data={filteredData}
+            rowsPerPage={10}
+          />
         )}
       </div>
 
       {/* ================= MODALS ================= */}
       {modalType === "add" &&
         createPortal(
- <AddRegularizeModal
-  open
-  data={selectedRow}
-  shiftData={shiftData}
-  onClose={() => {
-    setModalType(null);
-    setSelectedRow(null);
-    setShiftData(null);
-  }}
-  onSuccess={fetchData}   // ✅ ADD THIS LINE
-/>
-,
-          document.body
+          <AddRegularizeModal
+            open
+            data={selectedRow}
+            onClose={() => {
+              setModalType(null);
+              setSelectedRow(null);
+            }}
+            onSuccess={() => {
+              fetchData();
+              setModalType(null);
+            }}
+          />,
+          document.body,
         )}
 
       {modalType === "approve" &&
@@ -327,10 +327,13 @@ function RegularizationTable() {
               setSelectedRow(null);
               setShiftData(null);
             }}
-            onSuccess={fetchData}
+            onSuccess={() => {
+              fetchData();
+              setModalType(null);
+            }}
             onOptimisticUpdate={handleOptimisticUpdate}
           />,
-          document.body
+          document.body,
         )}
     </>
   );

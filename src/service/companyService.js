@@ -104,12 +104,15 @@ export const ShiftDataGet = async () => {
 
 export const getShiftPolicyById = async (id) => {
   try {
-    const response = await axiosInstance.get(
-      `/shifts/staff/get/${id}`
-    );
-    return response.data.data;
+    const response = await axiosInstance.get(`/shifts/staff/get/${id}`);
+    
+    // FIX: Access the first element [0] because the API returns an array
+    if (response.data && response.data.data && response.data.data.length > 0) {
+      return response.data.data[0]; 
+    }
+    return null;
   } catch (error) {
-    console.error("Error fetching attendance policy:", error);
+    console.error("Error fetching shift policy:", error);
     throw error;
   }
 };

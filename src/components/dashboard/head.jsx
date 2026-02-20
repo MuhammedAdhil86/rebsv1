@@ -1,28 +1,28 @@
 import React, { useEffect, useState } from "react";
-// Change: Import the service as a default object to match your likely export
 import dashboardService from "../../service/dashboardService";
 import { Icon } from "@iconify/react";
-// Change: Ensure this path matches where you save the second file
 import AnnouncementModal from "./announcement";
 
 function DashboardHead({ userName, activeTab, setActiveTab }) {
   const [dashboardData, setDashboardData] = useState({
-    total_staff: 0,
-    present_today: 0,
-    on_leave: 0,
-    happiness_rate: "0%",
+    total_staff: { count: 0, employees: [] },
+    present_today: { count: 0, employees: [] },
+    on_leave: { count: 0, employees: [] },
+    absent_today: { count: 0, employees: [] },
+    happiness_rate: "0.00%",
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Modal State
+  // Modal & Sidebar State
   const [isAnnounceModalOpen, setIsAnnounceModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const data = await dashboardService.getDashboardData();
-        setDashboardData(data || {});
+        const response = await dashboardService.getDashboardData();
+        setDashboardData(response || {});
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError("Failed to load dashboard data");
@@ -64,8 +64,51 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
     </button>
   );
 
+  const kpiCards = [
+    {
+      id: "total_staff",
+      label: "Total Employees",
+      value: dashboardData.total_staff?.count,
+      bg: "#EBFDEF",
+      icon: "famicons:people-outline",
+      isClickable: true,
+    },
+    {
+      id: "present_today",
+      label: "Total Present",
+      value: dashboardData.present_today?.count,
+      bg: "#E8EFF9",
+      icon: "mdi:account-tick-outline",
+      isClickable: true,
+    },
+    {
+      id: "on_leave",
+      label: "On Leave",
+      value: dashboardData.on_leave?.count,
+      bg: "#FFEFE7",
+      icon: "fluent-mdl2:leave-user",
+      isClickable: true,
+    },
+    {
+      id: "happiness",
+      label: "Happiness Rate",
+      value: dashboardData.happiness_rate,
+      bg: "#FFFBDB",
+      icon: "cil:smile",
+      isClickable: false, // UI remains, logic click disabled
+    },
+    {
+      id: "absent_today",
+      label: "Total Absents",
+      value: dashboardData.absent_today?.count,
+      bg: "#FFDADA",
+      icon: "mdi:account-remove-outline",
+      isClickable: true,
+    },
+  ];
+
   return (
-    <div className="w-full bg-white font-poppins">
+    <div className="w-full bg-white font-poppins relative">
       {/* --- HEADER --- */}
       <div className="flex justify-between items-center w-full sm:px-6 pt-3 pb-3">
         <p className="text-sm text-gray-600">
@@ -100,7 +143,6 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
             Track and manage all details here
           </p>
         </div>
-
         <div className="flex flex-wrap gap-2">
           <GlowButton onClick={() => setIsAnnounceModalOpen(true)}>
             <div className="flex items-center gap-2">
@@ -108,7 +150,7 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
               Announce
             </div>
           </GlowButton>
-          <button className="px-3 sm:px-4 py-3 text-xs rounded-lg border bg-black text-white font-poppins font-normal transition-all hover:bg-gray-800">
+          <button className="px-3 sm:px-4 py-3 text-xs rounded-lg border bg-black text-white transition-all hover:bg-gray-800">
             + Add Leave
           </button>
         </div>
@@ -116,41 +158,15 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
 
       {/* --- KPI CARDS --- */}
       <section className="grid grid-cols-2 sm:grid-cols-5 gap-4 w-full px-4 sm:px-6 mt-4">
-        {[
-          {
-            label: "Total Employees",
-            value: dashboardData.total_staff,
-            bg: "#EBFDEF",
-            icon: "famicons:people-outline",
-          },
-          {
-            label: "Total Present",
-            value: dashboardData.present_today,
-            bg: "#E8EFF9",
-            icon: "mdi:account-tick-outline",
-          },
-          {
-            label: "On Leave",
-            value: dashboardData.on_leave,
-            bg: "#FFEFE7",
-            icon: "fluent-mdl2:leave-user",
-          },
-          {
-            label: "Happiness Rate",
-            value: dashboardData.happiness_rate,
-            bg: "#FFFBDB",
-            icon: "cil:smile",
-          },
-          {
-            label: "Total Absents",
-            value: "_",
-            bg: "#FFDADA",
-            icon: "mdi:account-remove-outline",
-          },
-        ].map((card, idx) => (
+        {kpiCards.map((card, idx) => (
           <div
             key={idx}
-            className="shadow-sm rounded-lg p-3 flex items-center gap-3 transition-all hover:shadow-md"
+            onClick={() => card.isClickable && setSelectedCategory(card)}
+            className={`shadow-sm rounded-lg p-3 flex items-center gap-3 transition-all ${
+              card.isClickable
+                ? "cursor-pointer hover:shadow-md border border-transparent hover:border-gray-200"
+                : "cursor-default"
+            }`}
             style={{ backgroundColor: card.bg }}
           >
             <div className="flex items-center justify-center min-w-10 h-10 rounded-full bg-black text-white">
@@ -161,12 +177,99 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
                 {card.label}
               </p>
               <h2 className="text-lg sm:text-xl font-medium text-gray-800">
-                {card.value || 0}
+                {card.value ?? 0}
               </h2>
             </div>
           </div>
         ))}
       </section>
+
+      {/* --- SIDEBAR MENU --- */}
+      <div
+        className={`fixed top-0 right-0 h-full w-full sm:w-[450px] bg-white shadow-[-10px_0_30px_rgba(0,0,0,0.1)] z-50 transform transition-transform duration-300 ease-in-out ${
+          selectedCategory ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        {selectedCategory && (
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="p-6 border-b flex justify-between items-center bg-white">
+              <div>
+                <h3 className="font-medium text-xl text-gray-900">
+                  {selectedCategory.label}
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Viewing{" "}
+                  {dashboardData[selectedCategory.id]?.employees?.length || 0}{" "}
+                  employees
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <Icon
+                  icon="heroicons:x-mark-20-solid"
+                  className="w-6 h-6 text-gray-400"
+                />
+              </button>
+            </div>
+
+            {/* List */}
+            <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
+              {dashboardData[selectedCategory.id]?.employees?.length > 0 ? (
+                <div className="grid gap-3">
+                  {dashboardData[selectedCategory.id].employees.map(
+                    (emp, i) => (
+                      <div
+                        key={i}
+                        className="bg-white p-4 rounded-xl border border-gray-100 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <div className="w-11 h-11 rounded-full bg-black flex items-center justify-center text-white  text-sm">
+                          {emp.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm  text-gray-900">{emp.name}</p>
+                          <p className="text-[11px] text-gray-500 font-medium">
+                            {emp.designation || "No Designation"}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[9px] bg-gray-100 px-2 py-0.5 rounded text-gray-600">
+                              {emp.department || "N/A"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ),
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400 opacity-60">
+                  <Icon
+                    icon="solar:user-block-linear"
+                    className="w-16 h-16 mb-2"
+                  />
+                  <p className="text-sm font-medium">
+                    No employee records found
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* --- OVERLAY --- */}
+      {selectedCategory && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40 transition-opacity"
+          onClick={() => setSelectedCategory(null)}
+        />
+      )}
 
       {/* --- TABS --- */}
       <section className="bg-white mt-4 sm:mt-6 w-full px-4 sm:px-6">
@@ -194,7 +297,6 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
         </div>
       </section>
 
-      {/* --- THE MODAL --- */}
       <AnnouncementModal
         isOpen={isAnnounceModalOpen}
         onClose={() => setIsAnnounceModalOpen(false)}
