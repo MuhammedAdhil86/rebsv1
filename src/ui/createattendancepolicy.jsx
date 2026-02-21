@@ -1,50 +1,126 @@
-// src/ui/createattendancepolicy.jsx
 import React, { useState } from "react";
 import { X, Calendar, Clock, ChevronDown } from "lucide-react";
 import attendancePolicyService from "../service/attendancepolicyService";
+import ColorPicker from "./colorpicker";
 
 const CreateAttendancePolicyTab = ({ onClose }) => {
+  // Initial state uses empty strings to allow placeholders to show in the UI
   const [formData, setFormData] = useState({
     policy_name: "",
     policy_code: "",
-    policy_colour: "#2E86C1",
-    start_time: "09:00:00",
-    end_time: "18:00:00",
-    lunch_break_from: "13:30:00",
-    lunch_break_to: "14:00:00",
-    break_time_from: "13:00:00",
-    break_time_to: "13:30:00",
-    half_day: "04:00:00",
-    late: "00:30:00",
-    delay: "00:15:00",
+    policy_colour: "#4CAF50",
+    start_time: "",
+    end_time: "",
+    working_hours: "",
+    delay: "",
+    delay_unpaid_count: "",
+    delay_cut: "",
+    late: "",
+    late_unpaid_count: "",
+    late_cut: "",
+    delay_action_type: "",
+    delay_fine_amount: null,
+    delay_fine_source: null,
+    late_action_type: "",
+    late_fine_amount: null,
+    late_fine_source: null,
+    half_day: "",
+    break_time_from: "",
+    break_time_to: "",
+    lunch_break_from: "",
+    lunch_break_to: "",
     work_from_home: false,
     over_time_benefit: false,
-    regularisation_limit: 1,
+    over_time_pay: "",
+    regularisation_limit: "",
     regularisation_type: "Monthly",
-    regularize_cap_limit: "01:00:00",
-    regularize_cap_period: "Monthly",
-    start_date: "2026-01-20",
-    end_date: "2026-01-31",
-    delay_unpaid_count: 0,
-    delay_action_type: "",
-    late_unpaid_count: 0,
-    late_action_type: "",
+    start_date: "",
+    end_date: "",
+    overtime_cap_limit: "",
+    overtime_cap_period: "Monthly",
   });
 
   const handleInputChange = (field, value) => {
+    // Validation: prevent negative numbers for amount/count fields
+    if (
+      [
+        "delay_fine_amount",
+        "late_fine_amount",
+        "over_time_pay",
+        "working_hours",
+      ].includes(field)
+    ) {
+      if (value !== "" && parseFloat(value) < 0) return;
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async () => {
+    // Data Transformation: Convert empty strings to Numbers/Nulls for Backend
+    const payload = {
+      ...formData,
+      working_hours:
+        formData.working_hours === "" ? 0 : Number(formData.working_hours),
+      delay_unpaid_count:
+        formData.delay_unpaid_count === ""
+          ? 0
+          : Number(formData.delay_unpaid_count),
+      late_unpaid_count:
+        formData.late_unpaid_count === ""
+          ? 0
+          : Number(formData.late_unpaid_count),
+      over_time_pay:
+        formData.over_time_pay === ""
+          ? 0.0
+          : parseFloat(formData.over_time_pay),
+      regularisation_limit:
+        formData.regularisation_limit === ""
+          ? 0
+          : Number(formData.regularisation_limit),
+
+      // Dynamic Logic for Fines: only send numeric data if 'fine' is selected
+      delay_fine_amount:
+        formData.delay_action_type === "fine"
+          ? parseFloat(formData.delay_fine_amount) || 0
+          : null,
+      delay_fine_source:
+        formData.delay_action_type === "fine"
+          ? formData.delay_fine_source
+          : null,
+      late_fine_amount:
+        formData.late_action_type === "fine"
+          ? parseFloat(formData.late_fine_amount) || 0
+          : null,
+      late_fine_source:
+        formData.late_action_type === "fine" ? formData.late_fine_source : null,
+
+      // Dynamic Logic for Day Cut: only send if 'day' is selected
+      delay_cut:
+        formData.delay_action_type === "day" ? formData.delay_cut : null,
+      late_cut: formData.late_action_type === "day" ? formData.late_cut : null,
+
+      // Time and Date Defaults
+      start_time: formData.start_time || "00:00:00",
+      end_time: formData.end_time || "00:00:00",
+      delay: formData.delay || "00:00:00",
+      late: formData.late || "00:00:00",
+      half_day: formData.half_day || "00:00:00",
+      overtime_cap_limit: formData.overtime_cap_limit || "00:00:00",
+      start_date: formData.start_date || null,
+      end_date: formData.end_date || null,
+    };
+
     try {
-      const response = await attendancePolicyService.createPolicy(formData);
+      const response = await attendancePolicyService.createPolicy(payload);
       if (response.status === 200 || response.status === 201) {
         alert("Policy Created Successfully!");
-        onClose(); // close tab and refresh table
+        onClose();
       }
     } catch (error) {
-      console.error("Error creating policy:", error);
-      alert("Error: check console for details.");
+      console.error("Backend Error Detail:", error.response?.data);
+      alert(
+        `Error: ${error.response?.data?.message || "Internal Server Error"}`,
+      );
     }
   };
 
@@ -55,18 +131,23 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
     "absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none";
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 space-y-6">
+    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 space-y-6 max-h-[90vh] overflow-y-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-[16px] font-semibold text-gray-900">
-          Create Attendance Policy
-        </h2>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-          <X size={20} />
+        <div className="flex items-center gap-2">
+          <Calendar size={20} className="text-gray-900" />
+          <h2 className="text-[16px] font-semibold text-gray-900">
+            Create a Policy
+          </h2>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <X size={24} />
         </button>
       </div>
 
-      {/* Form Content */}
       <div className="flex gap-6">
         {/* Left Column */}
         <div className="w-[32%] space-y-4">
@@ -76,6 +157,7 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
               type="text"
               placeholder="Enter Policy Name"
               className={inputClass}
+              value={formData.policy_name}
               onChange={(e) => handleInputChange("policy_name", e.target.value)}
             />
           </div>
@@ -87,6 +169,7 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
                 type="text"
                 placeholder="Policy Code (eg: RP)"
                 className={inputClass}
+                value={formData.policy_code}
                 onChange={(e) =>
                   handleInputChange("policy_code", e.target.value)
                 }
@@ -94,152 +177,188 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
             </div>
             <div>
               <label className={labelClass}>Policy Color</label>
-              <div className="relative flex items-center gap-2 bg-[#F4F6F8] border border-gray-100 rounded-xl px-3 py-1.5 h-[38px]">
-                <input
-                  type="color"
-                  value={formData.policy_colour}
-                  className="w-5 h-5 rounded-full cursor-pointer border-none bg-transparent"
-                  onChange={(e) =>
-                    handleInputChange("policy_colour", e.target.value)
-                  }
-                />
-                <span className="text-[11px] text-gray-500 uppercase">
-                  color
-                </span>
-                <ChevronDown
-                  className="absolute right-2 text-gray-400"
-                  size={14}
-                />
-              </div>
+              <ColorPicker
+                value={formData.policy_colour}
+                onChange={(color) => handleInputChange("policy_colour", color)}
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Work From Home</label>
-              <div className="relative">
-                <select
-                  className={`${inputClass} appearance-none`}
-                  onChange={(e) =>
-                    handleInputChange(
-                      "work_from_home",
-                      e.target.value === "true",
-                    )
-                  }
-                >
-                  <option value="false">No</option>
-                  <option value="true">Yes</option>
-                </select>
-                <ChevronDown className={iconWrapper} size={14} />
-              </div>
+              <select
+                className={inputClass}
+                value={formData.work_from_home}
+                onChange={(e) =>
+                  handleInputChange("work_from_home", e.target.value === "true")
+                }
+              >
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
             </div>
             <div>
-              <label className={labelClass}>Over Time</label>
-              <div className="relative">
-                <select
-                  className={`${inputClass} appearance-none`}
-                  onChange={(e) =>
-                    handleInputChange(
-                      "over_time_benefit",
-                      e.target.value === "true",
-                    )
-                  }
-                >
-                  <option value="false">No</option>
-                  <option value="true">Yes</option>
-                </select>
-                <ChevronDown className={iconWrapper} size={14} />
-              </div>
+              <label className={labelClass}>Over Time Benefit</label>
+              <select
+                className={inputClass}
+                value={formData.over_time_benefit}
+                onChange={(e) =>
+                  handleInputChange(
+                    "over_time_benefit",
+                    e.target.value === "true",
+                  )
+                }
+              >
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
             </div>
           </div>
 
-          {/* Regularization and Period */}
+          {/* Conditional Overtime Pay Input */}
+          {formData.over_time_benefit && (
+            <div className="animate-in fade-in slide-in-from-top-1">
+              <label className={labelClass}>OverTime Pay (per hour)</label>
+              <input
+                type="number"
+                placeholder="eg: 150.0"
+                className={inputClass}
+                value={formData.over_time_pay}
+                onChange={(e) =>
+                  handleInputChange("over_time_pay", e.target.value)
+                }
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Regularization</label>
-              <input type="number" placeholder="count" className={inputClass} />
+              <label className={labelClass}>Regularization Limit</label>
+              <input
+                type="number"
+                placeholder="count"
+                className={inputClass}
+                value={formData.regularisation_limit}
+                onChange={(e) =>
+                  handleInputChange("regularisation_limit", e.target.value)
+                }
+              />
             </div>
             <div>
               <label className={labelClass}>Period</label>
-              <div className="relative">
-                <select className={`${inputClass} appearance-none`}>
-                  <option>Monthly/Weekly</option>
-                </select>
-                <ChevronDown className={iconWrapper} size={14} />
-              </div>
+              <select
+                className={inputClass}
+                value={formData.regularisation_type}
+                onChange={(e) =>
+                  handleInputChange("regularisation_type", e.target.value)
+                }
+              >
+                <option value="Monthly">Monthly</option>
+                <option value="Weekly">Weekly</option>
+              </select>
             </div>
           </div>
 
-          {/* Regularisable Overtime */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Regularisable OverTime</label>
+              <label className={labelClass}>OverTime Cap Limit</label>
               <div className="relative">
-                <input type="text" placeholder="HH:MM" className={inputClass} />
-                <Calendar className={iconWrapper} size={14} />
+                <input
+                  type="text"
+                  placeholder="HH:MM"
+                  className={inputClass}
+                  value={formData.overtime_cap_limit}
+                  onChange={(e) =>
+                    handleInputChange("overtime_cap_limit", e.target.value)
+                  }
+                />
+                <Clock className={iconWrapper} size={16} />
               </div>
             </div>
             <div>
               <label className={labelClass}>Period</label>
-              <div className="relative">
-                <select className={`${inputClass} appearance-none`}>
-                  <option>Monthly/Weekly</option>
-                </select>
-                <ChevronDown className={iconWrapper} size={14} />
-              </div>
+              <select
+                className={inputClass}
+                value={formData.overtime_cap_period}
+                onChange={(e) =>
+                  handleInputChange("overtime_cap_period", e.target.value)
+                }
+              >
+                <option value="Monthly">Monthly</option>
+                <option value="Weekly">Weekly</option>
+              </select>
             </div>
           </div>
 
-          {/* Policy Dates */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Policy Effective From</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="DD/MM/YYYY"
-                  className={inputClass}
-                />
-                <Calendar className={iconWrapper} size={14} />
-              </div>
+              <label className={labelClass}>Effective From</label>
+              <input
+                type="date"
+                className={inputClass}
+                value={formData.start_date}
+                onChange={(e) =>
+                  handleInputChange("start_date", e.target.value)
+                }
+              />
             </div>
             <div>
-              <label className={labelClass}>Policy Effective To</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="DD/MM/YYYY"
-                  className={inputClass}
-                />
-                <Calendar className={iconWrapper} size={14} />
-              </div>
+              <label className={labelClass}>Effective To</label>
+              <input
+                type="date"
+                className={inputClass}
+                value={formData.end_date}
+                onChange={(e) => handleInputChange("end_date", e.target.value)}
+              />
             </div>
           </div>
         </div>
 
         {/* Right Column */}
         <div className="w-[68%] space-y-6">
-          {/* Time Configurations */}
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
             <div className="grid grid-cols-2 gap-x-10 gap-y-4">
               {[
-                { label: "Check in Time", placeholder: "Enter Check In Time" },
+                {
+                  label: "Check in Time",
+                  field: "start_time",
+                  placeholder: "09:30:00",
+                },
                 {
                   label: "Check out Time",
-                  placeholder: "Enter Check Out Time",
+                  field: "end_time",
+                  placeholder: "18:30:00",
                 },
                 {
                   label: "Lunch Break From",
-                  placeholder: "Enter Lunch Time from",
+                  field: "lunch_break_from",
+                  placeholder: "13:30:00",
                 },
-                { label: "Lunch Break To", placeholder: "Enter Lunch Time To" },
+                {
+                  label: "Lunch Break To",
+                  field: "lunch_break_to",
+                  placeholder: "14:00:00",
+                },
                 {
                   label: "Short Break From",
-                  placeholder: "Enter Short Break Time from",
+                  field: "break_time_from",
+                  placeholder: "11:00:00",
                 },
                 {
                   label: "Short Break To",
-                  placeholder: "Enter Short Break Time To",
+                  field: "break_time_to",
+                  placeholder: "11:15:00",
+                },
+                {
+                  label: "Half Day Start Time",
+                  field: "half_day",
+                  placeholder: "13:30:00",
+                },
+                {
+                  label: "Total Working Hours",
+                  field: "working_hours",
+                  placeholder: "8",
                 },
               ].map((item, idx) => (
                 <div key={idx}>
@@ -248,104 +367,219 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
                     <input
                       type="text"
                       placeholder={item.placeholder}
+                      value={formData[item.field]}
                       className={inputClass}
+                      onChange={(e) =>
+                        handleInputChange(item.field, e.target.value)
+                      }
                     />
-                    <Clock className={iconWrapper} size={14} />
+                    <Clock className={iconWrapper} size={16} />
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Half Day / Late / Delay */}
-            <div className="grid grid-cols-3 gap-6 mt-6">
-              {["Half Day", "Late", "Delay"].map((label) => (
-                <div key={label}>
-                  <label className={labelClass}>{label}</label>
+            <div className="grid grid-cols-2 gap-6 mt-6">
+              {[
+                {
+                  label: "Late Limit (Time)",
+                  field: "late",
+                  placeholder: "00:30:00",
+                },
+                {
+                  label: "Delay Limit (Time)",
+                  field: "delay",
+                  placeholder: "00:10:00",
+                },
+              ].map((item) => (
+                <div key={item.label}>
+                  <label className={labelClass}>{item.label}</label>
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder={label}
+                      placeholder={item.placeholder}
+                      value={formData[item.field]}
                       className={inputClass}
+                      onChange={(e) =>
+                        handleInputChange(item.field, e.target.value)
+                      }
                     />
-                    <Clock className={iconWrapper} size={14} />
+                    <Clock className={iconWrapper} size={16} />
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Delay / Late Cards */}
-          <div className="flex gap-4">
-            {/* Delay */}
-            <div className="flex-1 bg-[#FFF6E9] border border-[#FDE3C3] rounded-2xl p-5">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-[13px] font-semibold text-gray-800">
-                  Consider
-                </span>
-                <span className="text-[13px] font-semibold text-gray-800">
-                  Compensates
-                </span>
+          {/* Action Cards */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Delay Card */}
+            <div className="bg-[#FFF6E9] border border-[#FDE3C3] rounded-2xl p-5 space-y-4">
+              <div className="flex justify-between items-center text-gray-800 font-semibold text-[13px]">
+                <span>Consider Delay</span>
+                <span>Compensates</span>
               </div>
               <div className="flex items-center gap-3">
                 <input
-                  type="text"
+                  type="number"
                   placeholder="Count"
                   className="w-20 bg-white h-10 rounded-xl px-3 text-[12px] border-none shadow-sm"
+                  value={formData.delay_unpaid_count}
+                  onChange={(e) =>
+                    handleInputChange("delay_unpaid_count", e.target.value)
+                  }
                 />
                 <span className="text-[12px] font-medium text-gray-600">
-                  Delay as
+                  as
                 </span>
                 <div className="relative flex-1">
-                  <select className="w-full bg-white h-10 rounded-xl px-3 text-[12px] appearance-none border-none shadow-sm">
-                    <option value=""></option>
+                  <select
+                    className="w-full bg-white h-10 rounded-xl px-3 text-[12px] appearance-none border-none shadow-sm"
+                    value={formData.delay_action_type}
+                    onChange={(e) =>
+                      handleInputChange("delay_action_type", e.target.value)
+                    }
+                  >
+                    <option value="">Select</option>
+                    <option value="day">Day</option>
+                    <option value="fine">Fine</option>
+                    <option value="email">Email</option>
                   </select>
                   <ChevronDown className={iconWrapper} size={14} />
                 </div>
               </div>
+              {formData.delay_action_type === "day" && (
+                <div className="relative animate-in slide-in-from-top-1">
+                  <select
+                    className={inputClass}
+                    value={formData.delay_cut}
+                    onChange={(e) =>
+                      handleInputChange("delay_cut", e.target.value)
+                    }
+                  >
+                    <option value="">Select Cut</option>
+                    <option value="Half Day">Half Day</option>
+                    <option value="Full Day">Full Day</option>
+                  </select>
+                  <ChevronDown className={iconWrapper} size={14} />
+                </div>
+              )}
+              {formData.delay_action_type === "fine" && (
+                <div className="flex gap-2 animate-in slide-in-from-top-1">
+                  <input
+                    type="number"
+                    placeholder="Amt"
+                    className="w-1/2 bg-white h-10 rounded-xl px-3 text-[12px] border-none shadow-sm"
+                    value={formData.delay_fine_amount || ""}
+                    onChange={(e) =>
+                      handleInputChange("delay_fine_amount", e.target.value)
+                    }
+                  />
+                  <select
+                    className="w-1/2 bg-white h-10 rounded-xl px-3 text-[12px] border-none shadow-sm"
+                    value={formData.delay_fine_source || ""}
+                    onChange={(e) =>
+                      handleInputChange("delay_fine_source", e.target.value)
+                    }
+                  >
+                    <option value="">Source</option>
+                    <option value="payroll">Payroll</option>
+                    <option value="hand">Hand</option>
+                  </select>
+                </div>
+              )}
             </div>
 
-            {/* Late */}
-            <div className="flex-1 bg-[#FFEBF3] border border-[#FFD2E5] rounded-2xl p-5">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-[13px] font-semibold text-gray-800">
-                  Consider
-                </span>
-                <span className="text-[13px] font-semibold text-gray-800">
-                  Compensates
-                </span>
+            {/* Late Card */}
+            <div className="bg-[#FFEBF3] border border-[#FFD2E5] rounded-2xl p-5 space-y-4">
+              <div className="flex justify-between items-center text-gray-800 font-semibold text-[13px]">
+                <span>Consider Late</span>
+                <span>Compensates</span>
               </div>
               <div className="flex items-center gap-3">
                 <input
-                  type="text"
+                  type="number"
                   placeholder="Count"
                   className="w-20 bg-white h-10 rounded-xl px-3 text-[12px] border-none shadow-sm"
+                  value={formData.late_unpaid_count}
+                  onChange={(e) =>
+                    handleInputChange("late_unpaid_count", e.target.value)
+                  }
                 />
                 <span className="text-[12px] font-medium text-gray-600">
-                  Late as
+                  as
                 </span>
                 <div className="relative flex-1">
-                  <select className="w-full bg-white h-10 rounded-xl px-3 text-[12px] appearance-none border-none shadow-sm">
-                    <option value=""></option>
+                  <select
+                    className="w-full bg-white h-10 rounded-xl px-3 text-[12px] appearance-none border-none shadow-sm"
+                    value={formData.late_action_type}
+                    onChange={(e) =>
+                      handleInputChange("late_action_type", e.target.value)
+                    }
+                  >
+                    <option value="">Select</option>
+                    <option value="day">Day</option>
+                    <option value="fine">Fine</option>
+                    <option value="email">Email</option>
                   </select>
                   <ChevronDown className={iconWrapper} size={14} />
                 </div>
               </div>
+              {formData.late_action_type === "day" && (
+                <div className="relative animate-in slide-in-from-top-1">
+                  <select
+                    className={inputClass}
+                    value={formData.late_cut}
+                    onChange={(e) =>
+                      handleInputChange("late_cut", e.target.value)
+                    }
+                  >
+                    <option value="">Select Cut</option>
+                    <option value="Half Day">Half Day</option>
+                    <option value="Full Day">Full Day</option>
+                  </select>
+                  <ChevronDown className={iconWrapper} size={14} />
+                </div>
+              )}
+              {formData.late_action_type === "fine" && (
+                <div className="flex gap-2 animate-in slide-in-from-top-1">
+                  <input
+                    type="number"
+                    placeholder="Amt"
+                    className="w-1/2 bg-white h-10 rounded-xl px-3 text-[12px] border-none shadow-sm"
+                    value={formData.late_fine_amount || ""}
+                    onChange={(e) =>
+                      handleInputChange("late_fine_amount", e.target.value)
+                    }
+                  />
+                  <select
+                    className="w-1/2 bg-white h-10 rounded-xl px-3 text-[12px] border-none shadow-sm"
+                    value={formData.late_fine_source || ""}
+                    onChange={(e) =>
+                      handleInputChange("late_fine_source", e.target.value)
+                    }
+                  >
+                    <option value="">Source</option>
+                    <option value="Payroll">Payroll</option>
+                    <option value="Hand">Hand</option>
+                  </select>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
       <div className="flex justify-end gap-3 mt-6">
         <button
           onClick={onClose}
-          className="px-10 py-2.5 border border-gray-300 rounded-xl text-[13px] font-medium text-gray-700 hover:bg-gray-50"
+          className="px-10 py-2.5 border border-gray-300 rounded-xl text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors"
         >
           Cancel
         </button>
         <button
           onClick={handleSubmit}
-          className="px-10 py-2.5 bg-black text-white rounded-xl text-[13px] font-medium hover:bg-zinc-800 transition-all active:scale-95 shadow-lg shadow-black/10"
+          className="px-10 py-2.5 bg-black text-white rounded-xl text-[13px] font-medium hover:bg-zinc-800 active:scale-95 transition-all shadow-lg"
         >
           Create
         </button>
