@@ -4,16 +4,18 @@ import CreateShiftModal from "../../../ui/createshiftmodal";
 import { ShiftDataGet } from "../../../service/companyService";
 import PayrollTable from "../../../ui/payrolltable";
 import CustomSelect from "../../../ui/customselect";
+import UpdateShiftTab from "../../../ui/updateshiftmodal";
 
 const Shifts = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [shiftData, setShiftData] = useState([]);
+  const [viewMode, setViewMode] = useState("list"); // 'list', 'create', or 'update'
+  const [selectedShift, setSelectedShift] = useState(null); // Store raw shift data for update
+  const [rawApiData, setRawApiData] = useState([]); // Keep original API data
+  const [shiftData, setShiftData] = useState([]); // Formatted data for table
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 
-  // Format time to 12-hour
   const formatTime = (timeStr) => {
     if (!timeStr) return "N/A";
     const [hour, minute] = timeStr.split(":");
@@ -27,8 +29,6 @@ const Shifts = () => {
     switch (status) {
       case "Active":
         return "bg-green-50 text-green-500 border-green-100";
-      case "Expired":
-        return "bg-red-50 text-red-500 border-red-100";
       case "Inactive":
         return "bg-indigo-50 text-indigo-500 border-indigo-100";
       default:
@@ -36,47 +36,49 @@ const Shifts = () => {
     }
   };
 
-  // Fetch shifts
+  const fetchShiftsData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await ShiftDataGet();
+      setRawApiData(data); // Store original data to find by ID later
+
+      const mappedData = data.map((shift) => ({
+        id: shift.id, // Keep the ID for lookup
+        name: shift.shift_name,
+        duration: `${shift.policies[0]?.working_hours || 0} Hrs`,
+        start: formatTime(shift.policies[0]?.start_time),
+        end: formatTime(shift.policies[0]?.end_time),
+        staff: shift.allocated_employees,
+        break: shift.policies[0]?.lunch_break_from
+          ? `${formatTime(shift.policies[0].lunch_break_from)} - ${formatTime(shift.policies[0].lunch_break_to)}`
+          : "N/A",
+        reg: `${shift.policies[0]?.regularisation_limit || 0}/${shift.policies[0]?.regularisation_type || ""}`,
+        policy: shift.policy_count,
+        status: shift.allocated_employees > 0 ? "Active" : "Inactive",
+      }));
+
+      setShiftData(mappedData);
+    } catch (err) {
+      setError(err.message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchShiftsData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await ShiftDataGet();
-        const mappedData = data.map((shift) => ({
-          name: shift.shift_name,
-          duration: `${shift.policies[0]?.working_hours || 0} Hrs`,
-          start: formatTime(shift.policies[0]?.start_time),
-          end: formatTime(shift.policies[0]?.end_time),
-          staff: shift.allocated_employees,
-          break: shift.policies[0]?.lunch_break_from
-            ? `${formatTime(shift.policies[0].lunch_break_from)} - ${formatTime(
-                shift.policies[0].lunch_break_to,
-              )}`
-            : "N/A",
-          reg: `${shift.policies[0]?.regularisation_limit || 0}/${
-            shift.policies[0]?.regularisation_type || ""
-          }`,
-          policy: shift.policy_count,
-          status: shift.allocated_employees > 0 ? "Active" : "Inactive",
-        }));
-
-        const filtered = mappedData.filter((item) => {
-          if (!filterStatus) return true;
-          return item.status.toLowerCase() === filterStatus;
-        });
-
-        setShiftData(filtered);
-      } catch (err) {
-        console.error("Error fetching shifts:", err);
-        setError(err.message || "Unknown error");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchShiftsData();
-  }, [filterStatus]);
+  }, []);
+
+  // Handler for row click
+  const handleRowClick = (row) => {
+    // Find the original full object from API using the ID
+    const originalShift = rawApiData.find((s) => s.id === row.id);
+    if (originalShift) {
+      setSelectedShift(originalShift);
+      setViewMode("update");
+    }
+  };
 
   const columns = [
     { key: "name", label: "Shift Name", align: "left" },
@@ -102,24 +104,41 @@ const Shifts = () => {
   ];
 
   // =========================
-  // FULL-PAGE CREATE SHIFT FORM
+  // VIEW LOGIC
   // =========================
-  if (isModalOpen) {
+
+  // Create Mode
+  if (viewMode === "create") {
     return (
       <div className="w-full min-h-screen bg-white p-6 rounded-md shadow-md">
-        <CreateShiftModal onClose={() => setIsModalOpen(false)} />
+        <CreateShiftModal
+          onClose={() => setViewMode("list")}
+          refreshData={fetchShiftsData}
+        />
       </div>
     );
   }
 
-  // =========================
-  // NORMAL TABLE VIEW
-  // =========================
+  // Update Mode
+  if (viewMode === "update") {
+    return (
+      <div className="w-full min-h-screen bg-white p-6 rounded-md shadow-md">
+        <UpdateShiftTab
+          onClose={() => {
+            setViewMode("list");
+            setSelectedShift(null);
+          }}
+          shiftData={selectedShift} // Passing the full shift object
+          refreshData={fetchShiftsData}
+        />
+      </div>
+    );
+  }
+
+  // List View (Table)
   return (
     <div className="w-full">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
-        {/* Filter + Search */}
         <div className="flex flex-wrap gap-2 items-center">
           <CustomSelect
             placeholder="Status"
@@ -132,7 +151,6 @@ const Shifts = () => {
             ]}
             minWidth={120}
           />
-
           <input
             type="text"
             placeholder="Search shifts..."
@@ -142,16 +160,14 @@ const Shifts = () => {
           />
         </div>
 
-        {/* Create Shift Button */}
         <button
-          className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-[12px] font-medium hover:bg-gray-800 transition-colors"
-          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-[12px] font-medium hover:bg-gray-800"
+          onClick={() => setViewMode("create")}
         >
           <Plus size={14} /> Create Shift
         </button>
       </div>
 
-      {/* Payroll Table */}
       <div className="overflow-x-auto">
         {loading ? (
           <p className="text-gray-500 text-[12px]">Loading shifts...</p>
@@ -163,7 +179,7 @@ const Shifts = () => {
             data={shiftData}
             rowsPerPage={6}
             searchTerm={searchTerm}
-            rowClickHandler={(row) => console.log("Clicked row:", row)}
+            rowClickHandler={handleRowClick} // This triggers the update tab
           />
         )}
       </div>

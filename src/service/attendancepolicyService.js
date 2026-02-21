@@ -3,7 +3,9 @@ import {
   postAttendancePolicyAdd,
   getShiftAttendanceUserType,
   putToggleUserActivate,
+  updateAttendancePolicy,
   deleteStaffUser,
+  updateLeavePolicy,
 } from "../api/api";
 
 /**
@@ -77,6 +79,33 @@ const attendancePolicyService = {
       );
       return response;
     } catch (error) {
+      throw error;
+    }
+  },
+
+  updatePolicy: async (id, policyData) => {
+    try {
+      // We call the updateAttendancePolicy(id) function to generate the dynamic URL
+      const response = await axiosInstance.put(
+        updateAttendancePolicy(id),
+        policyData
+      );
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateLeavePolicy: async (id, policyData) => {
+    try {
+      // 2. We use the updateLeavePolicy(id) function to get the /leave-policy/update/${id} URL
+      const response = await axiosInstance.put(
+        updateLeavePolicy(id),
+        policyData
+      );
+      return response;
+    } catch (error) {
+      console.error("Leave Policy Update Error:", error);
       throw error;
     }
   },

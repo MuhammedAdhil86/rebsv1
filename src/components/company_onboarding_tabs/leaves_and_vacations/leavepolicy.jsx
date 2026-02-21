@@ -5,20 +5,21 @@ import UniversalTable from "../../../ui/universal_table";
 import { fetchAllLeavePolicy } from "../../../service/companyService";
 import payrollService from "../../../service/payrollService";
 import CreateLeavePolicyTab from "../leaves_and_vacations/createleavepolicymodal";
+import UpdateLeavePolicyTab from "./updateleavepolicy";
 import DefaultTemplatesTable from "./leavepolicy/defaultleave";
 import toast, { Toaster } from "react-hot-toast";
 
 const LeavesAndVacations = () => {
   const [activeTab, setActiveTab] = useState("all_leaves");
   const [showCreateTab, setShowCreateTab] = useState(false);
+  const [showUpdateTab, setShowUpdateTab] = useState(false); // Update state
+  const [selectedPolicy, setSelectedPolicy] = useState(null); // Selected data
   const [searchQuery, setSearchQuery] = useState("");
   const [leaveData, setLeaveData] = useState([]);
   const [defaultLeaves, setDefaultLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // New state for multi-selection in Default Templates
   const [selectedIds, setSelectedIds] = useState([]);
-
   const [menuPosition, setMenuPosition] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
 
@@ -32,7 +33,6 @@ const LeavesAndVacations = () => {
       ]);
 
       setLeaveData(customRes?.data || customRes || []);
-      // Ensure defaultLeaves is always an array to prevent .length errors
       setDefaultLeaves(defaultRes?.data || defaultRes || []);
     } catch (error) {
       console.error("Error fetching leave data:", error);
@@ -46,7 +46,6 @@ const LeavesAndVacations = () => {
     loadAllData();
   }, []);
 
-  // Reset selections when switching tabs
   useEffect(() => {
     setSelectedIds([]);
   }, [activeTab]);
@@ -60,7 +59,7 @@ const LeavesAndVacations = () => {
     try {
       await payrollService.cloneLeavePolicy(ids);
       toast.success("Templates cloned successfully!", { id: toastId });
-      setSelectedIds([]); // Clear selection
+      setSelectedIds([]);
       setActiveTab("all_leaves");
       loadAllData();
     } catch (error) {
@@ -69,7 +68,7 @@ const LeavesAndVacations = () => {
     }
   };
 
-  // Filter logic based on active tab
+  // Filter logic
   const filteredData = (
     activeTab === "all_leaves" ? leaveData : defaultLeaves
   ).filter(
@@ -108,8 +107,20 @@ const LeavesAndVacations = () => {
     setSelectedRow(null);
   };
 
+  // Handlers for switching views
   const handleCloseCreate = () => {
     setShowCreateTab(false);
+    loadAllData();
+  };
+
+  const handleRowClick = (row) => {
+    setSelectedPolicy(row);
+    setShowUpdateTab(true);
+  };
+
+  const handleCloseUpdate = () => {
+    setShowUpdateTab(false);
+    setSelectedPolicy(null);
     loadAllData();
   };
 
@@ -172,7 +183,9 @@ const LeavesAndVacations = () => {
   return (
     <div className="w-full relative">
       <Toaster position="top-right" />
-      {!showCreateTab && (
+
+      {/* Hide Header only when Create or Update tabs are active */}
+      {!showCreateTab && !showUpdateTab && (
         <>
           <div className="flex items-center gap-8 border-b border-gray-100 mb-6">
             <button
@@ -196,11 +209,10 @@ const LeavesAndVacations = () => {
                 : "System Templates"}
             </h2>
             <div className="flex items-center gap-3">
-              {/* CLONE BUTTON: Placed to the left of Search */}
               {activeTab === "default_templates" && selectedIds.length > 0 && (
                 <button
                   onClick={() => handleCloneTemplate(selectedIds)}
-                  className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-[12px] font-medium font-['Poppins'] hover:bg-zinc-800 transition-all animate-in fade-in zoom-in-95"
+                  className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-[12px] font-medium font-['Poppins'] hover:bg-zinc-800 transition-all"
                 >
                   <Copy size={14} /> Clone Selected ({selectedIds.length})
                 </button>
@@ -233,8 +245,14 @@ const LeavesAndVacations = () => {
         </>
       )}
 
+      {/* Main View Area */}
       {showCreateTab ? (
         <CreateLeavePolicyTab isOpen={true} onClose={handleCloseCreate} />
+      ) : showUpdateTab ? (
+        <UpdateLeavePolicyTab
+          policyData={selectedPolicy}
+          onClose={handleCloseUpdate}
+        />
       ) : activeTab === "all_leaves" ? (
         loading ? (
           <div className="flex items-center justify-center py-20">
@@ -247,6 +265,7 @@ const LeavesAndVacations = () => {
             columns={columns}
             data={filteredData}
             rowsPerPage={6}
+            rowClickHandler={handleRowClick} // This prop must be used in UniversalTable's <tr>
           />
         )
       ) : (
@@ -273,20 +292,18 @@ const LeavesAndVacations = () => {
                 left: menuPosition.left,
                 zIndex: 999999,
               }}
-              className="w-40 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+              className="w-40 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden p-1"
             >
-              <div className="p-1">
-                <button
-                  className={`w-full text-left px-3 py-2 text-[11px] font-['Poppins'] transition-colors flex items-center gap-2 rounded-lg
-                    ${selectedRow?.status === "active" ? "text-red-600 hover:bg-red-50" : "text-green-600 hover:bg-green-50"}`}
-                  onClick={handleToggleStatus}
-                >
-                  <Power size={14} />
-                  {selectedRow?.status === "active"
-                    ? "Deactivate Policy"
-                    : "Activate Policy"}
-                </button>
-              </div>
+              <button
+                className={`w-full text-left px-3 py-2 text-[11px] font-['Poppins'] transition-colors flex items-center gap-2 rounded-lg
+                  ${selectedRow?.status === "active" ? "text-red-600 hover:bg-red-50" : "text-green-600 hover:bg-green-50"}`}
+                onClick={handleToggleStatus}
+              >
+                <Power size={14} />
+                {selectedRow?.status === "active"
+                  ? "Deactivate Policy"
+                  : "Activate Policy"}
+              </button>
             </div>
           </>,
           document.body,

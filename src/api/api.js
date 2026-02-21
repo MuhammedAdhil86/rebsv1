@@ -306,5 +306,8 @@ export const updatePayrollSalaryTemplate = (id) => `/api/payroll/templates/${id}
 export const getPayrollcomponents = "api/payroll/components";
 
 
+export const updateAttendancePolicy = (id) => `/attendance-policy/update/${id}`;
+
+export const updateLeavePolicy = (id) => `/leave-policy/update/${id}`;
 
 
