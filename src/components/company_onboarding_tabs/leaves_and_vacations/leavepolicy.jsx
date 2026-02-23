@@ -195,21 +195,21 @@ const LeavesAndVacations = () => {
               All Leaves
             </button>
             <button
-              onClick={() => setActiveTab("default_templates")}
-              className={`pb-3 text-[14px] font-medium transition-all ${activeTab === "default_templates" ? "text-black border-b-2 border-black" : "text-gray-400 hover:text-gray-600"}`}
+              onClick={() => setActiveTab("presets_templates")}
+              className={`pb-3 text-[14px] font-medium transition-all ${activeTab === "presets_templates" ? "text-black border-b-2 border-black" : "text-gray-400 hover:text-gray-600"}`}
             >
-              Default Templates
+              Presets Templates
             </button>
           </div>
 
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-[16px] font-medium text-gray-900 font-['Poppins']">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-[16px]  text-gray-900 font-['Poppins']">
               {activeTab === "all_leaves"
                 ? "Leave Policies"
-                : "System Templates"}
+                : "Presets  Templates"}
             </h2>
             <div className="flex items-center gap-3">
-              {activeTab === "default_templates" && selectedIds.length > 0 && (
+              {activeTab === "presets_templates" && selectedIds.length > 0 && (
                 <button
                   onClick={() => handleCloneTemplate(selectedIds)}
                   className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-[12px] font-medium font-['Poppins'] hover:bg-zinc-800 transition-all"

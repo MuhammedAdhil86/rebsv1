@@ -58,7 +58,7 @@ export default function ShiftOverview() {
   return (
     <div className="min-h-screen bg-[#f9fafb] p-6">
       {/* ---------- Top Stats & Buttons ---------- */}
-      <div className="flex justify-between items-center mb-5 flex-wrap gap-3">
+      <div className="flex justify-between items-center mb-5 flex-wrap gap-4">
         <div className="flex flex-wrap gap-4 justify-start w-full md:w-auto">
           <StatCard
             title="Total Employees"

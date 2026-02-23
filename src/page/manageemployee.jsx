@@ -58,8 +58,10 @@ function ManageEmployees() {
 
   const filteredData = employees
     .filter((emp) => {
-      if (tab === "active") return emp.is_active === true || emp.is_active === "true";
-      if (tab === "inactive") return emp.is_active === false || emp.is_active === "false";
+      if (tab === "active")
+        return emp.is_active === true || emp.is_active === "true";
+      if (tab === "inactive")
+        return emp.is_active === false || emp.is_active === "false";
       return true;
     })
     .filter((emp) => {
@@ -85,7 +87,7 @@ function ManageEmployees() {
   const handleSelectRow = (e, uuid) => {
     e.stopPropagation();
     setSelectedRows((prev) =>
-      e.target.checked ? [...prev, uuid] : prev.filter((x) => x !== uuid)
+      e.target.checked ? [...prev, uuid] : prev.filter((x) => x !== uuid),
     );
   };
 
@@ -97,21 +99,26 @@ function ManageEmployees() {
     if (selectedRows.length === 0) return;
     try {
       const token = localStorage.getItem("authToken");
-      const response = await fetch(`${API_BASE_URL}/staff/bulk-toggle-activate`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${API_BASE_URL}/staff/bulk-toggle-activate`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ user_uuids: selectedRows, activate }),
         },
-        body: JSON.stringify({ user_uuids: selectedRows, activate }),
-      });
+      );
 
       if (!response.ok) {
         const text = await response.text();
         throw new Error(text || "Failed to update users");
       }
 
-      toast.success(`Users ${activate ? "activated" : "deactivated"} successfully!`);
+      toast.success(
+        `Users ${activate ? "activated" : "deactivated"} successfully!`,
+      );
       setSelectedRows([]);
       fetchEmployees();
     } catch (err) {
@@ -193,9 +200,10 @@ function ManageEmployees() {
                 : "bg-red-100 text-red-700"
             }`}
           >
-            {emp.is_active ? "Active" : "Inactive"}
+            {emp.is_active === true || emp.is_active === "true"
+              ? "Active"
+              : "Inactive"}
           </span>
-
           {/* Button fixed with stopPropagation */}
           <button
             onClick={(e) => {
@@ -215,35 +223,33 @@ function ManageEmployees() {
         </h3>
         <p className="text-[10px] text-gray-500">{emp.designation}</p>
       </div>
-<div className="flex flex-col text-gray-600 bg-gray-100 p-2 rounded-lg mt-2">
+      <div className="flex flex-col text-gray-600 bg-gray-100 p-2 rounded-lg mt-2">
+        {/* LABELS */}
+        <div className="flex justify-between">
+          <span className="text-[10px] text-gray-700">Department</span>
+          <span className="text-[10px] text-gray-700">Date of Joining</span>
+        </div>
 
-  {/* LABELS */}
-  <div className="flex justify-between">
-    <span className="text-[10px] text-gray-700">Department</span>
-    <span className="text-[10px] text-gray-700">Date of Joining</span>
-  </div>
+        {/* VALUES — reduced gap using mt-0.5 */}
+        <div className="flex justify-between mt-0.5">
+          <span className="text-[12px] text-black">{emp.department}</span>
+          <span className="text-[12px] text-black">
+            {formatDate(emp.date_of_join)}
+          </span>
+        </div>
 
-  {/* VALUES — reduced gap using mt-0.5 */}
-  <div className="flex justify-between mt-0.5">
-    <span className="text-[12px] text-black">{emp.department}</span>
-    <span className="text-[12px] text-black">{formatDate(emp.date_of_join)}</span>
-  </div>
+        {/* PHONE */}
+        <div className="flex items-center space-x-2 text-[12px] text-gray-800 mt-1.5 ">
+          <Icon icon="solar:phone-linear" className="text-black w-4 h-4" />
+          <span>{emp.ph_no}</span>
+        </div>
 
-  {/* PHONE */}
-  <div className="flex items-center space-x-2 text-[12px] text-gray-800 mt-1.5 ">
-    <Icon icon="solar:phone-linear" className="text-black w-4 h-4" />
-    <span>{emp.ph_no}</span>
-  </div>
-
-  {/* EMAIL */}
-  <div className="flex items-center space-x-2 text-[12px] text-gray-800 ">
-    <Icon icon="mage:email" className="text-black w-4 h-4" />
-    <span>{emp.email}</span>
-  </div>
-
-</div>
-
-
+        {/* EMAIL */}
+        <div className="flex items-center space-x-2 text-[12px] text-gray-800 ">
+          <Icon icon="mage:email" className="text-black w-4 h-4" />
+          <span>{emp.email}</span>
+        </div>
+      </div>
     </div>
   );
 
@@ -296,7 +302,8 @@ function ManageEmployees() {
     {
       key: "date_of_join",
       label: "Date of Joining",
-      render: (_, row) => (row.date_of_join ? formatDate(row.date_of_join) : "N/A"),
+      render: (_, row) =>
+        row.date_of_join ? formatDate(row.date_of_join) : "N/A",
     },
     {
       key: "department",
@@ -372,7 +379,9 @@ function ManageEmployees() {
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
           {/* Header */}
           <div className="flex justify-between items-center  border-b border-gray-300 ">
-            <h1 className="text-xl font-medium text-gray-800">Manage Employees</h1>
+            <h1 className="text-xl font-medium text-gray-800">
+              Manage Employees
+            </h1>
             <div className="flex items-center space-x-4">
               <div className="w-8 h-8 flex items-center justify-center border rounded-full">
                 <FiBell className="w-5 h-5 text-gray-600" />
@@ -407,7 +416,9 @@ function ManageEmployees() {
           {/* Controls */}
           <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
             <span className="text-gray-700 font-medium text-[14px]">
-              {loading ? "Loading..." : `${filteredData.length} Total Employees`}
+              {loading
+                ? "Loading..."
+                : `${filteredData.length} Total Employees`}
             </span>
 
             <div className="flex items-center space-x-3">
@@ -438,22 +449,22 @@ function ManageEmployees() {
                           onClick={handleAddPrivilege}
                           className="w-full text-left px-4 py-2 text-[12px] text-gray-700 hover:bg-gray-100 flex items-center"
                         >
-                          <Shield size={16} className="mr-2 text-gray-600" /> Add
-                          Privilege
+                          <Shield size={16} className="mr-2 text-gray-600" />{" "}
+                          Add Privilege
                         </button>
                         <button
                           onClick={handleActivateUser}
                           className="w-full text-left px-4 py-2 text-[12px] text-gray-700 hover:bg-gray-100 flex items-center"
                         >
-                          <UserCheck size={16} className="mr-2 text-gray-600" /> Activate
-                          User
+                          <UserCheck size={16} className="mr-2 text-gray-600" />{" "}
+                          Activate User
                         </button>
                         <button
                           onClick={handleDeactivateUser}
                           className="w-full text-left px-4 py-2 text-[12px] text-gray-700 hover:bg-gray-100 flex items-center"
                         >
-                          <UserX size={16} className="mr-2 text-gray-600" /> Deactivate
-                          User
+                          <UserX size={16} className="mr-2 text-gray-600" />{" "}
+                          Deactivate User
                         </button>
 
                         <hr className="my-1 border-gray-200" />
@@ -462,7 +473,8 @@ function ManageEmployees() {
                           onClick={handleDelete}
                           className="w-full text-left px-4 py-2 text-[12px] text-red-600 hover:bg-red-50 flex items-center"
                         >
-                          <Trash2 size={16} className="mr-2 text-red-600" /> Delete User
+                          <Trash2 size={16} className="mr-2 text-red-600" />{" "}
+                          Delete User
                         </button>
                       </div>
                     </div>
@@ -525,7 +537,11 @@ function ManageEmployees() {
               )}
             </div>
           ) : (
-            <UniversalTable columns={tableColumns} data={filteredData} rowsPerPage={6} />
+            <UniversalTable
+              columns={tableColumns}
+              data={filteredData}
+              rowsPerPage={6}
+            />
           )}
         </div>
       </div>
@@ -534,11 +550,16 @@ function ManageEmployees() {
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-[400px] p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3">Confirm Delete</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              Confirm Delete
+            </h2>
             <p className="text-sm text-gray-600 mb-4">
               Are you sure you want to permanently delete
-              <span className="font-medium text-gray-900"> {selectedRows.length} employee(s)</span>?
-              This action cannot be undone.
+              <span className="font-medium text-gray-900">
+                {" "}
+                {selectedRows.length} employee(s)
+              </span>
+              ? This action cannot be undone.
             </p>
 
             <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -1,20 +1,19 @@
-import React from "react";
+import React, { useRef } from "react"; // Added useRef
 import { useLocation, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiBell } from "react-icons/fi";
 import { Printer, Download } from "lucide-react";
 import DashboardLayout from "../ui/pagelayout";
+import html2pdf from "html2pdf.js"; // Added library
 
 const avatar =
   "https://ui-avatars.com/api/?name=Admin&background=000000&color=ffffff";
-
-// ✅ Online placeholder logo for Iresco
 const companyLogo = "https://cdn-icons-png.flaticon.com/512/9119/9119104.png";
 
 const Payslip = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const payslipRef = useRef(); // Ref for the PDF area
 
-  // ✅ Data received from the ReportTable row click
   const employee = location.state?.employeeData;
 
   const formatINR = (amount) => {
@@ -25,7 +24,18 @@ const Payslip = () => {
     }).format(amount || 0);
   };
 
-  const handlePrint = () => window.print();
+  // --- NEW DOWNLOAD LOGIC ---
+  const handleDownloadPDF = () => {
+    const element = payslipRef.current;
+    const opt = {
+      margin: 0,
+      filename: `Payslip_${employee?.bank_info?.first_name || "Employee"}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+    };
+    html2pdf().set(opt).from(element).save();
+  };
 
   const renderContent = () => {
     if (!employee) {
@@ -53,13 +63,14 @@ const Payslip = () => {
       "Changampuzha Nagar 5th Floor Crescence Tower";
 
     return (
-      <div className="bg-gray-100 min-h-screen flex flex-col items-center">
-        {/* --- MAIN PAYSLIP DOCUMENT --- */}
-        <div className="w-full max-w-5xl bg-white px-8 pt-3 pb-7 shadow-md print:shadow-none print:p-0 text-[#333] font-sans border border-gray-100">
-          {/* ================= DOCUMENT HEADER (UPDATED) ================= */}
+      <div className="min-h-screen flex flex-col items-center">
+        {/* Added Ref here */}
+        <div
+          ref={payslipRef}
+          className="w-full bg-white px-8 pt-3 pb-7 shadow-md print:shadow-none print:p-0 text-[#333] font-sans border border-gray-100"
+        >
           <div className="flex justify-between items-start mb-8 border-b border-gray-200 pb-6">
             <div className="flex gap-4">
-              {/* ✅ Company Logo Implementation */}
               <div className="w-14 h-14 flex items-center justify-center">
                 <img
                   src={companyLogo}
@@ -95,7 +106,6 @@ const Payslip = () => {
           </h2>
 
           <div className="flex flex-col md:flex-row justify-between gap-10 mb-10">
-            {/* Info Column */}
             <div className="flex-1 grid grid-cols-2 gap-y-2 text-[13px]">
               <span className="text-gray-500">Employee Name</span>
               <span className="font-semibold text-gray-800">
@@ -133,17 +143,13 @@ const Payslip = () => {
               </span>
             </div>
 
-            {/* Net Pay Box */}
             <div className="w-full md:w-80 bg-[#f1fcf4] border border-[#def7e5] rounded-xl p-6 shadow-sm">
-              <div className="flex justify-between items-baseline mb-1">
-                <p className="text-3xl font-medium text-gray-800">
-                  {formatINR(employee.net_monthly)}
-                </p>
-              </div>
+              <p className="text-3xl font-medium text-gray-800">
+                {formatINR(employee.net_monthly)}
+              </p>
               <p className="text-[10px] font-medium text-green-700 uppercase tracking-widest mb-6">
                 Total Net Pay
               </p>
-
               <div className="space-y-2 pt-4 border-t border-green-200/50 text-[12px]">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Paid Days</span>
@@ -161,7 +167,7 @@ const Payslip = () => {
             </div>
           </div>
 
-          {/* Account/Statutory Row */}
+          {/* Account/Statutory Table, Earnings, etc remain exactly as you provided... */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 text-[12px] border-t border-dashed py-8 mb-6">
             <div className="flex flex-col">
               <span className="text-gray-400 uppercase font-bold text-[10px] mb-1">
@@ -207,7 +213,6 @@ const Payslip = () => {
             </div>
           </div>
 
-          {/* Earnings & Deductions Table */}
           <div className="border border-gray-200 rounded-lg overflow-hidden mb-10">
             <table className="w-full text-[12px]">
               <thead className="bg-gray-50 text-gray-500 uppercase font-bold border-b">
@@ -251,7 +256,6 @@ const Payslip = () => {
             </table>
           </div>
 
-          {/* Total Net Payable */}
           <div className="bg-[#f1fcf4] border border-[#def7e5] rounded-xl p-5 flex justify-between items-center mb-4">
             <div>
               <p className="text-[11px] font-medium text-gray-500 uppercase tracking-widest">
@@ -270,55 +274,6 @@ const Payslip = () => {
             -- This is a system-generated document and does not require a
             signature. --
           </p>
-
-          {/* Benefits Summary */}
-          <div className="mt-10">
-            <h3 className="text-[11px] font-bold text-gray-800 mb-2">
-              Benefits Summary
-            </h3>
-            <p className="text-[10px] text-gray-500 mb-4">
-              Detailed breakdown of benefit contributions.
-            </p>
-            <div className="border rounded-lg overflow-hidden">
-              <table className="w-full text-[11px]">
-                <thead className="bg-gray-50 text-[10px] font-bold text-gray-500 uppercase border-b">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Benefits</th>
-                    <th className="px-4 py-3 text-center">
-                      Employee Contribution
-                    </th>
-                    <th className="px-4 py-3 text-center">
-                      Employer Contribution
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y text-center">
-                  <tr>
-                    <td className="px-4 py-3 text-left font-medium">
-                      EPF Contribution
-                    </td>
-                    <td className="px-4 py-3">
-                      {formatINR(statutory?.epf_employee)}
-                    </td>
-                    <td className="px-4 py-3">
-                      {formatINR(statutory?.epf_employer)}
-                    </td>
-                  </tr>
-                  <tr className="bg-gray-50/30">
-                    <td className="px-4 py-3 text-left font-medium">
-                      ESI Insurance
-                    </td>
-                    <td className="px-4 py-3">
-                      {formatINR(statutory?.esi_employee)}
-                    </td>
-                    <td className="px-4 py-3">
-                      {formatINR(statutory?.esi_employer)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -326,10 +281,27 @@ const Payslip = () => {
 
   return (
     <DashboardLayout userName="Admin" onLogout={() => {}}>
+      {/* Scrollbar hidden via CSS in the className below */}
+      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
+
       <div className="bg-white pt-4 px-4 pb-0 w-full max-w-full print:hidden">
         <div className="flex justify-between items-center py-1 border-b border-gray-200 mb-5 flex-wrap gap-4">
           <h1 className="text-[15px] font-semibold text-gray-800">Payslip</h1>
           <div className="flex items-center gap-3 flex-wrap">
+            {/* NEW DOWNLOAD BUTTON */}
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2 text-[13px] bg-indigo-600 text-white px-4 py-1.5 rounded-full hover:bg-indigo-700 transition-colors"
+            >
+              <Download size={14} /> Download PDF
+            </button>
+
+            <div
+              className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-300 cursor-pointer"
+              onClick={() => window.print()}
+            >
+              <Printer className="text-gray-600 text-lg" size={18} />
+            </div>
             <div className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-300">
               <FiBell className="text-gray-600 text-lg" />
             </div>
@@ -346,7 +318,11 @@ const Payslip = () => {
           </div>
         </div>
       </div>
-      <div className="w-full overflow-auto h-full">{renderContent()}</div>
+
+      {/* Apply no-scrollbar here */}
+      <div className="w-full overflow-auto h-full no-scrollbar">
+        {renderContent()}
+      </div>
     </DashboardLayout>
   );
 };

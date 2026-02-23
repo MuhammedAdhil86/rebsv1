@@ -52,6 +52,9 @@ export const addAssetType = "/admin/asset-type/add"
 export const getReport = "/admin/staffreport/:month"
 export const getReportIndia = "/admin/staff/fullreport"
 
+export const getLeaveReport = "/admin/leave/employee/leave/report";
+export  const attendanceFullReport = (month, year) => `/admin/staff/fullreport/${month}/${year}`;
+
 //Events and Leave Calendar
 
 export const getLeavebyDate = "/admin/leave/getbydate"

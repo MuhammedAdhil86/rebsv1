@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  // ✅ Change this to use the proxy prefix from vite.config.js
+  // Using the proxy prefix from vite.config.js
   baseURL: "/api_v1", 
   headers: { "Content-Type": "application/json" },
   timeout: 15000,
@@ -11,7 +11,10 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("authToken");
-    if (token) config.headers["Authorization"] = `Bearer ${token}`;
+    // Automatically inject Bearer token if it exists
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => Promise.reject(error)
@@ -20,24 +23,28 @@ axiosInstance.interceptors.request.use(
 // -------------------- Response Interceptor --------------------
 axiosInstance.interceptors.response.use(
   (response) => {
+    // Optional: Auto-update token if backend sends a refreshed one
     const newToken = response.data?.token;
-    if (newToken) localStorage.setItem("authToken", newToken);
+    if (newToken) {
+      localStorage.setItem("authToken", newToken);
+    }
     return response;
   },
   (error) => {
     const requestUrl = error.config?.url || "";
 
-    if (
-      error.response?.status === 401 &&
-      !requestUrl.startsWith(axiosInstance.baseURL2)
-    ) {
+    // 401 Unauthorized Handling
+    if (error.response?.status === 401) {
+      /* FIXED: Removed baseURL2 reference. 
+         Logic: If we get a 401, clear storage and redirect to login.
+      */
+      console.error("Unauthorized request. Redirecting to login...", requestUrl);
       localStorage.removeItem("authToken");
-      window.location.href = "/"; 
-    } else if (error.response?.status === 401) {
-      console.warn(
-        "Email API returned 401, user will NOT be logged out:",
-        requestUrl
-      );
+      
+      // Only redirect if we aren't already on the login page to avoid loops
+      if (window.location.pathname !== "/") {
+        window.location.href = "/"; 
+      }
     }
 
     return Promise.reject(error);

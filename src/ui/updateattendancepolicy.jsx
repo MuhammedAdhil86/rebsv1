@@ -155,7 +155,7 @@ const UpdateAttendancePolicyTab = ({ initialData, onClose }) => {
       <div className="flex items-center justify-between border-b pb-4">
         <div className="flex items-center gap-2">
           <Calendar size={20} className="text-gray-900" />
-          <h2 className="text-[16px] font-semibold text-gray-900">
+          <h2 className="text-[16px]  text-gray-900">
             Update Attendance Policy
           </h2>
         </div>

@@ -407,13 +407,16 @@ export const fetchEmployeeCalendar = async (month, year) => {
     // Replace placeholder with month
     const url = getEmployeeCalendar.replace("{month}", month) + `/${year}`;
     const response = await axiosInstance.get(url);
+
+    // ✅ Log the data to see the employee array and attendance structure
+    console.log("Fetched Employee Calendar Data:", response.data.data);
+
     return response.data.data || [];
   } catch (error) {
     console.error("Error fetching employee calendar:", error);
     return [];
   }
 };
-
 export const fetchEmployeeWorkHours = async (user_id, dateRange) => {
   try {
     const response = await axiosInstance.post(

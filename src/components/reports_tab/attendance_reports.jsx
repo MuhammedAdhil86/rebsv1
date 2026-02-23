@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import { FiDownload } from "react-icons/fi";
 import { Icon } from "@iconify/react";
 import UniversalTable from "../../ui/universal_table";
-import axiosInstance from "../../service/axiosinstance";
 import CustomSelect from "../../ui/customselect";
 import * as XLSX from "xlsx-js-style";
+
+// Import the service
+import { fetchFullAttendanceReport } from "../../service/reportsService";
 
 import {
   titleStyle,
@@ -26,7 +28,6 @@ const columns = [
   { key: "lop", label: "LOP" },
 ];
 
-// helper for truncate + hover
 const TruncatedCell = ({ text }) => {
   if (!text) return "N/A";
   return (
@@ -49,59 +50,86 @@ export default function AttendanceReports() {
   );
 
   useEffect(() => {
-    axiosInstance
-      .get(`admin/staff/fullreport/${selectedMonth}/${selectedYear}`)
-      .then((res) => {
-        // ✅ console logs for full data
-        console.log("Full API Response:", res);
-        console.log("Full Data Array:", res.data?.data);
+    const loadData = async () => {
+      try {
+        const data = await fetchFullAttendanceReport(
+          selectedMonth,
+          selectedYear,
+        );
 
-        const mapped =
-          res.data?.data?.map((item, index) => {
-            console.log("Row Data:", index + 1, {
-              user_id: item.user_id,
-              total_working_days: item.total_working_days,
-              present: item.present,
-              absent: item.absent,
-              net_salary: item.net_salary,
-              lop: item.absent_cut,
-            });
+        if (!data || data.length === 0) {
+          setApiData([]);
+          return;
+        }
 
-            return {
-              user_id: item.user_id || "N/A",
+        // 1. Calculate the Global Total Net Salary
+        const totalNetSalary = data.reduce(
+          (sum, row) => sum + (Number(row.net_salary) || 0),
+          0,
+        );
 
-              name: <TruncatedCell text={item.name || "N/A"} />,
-              designation: <TruncatedCell text={item.designation || "N/A"} />,
-              department: <TruncatedCell text={item.department || "N/A"} />,
+        // 2. Map actual employee rows with truncation
+        const tableRows = data.map((item) => ({
+          ...item,
+          name: <TruncatedCell text={item.name} />,
+          designation: <TruncatedCell text={item.designation} />,
+          department: <TruncatedCell text={item.department} />,
+          raw_name: item.name,
+          raw_designation: item.designation,
+          raw_department: item.department,
+        }));
 
-              working_days: Number(item.total_working_days || 0),
-              present_days: Number(item.present || 0),
-              absent_days: Number(item.absent || 0),
-              net_salary: Number(item.net_salary || 0),
-              lop: Number(item.absent_cut || 0),
-            };
-          }) || [];
+        // 3. Create the Total Row Template
+        const totalRowTemplate = {
+          user_id: "",
+          name: "",
+          designation: "",
+          department: <span className=" text-black">TOTAL</span>,
+          working_days: "",
+          present_days: "",
+          absent_days: "",
+          net_salary: (
+            <span className=" text-black">
+              {totalNetSalary.toLocaleString()}
+            </span>
+          ),
+          lop: "",
+          isTotal: true,
+          raw_net_salary: totalNetSalary,
+        };
 
-        console.log("Mapped Data:", mapped);
+        // 4. Inject Total Row every 10 items for persistent pagination view
+        const itemsPerPage = 10;
+        const finalDisplayData = [];
 
-        setApiData(mapped);
-      })
-      .catch((err) => {
-        console.error("API Error:", err);
+        for (let i = 0; i < tableRows.length; i += itemsPerPage) {
+          const chunk = tableRows.slice(i, i + itemsPerPage);
+          finalDisplayData.push(...chunk);
+          // Add the total row as the 11th item for this "page"
+          finalDisplayData.push({ ...totalRowTemplate, id: `total-${i}` });
+        }
+
+        setApiData(finalDisplayData);
+      } catch (err) {
+        console.error("Error loading report:", err);
         setApiData([]);
-      });
+      }
+    };
+
+    loadData();
   }, [selectedMonth, selectedYear]);
 
   const handleDownload = () => {
-    if (!apiData.length) return;
+    // Filter out the injected UI total rows for a clean Excel export
+    const actualData = apiData.filter((row) => !row.isTotal);
+    if (!actualData.length) return;
 
     const headerRow = columns.map((c) => c.label);
-
-    const dataRows = apiData.map((row, i) => [
+    const dataRows = actualData.map((row, i) => [
       i + 1,
-      row.name?.props?.text || row.name,
-      row.designation?.props?.text || row.designation,
-      row.department?.props?.text || row.department,
+      row.raw_name || "N/A",
+      row.raw_designation || "N/A",
+      row.raw_department || "N/A",
       row.working_days,
       row.present_days,
       row.absent_days,
@@ -109,13 +137,11 @@ export default function AttendanceReports() {
       row.lop,
     ]);
 
-    const totalSalary = apiData.reduce(
-      (sum, row) => sum + Number(row.net_salary || 0),
-      0,
-    );
+    // Use the first available total value
+    const totalSalary = apiData.find((row) => row.isTotal)?.raw_net_salary || 0;
 
     const sheetData = [
-      [`MONTH OF ${monthName.toUpperCase()}`],
+      [`MONTH OF ${monthName.toUpperCase()} ${selectedYear}`],
       headerRow,
       ...dataRows,
       ["", "", "", "", "", "", "TOTAL", totalSalary, ""],
@@ -125,12 +151,8 @@ export default function AttendanceReports() {
     const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
     ws["!merges"] = [
-      {
-        s: { r: 0, c: 0 },
-        e: { r: 0, c: headerRow.length - 1 },
-      },
+      { s: { r: 0, c: 0 }, e: { r: 0, c: headerRow.length - 1 } },
     ];
-
     ws["!cols"] = [
       { wch: 6 },
       { wch: 28 },
@@ -144,7 +166,6 @@ export default function AttendanceReports() {
     ];
 
     const range = XLSX.utils.decode_range(ws["!ref"]);
-
     for (let R = range.s.r; R <= range.e.r; R++) {
       for (let C = range.s.c; C <= range.e.c; C++) {
         const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
@@ -165,12 +186,20 @@ export default function AttendanceReports() {
 
   return (
     <div className="flex flex-col gap-4 text-[13px]">
-      <div className="flex justify-between items-center mb-2 px-2">
-        <div className="text-[16px] font-medium">
-          {monthName} {selectedYear}
-        </div>
-
-        <div className="flex gap-3 items-center">
+      <div className="flex justify-between items-center mb-4 px-2">
+        {/* LEFT SIDE: Title + Month Select + Year Select */}
+        <div className="flex items-center gap-4">
+          <div className="text-[16px] font-medium min-w-fit">
+            {monthName} {selectedYear}
+          </div>
+          <CustomSelect
+            value={selectedYear}
+            onChange={(val) => setSelectedYear(Number(val))}
+            options={Array.from({ length: 5 }, (_, i) => {
+              const yr = today.getFullYear() - 2 + i;
+              return { value: yr, label: yr };
+            })}
+          />{" "}
           <CustomSelect
             value={selectedMonth}
             onChange={(val) => setSelectedMonth(Number(val))}
@@ -181,18 +210,12 @@ export default function AttendanceReports() {
               }),
             }))}
           />
+        </div>
 
-          <CustomSelect
-            value={selectedYear}
-            onChange={(val) => setSelectedYear(Number(val))}
-            options={Array.from({ length: 5 }, (_, i) => {
-              const yr = today.getFullYear() - 2 + i;
-              return { value: yr, label: yr };
-            })}
-          />
-
+        {/* RIGHT SIDE: Download + Search */}
+        <div className="flex items-center gap-3">
           <button
-            className="flex items-center px-4 py-1 bg-black text-white rounded"
+            className="flex items-center px-4 py-1 bg-black text-white rounded whitespace-nowrap"
             onClick={handleDownload}
           >
             <FiDownload className="mr-2" /> Download
@@ -204,7 +227,7 @@ export default function AttendanceReports() {
               placeholder="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="border px-3 py-1 rounded w-full"
+              className="border px-3 py-1 rounded w-full outline-none"
             />
             <Icon
               icon="mynaui:search"
@@ -217,7 +240,7 @@ export default function AttendanceReports() {
       <UniversalTable
         columns={columns}
         data={apiData}
-        rowsPerPage={5}
+        rowsPerPage={11} // This triggers pagination at the 11th row (the total row)
         searchTerm={searchTerm}
       />
     </div>
