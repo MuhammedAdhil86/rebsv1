@@ -84,7 +84,11 @@ const SalaryComponents = () => {
 
       <div className="fade-in">
         {activeSubTab === "earnings" ? (
-          <Earnings data={earningsData} onEdit={handleEditRow} />
+          <Earnings
+            data={earningsData}
+            onEdit={handleEditRow}
+            onRefresh={fetchEarnings} // ✅ Pass fetch function here
+          />
         ) : (
           <div className="py-20 text-center text-gray-400 italic">
             Coming soon.

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Search, ChevronDown, ChevronUp, Download } from "lucide-react";
+import { Search, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { fetchEmployeeCalendar } from "../../service/employeeService";
 import CustomSelect from "../../ui/customselect";
@@ -12,9 +12,6 @@ function MusterRoll() {
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
   const [searchTerm, setSearchTerm] = useState("");
-
-  // Set to 31 by default since we are removing the toggle button
-  const visibleDates = 31;
 
   // -------------------- STATIC LABELS --------------------
   const monthNames = [
@@ -37,37 +34,10 @@ function MusterRoll() {
     loadAttendance();
   }, [month, year]);
 
-  const loadAttendance = async () => {
-    const data = await fetchEmployeeCalendar(month, year);
-    const formatted = data.map((emp) => {
-      const attendance = emp.attendance.map((d) => ({
-        ...d,
-        in_time: convertToTime(d.in),
-        out_time: convertToTime(d.out),
-        total_hour:
-          !d.total_hour || d.total_hour === "0000-01-01T00:00:00Z"
-            ? "00:00:00"
-            : convertToTimeWithSeconds(d.total_hour),
-      }));
-
-      const filledAttendance = Array.from({ length: 31 }, (_, i) => {
-        return (
-          attendance[i] || {
-            status: "--",
-            in_time: "--",
-            out_time: "--",
-            total_hour: "00:00:00",
-          }
-        );
-      });
-
-      return { ...emp, attendance: filledAttendance };
-    });
-    setAttendanceData(formatted);
-  };
-
+  // -------------------- HELPER FUNCTIONS --------------------
   const convertToTime = (value) => {
-    if (!value || value === "0000-01-01T00:00:00Z") return "--";
+    if (!value || value.startsWith("0000") || value.startsWith("0001"))
+      return "--";
     const date = new Date(value);
     return isNaN(date)
       ? "--"
@@ -75,30 +45,76 @@ function MusterRoll() {
   };
 
   const convertToTimeWithSeconds = (value) => {
-    if (!value || value === "0000-01-01T00:00:00Z") return "--";
+    if (!value || value.startsWith("0000") || value.startsWith("0001"))
+      return "00:00:00";
     const date = new Date(value);
     return isNaN(date)
-      ? "--"
+      ? "00:00:00"
       : `${date.getUTCHours().toString().padStart(2, "0")}:${date.getUTCMinutes().toString().padStart(2, "0")}:${date.getUTCSeconds().toString().padStart(2, "0")}`;
   };
 
   const getStatusClasses = (status) => {
-    switch (status) {
-      case "On Time":
-      case "Holt Day":
+    if (!status || status === "--")
+      return "bg-gray-100 text-gray-400 border border-gray-200";
+
+    switch (status.toUpperCase()) {
+      case "ON TIME":
+      case "PRESENT":
         return "bg-[#00AB2E1F] text-[#00AB2E]";
       case "EARLY CHECK-IN":
-        return "bg-yellow-200 text-yellow-600";
-      case "Absent":
+        return "bg-yellow-100 text-yellow-700";
+      case "ABSENT":
         return "bg-[#FF666833] text-[#FF6668]";
-      case "Sick Leave":
-        return "outline outline-1 outline-red-600 text-red-600 bg-transparent";
-      case "Casual Leave":
-        return "outline outline-1 outline-orange-600 text-orange-600 bg-transparent";
-      case "Late":
+      case "SICK LEAVE":
+        return "outline outline-1 outline-red-600 text-red-600";
+      case "LATE":
         return "bg-[#4F4C9133] text-[#4F4C91]";
       default:
-        return "bg-gray-100 text-gray-600";
+        return "bg-gray-100 text-gray-500";
+    }
+  };
+
+  // -------------------- DATA LOADING --------------------
+  const loadAttendance = async () => {
+    try {
+      const data = await fetchEmployeeCalendar(month, year);
+
+      const formatted = data.map((emp) => {
+        const attendanceMap = {};
+
+        emp.attendance?.forEach((record) => {
+          const day = new Date(record.date).getUTCDate();
+          attendanceMap[day] = {
+            ...record,
+            in_time: convertToTime(record.in),
+            out_time: convertToTime(record.out),
+            total_hour: convertToTimeWithSeconds(record.total_hour),
+            // Logic: Only show string if Valid is true, else explicitly null
+            display_checkout:
+              record.checkout_status?.Valid &&
+              record.checkout_status.String !== ""
+                ? record.checkout_status.String
+                : null,
+          };
+        });
+
+        const filledAttendance = Array.from({ length: 31 }, (_, i) => {
+          const day = i + 1;
+          return (
+            attendanceMap[day] || {
+              status: "--",
+              total_hour: "00:00:00",
+              display_checkout: null,
+            }
+          );
+        });
+
+        return { ...emp, attendance: filledAttendance };
+      });
+
+      setAttendanceData(formatted);
+    } catch (error) {
+      console.error("Error loading attendance:", error);
     }
   };
 
@@ -148,17 +164,15 @@ function MusterRoll() {
         </div>
       </div>
 
-      {/* TABLE SECTION - FIXED NAME COLUMN LOGIC */}
+      {/* TABLE SECTION */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="w-full overflow-x-auto scrollbar-none">
           <table className="min-w-full text-sm border-collapse table-fixed">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
               <tr>
-                {/* Fixed Header Column */}
                 <th className="sticky left-0 z-20 bg-gray-50 px-4 py-3 text-left font-medium border-b border-r w-[200px] min-w-[200px]">
                   Employee Name
                 </th>
-                {/* Scrollable Date Headers */}
                 {Array.from({ length: 31 }, (_, i) => (
                   <th
                     key={i}
@@ -172,15 +186,15 @@ function MusterRoll() {
 
             <tbody className="divide-y divide-gray-100 bg-white">
               {filteredEmployees.map((emp, idx) => (
-                <tr key={idx} className="hover:bg-gray-50 group">
-                  {/* Fixed Name Cell */}
-                  <td className="sticky left-0 z-10 bg-white group-hover:bg-gray-50 px-4 py-3 border-r h-[100px] w-[200px] min-w-[200px]">
+                <tr key={emp.user_id || idx} className="hover:bg-gray-50 group">
+                  <td className="sticky left-0 z-10 bg-white group-hover:bg-gray-50 px-4 py-3 border-r h-[120px] w-[200px] min-w-[200px]">
                     <div className="flex items-center gap-3">
                       <img
                         src={
-                          emp.image || `https://i.pravatar.cc/40?img=${idx + 1}`
+                          emp.image ||
+                          `https://ui-avatars.com/api/?name=${emp.user_name}&background=random`
                         }
-                        className="w-10 h-10 rounded-full border border-gray-200"
+                        className="w-10 h-10 rounded-full border border-gray-200 object-cover"
                         alt=""
                       />
                       <p className="font-medium text-gray-900 truncate">
@@ -189,22 +203,37 @@ function MusterRoll() {
                     </div>
                   </td>
 
-                  {/* Scrollable Date Cells */}
                   {emp.attendance.map((d, i) => (
                     <td
                       key={i}
-                      className="px-2 py-3 border-r min-w-[120px] h-[100px]"
+                      className="px-2 py-3 border-r min-w-[120px] h-[120px] text-center"
                     >
                       <div className="flex flex-col items-center justify-center space-y-2">
+                        {/* Attendance Status */}
                         <span
                           className={`px-2 py-0.5 rounded text-[9px]  uppercase ${getStatusClasses(d.status)}`}
                         >
-                          {d.status === "EARLY CHECK-IN" ? "EARLY" : d.status}
+                          {!d.status || d.status === "--"
+                            ? "NO STATUS"
+                            : d.status}
                         </span>
-                        <div className="text-center">
-                          <p className="text-[11px]  bg-gray-100 rounded px-2 py-0.5 mt-0.5">
+
+                        <div className="flex flex-col items-center gap-1">
+                          {/* Working Hours */}
+                          <p className="text-[11px] bg-gray-100 text-gray-700 rounded px-2 py-0.5 font-medium">
                             {d.total_hour}
                           </p>
+
+                          {/* Checkout Status Logic */}
+                          {d.display_checkout ? (
+                            <span className="text-[9px]  text-orange-500 ">
+                              {d.display_checkout}
+                            </span>
+                          ) : (
+                            <span className="text-[8px] font-medium text-gray-300 uppercase tracking-tighter">
+                              No Checkout Status
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>

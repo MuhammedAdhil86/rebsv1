@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Plus, Search, Upload } from "lucide-react";
-import UniversalTable from "../../../ui/universal_table";
+import PayrollTable from "../../../ui/payrolltable"; // ✅ Swapped to PayrollTable
 import CreateEmailTemplateModal from "../../../ui/createemailmodal";
 import UploadEmailTemplateModal from "../../../ui/uploademailmodal";
 import ActionMenu from "../../../ui/actionmenu";
@@ -21,7 +21,6 @@ const EmailTemplates = () => {
     loadDefaultTemplates,
   } = useEmailTemplateStore();
 
-  // Load data based on tab
   useEffect(() => {
     if (activeTab === "all") {
       loadTemplates();
@@ -29,9 +28,6 @@ const EmailTemplates = () => {
       loadDefaultTemplates();
     }
   }, [activeTab, loadTemplates, loadDefaultTemplates]);
-
-  const getType = (isManual) => (isManual ? "Manual" : "Auto");
-  const getStatus = (isActive) => (isActive ? "Active" : "Inactive");
 
   const formatDate = (date) => {
     if (!date) return "-";
@@ -42,97 +38,148 @@ const EmailTemplates = () => {
     });
   };
 
-  // Filter templates based on search
   const filteredTemplates = useMemo(() => {
     const data = activeTab === "all" ? templates : defaultTemplates;
-    return data.filter((item) =>
-      item?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    return (data || []).filter((item) =>
+      item?.name?.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [templates, defaultTemplates, searchQuery, activeTab]);
 
+  // EXACT ALIGNMENT CONFIGURATION (Matching Shifts/Leaves Reference)
   const columns = useMemo(
     () => [
-      { key: "name", label: "Template Name", render: (v) => <div className="text-left w-full">{v}</div> },
-      { key: "is_manual", label: "Type", render: (v) => getType(v) },
-      { key: "created_at", label: "Created on", render: (v) => formatDate(v) },
+      {
+        key: "name",
+        label: "Template Name",
+        align: "left", // Anchor primary text to the left
+      },
+      {
+        key: "is_manual",
+        label: "Type",
+        align: "left",
+        render: (v) => (v ? "Manual" : "Auto"),
+      },
+      {
+        key: "created_at",
+        label: "Created on",
+        align: "left",
+        render: (v) => formatDate(v),
+      },
       {
         key: "is_active",
         label: "Status",
+        align: "center", // Center aligned status pill
         render: (v) => (
           <span
-            className={`px-4 py-1 rounded-full text-[11px] font-medium ${
-              v ? "bg-[#E7F7EF] text-[#00B050]" : "bg-[#F1F1F8] text-[#8C8CB1]"
+            className={`px-3 py-1 rounded-full border text-[11px] font-medium ${
+              v
+                ? "bg-green-50 text-green-500 border-green-100"
+                : "bg-gray-50 text-gray-400 border-gray-100"
             }`}
           >
-            {getStatus(v)}
+            {v ? "Active" : "Inactive"}
           </span>
         ),
       },
-      { key: "action", label: "Action", render: (_, row) => <ActionMenu row={row} refreshTemplates={activeTab === "all" ? loadTemplates : loadDefaultTemplates} /> },
+      {
+        key: "action",
+        label: "Action",
+        align: "center",
+        render: (_, row) => (
+          <ActionMenu
+            row={row}
+            refreshTemplates={
+              activeTab === "all" ? loadTemplates : loadDefaultTemplates
+            }
+          />
+        ),
+      },
     ],
-    [activeTab, loadTemplates, loadDefaultTemplates]
+    [activeTab, loadTemplates, loadDefaultTemplates],
   );
 
   return (
-    <div className="w-full">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-[16px] font-medium text-gray-900">All Email Templates</h2>
+    <div className="w-full bg-white rounded-xl">
+      {/* Header & Actions */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        <h2 className="text-[16px] font-semibold text-gray-900 font-['Poppins']">
+          All Email Templates
+        </h2>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center justify-center p-2 text-white bg-black rounded-lg hover:bg-gray-900 transition-all active:scale-95"
+            className="flex items-center justify-center p-2.5 text-white bg-black rounded-lg hover:bg-gray-800 transition-all active:scale-95"
+            title="Upload Template"
           >
             <Upload className="h-4 w-4" />
           </button>
 
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2 bg-black text-white rounded-lg text-[12px] font-medium hover:bg-zinc-800 transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-[12px] font-medium hover:bg-gray-800 transition-all font-['Poppins']"
           >
-            <Plus size={14} /> Create Email template
+            <Plus size={14} /> Create Email Template
           </button>
 
           <div className="relative ml-2">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={14}
+            />
             <input
               type="text"
-              placeholder="Search"
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-4 pr-10 py-2 border border-gray-300 bg-[#f9f9f9] rounded-lg text-[12px] w-64 focus:outline-none"
+              className="pl-9 pr-3 py-2 border border-gray-200 bg-[#f9f9f9] rounded-lg text-[12px] w-60 focus:outline-none focus:ring-1 focus:ring-black font-['Poppins']"
             />
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-3 mb-4">
+      {/* Modern Tab Toggle */}
+      <div className="flex items-center gap-2 mb-6 bg-gray-50 p-1 w-fit rounded-xl">
         <button
           onClick={() => setActiveTab("all")}
-          className={`px-4 py-2 rounded-lg text-[12px] font-medium ${
-            activeTab === "all" ? "bg-black text-white" : "bg-[#f1f1f1] text-gray-600"
+          className={`px-6 py-2 rounded-lg text-[12px] font-medium transition-all ${
+            activeTab === "all"
+              ? "bg-white text-black shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
           }`}
         >
           Templates
         </button>
         <button
           onClick={() => setActiveTab("default")}
-          className={`px-4 py-2 rounded-lg text-[12px] font-medium ${
-            activeTab === "default" ? "bg-black text-white" : "bg-[#f1f1f1] text-gray-600"
+          className={`px-6 py-2 rounded-lg text-[12px] font-medium transition-all ${
+            activeTab === "default"
+              ? "bg-white text-black shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
           }`}
         >
           Default Templates
         </button>
       </div>
 
-      {/* Table */}
-      {loading && <p className="text-center text-[12px] text-gray-500">Loading...</p>}
-      {error && <p className="text-center text-[12px] text-red-500">{error}</p>}
-      {!loading && !error && (
-        <UniversalTable columns={columns} data={filteredTemplates} rowsPerPage={6} />
-      )}
+      {/* Table Section */}
+      <div className="w-full">
+        {loading ? (
+          <div className="flex items-center justify-center py-20 text-gray-400 text-[12px] font-['Poppins'] animate-pulse">
+            Loading templates...
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-20 text-red-500 text-[12px] font-['Poppins']">
+            {error}
+          </div>
+        ) : (
+          <PayrollTable
+            columns={columns}
+            data={filteredTemplates}
+            rowsPerPage={6}
+          />
+        )}
+      </div>
 
       {/* Modals */}
       <CreateEmailTemplateModal

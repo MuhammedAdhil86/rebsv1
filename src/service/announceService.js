@@ -1,5 +1,6 @@
 import axiosInstance from "./axiosinstance";
-import { postAnnouncement, getDept, getStaff } from "../api/api"; // Import getStaff here
+// Added getAnnouncement to the imports below
+import { postAnnouncement, getDept, getStaff, getAnnouncement } from "../api/api"; 
 
 const announceService = {
   addAnnouncement: async (announcementData) => {
@@ -46,6 +47,21 @@ const announceService = {
       return response.data;
     } catch (error) {
       console.error("Error fetching staff:", error);
+      throw error;
+    }
+  },
+
+  // New function added below
+  fetchAnnouncements: async () => {
+    try {
+      const response = await axiosInstance.get(getAnnouncement);
+      console.log("Announcements fetched:", response.data);
+      
+      // Returning response.data.data to match your addAnnouncement pattern
+      // If your API returns the array directly, change this to response.data
+      return response.data.data || response.data;
+    } catch (error) {
+      console.error("Error fetching announcements:", error);
       throw error;
     }
   },

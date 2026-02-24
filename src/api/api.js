@@ -6,6 +6,7 @@ export const AddUser = "/user/createstaff"
 
 export const postAnnouncement = "/admin/announcement/add"
 export const Login = "/staff/login"
+export const getAnnouncement = "/admin/announcement/get"
 //Employeelist
 
 export const getTotalEmployee = "/admin/staffstatus/list"
@@ -307,6 +308,9 @@ export const updateSalaryPayrollComponent = (id) => `/api/payroll/components/${i
 export const updatePayrollSalaryTemplate = (id) => `/api/payroll/templates/${id}`;
 
 export const getPayrollcomponents = "api/payroll/components";
+export const deletePayrollComponent = "/api/payroll/components"; 
+export const deletePayrollTemplate = "/api/payroll/templates";
+export const deleteTemplateAllocation = "/api/payroll/template-allocations";
 
 
 export const updateAttendancePolicy = (id) => `/attendance-policy/update/${id}`;

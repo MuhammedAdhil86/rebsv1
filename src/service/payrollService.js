@@ -6,7 +6,10 @@ import { getpolicyLookup,
   postCloneLeavePolicy,
   updateSalaryPayrollComponent,
   updatePayrollSalaryTemplate,
-getPayrollcomponents, } from "../api/api";
+getPayrollcomponents, 
+deletePayrollComponent,
+deleteTemplateAllocation,
+deletePayrollTemplate,} from "../api/api";
 
 const payrollService = {
   // ---------------- POLICY LOOKUPS ----------------
@@ -279,6 +282,33 @@ updateSalaryTemplate: async (id, payload) => {
       console.error(`[PayrollService] Update Error for ID ${id}:`, err.response || err);
       
       throw new Error(errorMessage);
+    }
+  },
+  deleteComponent: async (id) => {
+    try {
+      const response = await axiosInstance.delete(`${deletePayrollComponent}/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting component ${id}:`, error);
+      throw error;
+    }
+  },
+  deleteTemplate: async (id) => {
+    try {
+      const response = await axiosInstance.delete(`${deletePayrollTemplate}/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting template ${id}:`, error);
+      throw error;
+    }
+  },
+  deleteAllocation: async (id) => {
+    try {
+      const response = await axiosInstance.delete(`${deleteTemplateAllocation}/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting allocation ${id}:`, error);
+      throw error;
     }
   },
 };

@@ -34,6 +34,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
     hr: <Icon icon="si:dashboard-line" width="20" />,
     muster: <Icon icon="mynaui:table" width="20" />,
     events: <Icon icon="carbon:event" width="20" />,
+    announcement: <Icon icon="lucide:megaphone" width="20" />, // ✅ Added Announcement Icon
     payroll: <Icon icon="fluent:payment-20-regular" width="20" />,
     reports: <Icon icon="iconoir:reports" width="20" />,
     asset: <Icon icon="fluent:web-asset-16-regular" width="20" />,
@@ -65,6 +66,11 @@ function SideBar({ isCollapsed, toggleSidebar }) {
           title: "Events",
           path: userId ? `/u/${userId}/${userNameSlug}/events` : "#",
           icon: icons.events,
+        },
+        {
+          title: "Announcements", // ✅ Added Announcements MenuItem
+          path: "/announcements",
+          icon: icons.announcement,
         },
         {
           title: "Payroll",
