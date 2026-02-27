@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, Calendar, ChevronDown } from "lucide-react";
+import { ChevronLeft, Calendar, ChevronDown, X } from "lucide-react";
 import axiosInstance from "../service/axiosinstance";
 import toast from "react-hot-toast";
 import ColorPicker from "./colorpicker";
 
 const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
-  // Initialize state with existing shift data
   const [shiftName, setShiftName] = useState(shiftData?.shift_name || "");
   const [shiftCode, setShiftCode] = useState(shiftData?.shift_code || "");
   const [shiftColour, setShiftColour] = useState(shiftData?.shift_colour || "");
@@ -13,7 +12,6 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
     shiftData?.is_cross_shift || false,
   );
 
-  // Important: Extract IDs from shiftData.policies (which is an array of objects)
   const [policies, setPolicies] = useState([]);
   const [allPolicies, setAllPolicies] = useState([]);
   const [remarks, setRemarks] = useState(shiftData?.remarks || "");
@@ -22,16 +20,13 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
 
   const dropdownRef = useRef(null);
 
-  // Sync policies when shiftData loads
   useEffect(() => {
     if (shiftData?.policies) {
-      // Map the objects to just IDs so the checkbox 'includes' logic works
       const existingPolicyIds = shiftData.policies.map((p) => p.id);
       setPolicies(existingPolicyIds);
     }
   }, [shiftData]);
 
-  // Fetch all available policies on mount
   useEffect(() => {
     const fetchPolicies = async () => {
       try {
@@ -44,7 +39,6 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
     fetchPolicies();
   }, []);
 
-  // Close dropdown if clicked outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -76,7 +70,7 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
       shift_colour: shiftColour,
       is_cross_shift: isCrossShift,
       is_default: shiftData.is_default || false,
-      policies: policies, // Sending array of IDs
+      policies: policies,
       remarks,
     };
 
@@ -115,8 +109,9 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
         </div>
       </div>
 
-      {/* Form */}
+      {/* Form Grid */}
       <div className="grid grid-cols-2 gap-x-8 gap-y-5">
+        {/* Row 1: Left - Name | Right - Policies */}
         <div>
           <label className={labelStyle}>Shift Name</label>
           <input
@@ -133,12 +128,9 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
             className={`${inputStyle} justify-between cursor-pointer`}
             onClick={() => setDropdownOpen(!dropdownOpen)}
           >
-            <span className="truncate">
-              {policies.length
-                ? allPolicies
-                    .filter((p) => policies.includes(p.id))
-                    .map((p) => p.policy_name)
-                    .join(", ")
+            <span className="truncate text-gray-400">
+              {policies.length > 0
+                ? `${policies.length} Policies Selected`
                 : "Select policies"}
             </span>
             <ChevronDown size={16} />
@@ -155,7 +147,7 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
                   <input
                     type="checkbox"
                     checked={policies.includes(policy.id)}
-                    onChange={() => {}} // Controlled by the div click
+                    readOnly
                     className="mr-2 h-4 w-4 accent-black"
                   />
                   {policy.policy_name}
@@ -165,14 +157,32 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
           )}
         </div>
 
-        <div>
-          <label className={labelStyle}>Shift Code</label>
-          <input
-            type="text"
-            className={inputStyle}
-            value={shiftCode}
-            onChange={(e) => setShiftCode(e.target.value)}
-          />
+        {/* Row 2: Left - Shared (Code & Cross Shift) | Right - Color */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelStyle}>Shift Code</label>
+            <input
+              type="text"
+              className={inputStyle}
+              value={shiftCode}
+              onChange={(e) => setShiftCode(e.target.value)}
+            />
+          </div>
+          <div className="relative">
+            <label className={labelStyle}>Is Cross Shift?</label>
+            <select
+              className={`${inputStyle} appearance-none pr-10 cursor-pointer`}
+              value={String(isCrossShift)}
+              onChange={(e) => setIsCrossShift(e.target.value === "true")}
+            >
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+            <ChevronDown
+              size={16}
+              className="absolute right-3 top-[38px] text-gray-500 pointer-events-none"
+            />
+          </div>
         </div>
 
         <div>
@@ -183,34 +193,48 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
           />
         </div>
 
-        <div className="relative">
-          <label className={labelStyle}>Is Cross Shift?</label>
-          <select
-            className={`${inputStyle} appearance-none pr-10 cursor-pointer`}
-            value={String(isCrossShift)}
-            onChange={(e) => setIsCrossShift(e.target.value === "true")}
-          >
-            <option value="false">No</option>
-            <option value="true">Yes</option>
-          </select>
-          <ChevronDown
-            size={16}
-            className="absolute right-3 top-[38px] text-gray-500 pointer-events-none"
+        {/* Row 3: Left - Remarks | Right - Policy Cards Container */}
+        <div>
+          <label className={labelStyle}>Remarks</label>
+          <input
+            type="text"
+            className={inputStyle}
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            placeholder="Enter remarks..."
           />
         </div>
 
-        <div className="col-span-2">
-          <label className={labelStyle}>Remarks</label>
-          <textarea
-            className={`${inputStyle} h-24 resize-none py-2`}
-            value={remarks}
-            onChange={(e) => setRemarks(e.target.value)}
-          />
+        <div>
+          <label className={labelStyle}>Selected Policies</label>
+          <div className="flex flex-wrap gap-2 min-h-[44px]">
+            {allPolicies
+              .filter((p) => policies.includes(p.id))
+              .map((policy) => (
+                <div
+                  key={policy.id}
+                  className="flex items-center gap-2 bg-[#F4F6F8] border border-gray-200 px-3 py-2 rounded-xl text-[11px] text-black animate-in fade-in zoom-in duration-200"
+                >
+                  <span className="font-medium">{policy.policy_name}</span>
+                  <button
+                    onClick={() => togglePolicy(policy.id)}
+                    className="hover:text-red-500 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            {policies.length === 0 && (
+              <span className="text-[11px] text-gray-400 italic flex items-center">
+                No policies selected
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="flex justify-end gap-3 mt-6">
+      <div className="flex justify-end gap-3 mt-10">
         <button
           onClick={onClose}
           className="px-8 py-2 border border-gray-300 rounded-xl text-[12px] hover:bg-gray-50"

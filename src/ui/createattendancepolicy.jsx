@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { X, Calendar, Clock, ChevronDown } from "lucide-react";
 import attendancePolicyService from "../service/attendancepolicyService";
 import ColorPicker from "./colorpicker";
+import toast from "react-hot-toast"; // Added toast import
 
 const CreateAttendancePolicyTab = ({ onClose }) => {
   const [formData, setFormData] = useState({
@@ -18,8 +19,8 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
     late_unpaid_count: "",
     late_cut: "",
     delay_action_type: "",
-    delay_fine_amount: "", // Changed from null to empty string for input handling
-    delay_fine_source: "", // Changed from null to empty string
+    delay_fine_amount: "",
+    delay_fine_source: "",
     late_action_type: "",
     late_fine_amount: "",
     late_fine_source: "",
@@ -37,6 +38,10 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
     end_date: "",
     overtime_cap_limit: "",
     overtime_cap_period: "Monthly",
+    // New Fields
+    consider_as_halfday: false,
+    policy_halfday_type: "",
+    for_weekly_off: false,
   });
 
   const handleInputChange = (field, value) => {
@@ -50,25 +55,32 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
     ) {
       if (value !== "" && parseFloat(value) < 0) return;
     }
-    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    setFormData((prev) => {
+      const updated = { ...prev, [field]: value };
+      if (field === "consider_as_halfday" && value === false) {
+        updated.policy_halfday_type = "";
+      }
+      return updated;
+    });
   };
 
   const handleSubmit = async () => {
-    // 1. Helper for strict backend source requirements (payroll/hand)
+    if (formData.consider_as_halfday && !formData.policy_halfday_type) {
+      toast.error("Please select a Policy Half Day Type"); // Replaced alert
+      return;
+    }
+
     const getSafeSource = (type, source) => {
       if (type !== "fine") return null;
       const s = source?.toLowerCase();
-      // If action is fine, backend REQUIRES payroll or hand. Default to payroll if empty.
       return s === "payroll" || s === "hand" ? s : "payroll";
     };
 
-    // 2. Map payload to EXACTLY match working Postman structure
     const payload = {
       policy_name: formData.policy_name,
       policy_code: formData.policy_code,
       policy_colour: formData.policy_colour,
-
-      // Force HH:MM:SS format
       start_time: formData.start_time || "00:00:00",
       end_time: formData.end_time || "00:00:00",
       delay: formData.delay || "00:00:00",
@@ -79,15 +91,11 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
       lunch_break_from: formData.lunch_break_from || "00:00:00",
       lunch_break_to: formData.lunch_break_to || "00:00:00",
       overtime_cap_limit: formData.overtime_cap_limit || "00:00:00",
-
-      // Force Numeric Types (Required by your backend)
       working_hours: Number(formData.working_hours) || 0,
       delay_unpaid_count: Number(formData.delay_unpaid_count) || 0,
       late_unpaid_count: Number(formData.late_unpaid_count) || 0,
       over_time_pay: parseFloat(formData.over_time_pay) || 0.0,
       regularisation_limit: Number(formData.regularisation_limit) || 0,
-
-      // Delay Logic
       delay_action_type: formData.delay_action_type || "email",
       delay_fine_amount:
         formData.delay_action_type === "fine"
@@ -99,8 +107,6 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
       ),
       delay_cut:
         formData.delay_action_type === "day" ? formData.delay_cut : null,
-
-      // Late Logic
       late_action_type: formData.late_action_type || "email",
       late_fine_amount:
         formData.late_action_type === "fine"
@@ -111,31 +117,30 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
         formData.late_fine_source,
       ),
       late_cut: formData.late_action_type === "day" ? formData.late_cut : null,
-
-      // Enums & Booleans
       regularisation_type: formData.regularisation_type,
       overtime_cap_period: formData.overtime_cap_period,
       work_from_home: Boolean(formData.work_from_home),
       over_time_benefit: Boolean(formData.over_time_benefit),
       start_date: formData.start_date || null,
       end_date: formData.end_date || null,
+      consider_as_halfday: Boolean(formData.consider_as_halfday),
+      policy_halfday_type: formData.policy_halfday_type || null,
+      for_weekly_off: Boolean(formData.for_weekly_off),
     };
 
     try {
       const response = await attendancePolicyService.createPolicy(payload);
       if (response.status === 200 || response.status === 201) {
-        alert("Policy Created Successfully!");
+        toast.success("Policy Created Successfully!"); // Replaced alert
         onClose();
       }
     } catch (error) {
       console.error("Backend Error Detail:", error.response?.data);
-      alert(
-        `Error: ${error.response?.data?.message || "Internal Server Error"}`,
-      );
+      // Replaced alert with dynamic error toast
+      toast.error(error.response?.data?.message || "Internal Server Error");
     }
   };
 
-  // Styles preserved exactly as your original code
   const inputClass =
     "w-full px-4 py-2.5 bg-[#F4F6F8] border border-gray-100 rounded-xl text-[12px] font-normal placeholder:text-gray-400 focus:outline-none transition-all";
   const labelClass =
@@ -144,21 +149,14 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
     "absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none";
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 space-y-6 max-h-[90vh] overflow-y-auto font-['Poppins']">
-      {/* UI is 100% identical to your original code */}
+    <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-6 space-y-6  overflow-y-auto font-['Poppins']">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Calendar size={20} className="text-gray-900" />
-          <h2 className="text-[16px] font-semibold text-gray-900">
-            Create a Policy
+          <h2 className="text-[16px]  text-gray-900 ">
+            Create Attendance Policy
           </h2>
         </div>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <X size={24} />
-        </button>
       </div>
 
       <div className="flex gap-6">
@@ -227,6 +225,60 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
               </select>
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Consider Half Day</label>
+              <select
+                className={inputClass}
+                value={formData.consider_as_halfday}
+                onChange={(e) =>
+                  handleInputChange(
+                    "consider_as_halfday",
+                    e.target.value === "true",
+                  )
+                }
+              >
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>For Weekly Off</label>
+              <select
+                className={inputClass}
+                value={formData.for_weekly_off}
+                onChange={(e) =>
+                  handleInputChange("for_weekly_off", e.target.value === "true")
+                }
+              >
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </div>
+          </div>
+
+          {formData.consider_as_halfday && (
+            <div className="animate-in fade-in slide-in-from-top-1">
+              <label className={`${labelClass} text-blue-600`}>
+                Half Day Type *
+              </label>
+              <div className="relative">
+                <select
+                  className={`${inputClass} border-blue-100 bg-blue-50/30`}
+                  value={formData.policy_halfday_type}
+                  onChange={(e) =>
+                    handleInputChange("policy_halfday_type", e.target.value)
+                  }
+                >
+                  <option value="">Select Half</option>
+                  <option value="First Half">First Half</option>
+                  <option value="Second Half">Second Half</option>
+                </select>
+                <ChevronDown className={iconWrapper} size={14} />
+              </div>
+            </div>
+          )}
 
           {formData.over_time_benefit && (
             <div className="animate-in fade-in slide-in-from-top-1">
@@ -400,7 +452,7 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#FFF6E9] border border-[#FDE3C3] rounded-2xl p-5 space-y-4">
-              <div className="flex justify-between items-center text-gray-800 font-semibold text-[13px]">
+              <div className="flex justify-between items-center text-gray-800 text-[13px]">
                 <span>Consider Delay</span>
                 <span>Compensates</span>
               </div>
@@ -476,7 +528,7 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
             </div>
 
             <div className="bg-[#FFEBF3] border border-[#FFD2E5] rounded-2xl p-5 space-y-4">
-              <div className="flex justify-between items-center text-gray-800 font-semibold text-[13px]">
+              <div className="flex justify-between items-center text-gray-800 text-[13px]">
                 <span>Consider Late</span>
                 <span>Compensates</span>
               </div>

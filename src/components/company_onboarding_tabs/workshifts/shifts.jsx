@@ -7,14 +7,37 @@ import CustomSelect from "../../../ui/customselect";
 import UpdateShiftTab from "../../../ui/updateshiftmodal";
 
 const Shifts = () => {
-  const [viewMode, setViewMode] = useState("list"); // 'list', 'create', or 'update'
-  const [selectedShift, setSelectedShift] = useState(null); // Store raw shift data for update
-  const [rawApiData, setRawApiData] = useState([]); // Keep original API data
-  const [shiftData, setShiftData] = useState([]); // Formatted data for table
+  const [viewMode, setViewMode] = useState("list");
+  const [selectedShift, setSelectedShift] = useState(null);
+  const [rawApiData, setRawApiData] = useState([]);
+  const [shiftData, setShiftData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+
+  // --- PERSISTENCE LOGIC START ---
+
+  // 1. Check localStorage on initial mount
+  useEffect(() => {
+    const savedMode = localStorage.getItem("shiftViewMode");
+    const savedShift = localStorage.getItem("shiftSelectedData");
+
+    if (savedMode === "update" && savedShift) {
+      setViewMode("update");
+      setSelectedShift(JSON.parse(savedShift));
+    }
+  }, []);
+
+  // 2. Helper function to close and clear storage
+  const handleCloseUpdate = () => {
+    localStorage.removeItem("shiftViewMode");
+    localStorage.removeItem("shiftSelectedData");
+    setViewMode("list");
+    setSelectedShift(null);
+  };
+
+  // --- PERSISTENCE LOGIC END ---
 
   const formatTime = (timeStr) => {
     if (!timeStr) return "N/A";
@@ -41,10 +64,10 @@ const Shifts = () => {
     setError(null);
     try {
       const data = await ShiftDataGet();
-      setRawApiData(data); // Store original data to find by ID later
+      setRawApiData(data);
 
       const mappedData = data.map((shift) => ({
-        id: shift.id, // Keep the ID for lookup
+        id: shift.id,
         name: shift.shift_name,
         duration: `${shift.policies[0]?.working_hours || 0} Hrs`,
         start: formatTime(shift.policies[0]?.start_time),
@@ -70,11 +93,13 @@ const Shifts = () => {
     fetchShiftsData();
   }, []);
 
-  // Handler for row click
   const handleRowClick = (row) => {
-    // Find the original full object from API using the ID
     const originalShift = rawApiData.find((s) => s.id === row.id);
     if (originalShift) {
+      // Save to localStorage so it survives refresh
+      localStorage.setItem("shiftViewMode", "update");
+      localStorage.setItem("shiftSelectedData", JSON.stringify(originalShift));
+
       setSelectedShift(originalShift);
       setViewMode("update");
     }
@@ -103,11 +128,6 @@ const Shifts = () => {
     },
   ];
 
-  // =========================
-  // VIEW LOGIC
-  // =========================
-
-  // Create Mode
   if (viewMode === "create") {
     return (
       <div className="w-full min-h-screen bg-white p-6 rounded-md shadow-md">
@@ -119,23 +139,18 @@ const Shifts = () => {
     );
   }
 
-  // Update Mode
   if (viewMode === "update") {
     return (
       <div className="w-full min-h-screen bg-white p-6 rounded-md shadow-md">
         <UpdateShiftTab
-          onClose={() => {
-            setViewMode("list");
-            setSelectedShift(null);
-          }}
-          shiftData={selectedShift} // Passing the full shift object
+          onClose={handleCloseUpdate} // Uses the new cleaner function
+          shiftData={selectedShift}
           refreshData={fetchShiftsData}
         />
       </div>
     );
   }
 
-  // List View (Table)
   return (
     <div className="w-full">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
@@ -179,7 +194,7 @@ const Shifts = () => {
             data={shiftData}
             rowsPerPage={6}
             searchTerm={searchTerm}
-            rowClickHandler={handleRowClick} // This triggers the update tab
+            rowClickHandler={handleRowClick}
           />
         )}
       </div>

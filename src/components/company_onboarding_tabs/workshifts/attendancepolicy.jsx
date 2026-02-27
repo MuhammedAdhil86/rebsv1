@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
-// Import the specific PayrollTable component
 import PayrollTable from "../../../ui/payrolltable";
 import { fetchPolicyData } from "../../../service/companyService";
 import CreateAttendancePolicyTab from "../../../ui/createattendancepolicy";
@@ -13,6 +12,30 @@ const AttendancePolicy = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // --- PERSISTENCE LOGIC START ---
+
+  // 1. Check localStorage on initial mount to restore state after refresh
+  useEffect(() => {
+    const savedMode = localStorage.getItem("policyViewMode");
+    const savedPolicy = localStorage.getItem("policySelectedData");
+
+    if (savedMode === "update" && savedPolicy) {
+      setViewMode("update");
+      setEditData(JSON.parse(savedPolicy));
+    }
+  }, []);
+
+  // 2. Modified close function to also clear storage
+  const handleCloseTabs = () => {
+    localStorage.removeItem("policyViewMode");
+    localStorage.removeItem("policySelectedData");
+    setViewMode("list");
+    setEditData(null);
+    loadPolicies();
+  };
+
+  // --- PERSISTENCE LOGIC END ---
+
   useEffect(() => {
     loadPolicies();
   }, []);
@@ -21,7 +44,6 @@ const AttendancePolicy = () => {
     try {
       setLoading(true);
       const res = await fetchPolicyData();
-      // PayrollTable handles data normalization, but passing an empty array fallback is good practice
       setPolicyData(res || []);
     } catch (error) {
       console.error("Failed to fetch policies:", error);
@@ -30,13 +52,11 @@ const AttendancePolicy = () => {
     }
   };
 
-  const handleCloseTabs = () => {
-    setViewMode("list");
-    setEditData(null);
-    loadPolicies();
-  };
-
   const handleRowClick = (row) => {
+    // Save to localStorage so it survives refresh
+    localStorage.setItem("policyViewMode", "update");
+    localStorage.setItem("policySelectedData", JSON.stringify(row));
+
     setEditData(row);
     setViewMode("update");
   };
@@ -97,7 +117,7 @@ const AttendancePolicy = () => {
   // VIEW LOGIC
   if (viewMode === "create") {
     return (
-      <div className="w-full min-h-screen bg-white p-6 rounded-md shadow-md">
+      <div className="w-full bg-white rounded-md shadow-md">
         <CreateAttendancePolicyTab isOpen={true} onClose={handleCloseTabs} />
       </div>
     );
@@ -105,7 +125,7 @@ const AttendancePolicy = () => {
 
   if (viewMode === "update") {
     return (
-      <div className="w-full min-h-screen bg-white p-6 rounded-md shadow-md">
+      <div className="w-full bg-white rounded-md shadow-md">
         <UpdateAttendancePolicyTab
           initialData={editData}
           onClose={handleCloseTabs}
@@ -116,7 +136,6 @@ const AttendancePolicy = () => {
 
   return (
     <div className="w-full">
-      {/* Search and Action Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
         <div className="flex flex-wrap gap-2 items-center">
           <div className="relative">
@@ -138,7 +157,6 @@ const AttendancePolicy = () => {
         </button>
       </div>
 
-      {/* Payroll Table Implementation */}
       <div className="w-full">
         {loading ? (
           <div className="flex items-center justify-center p-10">
