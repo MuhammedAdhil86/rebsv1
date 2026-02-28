@@ -133,6 +133,8 @@ export const getAllLeavePolicy = "/leave-policy/fetch-all"
 //Week Off
 
 export const postAddWeekOff = "/admin/weekly-off/add"
+// constants/apiEndpoints.js (or similar)
+export const getWeeklyOffShifts = "/shifts/fetch/weekly-off";
 
 //Employee Onboard 
 
@@ -162,7 +164,7 @@ export const getPrivilegeCompliance = "/compliance/allocated/get"
 export const allocateCompliance = "/compliance/allocate"
 export const allocateRoles = "/staff/updateusertype"
 export const editWorkHourPolicy = "/attendance-policy/update"
-export const getShifts = "/shifts/fetch"
+export const  getShifts = "/shifts/fetch"
 
 export const deleteLeavePolicy = "/leave-policy/delete/:id"
 export const deleteAllowance = "/allowance/delete/:id"

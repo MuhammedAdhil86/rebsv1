@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, Calendar, ChevronDown } from "lucide-react"; // ✅ Changed X → ChevronLeft
+import { ChevronLeft, Calendar, ChevronDown } from "lucide-react";
 import axiosInstance from "../service/axiosinstance";
 import toast from "react-hot-toast";
 import ColorPicker from "./colorpicker";
 
-const CreateShiftModal = ({ onClose }) => {
+const CreateShiftModal = ({ onClose, refreshData }) => {
   const [shiftName, setShiftName] = useState("");
   const [shiftCode, setShiftCode] = useState("");
   const [shiftColour, setShiftColour] = useState("");
@@ -24,8 +24,12 @@ const CreateShiftModal = ({ onClose }) => {
         const res = await axiosInstance.get("/attendance-policy/get");
         setAllPolicies(res.data.data || []);
       } catch (err) {
-        toast.error("Session expired. Please login again.");
-        window.location.href = "/";
+        const errorMsg =
+          err.response?.data?.message || "Session expired. Please login again.";
+        toast.error(errorMsg);
+        if (err.response?.status === 401) {
+          window.location.href = "/";
+        }
       }
     };
     fetchPolicies();
@@ -51,6 +55,25 @@ const CreateShiftModal = ({ onClose }) => {
   };
 
   const handleSubmit = async () => {
+    // --- VALIDATION START ---
+    if (!shiftName.trim()) {
+      toast.error("Shift Name is required");
+      return;
+    }
+    if (policies.length === 0) {
+      toast.error("Please select at least one Attendance Policy");
+      return;
+    }
+    if (!shiftCode.trim()) {
+      toast.error("Shift Code is required");
+      return;
+    }
+    if (!shiftColour) {
+      toast.error("Please select a Shift Color");
+      return;
+    }
+    // --- VALIDATION END ---
+
     const payload = {
       shift_name: shiftName,
       shift_code: shiftCode,
@@ -58,13 +81,17 @@ const CreateShiftModal = ({ onClose }) => {
       is_cross_shift: isCrossShift,
       is_default: false,
       policies,
-      remarks,
+      remarks, // Remarks remains optional
     };
 
     try {
       setLoading(true);
-      await axiosInstance.post("/shifts/add", payload);
-      toast.success("Shift created successfully!");
+      const response = await axiosInstance.post("/shifts/add", payload);
+
+      // Dynamic Success Message from Backend
+      toast.success(response.data?.message || "Shift created successfully!");
+
+      if (refreshData) refreshData();
       onClose();
 
       // Reset form
@@ -75,7 +102,10 @@ const CreateShiftModal = ({ onClose }) => {
       setPolicies([]);
       setRemarks("");
     } catch (err) {
-      toast.error("Error creating shift");
+      // Dynamic Error Message from Backend
+      const errorMessage =
+        err.response?.data?.message || "Error creating shift";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -109,7 +139,9 @@ const CreateShiftModal = ({ onClose }) => {
       <div className="grid grid-cols-2 gap-x-8 gap-y-5">
         {/* Shift Name */}
         <div>
-          <label className={labelStyle}>Shift Name</label>
+          <label className={labelStyle}>
+            Shift Name <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             placeholder="Enter shift"
@@ -121,7 +153,9 @@ const CreateShiftModal = ({ onClose }) => {
 
         {/* Attendance Policies */}
         <div ref={dropdownRef} className="relative">
-          <label className={labelStyle}>Attendance Policies</label>
+          <label className={labelStyle}>
+            Attendance Policies <span className="text-red-500">*</span>
+          </label>
           <div
             className={`${inputStyle} justify-between cursor-pointer`}
             onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -160,7 +194,9 @@ const CreateShiftModal = ({ onClose }) => {
 
         {/* Shift Code */}
         <div>
-          <label className={labelStyle}>Shift Code</label>
+          <label className={labelStyle}>
+            Shift Code <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             placeholder="Shift Code (eg: NS)"
@@ -172,7 +208,9 @@ const CreateShiftModal = ({ onClose }) => {
 
         {/* Shift Color */}
         <div>
-          <label className={labelStyle}>Shift Color</label>
+          <label className={labelStyle}>
+            Shift Color <span className="text-red-500">*</span>
+          </label>
           <ColorPicker
             value={shiftColour}
             onChange={(color) => setShiftColour(color)}

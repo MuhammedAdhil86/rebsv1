@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Search, ChevronDown } from "lucide-react";
 import { createWeeklyOff } from "../../../service/eventservice";
-import { getBranchData, getShiftList } from "../../../service/staffservice";
+import { getBranchData } from "../../../service/staffservice";
+// Ensure this path matches where you saved the fetchWeeklyOffShifts service
+import { fetchWeeklyOffShifts } from "../../../service/mainServices";
 
-// GlowButton Component
+// -------------------- GlowButton Component --------------------
 function GlowButton({ children = "Edit in Chat", onClick }) {
   return (
     <>
@@ -27,7 +29,6 @@ function GlowButton({ children = "Edit in Chat", onClick }) {
           cursor: pointer;
           transition: transform 180ms cubic-bezier(.22, .61, .36, 1);
         }
-
         .chat-btn::before {
           content: "";
           position: absolute;
@@ -42,48 +43,31 @@ function GlowButton({ children = "Edit in Chat", onClick }) {
           -webkit-mask-composite: xor;
           mask-composite: exclude;
         }
-
-        .chat-btn:hover::before {
-          padding: 1px 1px 5px 1px;
-        }
-
-        .chat-btn:hover .glow {
-          opacity: 0.8;
-          filter: blur(18px);
-        }
-
+        .chat-btn:hover::before { padding: 1px 1px 5px 1px; }
+        .chat-btn:hover .glow { opacity: 0.8; filter: blur(18px); }
         .glow {
           position: absolute;
-          left: 12%;
-          right: 12%;
-          bottom: -8px;
-          height: 10px;
-          border-radius: 9999px;
+          left: 12%; right: 12%; bottom: -8px;
+          height: 10px; border-radius: 9999px;
           background: linear-gradient(90deg, #6d7cff, #a855f7, #ec4899, #6d7cff);
           background-size: 300% 100%;
           animation: slide 3s linear infinite;
-          filter: blur(16px);
-          opacity: 0.55;
+          filter: blur(16px); opacity: 0.55;
           transition: opacity 180ms ease, filter 180ms ease;
         }
-
         @keyframes slide {
           from { background-position: 0% 0; }
           to { background-position: 300% 0; }
         }
-
-        .label {
-          position: relative;
-          z-index: 2;
-        }
+        .label { position: relative; z-index: 2; }
       `}</style>
     </>
   );
 }
 
+// -------------------- Main Component --------------------
 const WeekendsAndOffDays = () => {
   const currentYear = new Date().getFullYear();
-  // Generate current year + next 2 years
   const yearOptions = [currentYear, currentYear + 1, currentYear + 2];
 
   const initialWeeks = [
@@ -142,7 +126,7 @@ const WeekendsAndOffDays = () => {
 
   const fetchShifts = async () => {
     try {
-      const data = await getShiftList();
+      const data = await fetchWeeklyOffShifts(); // Using the new endpoint
       setShifts(data);
       if (data.length) {
         setSelectedShift(data[0].id || data[0].name);
@@ -153,10 +137,12 @@ const WeekendsAndOffDays = () => {
     }
   };
 
+  // RESTORED: handleClear function
   const handleClear = () => {
     setWeeks(initialWeeks);
   };
 
+  // RESTORED: handleDayClick function
   const handleDayClick = (weekIndex, dayIndex) => {
     setWeeks((prevWeeks) => {
       const newWeeks = [...prevWeeks];
@@ -221,10 +207,10 @@ const WeekendsAndOffDays = () => {
 
   const labelClass = "text-[12px] font-medium text-gray-700 mb-2 block ml-1";
   const selectClass =
-    "w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-[13px] appearance-none focus:outline-none text-gray-600 h-[45px] font-poppins shadow-sm";
+    "w-full py-2 bg-white border border-gray-200 rounded-xl text-[13px] appearance-none focus:outline-none text-gray-600 h-[45px] font-poppins shadow-sm";
 
   return (
-    <div className="w-full bg-[#F4F7F9] p-6 min-h-screen font-poppins">
+    <div className="w-full bg-[#F4F7F9] p-6 font-poppins">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-[20px] text-gray-900">Weekends and Off days</h2>
       </div>
@@ -232,7 +218,7 @@ const WeekendsAndOffDays = () => {
       <div className="flex flex-col lg:flex-row gap-2">
         <div className="w-full lg:w-[45%] flex flex-col">
           <div className="bg-[#F8FAFB] p-8 rounded-3xl border border-gray-100 flex-grow">
-            <h3 className="text-[18px]  text-gray-900 mb-1">Select the days</h3>
+            <h3 className="text-[18px] text-gray-900 mb-1">Select the days</h3>
             <p className="text-[13px] text-gray-400 mb-8 leading-snug max-w-[300px]">
               The selected weekly off days apply to all weeks throughout the
               year.
@@ -282,7 +268,13 @@ const WeekendsAndOffDays = () => {
                 <select
                   className={selectClass}
                   value={selectedShift}
-                  onChange={(e) => setSelectedShift(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedShift(e.target.value);
+                    const shiftObj = shifts.find(
+                      (s) => (s.id || s.name) === e.target.value,
+                    );
+                    setSelectedPolicyId(shiftObj?.policies?.[0]?.id || "");
+                  }}
                 >
                   {shifts.map((s, idx) => (
                     <option key={idx} value={s.id || s.name}>
@@ -308,18 +300,15 @@ const WeekendsAndOffDays = () => {
             </div>
           </div>
 
+          {/* Info section ... */}
           <div className="mt-4 space-y-2 px-2">
             <p className="text-[12px] font-medium text-gray-900 mb-3">Info:</p>
-
-            {/* Full Day Info */}
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 bg-[#96E0BC] rounded-[4px]"></div>
               <span className="text-[12px] text-gray-500">
                 1st Click: Full Day
               </span>
             </div>
-
-            {/* 1st Half Day Info */}
             <div className="flex items-center gap-3">
               <div
                 className="w-5 h-5 rounded-[4px]"
@@ -329,11 +318,9 @@ const WeekendsAndOffDays = () => {
                 }}
               ></div>
               <span className="text-[12px] text-gray-500">
-                2nd Click: 1st Half Day (Top)
+                2nd Click: 1st Half Day
               </span>
             </div>
-
-            {/* 2nd Half Day Info */}
             <div className="flex items-center gap-3">
               <div
                 className="w-5 h-5 rounded-[4px]"
@@ -343,15 +330,7 @@ const WeekendsAndOffDays = () => {
                 }}
               ></div>
               <span className="text-[12px] text-gray-500">
-                3rd Click: 2nd Half Day (Bottom)
-              </span>
-            </div>
-
-            {/* Reset Info */}
-            <div className="flex items-center gap-3">
-              <div className="w-5 h-5 bg-[#F4F7F8] rounded-[4px]"></div>
-              <span className="text-[12px] text-gray-500">
-                4th Click: Reset to Normal
+                3rd Click: 2nd Half Day
               </span>
             </div>
           </div>
@@ -395,39 +374,6 @@ const WeekendsAndOffDays = () => {
                 </div>
               </div>
             ))}
-          </div>
-
-          <div className="flex items-center gap-6 mt-10 pt-6 border-t border-gray-50">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-[#96E0BC] rounded-lg"></div>
-              <span className="text-[12px] font-medium text-gray-600">
-                Full
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div
-                className="w-6 h-6 bg-[#C6EBF4] rounded-lg"
-                style={{
-                  background:
-                    "linear-gradient(to bottom, #C6EBF4 50%, #F4F7F8 50%)",
-                }}
-              ></div>
-              <span className="text-[12px] font-medium text-gray-600">
-                1st Half
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div
-                className="w-6 h-6 bg-[#C6EBF4] rounded-lg"
-                style={{
-                  background:
-                    "linear-gradient(to top, #C6EBF4 50%, #F4F7F8 50%)",
-                }}
-              ></div>
-              <span className="text-[12px] font-medium text-gray-600">
-                2nd Half
-              </span>
-            </div>
           </div>
         </div>
       </div>

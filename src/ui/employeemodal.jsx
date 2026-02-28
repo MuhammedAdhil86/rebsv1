@@ -4,9 +4,46 @@ function EmployeeModal({ data, employee, onClose }) {
   if (!employee) return null;
   if (!Array.isArray(data)) return null;
 
+  // Header data points from the latest entry
   const latestDay = data[0] || {};
   const totalWorkTime = latestDay.total_work_time || "00:00:00";
   const status = latestDay.status || "On time";
+
+  /**
+   * FIX: Timezone Offset Issue
+   * Instead of using new Date().toLocaleTimeString (which adds +5:30 IST),
+   * we split the string to get the exact hours/minutes sent by the server.
+   */
+  const formatTimeManual = (timeStr) => {
+    if (!timeStr || !timeStr.includes("T")) return "N/A";
+
+    // Extracts "10:10" from "0000-01-01T10:10:52Z"
+    const timePart = timeStr.split("T")[1].substring(0, 5);
+    let [hours, minutes] = timePart.split(":");
+
+    const h = parseInt(hours, 10);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const displayHours = h % 12 || 12;
+
+    return `${displayHours}:${minutes} ${ampm}`;
+  };
+
+  /**
+   * Helper for Date display (e.g., "Feb 28")
+   */
+  const formatDateManual = (dateStr) => {
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  /**
+   * Helper for Weekday display (e.g., "Saturday")
+   */
+  const formatDayManual = (dateStr) => {
+    return new Date(dateStr).toLocaleDateString("en-US", { weekday: "long" });
+  };
 
   return (
     <>
@@ -34,7 +71,7 @@ function EmployeeModal({ data, employee, onClose }) {
                 />
               </div>
               <div>
-                <h2 className="text-lg font-medium text-gray-900 leading-tight">
+                <h2 className="text-lg font-normal text-gray-900 leading-tight">
                   {employee.name || "Unknown"}
                 </h2>
                 <p className="text-xs font-normal text-gray-400">
@@ -45,7 +82,7 @@ function EmployeeModal({ data, employee, onClose }) {
 
             <div className="flex flex-col items-end">
               <div className="bg-[#F8F9FA] px-4 py-2 rounded-xl text-center min-w-[100px]">
-                <p className="text-lg font-medium text-gray-800 tabular-nums">
+                <p className="text-lg font-normal text-gray-800 tabular-nums">
                   {totalWorkTime}
                 </p>
                 <p className="text-[9px] font-normal text-gray-400 uppercase tracking-tighter">
@@ -53,7 +90,7 @@ function EmployeeModal({ data, employee, onClose }) {
                 </p>
               </div>
               <span
-                className={`mt-2 px-4 py-1 text-white text-[10px] font-medium rounded-full ${
+                className={`mt-2 px-4 py-1 text-white text-[10px] font-normal rounded-full ${
                   status === "On time" ? "bg-[#00C582]" : "bg-orange-500"
                 }`}
               >
@@ -64,125 +101,109 @@ function EmployeeModal({ data, employee, onClose }) {
 
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-300 hover:text-gray-600 transition-colors"
+            className="absolute top-4 right-4 text-gray-300 hover:text-gray-600 transition-colors font-normal"
           >
             ✕
           </button>
 
-          {/* Activity Log */}
-          <h3 className="text-[11px] font-medium text-gray-400 mb-6 uppercase tracking-[0.2em]">
+          {/* Activity Log Section */}
+          <h3 className="text-[11px] font-normal text-gray-400 mb-6 uppercase tracking-[0.2em]">
             Activity Log
           </h3>
 
           <div className="flex flex-col gap-4 mb-8">
-            {data.map((day) => {
-              return (
-                <div key={day.date} className="flex gap-4">
-                  {/* Left Date Box */}
-                  <div className="w-24 flex flex-col justify-start bg-[#F8F9FA] rounded-xl">
-                    {/* Fixed-size inside box */}
-                    <div className="relative w-full h-44 rounded-2xl border border-gray-50 flex flex-col items-center justify-center px-2">
-                      {/* Status top right */}
-                      <span
-                        className={`absolute top-1 right-1 px-2 py-0.5 text-[8px] font-medium rounded-full ${
-                          day.status === "On time"
-                            ? "bg-[#00C582] text-white"
-                            : "bg-orange-500 text-white"
-                        }`}
-                      >
-                        {day.status}
-                      </span>
+            {data.map((day) => (
+              <div key={day.date} className="flex gap-4">
+                {/* Left Date Box */}
+                <div className="w-24 flex flex-col justify-start bg-[#F8F9FA] rounded-xl">
+                  <div className="relative w-full h-44 rounded-2xl border border-gray-50 flex flex-col items-center justify-center px-2">
+                    {/* Day Status Badge */}
+                    <span
+                      className={`absolute top-1 right-1 px-2 py-0.5 text-[8px] font-normal rounded-full ${
+                        day.status === "On time"
+                          ? "bg-[#00C582] text-white"
+                          : "bg-orange-500 text-white"
+                      }`}
+                    >
+                      {day.status}
+                    </span>
 
-                      {/* Centered content */}
-                      <div className="flex flex-col items-center justify-center gap-1">
-                        {/* Work hours */}
-                        <p className="text-[10px] font-medium text-gray-700 tabular-nums">
-                          {day.total_work_time || "00:00:00"}
-                        </p>
+                    {/* Centered Date Info */}
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      <p className="text-[10px] font-normal text-gray-700 tabular-nums">
+                        {day.total_work_time || "00:00:00"}
+                      </p>
+                      <p className="text-sm font-normal text-gray-800">
+                        {formatDateManual(day.date)}
+                      </p>
+                      <p className="text-[10px] font-normal text-gray-400">
+                        {formatDayManual(day.date)}
+                      </p>
 
-                        {/* Date */}
-                        <p className="text-sm font-medium text-gray-800">
-                          {new Date(day.date).toLocaleDateString([], {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </p>
-
-                        {/* Weekday */}
-                        <p className="text-[10px] font-normal text-gray-400">
-                          {new Date(day.date).toLocaleDateString([], {
-                            weekday: "long",
-                          })}
-                        </p>
-
-                        {/* Checkout Status */}
-                        {day.checkout_status && (
-                          <span
-                            className={`px-2 py-0.5 text-[9px] font-medium rounded ${
-                              day.checkout_status === "Full Day"
-                                ? "bg-green-100 text-green-600"
-                                : "bg-orange-100 text-orange-500"
-                            }`}
-                          >
-                            {day.checkout_status}
-                          </span>
-                        )}
-                      </div>
+                      {/* Checkout Badge */}
+                      {day.checkout_status && (
+                        <span
+                          className={`px-2 py-0.5 text-[9px] font-normal rounded ${
+                            day.checkout_status === "Full Day"
+                              ? "bg-green-100 text-green-600"
+                              : "bg-orange-100 text-orange-500"
+                          }`}
+                        >
+                          {day.checkout_status}
+                        </span>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  {/* Right Side Cards */}
-                  <div className="flex-1 flex flex-col gap-3">
-                    {day.attendance.map((att) => {
-                      const isCheckOut = att.status
-                        ?.toLowerCase()
-                        .includes("out");
-                      const deviceName =
-                        att.location_info?.device || "Unknown device";
+                {/* Right Side Punch Cards */}
+                <div className="flex-1 flex flex-col gap-3">
+                  {day.attendance.map((att) => {
+                    const isCheckOut = att.status
+                      ?.toLowerCase()
+                      .includes("out");
+                    const deviceName =
+                      att.location_info?.device || "Unknown device";
 
-                      return (
-                        <div
-                          key={att.id}
-                          className="flex items-center justify-between p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow"
-                        >
-                          <div className="flex gap-4 items-center">
-                            <div
-                              className={`w-1 h-10 rounded-full ${
-                                isCheckOut ? "bg-[#FF8A8A]" : "bg-[#00C582]"
-                              }`}
-                            />
-                            <div>
-                              <p className="text-sm font-medium text-gray-800">
-                                {new Date(att.time).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </p>
-                              <p className="text-[10px] font-normal text-gray-400">
-                                {att.status || "Check in"}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="text-right">
-                            <p className="text-[11px] font-normal text-gray-600">
-                              {deviceName}
+                    return (
+                      <div
+                        key={att.id}
+                        className="flex items-center justify-between p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex gap-4 items-center">
+                          <div
+                            className={`w-1 h-10 rounded-full ${
+                              isCheckOut ? "bg-[#FF8A8A]" : "bg-[#00C582]"
+                            }`}
+                          />
+                          <div>
+                            <p className="text-sm font-normal text-gray-800">
+                              {formatTimeManual(att.time)}
                             </p>
-                            <p className="text-[9px] font-normal text-gray-300 uppercase tracking-widest">
-                              Device
+                            <p className="text-[10px] font-normal text-gray-400 uppercase tracking-wide">
+                              {att.status || "Check in"}
                             </p>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
+
+                        <div className="text-right">
+                          <p className="text-[11px] font-normal text-gray-600">
+                            {deviceName.split(" (")[0]}
+                          </p>
+                          <p className="text-[9px] font-normal text-gray-300 uppercase tracking-widest">
+                            Device
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
 
-          {/* Previous Days */}
-          <h3 className="text-[11px] font-medium text-gray-400 mb-6 uppercase tracking-[0.2em]">
+          {/* Previous Days Label */}
+          <h3 className="text-[11px] font-normal text-gray-400 mb-6 uppercase tracking-[0.2em]">
             Previous Days
           </h3>
         </div>

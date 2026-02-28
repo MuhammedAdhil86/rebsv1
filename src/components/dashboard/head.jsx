@@ -278,7 +278,6 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
             { label: "Attendance Overview", key: "overview" },
             { label: "Log Details", key: "logdetails" },
             { label: "Leave Requests", key: "leaverequests" },
-            { label: "Daily Attendance", key: "dailyAttendance" },
             { label: "Muster Roll", key: "musterRoll" },
             { label: "Regularization", key: "regularization" },
           ].map((tab) => (

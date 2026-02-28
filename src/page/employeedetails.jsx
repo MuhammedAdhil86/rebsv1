@@ -12,8 +12,7 @@ import useEmployeeStore from "../store/employeeStore";
 // Tabs
 import PersonalInfoTab from "../components/profiledetailstabs/personal_info_tab.jsx";
 import AttachmentsTab from "../components/profiledetailstabs/attachment_tab.jsx";
-import ActivityTab from "../components/profiledetailstabs/activity_tab.jsx"; // <- Added
-import Privilege from "../ui/privilages.jsx";
+import ActivityTab from "../components/profiledetailstabs/activity_tab.jsx";
 import SettingsTab from "../components/profiledetailstabs/settings_tab.jsx";
 
 import axiosInstance from "../service/axiosinstance.js";
@@ -45,7 +44,6 @@ export default function EmployeeProfile() {
 
     try {
       setStatusUpdating(true);
-
       const newStatus = !isActive;
 
       await axiosInstance.put(
@@ -79,7 +77,6 @@ export default function EmployeeProfile() {
       });
 
       toast.success("Employee deleted successfully");
-
       setShowDeleteModal(false);
 
       setTimeout(() => navigate("/manageemployee"), 1500);
@@ -94,7 +91,6 @@ export default function EmployeeProfile() {
     { name: "Activities", icon: "solar:graph-outline" },
     { name: "Attachments", icon: "subway:pin" },
     { name: "Manage Shift", icon: "ic:twotone-manage-history" },
-    { name: "Privilege", icon: "carbon:ibm-knowledge-catalog-premium" },
     { name: "Notifications", icon: "hugeicons:notification-02" },
     { name: "Settings", icon: "solar:settings-linear" },
   ];
@@ -132,7 +128,7 @@ export default function EmployeeProfile() {
         {/* Layout */}
         <div className="flex gap-3 p-3">
           {/* Sidebar */}
-          <aside className="sticky top-4 w-60 bg-white border rounded-2xl p-6 flex flex-col items-center shadow-sm relative">
+          <aside className="sticky top-4 w-60 bg-white border rounded-2xl p-6 flex flex-col items-center shadow-sm">
             <span
               className={`absolute top-2 right-2 px-2 py-1 text-xs rounded flex items-center gap-1 ${
                 isActive
@@ -152,6 +148,7 @@ export default function EmployeeProfile() {
               <img
                 src={selectedEmployee?.image || avatar}
                 className="w-full h-full object-cover"
+                alt="Profile"
               />
             </div>
 
@@ -167,8 +164,8 @@ export default function EmployeeProfile() {
               {sidebarTabs.map((tab) => (
                 <button
                   key={tab.name}
-                  onClick={() => setActiveTab(tab.name)} // <- Updated
-                  className={`flex items-center gap-2 w-full text-left px-4 py-2 rounded-md ${
+                  onClick={() => setActiveTab(tab.name)}
+                  className={`flex items-center gap-2 w-full text-left px-4 py-2 rounded-md transition-colors ${
                     activeTab === tab.name
                       ? "bg-[#181818] text-white"
                       : "text-black hover:bg-gray-100"
@@ -187,7 +184,7 @@ export default function EmployeeProfile() {
 
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="flex items-center gap-2 w-full px-4 py-2 text-red-500 hover:bg-red-50 rounded-md"
+                className="flex items-center gap-2 w-full px-4 py-2 text-red-500 hover:bg-red-50 rounded-md transition-colors"
               >
                 <Icon icon="fluent:delete-20-regular" width="18" />
                 Delete User
@@ -198,15 +195,13 @@ export default function EmployeeProfile() {
           {/* Main Content */}
           <main className="flex-1 overflow-y-auto max-h-[85vh] pr-2 scrollbar-none">
             {activeTab === "Activities" ? (
-              <ActivityTab employee={selectedEmployee} /> // <- Updated
+              <ActivityTab employee={selectedEmployee} />
             ) : activeTab === "Personal Info" ? (
               <PersonalInfoTab employee={selectedEmployee} />
             ) : activeTab === "Attachments" ? (
               <AttachmentsTab
                 attachments={selectedEmployee?.attachments || []}
               />
-            ) : activeTab === "Privilege" ? (
-              <Privilege employee={selectedEmployee} />
             ) : activeTab === "Settings" ? (
               <SettingsTab
                 employee={selectedEmployee}
@@ -222,7 +217,7 @@ export default function EmployeeProfile() {
 
         {/* Delete Modal */}
         {showDeleteModal && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm">
             <div className="bg-white rounded-xl p-6 w-[400px] shadow-lg relative">
               <button
                 onClick={() => setShowDeleteModal(false)}
@@ -237,7 +232,7 @@ export default function EmployeeProfile() {
               </p>
 
               <textarea
-                className="w-full border rounded-md p-2 text-sm mb-4"
+                className="w-full border rounded-md p-2 text-sm mb-4 outline-none focus:ring-1 focus:ring-red-500"
                 rows={3}
                 placeholder="Reason for deletion..."
                 value={deleteReason}

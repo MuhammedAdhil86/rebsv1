@@ -4,10 +4,9 @@ import DashboardHead from "../components/dashboard/head";
 import DashboardOverview from "../components/dashboard/overview";
 import LogDetails from "../components/dashboard/Attendance Tabs/logdetails";
 import LeaveRequestes from "../components/tables/leaverequests";
-import DailyAttendance from "../components/tables/daily-attendance";
+// DailyAttendance import removed
 import MusterRoll from "../components/tables/musterroll";
 import RegularizationTable from "../components/tables/regularizationtable";
-
 
 function Dashboard({ userId, userName, onLogout }) {
   const [activeTab, setActiveTab] = useState("overview");
@@ -22,9 +21,7 @@ function Dashboard({ userId, userName, onLogout }) {
   };
 
   const getWidth = (value) =>
-    ATTENDANCE_DATA?.total
-      ? `${(value / ATTENDANCE_DATA.total) * 100}%`
-      : "0%";
+    ATTENDANCE_DATA?.total ? `${(value / ATTENDANCE_DATA.total) * 100}%` : "0%";
 
   // Sample Data
   const CALENDAR_DAYS = [
@@ -80,15 +77,12 @@ function Dashboard({ userId, userName, onLogout }) {
             )}
 
             {activeTab === "logdetails" && (
-              <LogDetails
-                CALENDAR_DAYS={CALENDAR_DAYS}
-                EMPLOYEES={EMPLOYEES}
-              />
+              <LogDetails CALENDAR_DAYS={CALENDAR_DAYS} EMPLOYEES={EMPLOYEES} />
             )}
 
             {activeTab === "leaverequests" && <LeaveRequestes />}
 
-            {activeTab === "dailyAttendance" && <DailyAttendance />}
+            {/* Daily Attendance rendering block removed */}
 
             {activeTab === "musterRoll" && <MusterRoll />}
 

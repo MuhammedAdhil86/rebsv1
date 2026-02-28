@@ -8,6 +8,7 @@ import {
   updateEmailTemplate,
   uploadEmailTemplateFile,
   getDefulatEmailTemplate,
+  getWeeklyOffShifts,
   postCloneEmailTemplate
 } from "../api/api";
 
@@ -232,6 +233,18 @@ export const cloneDefaultEmailTemplate = async (default_template_id) => {
     return response?.data;
   } catch (error) {
     console.error("Error cloning default template:", error?.response?.data || error?.message);
+    throw error;
+  }
+};
+export const fetchWeeklyOffShifts = async () => {
+  try {
+    const response = await axiosInstance.get(getWeeklyOffShifts);
+    devLog("Weekly Off Shifts Response:", response);
+    
+    // Returning data based on your existing pattern
+    return response?.data?.data ?? [];
+  } catch (error) {
+    console.error("Error fetching weekly off shifts:", error?.response?.data || error?.message);
     throw error;
   }
 };
