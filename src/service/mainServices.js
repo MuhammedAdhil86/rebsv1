@@ -9,7 +9,8 @@ import {
   uploadEmailTemplateFile,
   getDefulatEmailTemplate,
   getWeeklyOffShifts,
-  postCloneEmailTemplate
+  postCloneEmailTemplate,
+  postAddWeekOff,
 } from "../api/api";
 
 /**
@@ -245,6 +246,31 @@ export const fetchWeeklyOffShifts = async () => {
     return response?.data?.data ?? [];
   } catch (error) {
     console.error("Error fetching weekly off shifts:", error?.response?.data || error?.message);
+    throw error;
+  }
+  
+};
+
+export const createWeeklyOff = async (payload) => {
+  try {
+    devLog("Post Weekly Off Payload:", payload);
+
+    const response = await axiosInstance.post(postAddWeekOff, payload);
+
+    devLog("Post Weekly Off Response:", response);
+    
+    return response?.data;
+  } catch (error) {
+    const errorMessage =
+      error?.response?.data?.message ||
+      error?.message ||
+      "Failed to add weekly off";
+
+    console.error("createWeeklyOff error:", { 
+      url: postAddWeekOff, 
+      error: errorMessage 
+    });
+    
     throw error;
   }
 };

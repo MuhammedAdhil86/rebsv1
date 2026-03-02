@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Search, ChevronDown } from "lucide-react";
+import toast, { Toaster } from "react-hot-toast"; // Added for Hot Toast
 import { createWeeklyOff } from "../../../service/eventservice";
 import { getBranchData } from "../../../service/staffservice";
-// Ensure this path matches where you saved the fetchWeeklyOffShifts service
 import { fetchWeeklyOffShifts } from "../../../service/mainServices";
 
 // -------------------- GlowButton Component --------------------
@@ -70,6 +70,16 @@ const WeekendsAndOffDays = () => {
   const currentYear = new Date().getFullYear();
   const yearOptions = [currentYear, currentYear + 1, currentYear + 2];
 
+  const fullDayNames = {
+    Sun: "Sunday",
+    Mon: "Monday",
+    Tue: "Tuesday",
+    Wed: "Wednesday",
+    Thu: "Thursday",
+    Fri: "Friday",
+    Sat: "Saturday",
+  };
+
   const initialWeeks = [
     {
       label: "Week 01",
@@ -126,7 +136,7 @@ const WeekendsAndOffDays = () => {
 
   const fetchShifts = async () => {
     try {
-      const data = await fetchWeeklyOffShifts(); // Using the new endpoint
+      const data = await fetchWeeklyOffShifts();
       setShifts(data);
       if (data.length) {
         setSelectedShift(data[0].id || data[0].name);
@@ -137,12 +147,10 @@ const WeekendsAndOffDays = () => {
     }
   };
 
-  // RESTORED: handleClear function
   const handleClear = () => {
     setWeeks(initialWeeks);
   };
 
-  // RESTORED: handleDayClick function
   const handleDayClick = (weekIndex, dayIndex) => {
     setWeeks((prevWeeks) => {
       const newWeeks = [...prevWeeks];
@@ -172,45 +180,69 @@ const WeekendsAndOffDays = () => {
     weeks.forEach((week, weekIndex) => {
       week.full.forEach((dayIndex) => {
         payloadWeeklyOffs.push({
-          day: week.days[dayIndex],
+          day: fullDayNames[week.days[dayIndex]],
           type: "Specific",
           weeks: [weekIndex + 1],
           is_half_day: false,
-          policy_id: selectedPolicyId,
+          shift_id: parseInt(selectedShift) || selectedShift,
         });
       });
-      [...week.half1, ...week.half2].forEach((dayIndex) => {
+
+      week.half1.forEach((dayIndex) => {
         payloadWeeklyOffs.push({
-          day: week.days[dayIndex],
+          day: fullDayNames[week.days[dayIndex]],
           type: "Specific",
           weeks: [weekIndex + 1],
           is_half_day: true,
-          policy_id: selectedPolicyId,
-          half_day_slot: week.half1.includes(dayIndex) ? 1 : 2,
+          half_day_type: "First Half",
+          shift_id: parseInt(selectedShift) || selectedShift,
+        });
+      });
+
+      week.half2.forEach((dayIndex) => {
+        payloadWeeklyOffs.push({
+          day: fullDayNames[week.days[dayIndex]],
+          type: "Specific",
+          weeks: [weekIndex + 1],
+          is_half_day: true,
+          half_day_type: "Second Half",
+          shift_id: parseInt(selectedShift) || selectedShift,
         });
       });
     });
 
     const payload = {
       year: parseInt(selectedYear),
-      branch: selectedBranch,
-      shift: selectedShift,
+      branch: selectedBranch.toString(),
       weeklyOffs: payloadWeeklyOffs,
     };
+
     try {
-      await createWeeklyOff(payload);
-      alert("Weekly off created successfully");
+      const response = await createWeeklyOff(payload);
+
+      // Dynamic Success Message from Backend
+      const successMsg =
+        response?.message || "Weekly off created successfully!";
+      toast.success(successMsg);
+
+      setWeeks(initialWeeks); // Move calendar back to normal colors (reset)
     } catch (error) {
-      alert("Failed to create weekly off");
+      // Dynamic Error Message from Backend
+      const errorMsg =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Failed to create weekly off";
+      toast.error(errorMsg);
     }
   };
 
   const labelClass = "text-[12px] font-medium text-gray-700 mb-2 block ml-1";
   const selectClass =
-    "w-full py-2 bg-white border border-gray-200 rounded-xl text-[13px] appearance-none focus:outline-none text-gray-600 h-[45px] font-poppins shadow-sm";
+    "w-full py-2 bg-white border border-gray-200 rounded-xl text-[13px] appearance-none focus:outline-none text-gray-600 h-[45px] font-poppins shadow-sm px-4";
 
   return (
     <div className="w-full bg-[#F4F7F9] p-6 font-poppins">
+      <Toaster position="top-right" reverseOrder={false} />
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-[20px] text-gray-900">Weekends and Off days</h2>
       </div>
@@ -239,7 +271,7 @@ const WeekendsAndOffDays = () => {
                   ))}
                 </select>
                 <ChevronDown
-                  className="absolute right-4 top-[42px] text-gray-400"
+                  className="absolute right-4 top-[42px] text-gray-400 pointer-events-none"
                   size={16}
                 />
               </div>
@@ -258,7 +290,7 @@ const WeekendsAndOffDays = () => {
                   ))}
                 </select>
                 <ChevronDown
-                  className="absolute right-4 top-[42px] text-gray-400"
+                  className="absolute right-4 top-[42px] text-gray-400 pointer-events-none"
                   size={16}
                 />
               </div>
@@ -283,7 +315,7 @@ const WeekendsAndOffDays = () => {
                   ))}
                 </select>
                 <ChevronDown
-                  className="absolute right-4 top-[42px] text-gray-400"
+                  className="absolute right-4 top-[42px] text-gray-400 pointer-events-none"
                   size={16}
                 />
               </div>

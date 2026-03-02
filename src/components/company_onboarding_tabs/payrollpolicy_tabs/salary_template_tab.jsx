@@ -112,7 +112,7 @@ export default function SalaryTemplate() {
       await payrollService.deleteTemplate(selectedRow.id);
       toast.success("Template deleted successfully", { id: toastId });
       closeDeleteModal();
-      fetchTemplates(); // 🔄 Refresh table
+      fetchTemplates();
     } catch (error) {
       const errorMsg =
         error.response?.data?.message || "Failed to delete template";
@@ -145,6 +145,9 @@ export default function SalaryTemplate() {
       );
     }
     if (tab === "salary-components") {
+      // Don't show the "Create" button if we are already inside the create view
+      if (showCreateComponent) return null;
+
       return (
         <div className="flex items-center gap-2">
           <CommonButton
@@ -209,6 +212,14 @@ export default function SalaryTemplate() {
           </>
         );
       case "salary-components":
+        // NEW: Render the create component view INSIDE the tab content
+        if (showCreateComponent) {
+          return (
+            <CreateSalaryComponent
+              onCancel={() => setShowCreateComponent(false)}
+            />
+          );
+        }
         return <SalaryComponents />;
       case "statutory-components":
         return <StatutoryComponents />;
@@ -231,9 +242,10 @@ export default function SalaryTemplate() {
             setSelectedTemplate(null);
           }}
         />
-      ) : showCreateComponent ? (
-        <CreateSalaryComponent onCancel={() => setShowCreateComponent(false)} />
       ) : (
+        /* IMPORTANT: showCreateComponent is handled inside renderTabContent now. 
+          This keeps TabsSwitch mounted so activeTab ("salary-components") is preserved.
+        */
         <TabsSwitch
           tabs={tabs}
           activeTab={activeTab}

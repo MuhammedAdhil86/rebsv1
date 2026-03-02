@@ -17,8 +17,6 @@ const Shifts = () => {
   const [filterStatus, setFilterStatus] = useState("");
 
   // --- PERSISTENCE LOGIC START ---
-
-  // 1. Check localStorage on initial mount
   useEffect(() => {
     const savedMode = localStorage.getItem("shiftViewMode");
     const savedShift = localStorage.getItem("shiftSelectedData");
@@ -29,14 +27,12 @@ const Shifts = () => {
     }
   }, []);
 
-  // 2. Helper function to close and clear storage
   const handleCloseUpdate = () => {
     localStorage.removeItem("shiftViewMode");
     localStorage.removeItem("shiftSelectedData");
     setViewMode("list");
     setSelectedShift(null);
   };
-
   // --- PERSISTENCE LOGIC END ---
 
   const formatTime = (timeStr) => {
@@ -79,6 +75,11 @@ const Shifts = () => {
         reg: `${shift.policies[0]?.regularisation_limit || 0}/${shift.policies[0]?.regularisation_type || ""}`,
         policy: shift.policy_count,
         status: shift.allocated_employees > 0 ? "Active" : "Inactive",
+        // Extracting string from backend object for the table list
+        remarks:
+          typeof shift.remarks === "object" && shift.remarks !== null
+            ? shift.remarks.String
+            : shift.remarks || "",
       }));
 
       setShiftData(mappedData);
@@ -96,10 +97,8 @@ const Shifts = () => {
   const handleRowClick = (row) => {
     const originalShift = rawApiData.find((s) => s.id === row.id);
     if (originalShift) {
-      // Save to localStorage so it survives refresh
       localStorage.setItem("shiftViewMode", "update");
       localStorage.setItem("shiftSelectedData", JSON.stringify(originalShift));
-
       setSelectedShift(originalShift);
       setViewMode("update");
     }
@@ -143,7 +142,7 @@ const Shifts = () => {
     return (
       <div className="w-full min-h-screen bg-white p-6 rounded-md shadow-md">
         <UpdateShiftTab
-          onClose={handleCloseUpdate} // Uses the new cleaner function
+          onClose={handleCloseUpdate}
           shiftData={selectedShift}
           refreshData={fetchShiftsData}
         />
@@ -174,7 +173,6 @@ const Shifts = () => {
             className="px-3 py-2 border rounded-lg text-sm"
           />
         </div>
-
         <button
           className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-[12px] font-medium hover:bg-gray-800"
           onClick={() => setViewMode("create")}

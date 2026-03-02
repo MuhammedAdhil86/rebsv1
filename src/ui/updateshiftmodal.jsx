@@ -14,10 +14,17 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
 
   const [policies, setPolicies] = useState([]);
   const [allPolicies, setAllPolicies] = useState([]);
-  const [remarks, setRemarks] = useState(shiftData?.remarks || "");
+
+  // LOGIC: Extracts the string from the { String: "...", Valid: true } object
+  const [remarks, setRemarks] = useState(() => {
+    if (shiftData?.remarks && typeof shiftData.remarks === "object") {
+      return shiftData.remarks.String || "";
+    }
+    return shiftData?.remarks || "";
+  });
+
   const [loading, setLoading] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -63,6 +70,7 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
       return;
     }
 
+    // This payload now matches your successful Postman test body
     const payload = {
       shift_id: shiftData.id,
       shift_name: shiftName,
@@ -71,7 +79,7 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
       is_cross_shift: isCrossShift,
       is_default: shiftData.is_default || false,
       policies: policies,
-      remarks,
+      remarks: remarks,
     };
 
     try {
@@ -111,7 +119,6 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
 
       {/* Form Grid */}
       <div className="grid grid-cols-2 gap-x-8 gap-y-5">
-        {/* Row 1: Left - Name | Right - Policies */}
         <div>
           <label className={labelStyle}>Shift Name</label>
           <input
@@ -135,7 +142,6 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
             </span>
             <ChevronDown size={16} />
           </div>
-
           {dropdownOpen && (
             <div className="absolute mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-52 overflow-auto text-[12px]">
               {allPolicies.map((policy) => (
@@ -157,7 +163,6 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
           )}
         </div>
 
-        {/* Row 2: Left - Shared (Code & Cross Shift) | Right - Color */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={labelStyle}>Shift Code</label>
@@ -193,7 +198,6 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
           />
         </div>
 
-        {/* Row 3: Left - Remarks | Right - Policy Cards Container */}
         <div>
           <label className={labelStyle}>Remarks</label>
           <input
@@ -213,7 +217,7 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
               .map((policy) => (
                 <div
                   key={policy.id}
-                  className="flex items-center gap-2 bg-[#F4F6F8] border border-gray-200 px-3 py-2 rounded-xl text-[11px] text-black animate-in fade-in zoom-in duration-200"
+                  className="flex items-center gap-2 bg-[#F4F6F8] border border-gray-200 px-3 py-2 rounded-xl text-[11px] text-black"
                 >
                   <span className="font-medium">{policy.policy_name}</span>
                   <button
@@ -224,16 +228,10 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
                   </button>
                 </div>
               ))}
-            {policies.length === 0 && (
-              <span className="text-[11px] text-gray-400 italic flex items-center">
-                No policies selected
-              </span>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Footer */}
       <div className="flex justify-end gap-3 mt-10">
         <button
           onClick={onClose}
@@ -244,7 +242,7 @@ const UpdateShiftTab = ({ onClose, shiftData, refreshData }) => {
         <button
           onClick={handleUpdate}
           disabled={loading}
-          className="px-10 py-2 bg-black text-white rounded-xl text-[12px] hover:bg-neutral-800 transition-colors disabled:bg-gray-400"
+          className="px-10 py-2 bg-black text-white rounded-xl text-[12px] hover:bg-neutral-800 disabled:bg-gray-400"
         >
           {loading ? "Updating..." : "Update Changes"}
         </button>

@@ -97,7 +97,7 @@ export default function CreateSalaryComponent({ onCancel }) {
   const [active, setActive] = useState(true);
   const [taxable, setTaxable] = useState(true);
   const [partSalary, setPartSalary] = useState(true);
-  const [proRata, setProRata] = useState(true);
+  const [pro_rata, setProRata] = useState(true);
   const [fbp, setFbp] = useState(false);
   const [epf, setEpf] = useState(true);
   const [esi, setEsi] = useState(true);
@@ -115,7 +115,7 @@ export default function CreateSalaryComponent({ onCancel }) {
       consider_epf: epf,
       epf_applicability: epf ? epfApplicability : "ALWAYS",
       consider_esi: esi,
-      pro_rata: proRata,
+      pro_rata: pro_rata,
       show_in_payslip: showPayslip,
       flexible_benefit: fbp,
       part_of_salary_structure: partSalary,
@@ -123,18 +123,17 @@ export default function CreateSalaryComponent({ onCancel }) {
       value: Number(value),
     };
 
-    // Logging the payload to the console for your inspection
     console.log("Final Payload being sent to API:", payload);
-
     const loadingToast = toast.loading("Saving salary component...");
 
     try {
       const res = await payrollService.createSalaryComponent(payload);
       toast.dismiss(loadingToast);
 
-      if (res?.ok) {
-        toast.success(res.message || "Salary component created successfully");
-        onCancel();
+      // logic update: check for success based on typical API response patterns
+      if (res?.ok || res?.status === 200 || res?.status === 201 || res?.data) {
+        toast.success("Salary component created successfully");
+        onCancel(); // This closes the form and returns you to the Component Tab
       } else {
         toast.error(res?.message || "Failed to create component");
       }
@@ -251,8 +250,8 @@ export default function CreateSalaryComponent({ onCancel }) {
             />
             <CheckboxOption
               label="Calculate on pro-rata basis"
-              checked={proRata}
-              onChange={() => setProRata(!proRata)}
+              checked={pro_rata}
+              onChange={() => setProRata(!pro_rata)}
             />
           </div>
 
