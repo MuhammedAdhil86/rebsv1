@@ -58,23 +58,6 @@ const OrganizationOnboarding = () => {
               onClick={() => setActiveTab("policy")}
             />
           </div>
-
-          {/* Sub Tabs for Organizational Details */}
-          {activeTab === "details" && (
-            <div className="flex gap-4 px-6 pb-2 border-t border-gray-100">
-              <TabButton
-                label="Add Basic Info"
-                isActive={detailsTab === "basic"}
-                onClick={() => setDetailsTab("basic")}
-              />
-
-              <TabButton
-                label="Bank Details"
-                isActive={detailsTab === "bank"}
-                onClick={() => setDetailsTab("bank")}
-              />
-            </div>
-          )}
         </div>
 
         {/* ================= SECTION TITLE ================= */}

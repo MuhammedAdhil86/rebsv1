@@ -17,14 +17,12 @@ function LeaveRequestes() {
 
   useEffect(() => {
     fetchLeaves();
-    connectWebSocket(token);
+    if (token) connectWebSocket(token);
   }, [fetchLeaves, connectWebSocket, token]);
 
-  // ===== Filtered & searched leaves =====
   const filteredLeaves = useMemo(() => {
     let arr = Array.isArray(leaves) ? [...leaves] : [];
 
-    // Filter by status
     if (filterStatus !== "All") {
       arr = arr.filter((req) => {
         const st = (req.status ?? "").toString().toLowerCase();
@@ -33,7 +31,6 @@ function LeaveRequestes() {
       });
     }
 
-    // Search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       arr = arr.filter((req) => {
@@ -45,7 +42,6 @@ function LeaveRequestes() {
       });
     }
 
-    // Sort by applied_on
     arr.sort((a, b) => {
       const dateA = a.applied_on ? new Date(a.applied_on) : new Date(0);
       const dateB = b.applied_on ? new Date(b.applied_on) : new Date(0);
@@ -75,7 +71,6 @@ function LeaveRequestes() {
           row?.image && row.image.trim() !== ""
             ? row.image
             : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJFYyBlkZfPY6Jb_BDM0gAW2jdMCFsYWxgeQ&s";
-
         return (
           <div className="flex items-center gap-2">
             <img
@@ -92,15 +87,11 @@ function LeaveRequestes() {
       key: "designation",
       label: "Designation",
       width: 140,
-      render: (val) => {
-        const des = val ?? "";
-        const shortDes = des.length > 12 ? des.substring(0, 12) + "…" : des;
-        return (
-          <span className="truncate block max-w-[120px]" title={des}>
-            {shortDes || "-"}
-          </span>
-        );
-      },
+      render: (val) => (
+        <span className="truncate block max-w-[120px]" title={val}>
+          {val || "-"}
+        </span>
+      ),
     },
     {
       key: "applied_on",
@@ -119,21 +110,8 @@ function LeaveRequestes() {
       label: "Reason",
       width: 150,
       render: (val) => (
-        <span className="truncate block max-w-[140px]" title={val ?? ""}>
+        <span className="truncate block max-w-[140px]" title={val}>
           {val ?? "-"}
-        </span>
-      ),
-    },
-    {
-      key: "remarks",
-      label: "Remark",
-      width: 120,
-      render: (val) => (
-        <span
-          className="truncate block max-w-[100px]"
-          title={val ? val : "Not available"}
-        >
-          {val || "Not available"}
         </span>
       ),
     },
@@ -149,16 +127,11 @@ function LeaveRequestes() {
       width: 120,
       render: (val) => {
         const status = val ?? "";
-        const shortStatus =
-          status.length > 8 ? status.substring(0, 8) + "…" : status;
         return (
           <span
-            title={status}
-            className={`px-3 py-1 rounded-full text-[11px] font-normal whitespace-nowrap inline-block max-w-[100px] text-center ${getStatusColor(
-              status,
-            )}`}
+            className={`px-3 py-1 rounded-full text-[11px] font-normal whitespace-nowrap inline-block max-w-[100px] text-center ${getStatusColor(status)}`}
           >
-            {shortStatus}
+            {status}
           </span>
         );
       },
@@ -167,27 +140,20 @@ function LeaveRequestes() {
 
   return (
     <div className="flex-1 grid grid-cols-1 gap-4 px-4 pb-4 bg-[#f9fafb] rounded-xl w-full mx-auto">
-      {/* Header: title + filters + search */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h3 className="text-base font-medium text-gray-800">Leave Requests</h3>
-
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
           <div className="flex flex-wrap items-center gap-2">
             {["All", "Pending", "Approved", "Rejected"].map((status) => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
-                className={`px-3 sm:px-4 py-2 text-[12px] rounded-lg border transition ${
-                  filterStatus === status
-                    ? "bg-black text-white border-black"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                }`}
+                className={`px-3 sm:px-4 py-2 text-[12px] rounded-lg border transition ${filterStatus === status ? "bg-black text-white border-black" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"}`}
               >
                 {status}
               </button>
             ))}
           </div>
-
           <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm w-full sm:w-auto">
             <input
               type="text"
@@ -204,7 +170,6 @@ function LeaveRequestes() {
         </div>
       </div>
 
-      {/* Table */}
       {loading ? (
         <div className="flex justify-center py-12">
           <div className="w-10 h-10 border-4 border-blue-500 border-dashed rounded-full animate-spin" />
@@ -221,7 +186,6 @@ function LeaveRequestes() {
         />
       )}
 
-      {/* Drawer for selected leave */}
       {drawerOpen && (
         <div className="fixed inset-0 z-50">
           <div
@@ -229,17 +193,12 @@ function LeaveRequestes() {
             onClick={() => setDrawerOpen(false)}
           />
           <div className="absolute top-0 right-0 h-full bg-white shadow-2xl rounded-l-2xl w-[600px] max-w-[90vw] overflow-y-auto">
-            <button
-              onClick={() => setDrawerOpen(false)}
-              className="absolute top-4 right-4 text-gray-600 hover:text-black"
-            >
-              ✕
-            </button>
+            {/* NO X ICON HERE PER REQUEST */}
             <div className="p-4">
               {selectedLeave ? (
                 <LeaveRequest
                   user={selectedLeave}
-                  handleClose={() => setDrawerOpen(false)}
+                  onClose={() => setDrawerOpen(false)} // This is the close feature
                 />
               ) : (
                 <p className="text-center text-gray-500 mt-20">
@@ -250,7 +209,6 @@ function LeaveRequestes() {
           </div>
         </div>
       )}
-
       {error && (
         <div className="text-center py-2 text-red-600">Error: {error}</div>
       )}
