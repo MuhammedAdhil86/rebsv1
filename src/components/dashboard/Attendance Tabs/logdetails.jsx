@@ -11,7 +11,7 @@ const getPlaceName = async (latitude, longitude) => {
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`,
-      { headers: { "User-Agent": "LogDetailsApp" } }
+      { headers: { "User-Agent": "LogDetailsApp" } },
     );
     const data = await response.json();
     return data.display_name || "-";
@@ -42,7 +42,7 @@ const LogDetails = () => {
       if (existing) {
         const combinedAttendance = new Map();
         [...(existing.attendance || []), ...(entry.attendance || [])].forEach(
-          (att) => combinedAttendance.set(att.id, att)
+          (att) => combinedAttendance.set(att.id, att),
         );
         map.set(entry.id, {
           ...existing,
@@ -62,7 +62,7 @@ const LogDetails = () => {
       try {
         const data = await getLogEntriesForDate(date);
         setLogs(
-          mergeLogs(Array.isArray(data) ? data : [], websocketLogs || [])
+          mergeLogs(Array.isArray(data) ? data : [], websocketLogs || []),
         );
       } catch (err) {
         console.error("Error fetching logs:", err);
@@ -72,7 +72,7 @@ const LogDetails = () => {
         setLoading(false);
       }
     },
-    [mergeLogs, websocketLogs]
+    [mergeLogs, websocketLogs],
   );
 
   useEffect(() => {
@@ -107,9 +107,11 @@ const LogDetails = () => {
   const tableData = logs
     .flatMap((log) =>
       log.attendance?.map((att) => {
+        // 1. Split to get time part
+        // 2. Remove 'Z' to treat as local time (fixes 5:30 offset)
         const combinedDateTime =
           log.date && att.time
-            ? `${log.date.split("T")[0]}T${att.time.split("T")[1]}`
+            ? `${log.date.split("T")[0]}T${att.time.split("T")[1].replace("Z", "")}`
             : null;
 
         const { latitude, longitude } = att.location_info || {};
@@ -119,8 +121,9 @@ const LogDetails = () => {
           name: att.name,
           image: att.image,
           device: att.location_info?.device || "Unknown",
+          // Format changed to show ONLY time
           time: combinedDateTime
-            ? dayjs(combinedDateTime).format("h:mm A, MMM D, YYYY")
+            ? dayjs(combinedDateTime).format("h:mm A")
             : "-",
           distance: att.distance ? `${att.distance} Km` : "Calculating...",
           location: {
@@ -133,7 +136,7 @@ const LogDetails = () => {
           },
           status: att.status,
         };
-      })
+      }),
     )
     .filter(Boolean)
     .filter((row) => row.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -147,10 +150,8 @@ const LogDetails = () => {
       key: "name",
       width: 180,
       render: (val, row) => {
-        const shortVal = val.length > 13 ? val.substring(0, 13) + "…" : val;
         return (
           <div className="flex items-center gap-2">
-            {/* ⭐ Dynamic Avatar Fallback (same UI, new feature) */}
             <img
               src={row.image || `https://i.pravatar.cc/40?u=${row.id}`}
               alt={val}
@@ -163,7 +164,9 @@ const LogDetails = () => {
 
             {val.length > 13 ? (
               <div className="overflow-hidden max-w-[140px]">
-                <div className="whitespace-nowrap hover:animate-marquee">{val}</div>
+                <div className="whitespace-nowrap hover:animate-marquee">
+                  {val}
+                </div>
               </div>
             ) : (
               <span className="truncate max-w-[140px]">{val}</span>
@@ -174,7 +177,7 @@ const LogDetails = () => {
     },
 
     { label: "Device", key: "device", width: 120 },
-    { label: "Time", key: "time", width: 180 },
+    { label: "Time", key: "time", width: 120 }, // Reduced width as it's only time now
     { label: "Distance", key: "distance", width: 120 },
 
     {
@@ -185,20 +188,29 @@ const LogDetails = () => {
         if (!val.latitude || !val.longitude) return "-";
         if (val.revealed) {
           if (val.loading)
-            return <span className="text-gray-400 animate-pulse">Loading...</span>;
+            return (
+              <span className="text-gray-400 animate-pulse">Loading...</span>
+            );
 
           const locText = val.text || "-";
 
           return (
             <div className="flex flex-col">
               <div className="overflow-hidden max-w-[180px]">
-                <div className="whitespace-nowrap hover:animate-marquee">{locText}</div>
+                <div className="whitespace-nowrap hover:animate-marquee">
+                  {locText}
+                </div>
               </div>
 
               <button
                 className="text-blue-600 underline mt-1"
                 onClick={() =>
-                  handleViewMap(val.latitude, val.longitude, val.att.name, val.att.image)
+                  handleViewMap(
+                    val.latitude,
+                    val.longitude,
+                    val.att.name,
+                    val.att.image,
+                  )
                 }
               >
                 View Map
@@ -226,7 +238,7 @@ const LogDetails = () => {
       render: (val) => (
         <span
           className={`px-3 py-1 rounded-full text-[12.5px] font-normal ${getStatusColor(
-            val
+            val,
           )}`}
         >
           {val === "IN" ? "Login" : "Logout"}

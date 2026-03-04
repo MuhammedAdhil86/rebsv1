@@ -7,9 +7,11 @@ import AttendancePolicy from "./workshifts/attendancepolicy";
 import LeavesAndVacations from "./leaves_and_vacations/leavepolicy";
 import WeekendsAndOffDays from "./leaves_and_vacations/weeklyoff";
 import EmailTemplates from "./email_template/emailtemplate";
+// Assuming you have a Holidays component or want to render a placeholder
 
 /* Reusable TabsSwitch Component */
 import TabsSwitch from "../../ui/tabswitch";
+import Holidays from "./leaves_and_vacations/holidays";
 
 const OrganizationalPolicy = () => {
   /* ----------------- Main Tabs ----------------- */
@@ -20,7 +22,7 @@ const OrganizationalPolicy = () => {
     { id: "email-templates", label: "Email Templates" },
     { id: "staff-onboarding", label: "Staff Onboarding" },
     { id: "employee-code", label: "Employee Code" },
-    { id: "holidays", label: "Holidays" },
+    // Removed "Holidays" from here since it's now a sub-tab
   ];
 
   /* ----------------- Sub-Tabs States ----------------- */
@@ -68,7 +70,8 @@ const OrganizationalPolicy = () => {
       {activeTab === "leaves-holidays" && (
         <>
           <div className="flex gap-4 border-b border-gray-200 mb-4">
-            {["Leave Policy", "WeeklyOff"].map((subTab) => (
+            {/* Added "Holidays" to this array */}
+            {["Leave Policy", "WeeklyOff", "Holidays"].map((subTab) => (
               <button
                 key={subTab}
                 onClick={() => setActiveLeaveTab(subTab)}
@@ -88,6 +91,8 @@ const OrganizationalPolicy = () => {
           <div>
             {activeLeaveTab === "Leave Policy" && <LeavesAndVacations />}
             {activeLeaveTab === "WeeklyOff" && <WeekendsAndOffDays />}
+            {/* Logic to render Holidays content */}
+            {activeLeaveTab === "Holidays" && <Holidays />}
           </div>
         </>
       )}

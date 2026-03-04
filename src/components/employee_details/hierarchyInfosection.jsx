@@ -7,19 +7,35 @@ import toast, { Toaster } from "react-hot-toast";
 export default function HierarchyInfoSection() {
   const { selectedEmployee, setSelectedEmployee } = useEmployeeStore();
   const [isEditing, setIsEditing] = useState(false);
+
+  // Local state for the form
   const [formData, setFormData] = useState({
-    reporting_manager_id: selectedEmployee?.reporting_manager_id || "",
-    reporting_manager: selectedEmployee?.reporting_manager || "",
+    reporting_manager_id: "",
+    reporting_manager: "",
   });
+
   const [reportingManagers, setReportingManagers] = useState([]);
 
+  // Sync local state when selectedEmployee changes in store
+  useEffect(() => {
+    if (selectedEmployee) {
+      setFormData({
+        reporting_manager_id: selectedEmployee.reporting_manager_id || "",
+        reporting_manager: selectedEmployee.reporting_manager || "",
+      });
+    }
+  }, [selectedEmployee]);
+
+  // Fetch managers list only when entering edit mode
   useEffect(() => {
     const fetchManagers = async () => {
       try {
         const response = await axiosInstance.get("/master/staff");
-        setReportingManagers(response.data.data);
+        // Ensure we are setting an array from response.data.data
+        setReportingManagers(response.data.data || []);
       } catch (error) {
         console.error("Error fetching reporting staff:", error);
+        toast.error("Failed to load managers list");
       }
     };
 
@@ -30,8 +46,16 @@ export default function HierarchyInfoSection() {
     return <p className="p-4 text-gray-500">Loading hierarchy info...</p>;
   }
 
-  const handleChange = (key, value) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+  const handleManagerChange = (managerId) => {
+    // Find the manager object to get the name
+    const managerObj = reportingManagers.find(
+      (m) => String(m.id) === String(managerId),
+    );
+
+    setFormData({
+      reporting_manager_id: managerId,
+      reporting_manager: managerObj ? managerObj.name : "",
+    });
   };
 
   const handleSave = async () => {
@@ -43,9 +67,10 @@ export default function HierarchyInfoSection() {
     try {
       await axiosInstance.put(
         `/staff/updatehierarchyinfo/${selectedEmployee.id}`,
-        { reporting_manager_id: formData.reporting_manager_id }
+        { reporting_manager_id: formData.reporting_manager_id },
       );
 
+      // Update the global Zustand store so other components reflect the change
       setSelectedEmployee({
         ...selectedEmployee,
         reporting_manager: formData.reporting_manager,
@@ -65,7 +90,9 @@ export default function HierarchyInfoSection() {
       <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium text-gray-800 text-[14px]">Hierarchy Information</h3>
+        <h3 className="font-medium text-gray-800 text-[14px]">
+          Hierarchy Information
+        </h3>
         <div className="flex items-center gap-2">
           {isEditing && (
             <button
@@ -85,19 +112,15 @@ export default function HierarchyInfoSection() {
 
       {/* Fields */}
       <div className="space-y-2">
-        {/* Reporting Manager */}
+        {/* Reporting Manager Name Field */}
         <div className="flex justify-between items-center border-b border-gray-100 py-2">
           <span className="text-gray-500 text-[12px]">Reporting Manager</span>
-          <span className="text-gray-800 text-[13px] flex-1 min-w-0 text-right">
+          <div className="flex-1 min-w-0 text-right ml-4">
             {isEditing ? (
               <select
                 value={formData.reporting_manager_id}
-                onChange={(e) => {
-                  const manager = reportingManagers.find((m) => String(m.id) === e.target.value);
-                  handleChange("reporting_manager_id", e.target.value);
-                  handleChange("reporting_manager", manager?.name || "");
-                }}
-                className="border border-gray-300 rounded px-2 py-1 text-gray-800 text-[13px] w-full flex-1 min-w-0 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                onChange={(e) => handleManagerChange(e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-gray-800 text-[13px] w-full focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value="">Select Manager</option>
                 {reportingManagers.map((m) => (
@@ -107,14 +130,18 @@ export default function HierarchyInfoSection() {
                 ))}
               </select>
             ) : (
-              formData.reporting_manager || "-"
+              <span className="text-gray-800 text-[13px]">
+                {formData.reporting_manager || "-"}
+              </span>
             )}
-          </span>
+          </div>
         </div>
 
-        {/* Reporting Manager ID */}
+        {/* Reporting Manager ID Field (Read Only) */}
         <div className="flex justify-between items-center border-b border-gray-100 py-2">
-          <span className="text-gray-500 text-[12px]">Reporting Manager ID</span>
+          <span className="text-gray-500 text-[12px]">
+            Reporting Manager ID
+          </span>
           <span className="text-gray-800 text-[13px] flex-1 min-w-0 text-right">
             {formData.reporting_manager_id || "-"}
           </span>

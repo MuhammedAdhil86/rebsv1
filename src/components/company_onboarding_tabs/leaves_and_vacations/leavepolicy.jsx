@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Search, MoreHorizontal, Power, Copy } from "lucide-react";
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Power,
+  Copy,
+  Trash2,
+  AlertTriangle,
+  X,
+} from "lucide-react";
 import PayrollTable from "../../../ui/payrolltable";
 import { fetchAllLeavePolicy } from "../../../service/companyService";
 import payrollService from "../../../service/payrollService";
@@ -13,6 +22,7 @@ const LeavesAndVacations = () => {
   const [activeTab, setActiveTab] = useState("all_leaves");
   const [showCreateTab, setShowCreateTab] = useState(false);
   const [showUpdateTab, setShowUpdateTab] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [leaveData, setLeaveData] = useState([]);
@@ -88,6 +98,22 @@ const LeavesAndVacations = () => {
     }
   };
 
+  const confirmDeleteAction = async () => {
+    if (!selectedRow) return;
+    const toastId = toast.loading("Deleting policy...");
+    try {
+      await payrollService.deleteLeavePolicy(selectedRow.id);
+      toast.success("Policy deleted successfully", { id: toastId });
+      setShowDeleteModal(false);
+      setSelectedRow(null);
+      loadAllData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete policy", {
+        id: toastId,
+      });
+    }
+  };
+
   const openMenu = (event, row) => {
     event.stopPropagation();
     const rect = event.currentTarget.getBoundingClientRect();
@@ -100,7 +126,6 @@ const LeavesAndVacations = () => {
 
   const closeMenu = () => {
     setMenuPosition(null);
-    setSelectedRow(null);
   };
 
   const handleCloseCreate = () => {
@@ -119,9 +144,8 @@ const LeavesAndVacations = () => {
     loadAllData();
   };
 
-  // EXACT ALIGNMENT CONFIGURATION (Matching Shifts Reference)
   const columns = [
-    { key: "name", label: "Leave Name", align: "left" }, // Primary anchor left
+    { key: "name", label: "Leave Name", align: "left" },
     {
       key: "leave_type",
       label: "Type",
@@ -317,7 +341,7 @@ const LeavesAndVacations = () => {
                 left: menuPosition.left,
                 zIndex: 10000,
               }}
-              className="w-44 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden p-1.5"
+              className="w-44 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden p-1.5 flex flex-col gap-0.5"
             >
               <button
                 className={`w-full text-left px-3 py-2 text-[11px] font-medium font-['Poppins'] transition-colors flex items-center gap-2 rounded-lg ${
@@ -332,8 +356,72 @@ const LeavesAndVacations = () => {
                   ? "Deactivate Policy"
                   : "Activate Policy"}
               </button>
+
+              <button
+                className="w-full text-left px-3 py-2 text-[11px] font-medium font-['Poppins'] transition-colors flex items-center gap-2 rounded-lg text-red-600 hover:bg-red-50"
+                onClick={() => {
+                  setShowDeleteModal(true);
+                  closeMenu();
+                }}
+              >
+                <Trash2 size={14} />
+                Delete Policy
+              </button>
             </div>
           </>,
+          document.body,
+        )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal &&
+        createPortal(
+          <div className="fixed inset-0 z-[10001] flex items-center justify-center px-4">
+            <div
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm"
+              onClick={() => setShowDeleteModal(false)}
+            />
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden z-[10002] animate-in fade-in zoom-in duration-200">
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-red-600">
+                    <AlertTriangle size={20} />
+                  </div>
+                  <button
+                    onClick={() => setShowDeleteModal(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <h3 className="text-lg font-semibold text-gray-900 mb-2 font-['Poppins']">
+                  Delete Policy?
+                </h3>
+                <p className="text-sm text-gray-500 font-['Poppins'] leading-relaxed">
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-gray-800">
+                    "{selectedRow?.name}"
+                  </span>
+                  ? This action is permanent and cannot be reversed.
+                </p>
+              </div>
+
+              <div className="bg-gray-50 px-6 py-4 flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors font-['Poppins']"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDeleteAction}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-all font-['Poppins'] shadow-sm shadow-red-200"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>,
           document.body,
         )}
     </div>

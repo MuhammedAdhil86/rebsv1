@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Search, ChevronDown } from "lucide-react";
-import toast, { Toaster } from "react-hot-toast"; // Added for Hot Toast
+import { ChevronDown } from "lucide-react";
+import toast, { Toaster } from "react-hot-toast";
 import { createWeeklyOff } from "../../../service/eventservice";
 import { getBranchData } from "../../../service/staffservice";
 import { fetchWeeklyOffShifts } from "../../../service/mainServices";
@@ -128,22 +128,26 @@ const WeekendsAndOffDays = () => {
     try {
       const data = await getBranchData();
       setBranches(data);
-      if (data.length) setSelectedBranch(data[0].id || data[0].name);
+      if (data && data.length > 0) {
+        setSelectedBranch(data[0].id || "");
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching branches:", error);
     }
   };
 
   const fetchShifts = async () => {
     try {
+      // Based on your URL: https://.../weekly-off?type=First Half
       const data = await fetchWeeklyOffShifts();
       setShifts(data);
-      if (data.length) {
-        setSelectedShift(data[0].id || data[0].name);
-        setSelectedPolicyId(data[0]?.policies?.[0]?.id || "");
+      if (data && data.length > 0) {
+        // Using "shift_name" and "id" from your provided JSON
+        setSelectedShift(data[0].id);
+        setSelectedPolicyId(data[0].policy_id || "");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching shifts:", error);
     }
   };
 
@@ -176,15 +180,27 @@ const WeekendsAndOffDays = () => {
   };
 
   const handleCreate = async () => {
+    if (!selectedBranch) {
+      toast.error("Please select a branch");
+      return;
+    }
+    if (!selectedShift) {
+      toast.error("Please select a shift");
+      return;
+    }
+
     const payloadWeeklyOffs = [];
     weeks.forEach((week, weekIndex) => {
+      const weekNumber = weekIndex + 1;
+
       week.full.forEach((dayIndex) => {
         payloadWeeklyOffs.push({
           day: fullDayNames[week.days[dayIndex]],
           type: "Specific",
-          weeks: [weekIndex + 1],
+          weeks: [weekNumber],
           is_half_day: false,
-          shift_id: parseInt(selectedShift) || selectedShift,
+          shift_id: parseInt(selectedShift),
+          policy_id: selectedPolicyId,
         });
       });
 
@@ -192,10 +208,11 @@ const WeekendsAndOffDays = () => {
         payloadWeeklyOffs.push({
           day: fullDayNames[week.days[dayIndex]],
           type: "Specific",
-          weeks: [weekIndex + 1],
+          weeks: [weekNumber],
           is_half_day: true,
           half_day_type: "First Half",
-          shift_id: parseInt(selectedShift) || selectedShift,
+          shift_id: parseInt(selectedShift),
+          policy_id: selectedPolicyId,
         });
       });
 
@@ -203,13 +220,19 @@ const WeekendsAndOffDays = () => {
         payloadWeeklyOffs.push({
           day: fullDayNames[week.days[dayIndex]],
           type: "Specific",
-          weeks: [weekIndex + 1],
+          weeks: [weekNumber],
           is_half_day: true,
           half_day_type: "Second Half",
-          shift_id: parseInt(selectedShift) || selectedShift,
+          shift_id: parseInt(selectedShift),
+          policy_id: selectedPolicyId,
         });
       });
     });
+
+    if (payloadWeeklyOffs.length === 0) {
+      toast.error("Please select at least one day on the calendar");
+      return;
+    }
 
     const payload = {
       year: parseInt(selectedYear),
@@ -219,15 +242,9 @@ const WeekendsAndOffDays = () => {
 
     try {
       const response = await createWeeklyOff(payload);
-
-      // Dynamic Success Message from Backend
-      const successMsg =
-        response?.message || "Weekly off created successfully!";
-      toast.success(successMsg);
-
-      setWeeks(initialWeeks); // Move calendar back to normal colors (reset)
+      toast.success(response?.message || "Weekly off created successfully!");
+      setWeeks(initialWeeks);
     } catch (error) {
-      // Dynamic Error Message from Backend
       const errorMsg =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
@@ -264,9 +281,12 @@ const WeekendsAndOffDays = () => {
                   value={selectedBranch}
                   onChange={(e) => setSelectedBranch(e.target.value)}
                 >
-                  {branches.map((b, idx) => (
-                    <option key={idx} value={b.id || b.name}>
-                      {b.name || b.branch_name}
+                  <option value="" disabled>
+                    Select Branch
+                  </option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.branch_name || b.name}
                     </option>
                   ))}
                 </select>
@@ -301,16 +321,21 @@ const WeekendsAndOffDays = () => {
                   className={selectClass}
                   value={selectedShift}
                   onChange={(e) => {
-                    setSelectedShift(e.target.value);
+                    const val = e.target.value;
+                    setSelectedShift(val);
+                    // Match by string to avoid type mismatch
                     const shiftObj = shifts.find(
-                      (s) => (s.id || s.name) === e.target.value,
+                      (s) => s.id.toString() === val.toString(),
                     );
-                    setSelectedPolicyId(shiftObj?.policies?.[0]?.id || "");
+                    setSelectedPolicyId(shiftObj?.policy_id || "");
                   }}
                 >
-                  {shifts.map((s, idx) => (
-                    <option key={idx} value={s.id || s.name}>
-                      {s.name || s.shift_name}
+                  <option value="" disabled>
+                    Select Shift
+                  </option>
+                  {shifts.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.shift_name} {/* Updated key from provided JSON */}
                     </option>
                   ))}
                 </select>
@@ -332,7 +357,6 @@ const WeekendsAndOffDays = () => {
             </div>
           </div>
 
-          {/* Info section ... */}
           <div className="mt-4 space-y-2 px-2">
             <p className="text-[12px] font-medium text-gray-900 mb-3">Info:</p>
             <div className="flex items-center gap-3">

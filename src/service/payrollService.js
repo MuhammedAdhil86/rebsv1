@@ -9,7 +9,8 @@ import { getpolicyLookup,
 getPayrollcomponents, 
 deletePayrollComponent,
 deleteTemplateAllocation,
-deletePayrollTemplate,} from "../api/api";
+deletePayrollTemplate,
+deleteLeavePolicy,} from "../api/api";
 
 const payrollService = {
   // ---------------- POLICY LOOKUPS ----------------
@@ -309,6 +310,23 @@ updateSalaryTemplate: async (id, payload) => {
     } catch (error) {
       console.error(`Error deleting allocation ${id}:`, error);
       throw error;
+    }
+  },
+  deleteLeavePolicy: async (id) => {
+    try {
+      // If deleteLeavePolicy is a function: deleteLeavePolicy(id)
+      // If it's a string: `${deleteLeavePolicy}/${id}`
+      const url = typeof deleteLeavePolicy === 'function' 
+                  ? deleteLeavePolicy(id) 
+                  : `${deleteLeavePolicy}/${id}`;
+
+      const res = await axiosInstance.delete(url);
+      
+      console.log(`Delete Leave Policy ${id} Response:`, res.data);
+      return res.data;
+    } catch (err) {
+      console.error(`Error in deleteLeavePolicy (${id}):`, err.response || err);
+      throw err;
     }
   },
 };

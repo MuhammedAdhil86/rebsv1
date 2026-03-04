@@ -83,6 +83,7 @@ export const getCompanyDetails =(id)=> `/company/get/${id}`
 export const updateCompanyDet = "/company/update"
 export const getOrgType ="/admin/organization-type/get"
 export const getCountry = "/master/country"
+export const updateCompany = "/company/update";
 
 //Company Structure
 
@@ -109,6 +110,8 @@ export const getCompliances = "/compliance/get"
 export const postCreatePolicy = "/attendance-policy/add"
 export const getPolicies = "/attendance-policy/get"
 export const getLeavePolicy = "/leave-policy/get"
+
+
 export const getRoles = "/master/role"
 export const deletePolicy = "/attendance-policy/delete/:id"
 export const getCompanyPreview = "/company/get"
@@ -166,7 +169,7 @@ export const allocateRoles = "/staff/updateusertype"
 export const editWorkHourPolicy = "/attendance-policy/update"
 export const  getShifts = "/shifts/fetch"
 
-export const deleteLeavePolicy = "/leave-policy/delete/:id"
+export const deleteLeavePolicy = (id) => `/leave-policy/delete/${id}`;
 export const deleteAllowance = "/allowance/delete/:id"
 export const deleteCompliance = "/compliance/delete/:id"
 export const deleteBranch = "/branch/delete/:id"
