@@ -122,6 +122,21 @@ export const getHoliday = "/admin/holiday/get/default"
 export const postAddHoliday = "/admin/holiday/add"
 export const postAddCSV = "/admin/holiday/addcsv"
 
+
+
+
+export const updateHoliday = (id) => `/admin/holiday/update/${id}`; // PUT form-data
+export const deleteHoliday = (id) => `/admin/holiday/delete/${id}`; // DELETE
+
+// Holiday Fetching
+export const getAllHolidays = "/admin/holiday/get/all";
+
+export const getFetchAllHolidays = "/admin/holiday/get";
+
+export const getHolidayByMonthYear = (month, year) => `/admin/holiday/get/${month}/${year}`;
+export const getHolidayByBranch = (branchId) => `/holiday/getbybranch/${branchId}`;
+export const getStaffHolidays = "/staff/holiday/get";
+
 //Leave Policy
 
 export const postLeavePolicy = "/leave-policy/add"
