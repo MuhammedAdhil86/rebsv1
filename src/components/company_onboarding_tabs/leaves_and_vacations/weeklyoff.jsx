@@ -138,13 +138,22 @@ const WeekendsAndOffDays = () => {
 
   const fetchShifts = async () => {
     try {
-      // Based on your URL: https://.../weekly-off?type=First Half
-      const data = await fetchWeeklyOffShifts();
-      setShifts(data);
-      if (data && data.length > 0) {
-        // Using "shift_name" and "id" from your provided JSON
-        setSelectedShift(data[0].id);
-        setSelectedPolicyId(data[0].policy_id || "");
+      const [firstHalfData, secondHalfData] = await Promise.all([
+        fetchWeeklyOffShifts("First Half"),
+        fetchWeeklyOffShifts("Second Half"),
+      ]);
+
+      // We add a unique identifier to each shift object to avoid duplicate key errors
+      const combinedShifts = [
+        ...(firstHalfData || []),
+        ...(secondHalfData || []),
+      ];
+
+      setShifts(combinedShifts);
+
+      if (combinedShifts.length > 0) {
+        setSelectedShift(combinedShifts[0].id);
+        setSelectedPolicyId(combinedShifts[0].policy_id || "");
       }
     } catch (error) {
       console.error("Error fetching shifts:", error);
@@ -323,7 +332,6 @@ const WeekendsAndOffDays = () => {
                   onChange={(e) => {
                     const val = e.target.value;
                     setSelectedShift(val);
-                    // Match by string to avoid type mismatch
                     const shiftObj = shifts.find(
                       (s) => s.id.toString() === val.toString(),
                     );
@@ -333,9 +341,11 @@ const WeekendsAndOffDays = () => {
                   <option value="" disabled>
                     Select Shift
                   </option>
-                  {shifts.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.shift_name} {/* Updated key from provided JSON */}
+                  {shifts.map((s, idx) => (
+                    <option key={`${s.id}-${idx}`} value={s.id}>
+                      {/* Use a fallback if half_day_type is missing */}
+                      {s.shift_name}{" "}
+                      {s.half_day_type ? `(${s.half_day_type})` : ""}
                     </option>
                   ))}
                 </select>
@@ -403,19 +413,18 @@ const WeekendsAndOffDays = () => {
                   {week.days.map((day, dIdx) => {
                     let style = {};
                     let className = "bg-[#F4F7F8]";
-                    if (week.full.includes(dIdx)) {
-                      className = "bg-[#96E0BC]";
-                    } else if (week.half1.includes(dIdx)) {
+                    if (week.full.includes(dIdx)) className = "bg-[#96E0BC]";
+                    else if (week.half1.includes(dIdx))
                       style = {
                         background:
                           "linear-gradient(to bottom, #C6EBF4 50%, #F4F7F8 50%)",
                       };
-                    } else if (week.half2.includes(dIdx)) {
+                    else if (week.half2.includes(dIdx))
                       style = {
                         background:
                           "linear-gradient(to top, #C6EBF4 50%, #F4F7F8 50%)",
                       };
-                    }
+
                     return (
                       <div
                         key={dIdx}

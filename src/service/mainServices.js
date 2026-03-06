@@ -237,18 +237,17 @@ export const cloneDefaultEmailTemplate = async (default_template_id) => {
     throw error;
   }
 };
-export const fetchWeeklyOffShifts = async () => {
+export const fetchWeeklyOffShifts = async (type) => {
   try {
-    const response = await axiosInstance.get(getWeeklyOffShifts);
-    devLog("Weekly Off Shifts Response:", response);
+    // We append the type parameter to the URL
+    const response = await axiosInstance.get(`${getWeeklyOffShifts}?type=${type}`);
+    devLog(`${type} Shifts Response:`, response);
     
-    // Returning data based on your existing pattern
     return response?.data?.data ?? [];
   } catch (error) {
-    console.error("Error fetching weekly off shifts:", error?.response?.data || error?.message);
-    throw error;
+    console.error(`Error fetching ${type} shifts:`, error?.response?.data || error?.message);
+    return []; // Return empty array so Promise.all doesn't fail
   }
-  
 };
 
 export const createWeeklyOff = async (payload) => {

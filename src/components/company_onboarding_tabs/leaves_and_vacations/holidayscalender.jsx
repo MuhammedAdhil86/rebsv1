@@ -53,12 +53,12 @@ const HolidayCalendar = ({
         </div>
       </div>
 
-      <div className="border border-black/5 rounded-xl overflow-hidden shadow-sm">
-        <div className="grid grid-cols-7 border-b border-black/5 bg-black/[0.01]">
+      <div className="border border-gray-400 rounded-xl overflow-hidden shadow-sm">
+        <div className="grid grid-cols-7 border-b border-gray-400 bg-black/[0.01]">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
             <div
               key={d}
-              className="py-3 text-center text-xs font-light text-black/40 uppercase"
+              className="py-3 text-center text-xs font-light text-black uppercase"
             >
               {d}
             </div>
@@ -73,7 +73,7 @@ const HolidayCalendar = ({
             return (
               <div
                 key={idx}
-                className={`min-h-[140px] border-r border-b border-black/5 p-2 ${holiday ? "bg-red-50/30" : ""} ${!day ? "bg-black/[0.01]" : ""}`}
+                className={`min-h-[140px] border-r border-b border-gray-400 p-2 ${holiday ? "bg-red-50/30" : ""} ${!day ? "bg-black/[0.01]" : ""}`}
               >
                 {day && (
                   <div className="h-full flex flex-col">

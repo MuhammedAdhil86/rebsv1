@@ -158,7 +158,7 @@ const EmailTemplates = () => {
               : "text-gray-500 hover:text-gray-700"
           }`}
         >
-          Default Templates
+          Presets Templates
         </button>
       </div>
 
