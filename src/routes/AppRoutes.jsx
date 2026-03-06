@@ -74,6 +74,7 @@ function AppRoutes() {
         path="/shift"
         element={<ProtectedRoute element={ManageEmployeeShifts} />}
       />
+      <Route path="/payslip" element={<ProtectedRoute element={Payslip} />} />
       <Route
         path="/onboarding"
         element={<ProtectedRoute element={OrganizationOnboarding} />}
