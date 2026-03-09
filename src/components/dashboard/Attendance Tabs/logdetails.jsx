@@ -253,17 +253,15 @@ const LogDetails = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ">
           <h3 className="text-base font-medium text-gray-800">Log Info</h3>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-            <div className="flex items-center gap-2 border px-3 py-2 rounded-lg bg-white text-sm w-full sm:w-auto">
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-transparent text-gray-600 w-full focus:outline-none text-sm placeholder:text-[12px]"
-              />
-              <Search className="w-4 h-4 text-gray-400" />
-            </div>
+          <div className="flex items-center gap-1 border px-2 py-1.5 rounded-md bg-gray-50 text-xs w-36 sm:w-40">
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-transparent w-full focus:outline-none text-xs placeholder:text-gray-400"
+            />
+            <Search className="w-3.5 h-3.5 text-gray-400" />
           </div>
         </div>
 

@@ -23,6 +23,7 @@ updateContactInfo,
 updatePersonalInfo,
 getStaff,
 getEmployeeCalendar,
+getEmployeeShifts,
 getEmployeePolicy,
 
   getMaritalStatus// make sure you export this from your api.js
@@ -473,5 +474,22 @@ export const fetchShiftAllocation = async (staffId) => {
   } catch (err) {
     console.error("Failed to fetch shift allocation: ", err);
     throw err;
+  }
+};
+
+export const fetchEmployeeShifts = async (from, to, user_uuid) => {
+  try {
+    const response = await axiosInstance.get(getEmployeeShifts, {
+      params: {
+        from,
+        to,
+        user_uuid,
+      },
+    });
+    // Return the array of shifts directly
+    return response.data; 
+  } catch (error) {
+    console.error("❌ Error fetching employee shifts:", error);
+    throw error;
   }
 };

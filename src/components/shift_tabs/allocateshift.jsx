@@ -1,11 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { FiPlus, FiChevronDown, FiCalendar, FiSearch, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import {
+  FiPlus,
+  FiChevronDown,
+  FiCalendar,
+  FiSearch,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
 import axiosInstance from "../../service/axiosinstance";
 
 const avatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
 // ---------------- FILTER BAR ----------------
-const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek, handlePrev, handleNext }) => {
+const FilterBar = ({
+  employees = [],
+  selectedWeek,
+  setSelectedWeek,
+  handlePrev,
+  handleNext,
+}) => {
   const [filterMode, setFilterMode] = useState("All Employees");
   const [selectedValues, setSelectedValues] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -20,7 +33,9 @@ const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek, handlePrev, 
 
   const handleCheckboxChange = (option) => {
     setSelectedValues((prev) =>
-      prev.includes(option) ? prev.filter((v) => v !== option) : [...prev, option]
+      prev.includes(option)
+        ? prev.filter((v) => v !== option)
+        : [...prev, option],
     );
   };
 
@@ -43,14 +58,16 @@ const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek, handlePrev, 
 
   const options = getOptions();
   const filteredEmployees = employees.filter((e) =>
-    e.name.toLowerCase().includes(searchQuery.toLowerCase())
+    e.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
     <div className="flex flex-wrap items-end gap-3 mb-3 p-3 mt-1 rounded-lg relative">
       {/* Staff Type */}
       <div className="min-w-[100px] w-[130px] relative">
-        <label className="text-[11px] text-gray-500 mb-0.5 block">Staff Type</label>
+        <label className="text-[11px] text-gray-500 mb-0.5 block">
+          Staff Type
+        </label>
         <div className="relative">
           <select
             value={filterMode}
@@ -72,7 +89,9 @@ const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek, handlePrev, 
       {/* Search box for Individual */}
       {filterMode === "Individual" && (
         <div className="min-w-[150px] w-[180px] relative">
-          <label className="text-[11px] text-gray-500 mb-0.5 block">Search Employee</label>
+          <label className="text-[11px] text-gray-500 mb-0.5 block">
+            Search Employee
+          </label>
           <div className="relative">
             <input
               type="text"
@@ -87,7 +106,10 @@ const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek, handlePrev, 
               <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-sm max-h-32 overflow-y-auto scrollbar-none">
                 {filteredEmployees.length > 0 ? (
                   filteredEmployees.map((emp) => (
-                    <label key={emp.id} className="flex items-center gap-2 p-1.5 hover:bg-gray-50 cursor-pointer text-xs text-gray-700">
+                    <label
+                      key={emp.id}
+                      className="flex items-center gap-2 p-1.5 hover:bg-gray-50 cursor-pointer text-xs text-gray-700"
+                    >
                       <input
                         type="checkbox"
                         checked={selectedValues.includes(emp.name)}
@@ -98,7 +120,9 @@ const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek, handlePrev, 
                     </label>
                   ))
                 ) : (
-                  <div className="p-1.5 text-xs text-gray-500 text-center">No match found</div>
+                  <div className="p-1.5 text-xs text-gray-500 text-center">
+                    No match found
+                  </div>
                 )}
               </div>
             )}
@@ -111,20 +135,27 @@ const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek, handlePrev, 
         filterMode !== "Individual" &&
         options.length > 0 && (
           <div className="min-w-[120px] w-[160px] relative">
-            <label className="text-[11px] text-gray-500 mb-0.5 block">{filterMode}</label>
+            <label className="text-[11px] text-gray-500 mb-0.5 block">
+              {filterMode}
+            </label>
             <div
               onClick={() => setShowDropdown(!showDropdown)}
               className="w-full border border-gray-300 rounded-md p-1.5 text-xs cursor-pointer bg-white flex justify-between items-center"
             >
               <span className="truncate">
-                {selectedValues.length > 0 ? selectedValues.join(", ") : `Select ${filterMode}`}
+                {selectedValues.length > 0
+                  ? selectedValues.join(", ")
+                  : `Select ${filterMode}`}
               </span>
               <FiChevronDown className="text-gray-400 text-xs" />
             </div>
             {showDropdown && (
               <div className="absolute mt-1 w-full bg-white z-20 border border-gray-200 rounded-md shadow-sm max-h-32 overflow-y-auto scrollbar-none">
                 {options.map((option) => (
-                  <label key={option} className="flex items-center gap-2 p-1.5 hover:bg-gray-50 cursor-pointer text-xs text-gray-700">
+                  <label
+                    key={option}
+                    className="flex items-center gap-2 p-1.5 hover:bg-gray-50 cursor-pointer text-xs text-gray-700"
+                  >
                     <input
                       type="checkbox"
                       checked={selectedValues.includes(option)}
@@ -140,9 +171,11 @@ const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek, handlePrev, 
         )}
 
       {/* From/To Date */}
-      {["From","To"].map((label) => (
+      {["From", "To"].map((label) => (
         <div key={label} className="min-w-[100px] w-[115px]">
-          <label className="text-[11px] text-gray-500 mb-0.5 block">{label}</label>
+          <label className="text-[11px] text-gray-500 mb-0.5 block">
+            {label}
+          </label>
           <div className="relative">
             <input
               type="text"
@@ -176,10 +209,16 @@ const FilterBar = ({ employees = [], selectedWeek, setSelectedWeek, handlePrev, 
         </button>
 
         <div className="flex items-center gap-1">
-          <button onClick={handlePrev} className="p-1 text-gray-600 hover:text-black">
+          <button
+            onClick={handlePrev}
+            className="p-1 text-gray-600 hover:text-black"
+          >
             <FiChevronLeft size={16} />
           </button>
-          <button onClick={handleNext} className="p-1 text-gray-600 hover:text-black">
+          <button
+            onClick={handleNext}
+            className="p-1 text-gray-600 hover:text-black"
+          >
             <FiChevronRight size={16} />
           </button>
         </div>
@@ -195,7 +234,11 @@ const EmployeeInfo = ({ employee }) => (
       <input type="checkbox" className="scale-90 align-middle" />
       <div className="relative">
         <div className="w-7 h-7 bg-gray-200 overflow-hidden rounded-full">
-          <img src={avatar} alt={employee.name} className="w-full h-full object-cover" />
+          <img
+            src={avatar}
+            alt={employee.name}
+            className="w-full h-full object-cover"
+          />
         </div>
       </div>
       <div className="flex flex-col">
@@ -213,18 +256,26 @@ const EmployeeInfo = ({ employee }) => (
 const ShiftCard = ({ shift }) => {
   const isRegular = shift.name === "Regular Shift";
   const isEvening = shift.name === "Evening Shift";
-  const borderColor = isRegular ? "border-green-400" : isEvening ? "border-sky-400" : "border-gray-300";
+  const borderColor = isRegular
+    ? "border-green-400"
+    : isEvening
+      ? "border-sky-400"
+      : "border-gray-300";
   const inTime = shift.in || "00:00 AM";
   const outTime = shift.out || "00:00 PM";
   const workHours = shift.work_hours || "00:00:00";
 
   return (
-    <div className={`w-full border ${borderColor} rounded p-[6px] h-full flex flex-col justify-between bg-white relative text-[12px]`}>
+    <div
+      className={`w-full border ${borderColor} rounded p-[6px] h-full flex flex-col justify-between bg-white relative text-[12px]`}
+    >
       <button className="absolute top-1 right-1 p-[2px] bg-black hover:bg-gray-800 rounded-full flex items-center justify-center transition-colors z-10 mt-1">
         <FiPlus className="text-white text-[8px] " />
       </button>
       <div className="flex justify-between items-center mb-[2px]">
-        <div className={`truncate px-2 py-[1px] rounded-xs ${isRegular ? "text-green-500 bg-green-50" : isEvening ? "text-sky-500 bg-sky-50" : "text-gray-700 bg-gray-50"}`}>
+        <div
+          className={`truncate px-2 py-[1px] rounded-xs ${isRegular ? "text-green-500 bg-green-50" : isEvening ? "text-sky-500 bg-sky-50" : "text-gray-700 bg-gray-50"}`}
+        >
           {shift.name || "Shift"}
         </div>
       </div>
@@ -273,7 +324,10 @@ const ShiftCalendar = ({ employees, days, startIndex }) => {
             Name
           </div>
           {visibleDays.map((day, idx) => (
-            <div key={`day-${startIndex + idx}`} className="p-2 font-medium text-gray-600 text-center border-r last:border-none bg-white">
+            <div
+              key={`day-${startIndex + idx}`}
+              className="p-2 font-medium text-gray-600 text-center border-r last:border-none bg-white"
+            >
               {day}
             </div>
           ))}
@@ -282,15 +336,27 @@ const ShiftCalendar = ({ employees, days, startIndex }) => {
         {/* Rows */}
         <div className="bg-white">
           {employees.map((employee) => (
-            <div key={`emp-${employee.id}`} className="grid grid-cols-[minmax(120px,_1fr)_repeat(5,_minmax(95px,_0.7fr))] text-[11px] border-b last:border-none">
+            <div
+              key={`emp-${employee.id}`}
+              className="grid grid-cols-[minmax(120px,_1fr)_repeat(5,_minmax(95px,_0.7fr))] text-[11px] border-b last:border-none"
+            >
               <div className="p-2 border-r">
                 <EmployeeInfo employee={employee} />
               </div>
-              {(employee.shifts || []).slice(startIndex, startIndex + 5).map((shift, index) => (
-                <div key={`shift-${employee.id}-${startIndex + index}`} className="p-2 border-r last:border-none w-full">
-                  {shift.type === "off" ? <WeeklyOffCard /> : <ShiftCard shift={shift} />}
-                </div>
-              ))}
+              {(employee.shifts || [])
+                .slice(startIndex, startIndex + 5)
+                .map((shift, index) => (
+                  <div
+                    key={`shift-${employee.id}-${startIndex + index}`}
+                    className="p-2 border-r last:border-none w-full"
+                  >
+                    {shift.type === "off" ? (
+                      <WeeklyOffCard />
+                    ) : (
+                      <ShiftCard shift={shift} />
+                    )}
+                  </div>
+                ))}
             </div>
           ))}
         </div>
@@ -302,21 +368,25 @@ const ShiftCalendar = ({ employees, days, startIndex }) => {
 // ---------------- MAIN EXPORT ----------------
 export default function AllocateShift() {
   const [employeesData, setEmployeesData] = useState([]);
-  const [startIndex, setStartIndex] = useState(0); 
+  const [startIndex, setStartIndex] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const days = Array.from({ length: 31 }, (_, i) => `${String(i + 1).padStart(2,"0")}-Day`);
+  const days = Array.from(
+    { length: 31 },
+    (_, i) => `${String(i + 1).padStart(2, "0")}-Day`,
+  );
 
   const handlePrev = () => setStartIndex((prev) => Math.max(prev - 5, 0));
-  const handleNext = () => setStartIndex((prev) => Math.min(prev + 5, days.length - 5));
+  const handleNext = () =>
+    setStartIndex((prev) => Math.min(prev + 5, days.length - 5));
 
   useEffect(() => {
     const fetchShifts = async () => {
       try {
         const response = await axiosInstance.get("/shifts/filtered");
         const data = response.data;
-   
+
         const grouped = {};
         data.forEach((shift) => {
           const empKey = shift.name || shift.id || Math.random();
@@ -336,7 +406,7 @@ export default function AllocateShift() {
                   name: shift.shift_type || "Regular Shift",
                   in: shift.in_time || "00:00 AM",
                   out: shift.out_time || "00:00 PM",
-                  work_hours: shift.work_hours || "00:00:00"
+                  work_hours: shift.work_hours || "00:00:00",
                 }
               : { type: "off" };
           }
@@ -355,7 +425,7 @@ export default function AllocateShift() {
   const totalPages = Math.ceil(employeesData.length / itemsPerPage);
   const currentEmployees = employeesData.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   return (
@@ -365,19 +435,25 @@ export default function AllocateShift() {
         handlePrev={handlePrev}
         handleNext={handleNext}
       />
-      <ShiftCalendar employees={currentEmployees} days={days} startIndex={startIndex} />
-      
+      <ShiftCalendar
+        employees={currentEmployees}
+        days={days}
+        startIndex={startIndex}
+      />
+
       {/* Pagination Controls */}
       {employeesData.length > itemsPerPage && (
         <div className="flex items-center justify-between mt-4 px-2">
           <span className="text-xs text-gray-500">
-            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, employeesData.length)} of {employeesData.length} employees
+            Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+            {Math.min(currentPage * itemsPerPage, employeesData.length)} of{" "}
+            {employeesData.length} employees
           </span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className={`p-1 rounded border ${currentPage === 1 ? 'text-gray-300 border-gray-200' : 'text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+              className={`p-1 rounded border ${currentPage === 1 ? "text-gray-300 border-gray-200" : "text-gray-600 border-gray-300 hover:bg-gray-50"}`}
             >
               <FiChevronLeft size={16} />
             </button>
@@ -386,7 +462,7 @@ export default function AllocateShift() {
                 <button
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`px-2 py-1 text-xs rounded ${currentPage === i + 1 ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`px-2 py-1 text-xs rounded ${currentPage === i + 1 ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100"}`}
                 >
                   {i + 1}
                 </button>
@@ -395,7 +471,7 @@ export default function AllocateShift() {
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className={`p-1 rounded border ${currentPage === totalPages ? 'text-gray-300 border-gray-200' : 'text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+              className={`p-1 rounded border ${currentPage === totalPages ? "text-gray-300 border-gray-200" : "text-gray-600 border-gray-300 hover:bg-gray-50"}`}
             >
               <FiChevronRight size={16} />
             </button>

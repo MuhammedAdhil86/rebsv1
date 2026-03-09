@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import {
   fetchEmailTemplates,
-  fetchDefaultEmailTemplates, // ✅ new import
+  fetchDefaultEmailTemplates,
+  deleteEmailTemplateService, // ✅ Added import
 } from "../service/mainServices";
 
 /**
@@ -12,12 +13,12 @@ const useEmailTemplateStore = create((set) => ({
   // STATES
   // -------------------------------
   templates: [],
-  defaultTemplates: [], // ✅ new state
+  defaultTemplates: [],
   loading: false,
   error: null,
 
   // -------------------------------
-  // FETCH ALL EMAIL TEMPLATES
+  // FETCH ALL EMAIL TEMPLATES (Untouched)
   // -------------------------------
   loadTemplates: async () => {
     set({ loading: true, error: null });
@@ -37,7 +38,7 @@ const useEmailTemplateStore = create((set) => ({
   },
 
   // -------------------------------
-  // FETCH DEFAULT EMAIL TEMPLATES
+  // FETCH DEFAULT EMAIL TEMPLATES (Untouched)
   // -------------------------------
   loadDefaultTemplates: async () => {
     set({ loading: true, error: null });
@@ -53,6 +54,23 @@ const useEmailTemplateStore = create((set) => ({
         error: error.message || "Failed to fetch default email templates",
         loading: false,
       });
+    }
+  },
+
+  // -------------------------------
+  // DELETE EMAIL TEMPLATE ✅ NEW LOGIC
+  // -------------------------------
+  removeTemplate: async (id) => {
+    try {
+      await deleteEmailTemplateService(id);
+      // Update local state by filtering out the deleted template
+      set((state) => ({
+        templates: state.templates.filter((t) => t.id !== id),
+      }));
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      throw error;
     }
   },
 }));

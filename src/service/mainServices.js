@@ -10,6 +10,7 @@ import {
   getDefulatEmailTemplate,
   getWeeklyOffShifts,
   postCloneEmailTemplate,
+  deleteEmailTemplate,
   postAddWeekOff,
 } from "../api/api";
 
@@ -271,5 +272,23 @@ export const createWeeklyOff = async (payload) => {
     });
     
     throw error;
+  }
+};
+
+export const deleteEmailTemplateService = async (id) => {
+  if (!id) throw new Error("Template ID is required");
+
+  // FIX: Call the function with the id instead of template literals
+  const url = deleteEmailTemplate(id); 
+
+  try {
+    const response = await axiosInstance.delete(url);
+    return response.data; 
+  } catch (error) {
+    const errorMessage =
+      error?.response?.data?.message || 
+      error?.response?.data?.error || 
+      "Failed to delete email template";
+    throw new Error(errorMessage);
   }
 };

@@ -127,11 +127,16 @@ function LeaveRequestes() {
       width: 120,
       render: (val) => {
         const status = val ?? "";
+        // Logic: If length > 15, cut at 15 and add "...", otherwise show full status
+        const displayedStatus =
+          status.length > 10 ? status.substring(0, 10) + "..." : status;
+
         return (
           <span
+            title={status} // Added title so user can see full text on hover
             className={`px-3 py-1 rounded-full text-[11px] font-normal whitespace-nowrap inline-block max-w-[100px] text-center ${getStatusColor(status)}`}
           >
-            {status}
+            {displayedStatus}
           </span>
         );
       },
@@ -148,7 +153,11 @@ function LeaveRequestes() {
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
-                className={`px-3 sm:px-4 py-2 text-[12px] rounded-lg border transition ${filterStatus === status ? "bg-black text-white border-black" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"}`}
+                className={`px-3 py-1.5 text-xs rounded-md border transition ${
+                  filterStatus === status
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                }`}
               >
                 {status}
               </button>

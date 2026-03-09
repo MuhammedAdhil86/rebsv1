@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Gift,
-  Plus,
-  Calendar as CalendarIcon,
-  List as ListIcon,
-} from "lucide-react";
+import { Plus, Calendar as CalendarIcon, List as ListIcon } from "lucide-react";
 import HolidayCalendar from "./holidayscalender";
 import HolidayList from "./holidayslist";
 import {
@@ -66,59 +61,65 @@ const Holidays = () => {
 
   return (
     <div className="p-4 w-full bg-white min-h-screen">
-      {/* HEADER SECTION */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-3">
-          <Gift className="text-red-400" size={20} />
-          <h1 className="text-xl font-normal text-black tracking-tight">
-            Holidays
-          </h1>
+      {/* TABS & ACTIONS SECTION - Button moved to right end */}
+      <div className="flex justify-between items-end border-b border-gray-300 mb-6">
+        {/* Left Side: Tab Navigation */}
+        <div className="flex gap-8">
+          <button
+            onClick={() => setActiveTab("calendar")}
+            className={`flex items-center gap-2 pb-3 text-sm font-medium transition-all relative ${
+              activeTab === "calendar" ? "text-black" : "text-black/30"
+            }`}
+          >
+            <CalendarIcon size={16} /> Calendar View
+            {activeTab === "calendar" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black rounded-full" />
+            )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("list")}
+            className={`flex items-center gap-2 pb-3 text-sm font-medium transition-all relative ${
+              activeTab === "list" ? "text-black" : "text-black/30"
+            }`}
+          >
+            <ListIcon size={16} /> Holiday List
+            {activeTab === "list" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black rounded-full" />
+            )}
+          </button>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-black rounded-lg text-white text-[12px] font-light"
-        >
-          <Plus size={14} strokeWidth={1.5} /> Add Holiday
-        </button>
+
+        {/* Right Side: Action Button */}
+        <div className="pb-2">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-black rounded-lg text-white text-[12px] font-light hover:bg-zinc-800 transition-colors"
+          >
+            <Plus size={14} strokeWidth={1.5} /> Add Holiday
+          </button>
+        </div>
       </div>
 
-      {/* TABS SECTION */}
-      <div className="flex gap-8 border-b border-gray-300 mb-6">
-        <button
-          onClick={() => setActiveTab("calendar")}
-          className={`flex items-center gap-2 pb-3 text-sm font-medium transition-all relative ${activeTab === "calendar" ? "text-black" : "text-black/30"}`}
-        >
-          <CalendarIcon size={16} /> Calendar View
-          {activeTab === "calendar" && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black rounded-full" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab("list")}
-          className={`flex items-center gap-2 pb-3 text-sm font-medium transition-all relative ${activeTab === "list" ? "text-black" : "text-black/30"}`}
-        >
-          <ListIcon size={16} /> Holiday List
-          {activeTab === "list" && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black rounded-full" />
-          )}
-        </button>
+      {/* CONTENT SECTION */}
+      <div className="w-full">
+        {activeTab === "calendar" ? (
+          <HolidayCalendar
+            holidays={monthHolidays}
+            currentMonth={currentMonth}
+            setCurrentMonth={setCurrentMonth}
+            getBranchName={getBranchName}
+          />
+        ) : (
+          <HolidayList
+            holidays={allHolidays}
+            getBranchName={getBranchName}
+            onRefresh={loadData}
+          />
+        )}
       </div>
 
-      {activeTab === "calendar" ? (
-        <HolidayCalendar
-          holidays={monthHolidays}
-          currentMonth={currentMonth}
-          setCurrentMonth={setCurrentMonth}
-          getBranchName={getBranchName}
-        />
-      ) : (
-        <HolidayList
-          holidays={allHolidays}
-          getBranchName={getBranchName}
-          onRefresh={loadData} // <-- ADD THIS LINE
-        />
-      )}
-
+      {/* MODAL */}
       <HolidayModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

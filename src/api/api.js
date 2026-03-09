@@ -183,6 +183,7 @@ export const allocateCompliance = "/compliance/allocate"
 export const allocateRoles = "/staff/updateusertype"
 export const editWorkHourPolicy = "/attendance-policy/update"
 export const  getShifts = "/shifts/fetch"
+export const getEmployeeShifts = "/shifts/filtered"
 
 export const deleteLeavePolicy = (id) => `/leave-policy/delete/${id}`;
 export const deleteAllowance = "/allowance/delete/:id"
@@ -266,7 +267,7 @@ export const getEmailPlaceholders = "/admin/email/placeholders"; // ✅ add this
 
 export const getEmailPurposes = "admin/available-purposes";
 export const postCreateEmailTemplate = "admin/create/templates";
-
+export const deleteEmailTemplate = (id) => `admin/templates/${id}`;
 export const getEmailTemplates = "admin/templates";
 
 export const updateEmailTemplate = "admin/notification-templates/{purpose}";

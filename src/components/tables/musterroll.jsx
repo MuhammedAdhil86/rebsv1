@@ -152,14 +152,14 @@ function MusterRoll() {
           >
             Consolidated Data
           </button>
-          <div className="flex items-center gap-1 border px-2 py-1.5 rounded-md bg-gray-50 text-xs w-36 sm:w-40">
+          <div className="flex items-center gap-1 border border-gray-200 px-2 py-1.5 rounded-md bg-gray-50 text-xs w-36 sm:w-40">
             <input
               type="text"
               placeholder="Search"
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-transparent w-full focus:outline-none text-xs"
+              className="bg-transparent w-full focus:outline-none text-xs text-gray-700 placeholder:text-gray-400"
             />
-            <Search className="w-3.5 h-3.5 text-gray-400" />
+            <Search className="w-3.5 h-3.5 text-gray-500" />
           </div>
         </div>
       </div>

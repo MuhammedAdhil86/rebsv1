@@ -4,7 +4,7 @@ import UpdateEmailTemplateModal from "./updateemailmodal";
 import { cloneDefaultEmailTemplate } from "../service/mainServices";
 import toast from "react-hot-toast";
 
-const ActionMenu = ({ row, refreshTemplates, isPresetTab }) => {
+const ActionMenu = ({ row, refreshTemplates, isPresetTab, onDeleteClick }) => {
   const [open, setOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -12,6 +12,7 @@ const ActionMenu = ({ row, refreshTemplates, isPresetTab }) => {
   const buttonRef = useRef(null);
   const menuRef = useRef(null);
 
+  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -30,7 +31,7 @@ const ActionMenu = ({ row, refreshTemplates, isPresetTab }) => {
   const handleClone = async () => {
     setOpen(false);
     try {
-      const res = await cloneDefaultEmailTemplate(row.id);
+      await cloneDefaultEmailTemplate(row.id);
       toast.success("Template cloned successfully!");
       if (refreshTemplates) refreshTemplates();
     } catch (err) {
@@ -79,12 +80,14 @@ const ActionMenu = ({ row, refreshTemplates, isPresetTab }) => {
               <button
                 onClick={() => {
                   setOpen(false);
-                  alert("View: " + row.name);
+                  // Add your View Logic or Modal here if needed
+                  console.log("View:", row.name);
                 }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-[12px] text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 <Eye size={14} /> View
               </button>
+
               <button
                 onClick={() => {
                   setOpen(false);
@@ -94,11 +97,13 @@ const ActionMenu = ({ row, refreshTemplates, isPresetTab }) => {
               >
                 <Pencil size={14} /> Edit
               </button>
+
               <div className="h-[1px] bg-gray-100 my-1" />
+
               <button
                 onClick={() => {
                   setOpen(false);
-                  alert("Delete logic here");
+                  onDeleteClick(); // Triggers the modal in EmailTemplates.jsx
                 }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-[12px] text-red-500 hover:bg-red-50 transition-colors"
               >
