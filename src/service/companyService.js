@@ -7,6 +7,7 @@ import {
   allocateAttendancePolicy,
   getShifts,
   allocateLeavePolicy,
+   regularizeAttendanceApproval,
   allocateAllowance,
   allocateCompliance,
   getRoles,
@@ -20,10 +21,14 @@ import {
   postBranch,
   getOrgType,
   postDepartment,
+  updatePresetAttendanceTemplate,
   postDivision,
+  getPresetAttendanceTemplate,
+  deleteAttendancePolicyUrl,
   postDesignation,
   postShiftcreate,
   companyPreview,
+  deleteShiftUrl,
   getAttendancepolicy,
   getAllLeavePolicy
 } from "../api/api";
@@ -461,6 +466,78 @@ export const getCompanyPreview = async () => {
     return response.data.data;
   } catch (error) {
     console.error("Error fetching company preview:", error);
+    throw error;
+  }
+};
+
+export const fetchPresetAttendanceTemplates = async () => {
+  try {
+    // Now 'getPresetAttendanceTemplate' refers correctly to the imported string "/attendance-policy/defaults"
+    const response = await axiosInstance.get(getPresetAttendanceTemplate);
+    
+    console.log("Preset Templates response:", response);
+    
+    // Correctly drilling down into the data
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching preset attendance templates:", error);
+    throw error;
+  }
+};
+
+export const updatePresetTemplate = async (id, payload) => {
+  try {
+    // This calls /attendance-policy/update/defaults/67
+    const response = await axiosInstance.put(updatePresetAttendanceTemplate(id), payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating preset template:", error);
+    throw error;
+  }
+};
+
+
+export const deleteattendancepolicy = async (id) => {
+  try {
+    const response = await axiosInstance.delete(deleteAttendancePolicyUrl(id));
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+export const deleteshift = async (id) => {
+  if (!id) throw new Error("ID is required");
+
+  try {
+    // This now calls /api_v1/shifts/delete/${id}
+    // Which proxies to https://...app/shifts/delete/${id}
+    const response = await axiosInstance.delete(deleteShiftUrl(id));
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const approveRegularization = async (requestId, status, remarks = "") => {
+  // 1. Basic Validation
+  if (!requestId) throw new Error("Request ID is required");
+  if (!status) throw new Error("Status is required (approved/rejected)");
+
+  try {
+    // 2. API Call
+    const response = await axiosInstance.put(regularizeAttendanceApproval, {
+      request_id: requestId,
+      status,  // Shorthand for status: status
+      remarks, // Shorthand for remarks: remarks
+    });
+
+    // 3. Return the data (usually contains a success message or updated object)
+    return response.data;
+  } catch (error) {
+    // 4. Log the error for developers and re-throw for the UI toast
+    console.error("Regularization Approval Error:", error.response?.data || error.message);
     throw error;
   }
 };

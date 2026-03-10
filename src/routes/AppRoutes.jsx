@@ -25,6 +25,7 @@ import EmployeeCalendar from "../page/activitycalander";
 import Payroll from "../page/payroll";
 import Payslip from "../page/payslip";
 import Announcement from "../page/announcement";
+import AssetManager from "../page/assetmanager";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ element: Element }) => {
@@ -96,7 +97,10 @@ function AppRoutes() {
         path="/announcements"
         element={<ProtectedRoute element={Announcement} />}
       />
-
+      <Route
+        path="/asset"
+        element={<ProtectedRoute element={AssetManager} />}
+      />
       {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
 
       {/* Catch-all redirect to login */}

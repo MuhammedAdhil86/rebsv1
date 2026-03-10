@@ -82,7 +82,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
 
         {
           title: "Asset Manager",
-          path: userId ? `/u/${userId}/${userNameSlug}/assetmanager` : "#",
+          path: "/asset",
           icon: icons.asset,
         },
         {

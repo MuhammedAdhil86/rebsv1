@@ -110,12 +110,13 @@ export const getCompliances = "/compliance/get"
 export const postCreatePolicy = "/attendance-policy/add"
 export const getPolicies = "/attendance-policy/get"
 export const getLeavePolicy = "/leave-policy/get"
-
+export const getPresetAttendanceTemplate = "/attendance-policy/defaults"
 
 export const getRoles = "/master/role"
 export const deletePolicy = "/attendance-policy/delete/:id"
 export const getCompanyPreview = "/company/get"
-
+export const updatePresetAttendanceTemplate = (id) => `/attendance-policy/update/defaults/${id}`;
+export const deleteAttendancePolicyUrl = (id) => `/attendance-policy/delete/${id}`;
 // Holiday
 
 export const getHoliday = "/admin/holiday/get/default"
@@ -184,6 +185,7 @@ export const allocateRoles = "/staff/updateusertype"
 export const editWorkHourPolicy = "/attendance-policy/update"
 export const  getShifts = "/shifts/fetch"
 export const getEmployeeShifts = "/shifts/filtered"
+export const deleteShiftUrl = (id) => `/shifts/delete/${id}`;
 
 export const deleteLeavePolicy = (id) => `/leave-policy/delete/${id}`;
 export const deleteAllowance = "/allowance/delete/:id"
@@ -339,3 +341,4 @@ export const updateAttendancePolicy = (id) => `/attendance-policy/update/${id}`;
 export const updateLeavePolicy = (id) => `/leave-policy/update/${id}`;
 
 
+export const regularizeAttendanceApproval = "/admin/attendance/regularize/approval";
