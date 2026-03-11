@@ -39,7 +39,7 @@ export const getEmployeeDetails = "/staff/get"
 
 //assetManager
 
-export const getAssets = "/master/asset-type"
+export const getAssetstype = "/master/asset-type"
 export const getAssetDashboard = "/admin/asset/dashboard"
 export const postCreateAsset = "/admin/asset/add"
 export const getAssetType = "/master/asset-type"
@@ -47,6 +47,7 @@ export const getAssetAllocatebyId =(id)=> `/admin/assetallocation/timeline/get/$
 export const postAssetAllocation = "/admin/assetallocation/add"
 export const postReturnAsset = "/admin/assetallocation/return"
 export const addAssetType = "/admin/asset-type/add"
+export const FetchAssets = "/admin/asset/get "
 
 //report
 
@@ -65,6 +66,7 @@ export const postEvents = "/admin/event/add"
 export const getTimezone = "/master/timezone"
 export const deleteEvent = "/admin/event/delete/:id"
 export const cancelEvent = "/admin/event/cancel/:id"
+
 
 //Digital Assets
 
@@ -122,6 +124,7 @@ export const deleteAttendancePolicyUrl = (id) => `/attendance-policy/delete/${id
 export const getHoliday = "/admin/holiday/get/default"
 export const postAddHoliday = "/admin/holiday/add"
 export const postAddCSV = "/admin/holiday/addcsv"
+// Add this to your api.js
 
 
 
@@ -172,6 +175,9 @@ export const getAllDetailsStaff = "/staff/get"
 export const putUserActivation = "/staff/toggle-activate"
 export const getWeekOff = "/admin/weekly-off/get/:year"
 
+export const getWeeklyOffBranch = "/admin/weekly-off/getbybranch/:year/:branchId";
+
+export const getWeeklyOffDefault = "/admin/weekly-off/default/get/:year";
 //Allocating Policies 
 export const allocateLeavePolicy = "/leave-policy/allocate"
 export const getPrivilegeLeavePolicy = "/leave-policy/allocated/get"

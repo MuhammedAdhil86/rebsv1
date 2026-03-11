@@ -1,100 +1,180 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import DashboardLayout from "../ui/pagelayout";
 import { FiBell, FiSearch, FiPlus } from "react-icons/fi";
 import { fetchDashboard, fetchAssets } from "../service/assetservice";
 import AssetTable from "../components/asset/assettable";
 import AssetDetailDrawer from "../components/asset/assetdrawer";
 import CreateAssetDrawer from "../components/asset/createasset";
+
 function AssetManager() {
-  const [activeTab, setActiveTab] = useState("all");
+  // --- States ---
+  const [activeCategory, setActiveCategory] = useState("Asset Manager");
+  const [activeStatus, setActiveStatus] = useState("all");
   const [assets, setAssets] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
 
-  // Column Configuration for the Table UI
-  const columns = [
-    { key: "asset_name", label: "Asset Name", align: "center" },
-    { key: "asset_type", label: "Type", align: "center" },
-    { key: "condition", label: "Condition", align: "center" },
-    {
-      key: "purchase_date",
-      label: "Purchase Date",
-      align: "center",
-      render: (val) => (val ? new Date(val).toLocaleDateString() : "—"),
-    },
-    {
-      key: "staff_id",
-      label: "Staff ID",
-      align: "center",
-      render: (val) => val || "—",
-    },
-    {
-      key: "asset_status",
-      label: "Status",
-      align: "center",
-      render: (val) => (
-        <span
-          className={`px-3 py-1 rounded-full text-[11px] font-semibold border ${
-            val === "Allocated"
-              ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-              : "bg-sky-50 text-sky-700 border-sky-100"
-          }`}
-        >
-          {val}
-        </span>
-      ),
-    },
-  ];
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: "ascending",
+  });
 
-  const loadData = async () => {
+  const handleRequestSort = (key) => {
+    let direction = "ascending";
+    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+      direction = "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const columns = useMemo(
+    () => [
+      {
+        key: "asset_name",
+        label: "Asset Name",
+        align: "center",
+        sortable: true,
+        onSort: () => handleRequestSort("asset_name"),
+      },
+      {
+        key: "asset_type",
+        label: "Type",
+        align: "center",
+        sortable: true,
+        onSort: () => handleRequestSort("asset_type"),
+      },
+      { key: "condition", label: "Condition", align: "center" },
+      {
+        key: "purchase_date",
+        label: "Purchase Date",
+        align: "center",
+        sortable: true,
+        onSort: () => handleRequestSort("purchase_date"),
+        render: (val) => (val ? new Date(val).toLocaleDateString() : "—"),
+      },
+      {
+        key: "staff_id",
+        label: "Staff ID",
+        align: "center",
+        render: (val) => val || "—",
+      },
+      {
+        key: "asset_status",
+        label: "Status",
+        align: "center",
+        render: (val) => {
+          const isAllocated = val === "Allocated";
+          return (
+            <span
+              className={`px-3 py-1 rounded-full text-[12px] border ${
+                isAllocated
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                  : "bg-sky-50 text-sky-700 border-sky-100"
+              }`}
+            >
+              {isAllocated ? "Allocated" : "Unallocated"}
+            </span>
+          );
+        },
+      },
+    ],
+    [sortConfig],
+  );
+
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
     try {
       const [assetData, stats] = await Promise.all([
         fetchAssets(),
         fetchDashboard(),
       ]);
       setAssets(Array.isArray(assetData) ? assetData : []);
-      setDashboardData(stats);
+      setDashboardData(stats || null);
     } catch (e) {
-      // Modern Error Handling: Preserve context
-      const err = e instanceof Error ? e : new Error(String(e), { cause: e });
-      console.error("AssetManager Load Error:", err.message);
+      console.error("AssetManager Load Error:", e);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
-  const filteredAssets = useMemo(() => {
-    return assets.filter((asset) => {
-      const matchesTab =
-        activeTab === "all" ||
-        (activeTab === "Allocated" && asset.asset_status === "Allocated") ||
-        (activeTab === "available" && asset.asset_status === "available");
+  const processedAssets = useMemo(() => {
+    let filtered = assets.filter((asset) => {
+      // 1. Category Filter
+      const isDigital = asset.isDigital;
+      const categoryMatch =
+        activeCategory === "Digital Assets" ? isDigital : !isDigital;
+      if (!categoryMatch) return false;
 
-      const term = searchQuery.toLowerCase();
-      const matchesSearch =
-        asset.asset_name?.toLowerCase().includes(term) ||
-        asset.asset_type?.toLowerCase().includes(term) ||
-        asset.staff_id?.toLowerCase().includes(term);
+      // 2. Status Filter
+      const isAllocated = asset.asset_status === "Allocated";
+      const statusMatch =
+        activeStatus === "all" ||
+        (activeStatus === "Allocated" && isAllocated) ||
+        (activeStatus === "available" && !isAllocated);
+      if (!statusMatch) return false;
 
-      return matchesTab && matchesSearch;
+      // 3. Search Filter
+      const term = searchQuery.toLowerCase().trim();
+      if (!term) return true;
+
+      return Object.values(asset).some(
+        (val) => val && val.toString().toLowerCase().includes(term),
+      );
     });
-  }, [assets, activeTab, searchQuery]);
+
+    if (sortConfig.key) {
+      filtered.sort((a, b) => {
+        const aVal = a[sortConfig.key] || "";
+        const bVal = b[sortConfig.key] || "";
+        if (aVal < bVal) return sortConfig.direction === "ascending" ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === "ascending" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [assets, activeCategory, activeStatus, searchQuery, sortConfig]);
 
   return (
-    <DashboardLayout userName="Admin" onLogout={() => {}}>
+    <DashboardLayout userName="Admin">
+      <div className="flex gap-4 border-b px-4 text-[14px] mb-4 bg-white/50 pt-2 shadow-sm rounded-t-lg">
+        {["Asset Manager", "Digital Assets"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => {
+              setActiveCategory(tab);
+              setActiveStatus("all");
+            }}
+            className={`pb-2 px-2 transition-all relative ${
+              activeCategory === tab
+                ? "text-black  after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-black"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
       <div className="bg-white flex justify-between items-center p-4 mb-4 shadow-sm rounded-lg">
-        <h1 className="text-lg font-medium text-gray-800">Asset Manager</h1>
+        <h1 className="text-lg  text-gray-800 tracking-tight">
+          {activeCategory}
+        </h1>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-300 cursor-pointer hover:bg-gray-50">
+          <div className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-300 cursor-pointer hover:bg-gray-50 transition-colors">
             <FiBell className="text-gray-600" />
           </div>
           <button
             onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-2 bg-black text-white text-sm px-4 py-2 rounded-full hover:bg-gray-800 transition-all shadow-sm"
+            className="flex items-center gap-2 bg-black text-white text-sm px-5 py-2 rounded-full hover:bg-gray-800 transition-all shadow-md active:scale-95"
           >
             <FiPlus /> Add Asset
           </button>
@@ -126,13 +206,11 @@ function AssetManager() {
         ].map((stat, i) => (
           <div
             key={i}
-            className="bg-white p-4 rounded-xl shadow-sm border border-gray-100"
+            className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 transition-transform hover:scale-[1.01]"
           >
-            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">
-              {stat.label}
-            </p>
-            <p className={`text-2xl font-bold ${stat.color}`}>
-              {stat.value || 0}
+            <p className="text-[16px] text-gray-400  mb-1">{stat.label}</p>
+            <p className={`text-2xl ml-2 font-black ${stat.color}`}>
+              {isLoading ? "..." : stat.value || 0}
             </p>
           </div>
         ))}
@@ -141,21 +219,27 @@ function AssetManager() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b flex justify-between items-center bg-white">
           <div className="flex gap-6 text-sm">
-            {["all", "Allocated", "available"].map((tab) => (
+            {["all", "Allocated", "available"].map((status) => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-2 capitalize transition-all relative ${activeTab === tab ? "text-black font-semibold after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-black" : "text-gray-400"}`}
+                key={status}
+                onClick={() => setActiveStatus(status)}
+                className={`pb-2 capitalize transition-all relative ${
+                  activeStatus === status
+                    ? "text-black after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-black"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
               >
-                {tab === "available" ? "Unallocated" : tab}
+                {status === "available" ? "Unallocated" : status}
               </button>
             ))}
           </div>
-          <div className="relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+
+          <div className="relative group">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
             <input
               type="text"
-              placeholder="Search assets..."
+              placeholder={`Search ${activeCategory.toLowerCase()}...`}
+              value={searchQuery}
               className="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-black w-64 transition-all"
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -164,8 +248,9 @@ function AssetManager() {
 
         <AssetTable
           columns={columns}
-          data={filteredAssets}
+          data={processedAssets}
           onRowClick={setSelectedAsset}
+          sortConfig={sortConfig}
         />
       </div>
 

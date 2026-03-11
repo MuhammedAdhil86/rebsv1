@@ -1,6 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Drawer from "@mui/material/Drawer";
-import { FiX, FiClock, FiInfo, FiUser } from "react-icons/fi";
+import {
+  FiX,
+  FiClock,
+  FiInfo,
+  FiUser,
+  FiCalendar,
+  FiShield,
+  FiExternalLink,
+} from "react-icons/fi";
 import {
   Timeline,
   TimelineItem,
@@ -25,78 +33,102 @@ const AssetDetailDrawer = ({ asset, onRefresh, onClose }) => {
   const [isEmployeeDrawerOpen, setIsEmployeeDrawerOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
-  // New Way Dynamic Placeholder Generator
-  const getPlaceholderImage = (name) => {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-      name,
-    )}&background=f3f4f6&color=a1a1aa&size=512&bold=true`;
-  };
+  const getPlaceholderImage = (name) =>
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "Asset")}&background=f3f4f6&color=a1a1aa&size=512&bold=true`;
 
-  // Fetch History and Sync Status/Staff Name
-  const fetchAllocations = async () => {
+  const fetchAllocations = useCallback(async () => {
     if (!asset?.id) return;
     setIsLoading(true);
     try {
       const response = await fetchAssetAllocationById(asset.id);
       if (response?.status_code === 200 && Array.isArray(response.data)) {
-        const data = response.data;
-        setAllocations(data);
-
-        // Logic: Extract status and staff name from the most recent record
-        if (data.length > 0) {
-          const latestRecord = data[data.length - 1];
-          setCurrentStatus(latestRecord.status);
-          // Only show staff name in the 'Info' tab if the asset is currently Allocated
+        setAllocations(response.data);
+        if (response.data.length > 0) {
+          const latest = response.data[response.data.length - 1];
+          setCurrentStatus(latest.status);
           setCurrentStaffName(
-            latestRecord.status === "Allocated" ? latestRecord.staff_name : "",
+            latest.status === "Allocated" ? latest.staff_name : "",
           );
         } else {
           setCurrentStatus(asset.asset_status);
-          setCurrentStaffName("");
+          setCurrentStaffName(asset.staff_name || "");
         }
       }
-    } catch (error) {
-      console.error("Error fetching history:", error);
+    } catch (e) {
+      console.error("History sync failed", e);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [asset?.id, asset?.asset_status, asset?.staff_name]);
 
   useEffect(() => {
-    if (asset?.id) fetchAllocations();
-  }, [asset?.id]);
+    if (asset?.id) {
+      fetchAllocations();
+      setSelectedEmployee(null);
+      setActiveSubTab("details");
+    }
+  }, [asset?.id, fetchAllocations]);
 
-  const handleReturn = async () => {
+  const handleAction = async (type) => {
     try {
-      const active = [...allocations]
-        .reverse()
-        .find((a) => a.status === "Allocated");
-
-      if (!active) return alert("No active allocation found.");
-
-      await returnAsset(asset.id, active.staff_id);
-      alert("Asset returned successfully!");
+      if (type === "return") {
+        const staffId =
+          [...allocations].reverse().find((a) => a.status === "Allocated")
+            ?.staff_id || asset.staff_id;
+        if (!staffId) throw new Error("No Staff ID found.");
+        await returnAsset(asset.id, staffId);
+      } else {
+        if (!selectedEmployee) return alert("Select staff first");
+        await axiosInstance.post("/admin/assetallocation/add", {
+          asset_id: asset.id,
+          staff_id: selectedEmployee.uuid,
+        });
+      }
       onRefresh();
       onClose();
-    } catch (error) {
-      alert("Error returning asset.");
+    } catch (e) {
+      alert(e.message || "Action failed.");
     }
   };
 
-  const handleAllocate = async () => {
-    if (!selectedEmployee) return alert("Select a staff member first.");
-    try {
-      await axiosInstance.post("/admin/assetallocation/add", {
-        asset_id: asset.id,
-        staff_id: selectedEmployee.uuid,
-      });
-      alert("Asset allocated successfully!");
-      onRefresh();
-      onClose();
-    } catch (error) {
-      alert(error.response?.data?.message || "Failed to allocate.");
-    }
-  };
+  const infoGrid = useMemo(() => {
+    if (!asset) return [];
+    const formatDate = (d) =>
+      d && !d.startsWith("1970") ? new Date(d).toLocaleDateString() : "N/A";
+
+    return [
+      {
+        label: "Condition",
+        val: asset.condition || "Good",
+        icon: <FiShield />,
+      },
+      {
+        label: "Status",
+        val: currentStatus || asset.asset_status || "Available",
+        icon: <FiInfo />,
+      },
+      {
+        label: "Staff ID",
+        val: asset.staff_id || "Unassigned",
+        icon: <FiUser />,
+      },
+      {
+        label: "Staff Name",
+        val: currentStaffName || asset.staff_name || "N/A",
+        icon: <FiUser />,
+      },
+      {
+        label: "Purchase Date",
+        val: formatDate(asset.purchase_date),
+        icon: <FiCalendar />,
+      },
+      {
+        label: "Last Maintenance",
+        val: formatDate(asset.last_maintenance),
+        icon: <FiClock />,
+      },
+    ];
+  }, [asset, currentStatus, currentStaffName]);
 
   if (!asset) return null;
 
@@ -105,83 +137,85 @@ const AssetDetailDrawer = ({ asset, onRefresh, onClose }) => {
       anchor="right"
       open={!!asset}
       onClose={onClose}
-      PaperProps={{ className: "w-full max-w-[500px] border-none" }}
+      PaperProps={{ className: "w-full max-w-[500px] border-none shadow-2xl" }}
     >
-      <div className="h-full flex flex-col bg-white font-sans">
+      <div className="h-full flex flex-col bg-white font-poppins text-[12px] font-regular">
         {/* Header */}
-        <div className="p-6 border-b flex justify-between items-center">
+        <div className="p-6 border-b flex justify-between items-start sticky top-0 bg-white z-10">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-[16px] font-regular text-gray-900 leading-tight">
               {asset.asset_name}
             </h2>
-            <p className="text-sm text-gray-500 font-medium">
-              {asset.asset_type}
+            <p className="text-[12px] text-gray-400 mt-1">
+              {asset.asset_type || "Asset"} • ID: {asset.id}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400"
           >
             <FiX size={20} />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex px-6 pt-4 gap-6 border-b">
-          <button
-            onClick={() => setActiveSubTab("details")}
-            className={`pb-3 text-sm flex items-center gap-2 transition-all ${
-              activeSubTab === "details"
-                ? "border-b-2 border-black font-bold text-black"
-                : "text-gray-400"
-            }`}
-          >
-            <FiInfo /> Info
-          </button>
-          <button
-            onClick={() => setActiveSubTab("history")}
-            className={`pb-3 text-sm flex items-center gap-2 transition-all ${
-              activeSubTab === "history"
-                ? "border-b-2 border-black font-bold text-black"
-                : "text-gray-400"
-            }`}
-          >
-            <FiClock /> History
-          </button>
+        <div className="flex px-6 pt-2 gap-8 border-b bg-gray-50/50">
+          {[
+            { id: "details", label: "Information", icon: <FiInfo /> },
+            { id: "history", label: "History Log", icon: <FiClock /> },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveSubTab(tab.id)}
+              className={`pb-3 text-[12px] flex items-center gap-2 transition-all relative ${
+                activeSubTab === tab.id
+                  ? "text-black font-regular after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-black"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <span className="text-[14px]">{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-8">
           {activeSubTab === "details" ? (
-            <div className="space-y-6">
-              <div className="rounded-2xl border overflow-hidden aspect-video bg-gray-50 flex items-center justify-center">
+            <div className="space-y-8">
+              {/* Asset Image */}
+              <div className="rounded-2xl border border-gray-100 shadow-sm overflow-hidden aspect-video bg-gray-50 flex items-center justify-center relative">
                 <img
                   src={asset.image || getPlaceholderImage(asset.asset_name)}
                   className="w-full h-full object-cover"
                   alt={asset.asset_name}
-                  onError={(e) => {
-                    e.target.src = getPlaceholderImage(asset.asset_name);
-                  }}
+                  onError={(e) =>
+                    (e.target.src = getPlaceholderImage(asset.asset_name))
+                  }
                 />
+                {asset.image && (
+                  <a
+                    href={asset.image}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="absolute bottom-3 right-3 p-2 bg-white/90 backdrop-blur rounded-full shadow-sm"
+                  >
+                    <FiExternalLink size={14} className="text-gray-600" />
+                  </a>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-y-6">
-                {[
-                  { label: "Condition", val: asset.condition },
-                  { label: "Status", val: currentStatus || asset.asset_status },
-                  { label: "Staff ID", val: asset.staff_id || "Unassigned" },
-                  { label: "Staff Name", val: currentStaffName || "N/A" },
-                  {
-                    label: "Purchase Date",
-                    val: asset.purchase_date
-                      ? new Date(asset.purchase_date).toLocaleDateString()
-                      : "N/A",
-                  },
-                ].map((item, i) => (
-                  <div key={i}>
-                    <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">
-                      {item.label}
-                    </label>
-                    <p className="text-sm font-semibold text-gray-800 mt-1">
+
+              {/* Information Grid */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-8">
+                {infoGrid.map((item, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <span className="text-[14px]">{item.icon}</span>
+                      <label className="text-[10px] uppercase font-regular tracking-wide">
+                        {item.label}
+                      </label>
+                    </div>
+                    <p className="text-[12px] text-gray-800 font-regular">
                       {item.val}
                     </p>
                   </div>
@@ -189,14 +223,14 @@ const AssetDetailDrawer = ({ asset, onRefresh, onClose }) => {
               </div>
             </div>
           ) : (
-            /* HISTORY TAB */
-            <div className="space-y-4">
+            /* History Timeline Tab */
+            <div className="pt-2">
               {isLoading ? (
-                <p className="text-sm text-gray-400 animate-pulse text-center py-10">
-                  Loading history...
-                </p>
+                <div className="py-20 text-center text-gray-400 text-[12px]">
+                  Syncing history...
+                </div>
               ) : allocations.length > 0 ? (
-                <Timeline position="right" sx={{ p: 0 }}>
+                <Timeline sx={{ p: 0 }}>
                   {[...allocations].reverse().map((item, idx) => (
                     <TimelineItem
                       key={idx}
@@ -204,32 +238,34 @@ const AssetDetailDrawer = ({ asset, onRefresh, onClose }) => {
                     >
                       <TimelineSeparator>
                         <TimelineDot
-                          sx={{ bgcolor: "black", boxShadow: "none" }}
+                          sx={{
+                            bgcolor: "black",
+                            width: "6px",
+                            height: "6px",
+                            boxShadow: "none",
+                          }}
                         />
                         {idx !== allocations.length - 1 && (
-                          <TimelineConnector sx={{ bgcolor: "#E5E7EB" }} />
+                          <TimelineConnector sx={{ bgcolor: "#f3f4f6" }} />
                         )}
                       </TimelineSeparator>
-                      <TimelineContent sx={{ pb: 4, pr: 0 }}>
-                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 shadow-sm transition-hover hover:bg-gray-100">
-                          <div className="flex justify-between items-start">
-                            <p className="text-sm font-bold text-gray-900">
+                      <TimelineContent sx={{ pb: 4, pt: 0 }}>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                          <div className="flex justify-between items-center">
+                            <p className="text-[12px] font-regular text-gray-900">
                               {item.staff_name}
                             </p>
                             <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
-                                item.status === "Returned"
-                                  ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                                  : "bg-blue-50 text-blue-600 border-blue-100"
+                              className={`text-[10px] px-2 py-0.5 rounded border ${
+                                item.status === "Allocated"
+                                  ? "bg-blue-50 text-blue-600 border-blue-100"
+                                  : "bg-emerald-50 text-emerald-600 border-emerald-100"
                               }`}
                             >
                               {item.status}
                             </span>
                           </div>
-                          <p className="text-[10px] text-gray-500 mt-2 font-medium">
-                            <span className="font-bold text-gray-400 mr-1">
-                              DATE:
-                            </span>
+                          <p className="text-[10px] text-gray-400 mt-2 font-regular">
                             {new Date(item.date).toLocaleDateString()}
                           </p>
                         </div>
@@ -238,11 +274,8 @@ const AssetDetailDrawer = ({ asset, onRefresh, onClose }) => {
                   ))}
                 </Timeline>
               ) : (
-                <div className="flex flex-col items-center justify-center py-10 text-gray-400 text-center">
-                  <FiClock size={40} className="mb-2 opacity-20" />
-                  <p className="text-sm italic font-medium">
-                    No allocation history available.
-                  </p>
+                <div className="py-20 text-center text-gray-300 text-[12px] italic">
+                  No records found.
                 </div>
               )}
             </div>
@@ -250,50 +283,40 @@ const AssetDetailDrawer = ({ asset, onRefresh, onClose }) => {
         </div>
 
         {/* Footer Actions */}
-        <div className="p-6 border-t bg-gray-50 space-y-4">
-          {currentStatus === "Allocated" ? (
-            <div className="flex flex-col gap-2">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
-                Action Required
-              </p>
-              <button
-                onClick={handleReturn}
-                className="w-full bg-white border border-black py-3 rounded-xl text-sm font-bold hover:bg-gray-50 transition-all shadow-sm active:scale-[0.98]"
-              >
-                Return Asset
-              </button>
-            </div>
+        <div className="p-6 border-t bg-white sticky bottom-0">
+          {(currentStatus || asset.asset_status) === "Allocated" ? (
+            <button
+              onClick={() => handleAction("return")}
+              className="w-full bg-white border border-black py-3 rounded-xl text-[12px] font-regular hover:bg-black hover:text-white transition-all shadow-sm active:scale-95"
+            >
+              Return to Inventory
+            </button>
           ) : (
-            <div className="space-y-3">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
-                Ready for Allocation
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setIsEmployeeDrawerOpen(true)}
-                  className="flex-[1.5] bg-white border border-gray-300 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 truncate px-2 hover:border-black transition-colors"
-                >
-                  <FiUser />{" "}
-                  {selectedEmployee ? selectedEmployee.name : "Select Staff"}
-                </button>
-                <button
-                  disabled={!selectedEmployee}
-                  onClick={handleAllocate}
-                  className="flex-1 bg-black text-white py-3 rounded-xl text-sm font-bold disabled:opacity-30 transition-all shadow-lg active:scale-95"
-                >
-                  Allocate
-                </button>
-              </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsEmployeeDrawerOpen(true)}
+                className="flex-[1.5] bg-gray-50 border border-gray-200 py-3 rounded-xl text-[12px] font-regular flex items-center justify-center gap-2 hover:border-black transition-all"
+              >
+                <FiUser />{" "}
+                {selectedEmployee ? selectedEmployee.name : "Select Staff"}
+              </button>
+              <button
+                disabled={!selectedEmployee}
+                onClick={() => handleAction("allocate")}
+                className="flex-1 bg-black text-white py-3 rounded-xl text-[12px] font-regular disabled:opacity-30 transition-all shadow-lg active:scale-95"
+              >
+                Allocate
+              </button>
             </div>
           )}
         </div>
 
-        {/* Employee Selection Drawer */}
+        {/* Staff Selector Drawer */}
         <Drawer
           anchor="right"
           open={isEmployeeDrawerOpen}
           onClose={() => setIsEmployeeDrawerOpen(false)}
-          PaperProps={{ style: { width: "500px" } }}
+          PaperProps={{ className: "w-full max-w-[480px] shadow-2xl" }}
         >
           <EmployeeAsset
             onBack={() => setIsEmployeeDrawerOpen(false)}

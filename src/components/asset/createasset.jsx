@@ -114,9 +114,7 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
         {/* Header */}
         <div className="p-6 border-b flex justify-between items-center">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Create New Asset
-            </h2>
+            <h2 className="text-xl  text-gray-900">Create New Asset</h2>
             <p className="text-sm text-gray-500">
               Add asset details and upload an image
             </p>
@@ -135,7 +133,7 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
         >
           {/* Image Upload Area */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            <label className="text-xs  text-gray-400 uppercase tracking-wider">
               Asset Image
             </label>
             <label className="relative group cursor-pointer block h-40 w-full border-2 border-dashed border-gray-200 rounded-xl hover:border-black transition-all overflow-hidden">
@@ -163,9 +161,7 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
           {/* Basic Info */}
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-500">
-                Asset Name
-              </label>
+              <label className="text-xs  text-gray-500">Asset Name</label>
               <input
                 required
                 name="assetName"
@@ -178,9 +174,7 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500">
-                  Condition
-                </label>
+                <label className="text-xs  text-gray-500">Condition</label>
                 <select
                   name="condition"
                   value={formData.condition}
@@ -194,9 +188,7 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-500">
-                  Status
-                </label>
+                <label className="text-xs  text-gray-500">Status</label>
                 <select
                   name="assetStatus"
                   value={formData.assetStatus}
@@ -214,9 +206,7 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
 
           {/* Asset Type with Dynamic Addition */}
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500">
-              Asset Type
-            </label>
+            <label className="text-xs  text-gray-500">Asset Type</label>
             {showTypeInput ? (
               <div className="flex gap-2">
                 <input
@@ -258,7 +248,7 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
                     {t.name}
                   </option>
                 ))}
-                <option value="add_new" className="text-blue-600 font-bold">
+                <option value="add_new" className="text-black ">
                   + Add New Type
                 </option>
               </select>
@@ -268,9 +258,7 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
           {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-500">
-                Purchase Date
-              </label>
+              <label className="text-xs  text-gray-500">Purchase Date</label>
               <input
                 type="date"
                 name="purchaseDate"
@@ -280,9 +268,7 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-500">
-                Last Maintenance
-              </label>
+              <label className="text-xs  text-gray-500">Last Maintenance</label>
               <input
                 type="date"
                 name="lastMaintenance"

@@ -64,7 +64,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
         },
         {
           title: "Events",
-          path: userId ? `/u/${userId}/${userNameSlug}/events` : "#",
+          path: "/events",
           icon: icons.events,
         },
         {

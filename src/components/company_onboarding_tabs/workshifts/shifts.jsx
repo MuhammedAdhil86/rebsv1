@@ -88,23 +88,38 @@ const Shifts = () => {
   const fetchShiftsData = async () => {
     setLoading(true);
     try {
-      const data = await ShiftDataGet();
+      const response = await ShiftDataGet();
+
+      // FIX: Ensure we are accessing the array correctly if the API wraps it
+      const data = Array.isArray(response) ? response : response?.data || [];
+
       setRawApiData(data);
-      const mappedData = data.map((shift) => ({
-        id: shift.id,
-        name: shift.shift_name,
-        duration: `${shift.policies[0]?.working_hours || 0} Hrs`,
-        start: formatTime(shift.policies[0]?.start_time),
-        end: formatTime(shift.policies[0]?.end_time),
-        staff: shift.allocated_employees,
-        break: shift.policies[0]?.lunch_break_from
-          ? `${formatTime(shift.policies[0].lunch_break_from)} - ${formatTime(shift.policies[0].lunch_break_to)}`
-          : "N/A",
-        reg: `${shift.policies[0]?.regularisation_limit || 0}/${shift.policies[0]?.regularisation_type || ""}`,
-        status: shift.allocated_employees > 0 ? "Active" : "Inactive",
-      }));
+
+      const mappedData = data.map((shift) => {
+        // FIX: Safe access to policies to prevent "cannot read property 0 of undefined"
+        const policy =
+          shift.policies && shift.policies.length > 0
+            ? shift.policies[0]
+            : null;
+
+        return {
+          id: shift.id,
+          name: shift.shift_name,
+          duration: `${policy?.working_hours || 0} Hrs`,
+          start: formatTime(policy?.start_time),
+          end: formatTime(policy?.end_time),
+          staff: shift.allocated_employees || 0,
+          break: policy?.lunch_break_from
+            ? `${formatTime(policy.lunch_break_from)} - ${formatTime(policy.lunch_break_to)}`
+            : "N/A",
+          reg: `${policy?.regularisation_limit || 0}/${policy?.regularisation_type || ""}`,
+          status: shift.allocated_employees > 0 ? "Active" : "Inactive",
+        };
+      });
+
       setShiftData(mappedData);
     } catch (err) {
+      console.error("Fetch error:", err);
       setError(err.message || "Unknown error");
     } finally {
       setLoading(false);
@@ -139,7 +154,7 @@ const Shifts = () => {
   const handleConfirmDelete = async () => {
     const tid = toast.loading("Deleting shift...");
     try {
-      await deleteshift(shiftToDelete.id); // Ensure this function is in your service
+      await deleteshift(shiftToDelete.id);
       toast.success("Shift deleted successfully", { id: tid });
       setIsDeleteModalOpen(false);
       fetchShiftsData();

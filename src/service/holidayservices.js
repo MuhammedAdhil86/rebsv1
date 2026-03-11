@@ -136,3 +136,4 @@ export const fetchHolidaysByBranch = async (branchId) => {
     throw error;
   }
 };
+

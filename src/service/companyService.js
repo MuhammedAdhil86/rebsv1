@@ -26,7 +26,9 @@ import {
   getPresetAttendanceTemplate,
   deleteAttendancePolicyUrl,
   postDesignation,
+  getWeeklyOffDefault ,
   postShiftcreate,
+  getWeeklyOffBranch,
   companyPreview,
   deleteShiftUrl,
   getAttendancepolicy,
@@ -539,5 +541,33 @@ export const approveRegularization = async (requestId, status, remarks = "") => 
     // 4. Log the error for developers and re-throw for the UI toast
     console.error("Regularization Approval Error:", error.response?.data || error.message);
     throw error;
+  }
+};
+/**
+ * CORRECTED: Fetch Weekly Offs for a specific branch
+ */
+export const getWeeklyOffByYear = async (year) => {
+  try {
+    const url = getWeeklyOffDefault.replace(":year", year);
+    const response = await axiosInstance.get(url);
+    // FIX: Access the specific array from your log: response.data.data.weekly_offs
+    const list = response.data?.data?.weekly_offs || [];
+    return Array.isArray(list) ? list : [];
+  } catch (error) {
+    console.error("Error:", error);
+    return [];
+  }
+};
+
+export const getWeeklyOffByBranch = async (year, branchId) => {
+  try {
+    const url = getWeeklyOffBranch.replace(":year", year).replace(":branchId", branchId);
+    const response = await axiosInstance.get(url);
+    // FIX: Same nesting here
+    const list = response.data?.data?.weekly_offs || [];
+    return Array.isArray(list) ? list : [];
+  } catch (error) {
+    console.error("Error:", error);
+    return [];
   }
 };
