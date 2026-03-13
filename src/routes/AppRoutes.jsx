@@ -27,6 +27,7 @@ import Payslip from "../page/payslip";
 import Announcement from "../page/announcement";
 import AssetManager from "../page/assetmanager";
 import Events from "../page/event";
+import Letter from "../page/letter";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ element: Element }) => {
@@ -48,7 +49,6 @@ function AppRoutes() {
       <Route path="/forgetpass" element={<ForgotPasswordUI />} />
       <Route path="/otp" element={<OtpUi />} />
       <Route path="/newpassword" element={<NewPasswordUI />} />
-
       {/* --- Protected Routes --- */}
       <Route
         path="/dashboard"
@@ -93,7 +93,6 @@ function AppRoutes() {
         element={<ProtectedRoute element={EmployeeCalendar} />}
       />
       <Route path="/payroll" element={<ProtectedRoute element={Payroll} />} />
-
       <Route
         path="/announcements"
         element={<ProtectedRoute element={Announcement} />}
@@ -102,9 +101,9 @@ function AppRoutes() {
         path="/asset"
         element={<ProtectedRoute element={AssetManager} />}
       />
+      <Route path="/letter" element={<ProtectedRoute element={Letter} />} />{" "}
       <Route path="/events" element={<ProtectedRoute element={Events} />} />
       {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
-
       {/* Catch-all redirect to login */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

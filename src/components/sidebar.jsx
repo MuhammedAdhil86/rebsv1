@@ -59,7 +59,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
         { title: "Attendance", path: `/dashboard`, icon: icons.hr },
         {
           title: "Letter",
-          path: userId ? `/u/${userId}/${userNameSlug}/musteroll` : "#",
+          path: "/letter",
           icon: icons.muster,
         },
         {
