@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../../service/axiosinstance";
+import payrollService from "../../../service/payrollService";
 import Earnings from "./salary_component_tabs/component_earnings_tab";
+import Reimbursements from "./salary_component_tabs/reimbursements";
 import EditSalaryComponent from "./salary_component_tabs/component_edit_earning ";
 
 const SalaryComponents = () => {
   const [activeSubTab, setActiveSubTab] = useState("earnings");
   const [earningsData, setEarningsData] = useState([]);
+  const [reimbursementData, setReimbursementData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- STATE FOR EDIT MODE ---
   const [isEditing, setIsEditing] = useState(false);
   const [selectedComponent, setSelectedComponent] = useState(null);
 
@@ -20,29 +22,41 @@ const SalaryComponents = () => {
     { id: "reimbursements", label: "Reimbursements" },
   ];
 
-  const fetchEarnings = async () => {
+  const fetchAllData = async (signal) => {
     try {
       setIsLoading(true);
-      const response = await axiosInstance.get("/api/payroll/components");
-      const apiData = response.data?.data?.items;
-      console.log("Fetched API Data:", apiData); // LOG 1: Initial Fetch
-      if (Array.isArray(apiData)) {
-        setEarningsData(apiData);
+      setError(null);
+
+      // Fetch from both sources
+      const [compRes, reimbursements] = await Promise.all([
+        axiosInstance.get("/api/payroll/components", { signal }),
+        payrollService.getReimbursements(signal),
+      ]);
+
+      // 1. Set Earnings
+      const compItems = compRes.data?.data?.items;
+      if (Array.isArray(compItems)) {
+        setEarningsData(compItems.filter((item) => item.type === "earning"));
       }
+
+      // 2. Set Reimbursements (State that drives the tab)
+      setReimbursementData(reimbursements);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch components.");
+      if (err.name !== "CanceledError") {
+        setError(err.message || "Failed to load payroll data.");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchEarnings();
+    const controller = new AbortController();
+    fetchAllData(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  // --- HANDLERS ---
   const handleEditRow = (rowData) => {
-    console.log("Step 1: Row Clicked. Data:", rowData); // LOG 2: Data from Table
     setSelectedComponent(rowData);
     setIsEditing(true);
   };
@@ -50,7 +64,7 @@ const SalaryComponents = () => {
   const handleCloseEdit = () => {
     setIsEditing(false);
     setSelectedComponent(null);
-    fetchEarnings();
+    fetchAllData();
   };
 
   if (isEditing) {
@@ -62,19 +76,26 @@ const SalaryComponents = () => {
     );
   }
 
-  if (isLoading) return <div className="p-10 text-center">Loading...</div>;
+  if (isLoading)
+    return <div className="p-10 text-center font-poppins">Loading...</div>;
 
   return (
     <div className="w-full p-4">
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded text-sm font-poppins">
+          {error}
+        </div>
+      )}
+
       <div className="flex border-b border-gray-200 mb-4">
         {subTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveSubTab(tab.id)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors font-poppins ${
               activeSubTab === tab.id
                 ? "border-pink-500 text-pink-600"
-                : "border-transparent text-gray-500"
+                : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
             {tab.label}
@@ -83,15 +104,26 @@ const SalaryComponents = () => {
       </div>
 
       <div className="fade-in">
-        {activeSubTab === "earnings" ? (
+        {activeSubTab === "earnings" && (
           <Earnings
             data={earningsData}
             onEdit={handleEditRow}
-            onRefresh={fetchEarnings} // ✅ Pass fetch function here
+            onRefresh={fetchAllData}
           />
-        ) : (
-          <div className="py-20 text-center text-gray-400 italic">
-            Coming soon.
+        )}
+
+        {activeSubTab === "reimbursements" && (
+          <Reimbursements
+            data={reimbursementData}
+            onEdit={handleEditRow}
+            onRefresh={fetchAllData}
+          />
+        )}
+
+        {["deductions", "benefits"].includes(activeSubTab) && (
+          <div className="py-20 text-center text-gray-400 italic font-poppins">
+            {activeSubTab.charAt(0).toUpperCase() + activeSubTab.slice(1)}{" "}
+            coming soon.
           </div>
         )}
       </div>

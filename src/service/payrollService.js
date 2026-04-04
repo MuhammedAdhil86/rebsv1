@@ -9,6 +9,8 @@ import { getpolicyLookup,
 getPayrollcomponents, 
 deletePayrollComponent,
 deleteTemplateAllocation,
+ getReimbursementList,
+ updateReimbursementStatus,
 deletePayrollTemplate,
 deleteLeavePolicy,} from "../api/api";
 
@@ -329,6 +331,44 @@ updateSalaryTemplate: async (id, payload) => {
       throw err;
     }
   },
+getReimbursements: async (signal) => {
+    try {
+      const res = await axiosInstance.get(getReimbursementList, { signal });
+      
+      // Postman showed the array is in res.data.data
+      const actualData = res.data?.data;
+      
+      if (process.env.NODE_ENV === "development") {
+        console.log("💸 Reimbursement API Response:", actualData);
+      }
+
+      return Array.isArray(actualData) ? actualData : [];
+    } catch (err) {
+      if (err.name === "CanceledError") return [];
+      console.error("Reimbursement Fetch Error:", err.response || err);
+      throw err;
+    }
+  },
+  updateReimbursementStatus: async (payload) => {
+    try {
+      // payload expects { id: "2", status: "approved" }
+      const res = await axiosInstance.patch(updateReimbursementStatus, payload);
+
+      if (process.env.NODE_ENV === "development") {
+        console.groupCollapsed("%c 📝 Reimbursement: Status Update", "color: #10b981; font-weight: bold;");
+        console.log("Payload:", payload);
+        console.log("Response:", res.data);
+        console.groupEnd();
+      }
+
+      return res.data;
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || "Failed to update status";
+      console.error("[Service Error] updateReimbursementStatus 👉", errorMsg);
+      throw new Error(errorMsg);
+    }
+  },
+
 };
 
 export default payrollService;

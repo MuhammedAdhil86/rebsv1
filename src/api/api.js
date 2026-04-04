@@ -286,6 +286,9 @@ export const getDefulatEmailTemplate = "/admin/defaults";
 
 export const postCloneEmailTemplate = "/admin/clone-default";
 export const postAllocatePayarollTemplate = "/api/payroll/template-allocations";
+
+export const postGenerateLetter = "/letter/generate";
+export const postSendLetter = "/letter/send";
 // FIXED
 export const getUserPayrollTemplateAllocations = (userId) =>
   `/api/payroll/template-allocations/user?user_id=${userId}`;
@@ -327,7 +330,8 @@ export const allocateEmployeePolicy = "/leave-policy/allocate/staffs";
 
 export const getDifaultleavePolicy = "/leave-policy/fetch-default";
 export const postCloneLeavePolicy = "/leave-policy/clone-defaults";
-
+export const getReimbursementList = "/api/payroll/reimbursements/list";
+export const updateReimbursementStatus = "/api/payroll/reimbursements/status";
 export const updateSalaryPayrollComponent = (id) => `/api/payroll/components/${id}`;
 
 // Change this:

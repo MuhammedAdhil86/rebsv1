@@ -8,9 +8,11 @@ import {
   updateEmailTemplate,
   uploadEmailTemplateFile,
   getDefulatEmailTemplate,
+  postGenerateLetter,
   getWeeklyOffShifts,
   postCloneEmailTemplate,
   deleteEmailTemplate,
+  postSendLetter,
   postAddWeekOff,
 } from "../api/api";
 
@@ -291,4 +293,36 @@ export const deleteEmailTemplateService = async (id) => {
       "Failed to delete email template";
     throw new Error(errorMessage);
   }
+};
+
+export const generateLetterService = async (userId, category) => {
+  // Ensure the keys match EXACTLY what the backend documentation says
+  const payload = {
+    user_id: String(userId),
+    letter_category: String(category),
+  };
+
+  try {
+    devLog("Generating Letter with Payload:", payload);
+    const response = await axiosInstance.post(postGenerateLetter, payload);
+    return response?.data;
+  } catch (error) {
+    // This will help you see if it's a 404, 500, or Proxy error
+    const serverMessage = error?.response?.data?.message || error?.message;
+    console.error("Generate Letter Backend Error:", serverMessage);
+    throw new Error(serverMessage);
+  }
+};
+/**
+ * Send an Email Letter
+ */
+export const sendLetterService = async (userId, category, cc = [], bcc = []) => {
+  const payload = {
+    user_id: String(userId),
+    letter_category: String(category),
+    cc: cc,
+    bcc: bcc,
+  };
+  const response = await axiosInstance.post(postSendLetter, payload);
+  return response?.data;
 };

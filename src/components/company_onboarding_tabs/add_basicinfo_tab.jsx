@@ -286,7 +286,7 @@ const AddBasicInformation = () => {
         <form className="space-y-6">
           <div className="grid grid-cols-3 gap-6">
             <Field
-              label="Name (Read-only)"
+              label="Name"
               name="name"
               value={formData.name}
               readOnly
