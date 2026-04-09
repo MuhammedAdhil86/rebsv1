@@ -58,7 +58,7 @@ const BasicInfoCard = ({ formData, handleChange }) => {
               <option value="Unpaid">UNPAID</option>
             </select>
             <ChevronDown
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 pointer-events-none"
               size={14}
             />
           </div>

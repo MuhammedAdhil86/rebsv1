@@ -2,6 +2,7 @@
 
 export const getLeave = "/admin/leave/get"
 export const AddUser = "/user/createstaff"
+export const postLeaveBulkAllocation = "/leave-policy/allocate/staffs"
 //AnnouncementService
 
 export const postAnnouncement = "/admin/announcement/add"
@@ -226,6 +227,9 @@ export const deleteSalaryPolicy = "/salary-policy/delete/:id"
 //Reset Password
 
 export const postResetPassword = "/staff/reset-password"
+export const sendResetPasswordEmail = "/staff/forgot-password"
+export const forgotPassword = "/staff/forgot-otpverify"
+export const confirmForgotPassword = "/staff/forgot-confirm"
 
 //Work from home
 export const getWorkFromHome = "/admin/wfh/get"
@@ -254,6 +258,13 @@ export const getAttachments = "/staff/admin/document/get/{uuid}"
 export const getPlatforms = "/admin/platform/get"
 export const getVacancies = "/company/vaccancy/get"
 export const addVacancies = "/company/vaccancy/add"
+export const getJobEnquiries = "/company/jobApplications/list"
+export const updateApplicationStatus = "/job-applications/update-status";
+export const sendInvitationOnHire = "/company/jobApplications/send/invitation-on-hire/";
+export const sendRejectionMail = "/company/jobApplications/send/rejection/";
+
+// src/api/api.js
+export const reviewApplication = "/job-applications/move-to/under-review";
 
 // Employee Basic Info
 export const updateBasicInfo = (id) => `/staff/updatebasicinfo/${id}`;
@@ -299,6 +310,7 @@ export const postPayrollAttendance = "/api/payroll/calculate/attendance";
 export const getEmployeeBankInfo = "/staff/employees/bank-info";
 
 export const getPayrollAnalyticsRun = "/api/payroll/analytics/run";
+export const getPayrollAnalyticsResult = " /api/payroll/analytics/list/all-runs";
 
 // Attendance Policy
 export const postAttendancePolicyAdd = "/attendance-policy/add";

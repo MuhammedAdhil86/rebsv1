@@ -28,6 +28,7 @@ import Announcement from "../page/announcement";
 import AssetManager from "../page/assetmanager";
 import Events from "../page/event";
 import Letter from "../page/letter";
+import JobEnquiry from "../page/jobenquiry";
 
 // ProtectedRoute Component
 const ProtectedRoute = ({ element: Element }) => {
@@ -103,6 +104,10 @@ function AppRoutes() {
       />
       <Route path="/letter" element={<ProtectedRoute element={Letter} />} />{" "}
       <Route path="/events" element={<ProtectedRoute element={Events} />} />
+      <Route
+        path="/jobenquiry"
+        element={<ProtectedRoute element={JobEnquiry} />}
+      />
       {/* <Route path="/manageemployees" element={<ProtectedRoute element={ManageEmployees} />} /> */}
       {/* Catch-all redirect to login */}
       <Route path="*" element={<Navigate to="/" replace />} />

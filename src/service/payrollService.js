@@ -11,6 +11,7 @@ deletePayrollComponent,
 deleteTemplateAllocation,
  getReimbursementList,
  updateReimbursementStatus,
+ postLeaveBulkAllocation,
 deletePayrollTemplate,
 deleteLeavePolicy,} from "../api/api";
 
@@ -366,6 +367,22 @@ getReimbursements: async (signal) => {
       const errorMsg = err.response?.data?.message || "Failed to update status";
       console.error("[Service Error] updateReimbursementStatus 👉", errorMsg);
       throw new Error(errorMsg);
+    }
+  },
+  bulkAllocateLeave: async (payload) => {
+    try {
+      console.log("LOG: Initiating Bulk Allocation Request...");
+      console.log("LOG: Destination URL:", postLeaveBulkAllocation);
+      console.log("LOG: Request Payload:", payload);
+
+      const res = await axiosInstance.post(postLeaveBulkAllocation, payload);
+      
+      console.log("LOG: Bulk Allocation Success Response:", res.data);
+      return res.data;
+    } catch (err) {
+      console.error("LOG ERROR: bulkAllocateLeave failed:", err.response || err);
+      // We throw the error so the component's catch block can handle the toast message
+      throw err;
     }
   },
 

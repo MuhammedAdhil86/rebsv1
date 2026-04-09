@@ -33,14 +33,20 @@ const SalaryComponents = () => {
         payrollService.getReimbursements(signal),
       ]);
 
-      // 1. Set Earnings
+      // 1. Set Earnings - Fixed mapping to match API key "component_type"
       const compItems = compRes.data?.data?.items;
       if (Array.isArray(compItems)) {
-        setEarningsData(compItems.filter((item) => item.type === "earning"));
+        // Updated from item.type to item.component_type
+        const filteredEarnings = compItems.filter(
+          (item) => item.component_type === "earning",
+        );
+        setEarningsData(filteredEarnings);
+      } else {
+        setEarningsData([]);
       }
 
-      // 2. Set Reimbursements (State that drives the tab)
-      setReimbursementData(reimbursements);
+      // 2. Set Reimbursements
+      setReimbursementData(reimbursements || []);
     } catch (err) {
       if (err.name !== "CanceledError") {
         setError(err.message || "Failed to load payroll data.");

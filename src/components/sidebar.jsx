@@ -19,7 +19,6 @@ function SideBar({ isCollapsed, toggleSidebar }) {
   const displayName =
     `${firstName} ${lastName}`.trim() || user?.name || "Admin";
 
-  // ✅ ONLY CHANGE REQUESTED: online avatar fallback
   const avatarUrl =
     user?.image && user.image.trim() !== ""
       ? user.image
@@ -34,7 +33,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
     hr: <Icon icon="si:dashboard-line" width="20" />,
     muster: <Icon icon="mynaui:table" width="20" />,
     events: <Icon icon="carbon:event" width="20" />,
-    announcement: <Icon icon="lucide:megaphone" width="20" />, // ✅ Added Announcement Icon
+    announcement: <Icon icon="lucide:megaphone" width="20" />,
     payroll: <Icon icon="fluent:payment-20-regular" width="20" />,
     reports: <Icon icon="iconoir:reports" width="20" />,
     asset: <Icon icon="fluent:web-asset-16-regular" width="20" />,
@@ -48,6 +47,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
     organisationonboard: <Icon icon="octicon:organization-24" width="20" />,
     employeeOnboard: <Icon icon="clarity:employee-line" width="20" />,
     Hiring: <Icon icon="hugeicons:job-link" width="20" />,
+    enquiry: <Icon icon="hugeicons:quill-write-02" width="20" />, // ✅ Added Enquiry Icon
     interview: <Icon icon="mage:message-conversation" width="20" />,
     manageShift: <Icon icon="ic:twotone-manage-history" width="20" />,
   };
@@ -68,7 +68,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
           icon: icons.events,
         },
         {
-          title: "Announcements", // ✅ Added Announcements MenuItem
+          title: "Announcements",
           path: "/announcements",
           icon: icons.announcement,
         },
@@ -119,6 +119,11 @@ function SideBar({ isCollapsed, toggleSidebar }) {
           title: "Job Creation",
           path: "/job",
           icon: icons.Hiring,
+        },
+        {
+          title: "Job Enquiry", // ✅ Added Job Enquiry Item
+          path: "/jobenquiry",
+          icon: icons.enquiry,
         },
         {
           title: "Interview Process",
@@ -230,9 +235,8 @@ function SideBar({ isCollapsed, toggleSidebar }) {
 
               <button
                 onClick={() => {
-                  // ✅ Logout: remove token and redirect to login
-                  localStorage.removeItem("token"); // or whatever key you use
-                  window.location.href = "/login"; // redirect to login page
+                  localStorage.removeItem("token");
+                  window.location.href = "/login";
                 }}
                 className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-600 transition-colors"
               >
@@ -263,7 +267,7 @@ function SideBar({ isCollapsed, toggleSidebar }) {
                         : "text-neutral-600 hover:text-white hover:bg-gray-800"
                     }`
                   }
-                  style={{ width: isCollapsed ? "6%" : "90%" }}
+                  style={{ width: isCollapsed ? "100%" : "90%" }}
                 >
                   <span className="flex-shrink-0">{item.icon}</span>
                   {!isCollapsed && (

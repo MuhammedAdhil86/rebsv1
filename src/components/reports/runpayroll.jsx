@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../../service/axiosinstance";
 import UniversalTable from "../../ui/universal_table";
-import { Loader2, Download, Play } from "lucide-react";
+import { Loader2, Download, Play, PlusCircle } from "lucide-react"; // Added PlusCircle
 import * as XLSX from "xlsx-js-style";
 import { postPayrollAttendance } from "../../api/api";
 import CustomSelect from "../../ui/customselect";
 import PayrollModal from "../../ui/payrollmodal";
+import AllocatePayrollModal from "../../ui/payrollallocatemodal";
+import toast, { Toaster } from "react-hot-toast";
 
 const monthNames = [
   "January",
@@ -32,6 +34,9 @@ export default function PayrollRunning() {
 
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // ✅ New state for Allocate Modal
+  const [isAllocateModalOpen, setIsAllocateModalOpen] = useState(false);
 
   // ================= FETCH DATA =================
   useEffect(() => {
@@ -66,7 +71,6 @@ export default function PayrollRunning() {
 
   // ================= ROW CLICK =================
   const handleRowClick = (row) => {
-    console.log("Clicked row data:", row); // log full row data
     const { bank_info, ...filteredRow } = row;
     setSelectedEmployee(JSON.parse(JSON.stringify(filteredRow)));
     setIsModalOpen(true);
@@ -95,7 +99,6 @@ export default function PayrollRunning() {
     );
     setIsModalOpen(false);
     setSelectedEmployee(null);
-    console.log("Local table updated for", selectedEmployee.user_name);
   };
 
   // ================= RUN BUTTON (API CALL) =================
@@ -121,19 +124,24 @@ export default function PayrollRunning() {
       })),
     };
 
-    console.log(
-      "Running payroll update with payload:",
-      JSON.stringify(payload, null, 2),
-    );
-
     try {
       await axiosInstance.put("/api/payroll/analytics/update", payload);
-      console.log("Payroll successfully updated!");
-      alert("Payroll updated successfully");
-      fetchData(); // refresh table from backend
+      toast.success("Payroll updated successfully");
+      fetchData();
     } catch (err) {
-      console.error("Payroll update failed:", err);
-      alert("Payroll update failed");
+      toast.error("Payroll update failed");
+    }
+  };
+
+  // ✅ New Confirm Allocation Handler
+  const handleConfirmAllocation = async () => {
+    try {
+      // Add your bulk allocation API call logic here if needed
+      toast.success("Payroll allocation initiated");
+      setIsAllocateModalOpen(false);
+      fetchData(); // Refresh the table
+    } catch (error) {
+      toast.error("Allocation failed");
     }
   };
 
@@ -189,7 +197,6 @@ export default function PayrollRunning() {
     XLSX.writeFile(wb, `payroll_${month}_${year}.xlsx`);
   };
 
-  // ================= DOWNLOAD FOR BANK =================
   const handleDownloadBank = () => {
     if (!records.length) return;
 
@@ -203,31 +210,15 @@ export default function PayrollRunning() {
 
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(dataRows);
-
-    const range = XLSX.utils.decode_range(ws["!ref"]);
-    for (let R = range.s.r; R <= range.e.r; ++R) {
-      for (let C = range.s.c; C <= range.e.c; ++C) {
-        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-        if (!ws[cellAddress]) continue;
-        ws[cellAddress].s = {
-          border: {
-            top: { style: "thin", color: { rgb: "000000" } },
-            bottom: { style: "thin", color: { rgb: "000000" } },
-            left: { style: "thin", color: { rgb: "000000" } },
-            right: { style: "thin", color: { rgb: "000000" } },
-          },
-          alignment: { vertical: "center", horizontal: "center" },
-        };
-      }
-    }
-
     XLSX.utils.book_append_sheet(wb, ws, "Bank");
     XLSX.writeFile(wb, `payroll_bank_${month}_${year}.xlsx`);
   };
 
   return (
-    <div className="p-4 bg-white rounded-lg shadow-sm">
-      {/* Filters */}
+    <div className="p-4 bg-white rounded-lg shadow-sm font-['Poppins'] font-normal text-[12px]">
+      <Toaster position="top-right" />
+
+      {/* Filters & Actions */}
       <div className="flex gap-3 mb-4 items-center">
         <CustomSelect
           label="Month"
@@ -242,31 +233,37 @@ export default function PayrollRunning() {
           options={[2024, 2025, 2026]}
         />
 
-        {/* Run Button */}
+        {/* ✅ Allocate Button */}
+        <button
+          onClick={() => setIsAllocateModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-blue-600 text-white hover:bg-blue-700 transition-all font-normal"
+        >
+          <PlusCircle className="w-4 h-4" />
+          Allocate Payroll
+        </button>
+
         <button
           onClick={handleRunButton}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-green-600 text-white disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-green-600 text-white disabled:opacity-50 font-normal"
         >
           <Play className="w-4 h-4" />
           Run
         </button>
 
-        {/* Download Payroll */}
         <button
           onClick={handleDownload}
           disabled={!records.length || loading}
-          className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-black text-white disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-black text-white disabled:opacity-50 font-normal"
         >
           <Download className="w-4 h-4" />
           Download
         </button>
 
-        {/* Download Bank */}
         <button
           onClick={handleDownloadBank}
           disabled={!records.length || loading}
-          className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-blue-600 text-white disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-blue-600 text-white disabled:opacity-50 font-normal"
         >
           <Download className="w-4 h-4" />
           Download for Bank
@@ -275,7 +272,7 @@ export default function PayrollRunning() {
 
       {loading ? (
         <div className="flex justify-center py-10">
-          <Loader2 className="animate-spin" />
+          <Loader2 className="animate-spin text-blue-500" />
         </div>
       ) : (
         <UniversalTable
@@ -285,15 +282,25 @@ export default function PayrollRunning() {
         />
       )}
 
+      {/* Edit Modal */}
       {isModalOpen && selectedEmployee && (
         <PayrollModal
           selectedEmployee={selectedEmployee}
           onClose={() => setIsModalOpen(false)}
           onFieldChange={handleFieldChange}
           onComponentChange={handleComponentChange}
-          onSave={handleSaveModal} // only updates table locally
+          onSave={handleSaveModal}
         />
       )}
+
+      {/* ✅ Allocate Payroll Modal Integration */}
+      <AllocatePayrollModal
+        isOpen={isAllocateModalOpen}
+        onClose={() => setIsAllocateModalOpen(false)}
+        onConfirm={handleConfirmAllocation}
+        month={month}
+        year={year}
+      />
     </div>
   );
 }

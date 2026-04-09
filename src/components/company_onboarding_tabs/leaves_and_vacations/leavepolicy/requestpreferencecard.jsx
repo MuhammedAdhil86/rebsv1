@@ -36,7 +36,7 @@ const RequestPreferencesCard = ({ formData, handleChange }) => {
           <div
             className={`ml-6 mt-2 flex items-center bg-[#F4F6F8] border border-gray-200 rounded-xl px-4 py-2 h-10 ${!formData.allow_negative_balance && "opacity-50 pointer-events-none"}`}
           >
-            <span className="text-[11px] text-gray-500 flex-1">
+            <span className="text-[11px] text-gray-700 flex-1">
               Consider as
             </span>
             <select

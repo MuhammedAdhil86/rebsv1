@@ -16,6 +16,7 @@ import payrollService from "../../../service/payrollService";
 import CreateLeavePolicyTab from "../leaves_and_vacations/createleavepolicymodal";
 import UpdateLeavePolicyTab from "./updateleavepolicy";
 import DefaultTemplatesTable from "./leavepolicy/defaultleave";
+import BulkAllocationTab from "./leavepolicy/bulkallocationtab";
 import toast, { Toaster } from "react-hot-toast";
 
 const LeavesAndVacations = () => {
@@ -258,28 +259,48 @@ const LeavesAndVacations = () => {
             <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black" />
           )}
         </button>
+        <button
+          onClick={() => setActiveTab("bulk_allocation")}
+          className={`pb-3 text-[14px] font-medium transition-all relative ${
+            activeTab === "bulk_allocation"
+              ? "text-black"
+              : "text-gray-400 hover:text-gray-600"
+          }`}
+        >
+          Bulk Allocation
+          {activeTab === "bulk_allocation" && (
+            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black" />
+          )}
+        </button>
       </div>
 
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
         <h2 className="text-[16px] text-gray-900 font-['Poppins']">
-          {activeTab === "all_leaves" ? "Leave Policies" : "Presets Templates"}
+          {activeTab === "all_leaves"
+            ? "Leave Policies"
+            : activeTab === "bulk_allocation"
+              ? "Bulk Allocation"
+              : "Presets Templates"}
         </h2>
 
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={14}
-            />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-3 py-2 border border-gray-200 bg-[#f9f9f9] rounded-lg text-[12px] w-64 focus:outline-none focus:ring-1 focus:ring-black font-['Poppins'] transition-all"
-            />
-          </div>
+          {/* Hide search bar for bulk allocation if preferred, or keep it visible */}
+          {activeTab !== "bulk_allocation" && (
+            <div className="relative">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                size={14}
+              />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-3 py-2 border border-gray-200 bg-[#f9f9f9] rounded-lg text-[12px] w-64 focus:outline-none focus:ring-1 focus:ring-black font-['Poppins'] transition-all"
+              />
+            </div>
+          )}
 
           {activeTab === "presets_templates" && selectedIds.length > 0 && (
             <button
@@ -301,7 +322,7 @@ const LeavesAndVacations = () => {
         </div>
       </div>
 
-      {/* Table Section */}
+      {/* Table Section - UPDATED LOGIC HERE */}
       <div className="w-full">
         {loading ? (
           <div className="flex items-center justify-center py-20 text-gray-400 text-[12px] font-['Poppins']">
@@ -315,7 +336,7 @@ const LeavesAndVacations = () => {
             searchTerm={searchQuery}
             rowClickHandler={handleRowClick}
           />
-        ) : (
+        ) : activeTab === "presets_templates" ? (
           <DefaultTemplatesTable
             data={filteredData || []}
             loading={loading}
@@ -323,7 +344,9 @@ const LeavesAndVacations = () => {
             setSelectedIds={setSelectedIds}
             onUseTemplate={handleCloneTemplate}
           />
-        )}
+        ) : activeTab === "bulk_allocation" ? (
+          <BulkAllocationTab policies={leaveData} />
+        ) : null}
       </div>
 
       {/* Action Menu Portal */}

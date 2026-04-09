@@ -23,7 +23,7 @@ const AccrualPolicyCard = ({ formData, handleChange }) => {
               <option value="yearly">Yearly</option>
             </select>
             <ChevronDown
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 pointer-events-none"
               size={14}
             />
           </div>
@@ -31,14 +31,14 @@ const AccrualPolicyCard = ({ formData, handleChange }) => {
 
         <div>
           <label className={labelClass}>Employee Accrues</label>
-          <div className="flex border border-gray-200 rounded-xl overflow-hidden bg-[#F4F6F8]">
+          <div className="flex border border-gray-300 rounded-xl overflow-hidden bg-[#F4F6F8]">
             <input
               type="number"
               className="w-full px-4 py-2 bg-transparent text-[12px] focus:outline-none font-normal"
               value={formData.employee_accrues || ""}
               onChange={(e) => handleChange("employee_accrues", e.target.value)}
             />
-            <span className="border-l border-gray-200 px-3 py-2 text-[10px] text-gray-400 flex items-center bg-gray-50">
+            <span className="border-l border-gray-400 px-3 py-2 text-[10px] text-gray-700 flex items-center bg-gray-50">
               DAYS
             </span>
           </div>
@@ -79,7 +79,7 @@ const AccrualPolicyCard = ({ formData, handleChange }) => {
                 DAYS <ChevronDown size={10} />
               </div>
             </div>
-            <span className="text-[11px] text-gray-500">After DOJ</span>
+            <span className="text-[11px] text-gray-700">After DOJ</span>
             <Info size={14} className="text-gray-300" />
           </div>
         </div>
@@ -96,7 +96,7 @@ const AccrualPolicyCard = ({ formData, handleChange }) => {
           <div
             className={`flex items-center gap-2 transition-opacity ${!formData.reset_leave_balance ? "opacity-40 pointer-events-none" : ""}`}
           >
-            <span className="text-[11px] text-gray-500">Every</span>
+            <span className="text-[11px] text-gray-700">Every</span>
             <div className="relative">
               <select
                 disabled={!formData.reset_leave_balance}
@@ -110,11 +110,11 @@ const AccrualPolicyCard = ({ formData, handleChange }) => {
                 <option value="monthly">Monthly</option>
               </select>
               <ChevronDown
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-700"
                 size={12}
               />
             </div>
-            <Info size={14} className="text-gray-300" />
+            <Info size={14} className="text-gray-700" />
           </div>
         </div>
 
@@ -132,13 +132,13 @@ const AccrualPolicyCard = ({ formData, handleChange }) => {
             <div
               className={`flex items-center gap-2 transition-opacity ${!formData.carry_forward ? "opacity-40 pointer-events-none" : ""}`}
             >
-              <div className="text-[10px] text-gray-400 bg-gray-50 border border-gray-100 px-3 py-1 rounded-lg">
+              <div className="text-[10px] text-gray-700 bg-gray-50 border border-gray-200 px-3 py-1 rounded-lg">
                 Max days
               </div>
               <input
                 type="number"
                 disabled={!formData.carry_forward}
-                className="w-10 py-1 bg-[#F4F6F8] border border-gray-200 rounded-lg text-center text-[11px] focus:outline-none"
+                className="w-10 py-1 bg-[#F4F6F8] border border-gray-400 rounded-lg text-center text-[11px] focus:outline-none"
                 value={formData.carry_forward_limit || ""}
                 onChange={(e) =>
                   handleChange("carry_forward_limit", e.target.value)

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import LeftSidebar from "./leftsidebox";
 import PayrollTable from "../../../ui/payrolltable";
+import toast, { Toaster } from "react-hot-toast"; // ✅ Added for feedback
 
 import {
   getAllStaff,
@@ -29,6 +30,9 @@ const ShiftBulkAllocation = () => {
 
   const [selectedUsers, setSelectedUsers] = useState([]);
 
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
   /* ================= INITIAL LOAD ================= */
   useEffect(() => {
     fetchInitialData();
@@ -36,7 +40,6 @@ const ShiftBulkAllocation = () => {
 
   const fetchInitialData = async () => {
     setLoading(true);
-    // Fetch both users and shifts in parallel for better performance
     await Promise.all([fetchAllUsers(), fetchShifts()]);
     setLoading(false);
   };
@@ -58,8 +61,8 @@ const ShiftBulkAllocation = () => {
         <input
           type="checkbox"
           className="cursor-pointer"
-          checked={selectedUsers.includes(row.id)}
-          onChange={() => toggleUserSelection(row.id)}
+          checked={selectedUsers.includes(row.uuid)} // ✅ Using UUID
+          onChange={() => toggleUserSelection(row.uuid)}
           onClick={(e) => e.stopPropagation()}
         />
       ),
@@ -77,16 +80,15 @@ const ShiftBulkAllocation = () => {
   ];
 
   /* ================= SELECTION LOGIC ================= */
-  const toggleUserSelection = (id) => {
+  const toggleUserSelection = (uuid) => {
     setSelectedUsers((prev) =>
-      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id],
+      prev.includes(uuid) ? prev.filter((u) => u !== uuid) : [...prev, uuid],
     );
   };
 
   const handleSelectAll = (isChecked) => {
     if (isChecked) {
-      // Ensure we only select IDs from the currently visible/filtered users
-      setSelectedUsers(users.map((u) => u.id));
+      setSelectedUsers(users.map((u) => u.uuid));
     } else {
       setSelectedUsers([]);
     }
@@ -96,12 +98,10 @@ const ShiftBulkAllocation = () => {
   const fetchAllUsers = async () => {
     try {
       const data = await getAllStaff();
-      // Safely handle both array and object responses
       const staffList = Array.isArray(data) ? data : data?.data || [];
       setUsers(staffList);
       setSelectedUsers([]);
     } catch (error) {
-      console.error("Error fetching staff:", error);
       setUsers([]);
     }
   };
@@ -111,7 +111,6 @@ const ShiftBulkAllocation = () => {
       const data = await getShiftList();
       setShifts(Array.isArray(data) ? data : data?.data || []);
     } catch (error) {
-      console.error("Error fetching shifts:", error);
       setShifts([]);
     }
   };
@@ -121,14 +120,12 @@ const ShiftBulkAllocation = () => {
     setSelectedFilterId("");
     setFilterOptions([]);
     setSelectedUsers([]);
-
     if (type === "all") {
       setLoading(true);
       await fetchAllUsers();
       setLoading(false);
       return;
     }
-
     let data = [];
     if (type === "department") data = await getDepartmentData();
     if (type === "designation") data = await getDesignationData();
@@ -140,18 +137,15 @@ const ShiftBulkAllocation = () => {
     setSelectedFilterId(id);
     setSelectedUsers([]);
     if (!id) return;
-
     setLoading(true);
     let params = {};
     if (filterType === "department") params.department_id = id;
     if (filterType === "designation") params.designation_id = id;
     if (filterType === "branch") params.branch_id = id;
-
     try {
       const data = await filterStaff(params);
       setUsers(Array.isArray(data) ? data : data?.data || []);
     } catch (error) {
-      console.error("Filtering error:", error);
       setUsers([]);
     }
     setLoading(false);
@@ -163,6 +157,8 @@ const ShiftBulkAllocation = () => {
     setFilterOptions([]);
     setSearchTerm("");
     setSelectedUsers([]);
+    setFromDate("");
+    setToDate("");
     fetchAllUsers();
   };
 
@@ -174,27 +170,48 @@ const ShiftBulkAllocation = () => {
   };
 
   const handleAllocate = async () => {
-    if (!selectedShift) return alert("Please select a shift!");
+    if (!selectedShift) return toast.error("Please select a shift");
     if (selectedUsers.length === 0)
-      return alert("Please select at least one user!");
+      return toast.error("Please select at least one staff");
+    if (!fromDate || !toDate)
+      return toast.error("Select both From and To dates");
 
-    try {
-      await allocateShiftBulkUpsert({
-        shift_id: Number(selectedShift),
-        staff_ids: selectedUsers.map(String),
-      });
-      alert("Shift allocated successfully!");
-      setSelectedUsers([]);
-      fetchAllUsers();
-    } catch (error) {
-      console.error("Allocation error:", error);
-      alert("Failed to allocate shift.");
-    }
+    const payload = {
+      shift_id: Number(selectedShift),
+      staff_ids: selectedUsers,
+      from_date: `${fromDate}T00:00:00Z`,
+      to_date: `${toDate}T00:00:00Z`,
+    };
+
+    const allocationPromise = allocateShiftBulkUpsert(payload);
+
+    toast.promise(allocationPromise, {
+      loading: "Allocating shifts...",
+      success: (response) => {
+        if (response.status_code === 200 || response.success) {
+          setSelectedUsers([]);
+          setFromDate("");
+          setToDate("");
+          fetchAllUsers();
+          return "Shifts allocated successfully!";
+        } else {
+          throw new Error(response.message || "Failed to allocate");
+        }
+      },
+      error: (err) => {
+        // ✅ Capture backend's specific error message
+        const backendMsg =
+          err.response?.data?.data ||
+          err.response?.data?.message ||
+          "Check your data and try again";
+        return `Error: ${backendMsg}`;
+      },
+    });
   };
 
-  /* ================= RENDER ================= */
   return (
-    <div className="flex gap-4 w-full min-h-screen bg-[#F9FAFB] font-normal p-4">
+    <div className="flex gap-4 w-full min-h-screen bg-[#F9FAFB] p-4 font-poppins font-normal text-[12px]">
+      <Toaster position="top-right" /> {/* ✅ Add toaster here */}
       <LeftSidebar
         shifts={shifts}
         selectedShift={selectedShift}
@@ -209,28 +226,30 @@ const ShiftBulkAllocation = () => {
         selectedPolicy={selectedPolicy}
         selectedUsersCount={selectedUsers.length}
         handleAllocate={handleAllocate}
+        fromDate={fromDate}
+        setFromDate={setFromDate}
+        toDate={toDate}
+        setToDate={setToDate}
       />
-
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col min-w-0">
-        {/* Table Header Area */}
         <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
           <input
             type="text"
             placeholder="Search staff by name..."
-            className="w-full max-w-sm p-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+            className="w-full max-w-sm p-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500 transition-all font-normal"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 font-normal">
             {selectedUsers.length} staff selected
           </div>
         </div>
 
         <div className="flex-1 overflow-auto">
           {loading ? (
-            <div className="flex flex-col items-center justify-center p-20 text-gray-500 gap-2">
+            <div className="flex flex-col items-center justify-center p-20 text-gray-500 gap-2 font-normal">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <span>Loading staff data...</span>
+              <span>Processing...</span>
             </div>
           ) : (
             <div className="p-4">

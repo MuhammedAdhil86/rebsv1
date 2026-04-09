@@ -12,7 +12,7 @@ import {
   allocateCompliance,
   getRoles,
   allocateRoles,
-  getPolicies,
+  getPolicies,postLeaveBulkAllocation,
   getLeavePolicy,
   getAllowanceData,
   getCompliances,
@@ -471,7 +471,15 @@ export const getCompanyPreview = async () => {
     throw error;
   }
 };
-
+export const bulkAllocateLeave = async (data) => {
+  try {
+    const res = await axiosInstance.post(postLeaveBulkAllocation, data);
+    return res.data;
+  } catch (error) {
+    console.error("Error in bulk leave allocation:", error);
+    throw error; // Throwing error so the component's catch block can handle the toast
+  }
+};
 export const fetchPresetAttendanceTemplates = async () => {
   try {
     // Now 'getPresetAttendanceTemplate' refers correctly to the imported string "/attendance-policy/defaults"

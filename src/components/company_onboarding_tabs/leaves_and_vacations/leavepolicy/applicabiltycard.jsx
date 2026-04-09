@@ -183,7 +183,7 @@ const ApplicabilityCard = ({
           onClick={handleSubmit}
           className="px-12 py-2.5 bg-black text-white rounded-xl text-[12px] hover:bg-zinc-800 shadow-lg active:scale-95 transition-all font-['Poppins']"
         >
-          Create
+          Save
         </button>
       </div>
     </div>
