@@ -267,7 +267,7 @@ const LeavesAndVacations = () => {
               : "text-gray-400 hover:text-gray-600"
           }`}
         >
-          Bulk Allocation
+          Leave Bulk Allocation
           {activeTab === "bulk_allocation" && (
             <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black" />
           )}

@@ -5,8 +5,6 @@ import toast from "react-hot-toast";
 
 import UniversalTable from "../../ui/universal_table";
 import { fetchRegularizationRequests } from "../../service/employeeService";
-
-// FIXED: Import the correct service for shifts
 import { getShiftPolicyById } from "../../service/companyService";
 
 import AddRegularizeModal from "../../ui/addregularize";
@@ -101,35 +99,41 @@ function RegularizationTable() {
   const [shiftData, setShiftData] = useState(null);
   const [modalType, setModalType] = useState(null); // "add" | "approve" | null
 
-  /* ================= FETCH DATA ================= */
+  /* ================= FETCH DATA & TRANSFORM ================= */
   const fetchData = async () => {
     setLoading(true);
     try {
       const res = await fetchRegularizationRequests();
 
-      const transformed = res.data.map((item) => {
-        const inDate = item.in_date ? new Date(item.in_date) : null;
+      // Standardizing the response to match your specific API Object structure
+      const transformed = (res.data || []).map((item) => {
+        // Accessing the .Time property within the nested in_date/out_date objects
+        const rawInTime = item.in_date?.Time;
+        const rawOutTime = item.out_date?.Time;
+
+        const inDateObj = rawInTime ? new Date(rawInTime) : null;
+        const outDateObj = rawOutTime ? new Date(rawOutTime) : null;
 
         return {
           id: item.id,
           userId: item.user_id,
           name: item.user_name || "N/A",
           designation: item.designation_name || "N/A",
-          date: inDate
-            ? inDate.toLocaleDateString("en-GB", {
+          date: inDateObj
+            ? inDateObj.toLocaleDateString("en-GB", {
                 day: "2-digit",
                 month: "short",
                 year: "numeric",
               })
             : "--",
-          checkIn: inDate
-            ? inDate.toLocaleTimeString([], {
+          checkIn: inDateObj
+            ? inDateObj.toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
               })
             : "--",
-          checkOut: item.out_date
-            ? new Date(item.out_date).toLocaleTimeString([], {
+          checkOut: outDateObj
+            ? outDateObj.toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
               })
@@ -140,11 +144,14 @@ function RegularizationTable() {
             item.user_image || `https://i.pravatar.cc/40?u=${item.user_id}`,
           remarks: item.remarks || "",
           remaining: item.remaining || 0,
+          // Keep raw data for modal usage if needed
+          raw_data: item,
         };
       });
 
       setData(transformed);
-    } catch {
+    } catch (err) {
+      console.error("Fetch error:", err);
       toast.error("Failed to load regularization requests");
     } finally {
       setLoading(false);
@@ -164,7 +171,7 @@ function RegularizationTable() {
 
   /* ================= STATUS COLOR ================= */
   const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case "approved":
         return "bg-green-100 text-green-600";
       case "rejected":
@@ -182,8 +189,15 @@ function RegularizationTable() {
       width: 180,
       render: (val, row) => (
         <div className="flex items-center gap-2">
-          <img src={row.avatar} className="w-7 h-7 rounded-full" alt="avatar" />
-          <span>{val}</span>
+          <img
+            src={row.avatar}
+            className="w-7 h-7 rounded-full object-cover"
+            alt="avatar"
+            onError={(e) => {
+              e.target.src = `https://i.pravatar.cc/40?u=${row.userId}`;
+            }}
+          />
+          <span className="font-medium text-gray-700">{val}</span>
         </div>
       ),
     },
@@ -192,20 +206,22 @@ function RegularizationTable() {
       label: "Designation",
       width: 160,
       render: (val) => (
-        <span className="truncate block max-w-[140px]">{val}</span>
+        <span className="truncate block max-w-[140px] text-gray-500 text-xs">
+          {val}
+        </span>
       ),
     },
     { key: "date", label: "Date", width: 120 },
-    { key: "checkIn", label: "Check In", width: 120 },
-    { key: "checkOut", label: "Check Out", width: 120 },
-    { key: "workingHours", label: "Working Hours", width: 140 },
+    { key: "checkIn", label: "Check In", width: 100 },
+    { key: "checkOut", label: "Check Out", width: 100 },
+    { key: "workingHours", label: "Working Hours", width: 130 },
     {
       key: "status",
       label: "Status",
       width: 120,
       render: (val) => (
         <span
-          className={`px-3 py-1 rounded-full text-[12px] font-medium ${getStatusColor(
+          className={`px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider ${getStatusColor(
             val,
           )}`}
         >
@@ -222,24 +238,22 @@ function RegularizationTable() {
           row={row}
           openMenuId={openMenuId}
           setOpenMenuId={setOpenMenuId}
-          onEdit={async (row) => {
-            setSelectedRow(row);
+          onEdit={async (selectedRow) => {
+            setSelectedRow(selectedRow);
+            setModalType("approve");
             try {
-              // FIXED: Use the correct API function that hits /shifts/staff/get/
-              const shiftInfo = await getShiftPolicyById(row.userId);
+              const shiftInfo = await getShiftPolicyById(selectedRow.userId);
               setShiftData(shiftInfo || { shift_name: "Not Allocated" });
             } catch (err) {
-              console.error("Shift fetch error:", err);
               setShiftData({ shift_name: "Not Allocated" });
             }
-            setModalType("approve");
           }}
         />
       ),
     },
   ];
 
-  /* ================= SEARCH ================= */
+  /* ================= SEARCH FILTER ================= */
   const filteredData = useMemo(() => {
     if (!searchTerm) return data;
     const q = searchTerm.toLowerCase();
@@ -251,46 +265,43 @@ function RegularizationTable() {
     );
   }, [data, searchTerm]);
 
-  /* ================= ADD REGULARIZE ================= */
-  const handleRegularizeClick = () => {
-    setSelectedRow(null); // Reset for new entry
-    setShiftData(null);
-    setModalType("add");
-  };
-
   return (
     <>
-      <div className="bg-[#f9fafb] rounded-xl p-4">
+      <div className="bg-[#f9fafb] rounded-xl p-4 border border-gray-100 shadow-sm">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-base font-medium text-gray-800">
+          <h3 className="text-base font-semibold text-gray-800">
             Regularization Requests
           </h3>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleRegularizeClick}
-              className="flex items-center gap-1 px-3 py-1.5 bg-black text-white rounded-md text-xs hover:bg-gray-800 transition-colors"
+              onClick={() => {
+                setSelectedRow(null);
+                setModalType("add");
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-black text-white rounded-md text-xs font-medium hover:bg-gray-800 transition-all"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
               Regularize
             </button>
 
-            <div className="flex items-center gap-1 border border-gray-100 px-2 py-1.5 rounded-md bg-gray-50 text-xs w-36 sm:w-40">
+            <div className="flex items-center gap-1 border border-gray-200 px-2 py-1.5 rounded-md bg-white text-xs w-40">
               <input
                 type="text"
-                placeholder="Search"
+                placeholder="Search requests..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-transparent w-full focus:outline-none text-xs text-gray-800 placeholder:text-gray-400"
+                className="bg-transparent w-full focus:outline-none text-gray-700"
               />
-              <Search className="w-3.5 h-3.5 text-gray-500" />
+              <Search className="w-3.5 h-3.5 text-gray-400" />
             </div>
           </div>
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center py-20 text-gray-500">
-            Loading requests...
+          <div className="flex flex-col justify-center items-center py-20 text-gray-400 gap-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+            <span className="text-xs">Loading requests...</span>
           </div>
         ) : (
           <UniversalTable

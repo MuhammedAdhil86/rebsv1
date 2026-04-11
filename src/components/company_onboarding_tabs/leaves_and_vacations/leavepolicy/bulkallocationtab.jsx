@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Search, Info, Users, Filter } from "lucide-react";
+import { Search, Palmtree } from "lucide-react";
 import PayrollTable from "../../../../ui/payrolltable";
 import toast, { Toaster } from "react-hot-toast";
 import payrollService from "../../../../service/payrollService";
@@ -17,7 +17,8 @@ const BulkAllocationTab = ({ policies }) => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [filterType, setFilterType] = useState("all");
+  // ✅ Updated: Default filter type is now "employee"
+  const [filterType, setFilterType] = useState("employee");
   const [filterOptions, setFilterOptions] = useState([]);
   const [selectedFilterId, setSelectedFilterId] = useState("");
 
@@ -60,15 +61,15 @@ const BulkAllocationTab = ({ policies }) => {
       ),
     },
     { key: "full_name", label: "Staff Name", align: "left" },
-    { key: "employee_id", label: "Staff ID", align: "center" },
-    { key: "department_name", label: "Department", align: "center" },
-    { key: "designation_name", label: "Designation", align: "center" },
+    { key: "uuid", label: "Staff ID", align: "center" }, // ✅ UUID as ID
+    { key: "department", label: "Department", align: "center" }, // ✅ Department name
+    { key: "designation", label: "Designation", align: "center" },
     {
       key: "status",
       label: "Status",
       align: "center",
       render: (val) => (
-        <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-normal border border-green-100 uppercase">
+        <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] uppercase border border-green-100">
           {val || "Active"}
         </span>
       ),
@@ -94,11 +95,11 @@ const BulkAllocationTab = ({ policies }) => {
   const fetchAllUsers = async () => {
     try {
       const data = await getAllStaff();
+      console.log("Bulk Allocation: Staff Data 👉", data);
       const staffList = Array.isArray(data) ? data : data?.data || [];
       setUsers(staffList);
-      setSelectedUsers([]);
+      // NOTE: We do NOT auto-select here because "Select Employee" is the default clean state
     } catch (error) {
-      toast.error("Failed to load staff list");
       setUsers([]);
     }
   };
@@ -107,23 +108,29 @@ const BulkAllocationTab = ({ policies }) => {
     setFilterType(type);
     setSelectedFilterId("");
     setFilterOptions([]);
-    setSelectedUsers([]);
 
-    if (type === "all") {
-      setLoading(true);
-      await fetchAllUsers();
-      setLoading(false);
+    if (type === "employee") {
+      // ✅ Mode: Select Employee -> Clear all checkboxes for manual choice
+      setSelectedUsers([]);
       return;
     }
 
+    if (type === "all") {
+      // ✅ Mode: All Employees -> Auto-check every single box
+      const allUuids = users.map((u) => u.uuid);
+      setSelectedUsers(allUuids);
+      toast.success("All employees selected");
+      return;
+    }
+
+    // Criteria modes (Department/Branch/Designation)
+    setSelectedUsers([]);
     try {
       let data = [];
       if (type === "department") data = await getDepartmentData();
       if (type === "designation") data = await getDesignationData();
       if (type === "branch") data = await getBranchData();
-
-      const options = Array.isArray(data) ? data : data?.data || [];
-      setFilterOptions(options);
+      setFilterOptions(Array.isArray(data) ? data : data?.data || []);
     } catch (error) {
       toast.error(`Could not load ${type} data`);
     }
@@ -131,7 +138,6 @@ const BulkAllocationTab = ({ policies }) => {
 
   const handleFilterSelect = async (id) => {
     setSelectedFilterId(id);
-    setSelectedUsers([]);
     if (!id) return;
 
     setLoading(true);
@@ -142,22 +148,24 @@ const BulkAllocationTab = ({ policies }) => {
 
     try {
       const data = await filterStaff(params);
+      console.log(`Filtered Staff (${filterType}) 👉`, data);
       const filteredList = Array.isArray(data) ? data : data?.data || [];
       setUsers(filteredList);
+
+      // ✅ Mode: Category Selected -> Auto-check all matching staff
+      const filteredUuids = filteredList.map((u) => u.uuid);
+      setSelectedUsers(filteredUuids);
     } catch (error) {
-      toast.error("Filtering failed");
       setUsers([]);
+      setSelectedUsers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= SUBMIT ACTION ================= */
   const handleAllocate = async () => {
-    if (!selectedPolicyId)
-      return toast.error("Please select a leave policy first");
-    if (selectedUsers.length === 0)
-      return toast.error("Please select at least one staff member");
+    if (!selectedPolicyId) return toast.error("Please select a leave policy");
+    if (selectedUsers.length === 0) return toast.error("Select staff members");
 
     const payload = {
       leave_policy_id: parseInt(selectedPolicyId, 10),
@@ -167,49 +175,38 @@ const BulkAllocationTab = ({ policies }) => {
     setSubmitting(true);
     try {
       const response = await payrollService.bulkAllocateLeave(payload);
-
       if (response.success || response.status_code === 200) {
-        toast.success(response.message || "Policy successfully allocated!");
+        toast.success("Policy successfully allocated!");
         setSelectedUsers([]);
-        setSelectedPolicyId("");
         fetchAllUsers();
-      } else {
-        toast.error(response.message || "Backend rejected the allocation");
       }
     } catch (error) {
-      const backendError =
-        error.response?.data?.message ||
-        error.response?.data?.data ||
-        error.message ||
-        "Unknown server error";
-
-      toast.error(`Error: ${backendError}`);
+      toast.error(error.response?.data?.message || "Server error");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 animate-in fade-in duration-500 font-['Poppins'] font-normal">
+    <div className="flex flex-col lg:flex-row gap-6 animate-in fade-in duration-500 font-['Poppins']">
       <Toaster position="top-right" />
 
-      {/* --- LEFT SIDEBAR: CONTROLS --- */}
+      {/* --- SIDEBAR --- */}
       <div className="w-full lg:w-80 space-y-4">
         <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm space-y-6">
-          {/* Policy Selection */}
           <div>
-            <label className="text-[12px] text-gray-800 uppercase tracking-tight block mb-3 font-normal">
-              Select Policy
+            <label className="text-[11px] font-semibold text-gray-400 uppercase mb-3 block">
+              Policy
             </label>
             <select
               value={selectedPolicyId}
               onChange={(e) => setSelectedPolicyId(e.target.value)}
-              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-black transition-all font-normal"
+              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-black"
             >
               <option value="">-- Choose Leave Template --</option>
-              {policies?.map((policy) => (
-                <option key={policy.id} value={policy.id}>
-                  {policy.name}
+              {policies?.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
                 </option>
               ))}
             </select>
@@ -217,33 +214,37 @@ const BulkAllocationTab = ({ policies }) => {
 
           <hr className="border-gray-50" />
 
-          {/* Filtering Controls */}
           <div>
-            <label className="text-[12px] text-gray-800 uppercase tracking-tight block mb-3 font-normal">
-              Target Audience
+            <label className="text-[11px] font-semibold text-gray-400 uppercase mb-3 block">
+              Target Category
             </label>
-
             <div className="grid grid-cols-2 gap-2 mb-4">
-              {["all", "department", "designation", "branch"].map((type) => (
-                <button
-                  key={type}
-                  onClick={() => handleFilterTypeChange(type)}
-                  className={`px-2 py-2 rounded-lg text-[10px] capitalize border transition-all font-normal ${
-                    filterType === type
-                      ? "bg-black text-white border-black"
-                      : "bg-white text-gray-500 border-gray-100 hover:border-gray-300"
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
+              {["employee", "all", "department", "designation", "branch"].map(
+                (type) => (
+                  <button
+                    key={type}
+                    onClick={() => handleFilterTypeChange(type)}
+                    className={`px-2 py-2 rounded-lg text-[10px] capitalize border transition-all ${
+                      filterType === type
+                        ? "bg-black text-white border-black"
+                        : "bg-white text-gray-500 border-gray-100 hover:border-gray-300"
+                    }`}
+                  >
+                    {type === "employee"
+                      ? "Select Employee"
+                      : type === "all"
+                        ? "All Employees"
+                        : type}
+                  </button>
+                ),
+              )}
             </div>
 
-            {filterType !== "all" && (
+            {["department", "designation", "branch"].includes(filterType) && (
               <select
                 value={selectedFilterId}
                 onChange={(e) => handleFilterSelect(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-black animate-in slide-in-from-top-2 duration-200 font-normal"
+                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-black animate-in slide-in-from-top-2"
               >
                 <option value="">-- Select {filterType} --</option>
                 {filterOptions.map((opt) => (
@@ -255,33 +256,25 @@ const BulkAllocationTab = ({ policies }) => {
             )}
           </div>
 
-          <hr className="border-gray-50" />
-
-          {/* Final Action */}
-          <div className="pt-2">
-            <button
-              disabled={submitting || selectedUsers.length === 0}
-              onClick={handleAllocate}
-              className={`w-full py-3.5 rounded-lg text-[12px] transition-all shadow-sm flex items-center justify-center gap-2 font-normal ${
-                submitting || selectedUsers.length === 0
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-black text-white hover:bg-zinc-800 active:scale-[0.98]"
-              }`}
-            >
-              {submitting
-                ? "Processing..."
-                : `Allocate to ${selectedUsers.length} Staff`}
-            </button>
-            <p className="text-[10px] text-gray-400 mt-3 text-center flex items-center justify-center gap-1 font-normal">
-              IDs will be sent as an array of strings
-            </p>
-          </div>
+          <button
+            disabled={submitting || selectedUsers.length === 0}
+            onClick={handleAllocate}
+            className={`w-full py-3.5 rounded-lg text-[12px] font-medium transition-all ${
+              submitting || selectedUsers.length === 0
+                ? "bg-gray-100 text-gray-400"
+                : "bg-black text-white hover:bg-zinc-800"
+            }`}
+          >
+            {submitting
+              ? "Processing..."
+              : `Allocate to ${selectedUsers.length} Staff`}
+          </button>
         </div>
       </div>
 
-      {/* --- RIGHT CONTENT: STAFF TABLE --- */}
+      {/* --- TABLE --- */}
       <div className="flex-1 bg-white border border-gray-100 rounded-xl shadow-sm flex flex-col min-w-0">
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10 rounded-t-xl">
+        <div className="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-10 rounded-t-xl">
           <div className="relative w-full max-w-sm">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -289,34 +282,30 @@ const BulkAllocationTab = ({ policies }) => {
             />
             <input
               type="text"
-              placeholder="Search staff by name or ID..."
-              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-transparent rounded-lg text-xs outline-none focus:bg-white focus:border-gray-200 transition-all font-normal"
+              placeholder="Search by name or ID..."
+              className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-transparent rounded-lg text-xs focus:bg-white focus:border-gray-200 transition-all outline-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="px-3 py-1 bg-black text-white rounded-full text-[10px] font-normal">
+          <div className="px-3 py-1 bg-black text-white rounded-full text-[10px]">
             {selectedUsers.length} SELECTED
           </div>
         </div>
 
         <div className="flex-1 overflow-auto p-4 min-h-[500px]">
           {loading ? (
-            <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3 font-normal">
+            <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3">
               <div className="w-8 h-8 border-3 border-gray-100 border-t-black rounded-full animate-spin" />
-              <span className="text-xs animate-pulse">
-                Updating Staff List...
-              </span>
+              <span className="text-xs">Updating Staff List...</span>
             </div>
           ) : (
-            <div className="animate-in fade-in zoom-in-95 duration-300">
-              <PayrollTable
-                columns={columns}
-                data={users}
-                rowsPerPage={12}
-                searchTerm={searchTerm}
-              />
-            </div>
+            <PayrollTable
+              columns={columns}
+              data={users}
+              rowsPerPage={12}
+              searchTerm={searchTerm}
+            />
           )}
         </div>
       </div>

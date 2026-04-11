@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import LeftSidebar from "./leftsidebox";
 import PayrollTable from "../../../ui/payrolltable";
-import toast, { Toaster } from "react-hot-toast"; // ✅ Added for feedback
+import toast, { Toaster } from "react-hot-toast";
 
 import {
   getAllStaff,
@@ -11,7 +11,6 @@ import {
   getDesignationData,
   getShiftList,
 } from "../../../service/staffservice";
-
 import { allocateShiftBulkUpsert } from "../../../service/companyService";
 
 const ShiftBulkAllocation = () => {
@@ -20,7 +19,7 @@ const ShiftBulkAllocation = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [filterType, setFilterType] = useState("all");
+  const [filterType, setFilterType] = useState("employee");
   const [filterOptions, setFilterOptions] = useState([]);
   const [selectedFilterId, setSelectedFilterId] = useState("");
 
@@ -29,20 +28,8 @@ const ShiftBulkAllocation = () => {
   const [selectedPolicy, setSelectedPolicy] = useState(null);
 
   const [selectedUsers, setSelectedUsers] = useState([]);
-
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-
-  /* ================= INITIAL LOAD ================= */
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
-
-  const fetchInitialData = async () => {
-    setLoading(true);
-    await Promise.all([fetchAllUsers(), fetchShifts()]);
-    setLoading(false);
-  };
 
   /* ================= COLUMN DEFINITION ================= */
   const columns = [
@@ -61,25 +48,75 @@ const ShiftBulkAllocation = () => {
         <input
           type="checkbox"
           className="cursor-pointer"
-          checked={selectedUsers.includes(row.uuid)} // ✅ Using UUID
+          checked={selectedUsers.includes(row.uuid)} // ✅ Matches your log: using row.uuid
           onChange={() => toggleUserSelection(row.uuid)}
-          onClick={(e) => e.stopPropagation()}
         />
       ),
     },
     { key: "full_name", label: "Staff Name", align: "left" },
-    { key: "employee_id", label: "Staff ID", align: "center" },
-    { key: "department_name", label: "Department", align: "center" },
-    { key: "designation_name", label: "Designation", align: "center" },
     {
-      key: "branch_name",
-      label: "Branch",
+      key: "uuid", // ✅ Matches your log: uuid is the Staff ID
+      label: "Staff ID",
+      align: "center",
+    },
+    {
+      key: "department", // ✅ Matches your log: department name is in 'department'
+      label: "Department",
+      align: "center",
+      render: (val) => val || <span className="text-gray-400">N/A</span>,
+    },
+    {
+      key: "designation",
+      label: "Designation",
       align: "center",
       render: (val) => val || <span className="text-gray-400">N/A</span>,
     },
   ];
 
-  /* ================= SELECTION LOGIC ================= */
+  /* ================= API ACTIONS ================= */
+
+  const fetchAllUsers = async () => {
+    try {
+      const data = await getAllStaff();
+      console.log("Total Staff Data Response 👉", data);
+      const staffList = Array.isArray(data) ? data : data?.data || [];
+      setUsers(staffList);
+    } catch (error) {
+      console.error("Error fetching all staff:", error);
+      setUsers([]);
+    }
+  };
+
+  const handleFilterSelect = async (id) => {
+    setSelectedFilterId(id);
+    if (!id) return;
+
+    setLoading(true);
+    let params = {};
+    if (filterType === "department") params.department_id = id;
+    if (filterType === "designation") params.designation_id = id;
+    if (filterType === "branch") params.branch_id = id;
+
+    try {
+      const data = await filterStaff(params);
+      console.log(`Filtered Staff (${filterType}) Response 👉`, data);
+
+      const filteredList = Array.isArray(data) ? data : data?.data || [];
+      setUsers(filteredList);
+
+      // ✅ Auto-check all filtered employees using their UUID
+      const filteredUuids = filteredList.map((u) => u.uuid);
+      setSelectedUsers(filteredUuids);
+    } catch (error) {
+      console.error("Error filtering staff:", error);
+      setUsers([]);
+      setSelectedUsers([]);
+    }
+    setLoading(false);
+  };
+
+  /* ================= HANDLERS ================= */
+
   const toggleUserSelection = (uuid) => {
     setSelectedUsers((prev) =>
       prev.includes(uuid) ? prev.filter((u) => u !== uuid) : [...prev, uuid],
@@ -94,16 +131,40 @@ const ShiftBulkAllocation = () => {
     }
   };
 
-  /* ================= API ACTIONS ================= */
-  const fetchAllUsers = async () => {
-    try {
-      const data = await getAllStaff();
-      const staffList = Array.isArray(data) ? data : data?.data || [];
-      setUsers(staffList);
-      setSelectedUsers([]);
-    } catch (error) {
-      setUsers([]);
+  const handleFilterTypeChange = async (type) => {
+    setFilterType(type);
+    setSelectedFilterId("");
+    setFilterOptions([]);
+
+    if (type === "employee") {
+      setSelectedUsers([]); // "Select Employee" mode: clean checkboxes
+      return;
     }
+
+    if (type === "all") {
+      const allUuids = users.map((u) => u.uuid);
+      setSelectedUsers(allUuids); // "All Employees" mode: check everything
+      toast.success(`Selected all ${allUuids.length} employees`);
+      return;
+    }
+
+    setSelectedUsers([]);
+    let data = [];
+    if (type === "department") data = await getDepartmentData();
+    if (type === "designation") data = await getDesignationData();
+    if (type === "branch") data = await getBranchData();
+    setFilterOptions(Array.isArray(data) ? data : data?.data || []);
+  };
+
+  // ... (Initial Load and Allocation logic same as before)
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
+
+  const fetchInitialData = async () => {
+    setLoading(true);
+    await Promise.all([fetchAllUsers(), fetchShifts()]);
+    setLoading(false);
   };
 
   const fetchShifts = async () => {
@@ -115,53 +176,6 @@ const ShiftBulkAllocation = () => {
     }
   };
 
-  const handleFilterTypeChange = async (type) => {
-    setFilterType(type);
-    setSelectedFilterId("");
-    setFilterOptions([]);
-    setSelectedUsers([]);
-    if (type === "all") {
-      setLoading(true);
-      await fetchAllUsers();
-      setLoading(false);
-      return;
-    }
-    let data = [];
-    if (type === "department") data = await getDepartmentData();
-    if (type === "designation") data = await getDesignationData();
-    if (type === "branch") data = await getBranchData();
-    setFilterOptions(Array.isArray(data) ? data : data?.data || []);
-  };
-
-  const handleFilterSelect = async (id) => {
-    setSelectedFilterId(id);
-    setSelectedUsers([]);
-    if (!id) return;
-    setLoading(true);
-    let params = {};
-    if (filterType === "department") params.department_id = id;
-    if (filterType === "designation") params.designation_id = id;
-    if (filterType === "branch") params.branch_id = id;
-    try {
-      const data = await filterStaff(params);
-      setUsers(Array.isArray(data) ? data : data?.data || []);
-    } catch (error) {
-      setUsers([]);
-    }
-    setLoading(false);
-  };
-
-  const handleClearAll = () => {
-    setFilterType("all");
-    setSelectedFilterId("");
-    setFilterOptions([]);
-    setSearchTerm("");
-    setSelectedUsers([]);
-    setFromDate("");
-    setToDate("");
-    fetchAllUsers();
-  };
-
   const handleShiftChange = (e) => {
     const shiftId = e.target.value;
     setSelectedShift(shiftId);
@@ -170,11 +184,9 @@ const ShiftBulkAllocation = () => {
   };
 
   const handleAllocate = async () => {
-    if (!selectedShift) return toast.error("Please select a shift");
-    if (selectedUsers.length === 0)
-      return toast.error("Please select at least one staff");
-    if (!fromDate || !toDate)
-      return toast.error("Select both From and To dates");
+    if (!selectedShift || selectedUsers.length === 0 || !fromDate || !toDate) {
+      return toast.error("Please select shift, staff, and dates");
+    }
 
     const payload = {
       shift_id: Number(selectedShift),
@@ -184,34 +196,17 @@ const ShiftBulkAllocation = () => {
     };
 
     const allocationPromise = allocateShiftBulkUpsert(payload);
-
     toast.promise(allocationPromise, {
       loading: "Allocating shifts...",
-      success: (response) => {
-        if (response.status_code === 200 || response.success) {
-          setSelectedUsers([]);
-          setFromDate("");
-          setToDate("");
-          fetchAllUsers();
-          return "Shifts allocated successfully!";
-        } else {
-          throw new Error(response.message || "Failed to allocate");
-        }
-      },
-      error: (err) => {
-        // ✅ Capture backend's specific error message
-        const backendMsg =
-          err.response?.data?.data ||
-          err.response?.data?.message ||
-          "Check your data and try again";
-        return `Error: ${backendMsg}`;
-      },
+      success: "Shifts allocated successfully!",
+      error: (err) =>
+        `Error: ${err.response?.data?.message || "Failed to allocate"}`,
     });
   };
 
   return (
-    <div className="flex gap-4 w-full min-h-screen bg-[#F9FAFB] p-4 font-poppins font-normal text-[12px]">
-      <Toaster position="top-right" /> {/* ✅ Add toaster here */}
+    <div className="flex gap-4 w-full min-h-screen bg-[#F9FAFB] p-4 font-poppins text-[12px]">
+      <Toaster position="top-right" />
       <LeftSidebar
         shifts={shifts}
         selectedShift={selectedShift}
@@ -221,8 +216,11 @@ const ShiftBulkAllocation = () => {
         filterOptions={filterOptions}
         selectedFilterId={selectedFilterId}
         handleFilterSelect={handleFilterSelect}
-        users={users}
-        handleClearAll={handleClearAll}
+        handleClearAll={() => {
+          setFilterType("employee");
+          setSelectedUsers([]);
+          fetchAllUsers();
+        }}
         selectedPolicy={selectedPolicy}
         selectedUsersCount={selectedUsers.length}
         handleAllocate={handleAllocate}
@@ -231,12 +229,13 @@ const ShiftBulkAllocation = () => {
         toDate={toDate}
         setToDate={setToDate}
       />
+
       <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col min-w-0">
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+        <div className="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-10">
           <input
             type="text"
             placeholder="Search staff by name..."
-            className="w-full max-w-sm p-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500 transition-all font-normal"
+            className="w-full max-w-sm p-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500 font-normal"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -247,7 +246,7 @@ const ShiftBulkAllocation = () => {
 
         <div className="flex-1 overflow-auto">
           {loading ? (
-            <div className="flex flex-col items-center justify-center p-20 text-gray-500 gap-2 font-normal">
+            <div className="flex flex-col items-center justify-center p-20 text-gray-500 gap-2">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               <span>Processing...</span>
             </div>
@@ -256,7 +255,6 @@ const ShiftBulkAllocation = () => {
               <PayrollTable
                 columns={columns}
                 data={users}
-                rowsPerPage={10}
                 searchTerm={searchTerm}
               />
             </div>

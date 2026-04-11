@@ -9,11 +9,14 @@ import { getpolicyLookup,
 getPayrollcomponents, 
 deletePayrollComponent,
 deleteTemplateAllocation,
+getPayrollDataAnalyticsList,
  getReimbursementList,
  updateReimbursementStatus,
  postLeaveBulkAllocation,
 deletePayrollTemplate,
-deleteLeavePolicy,} from "../api/api";
+postBulkAllocatePayroll,
+deleteLeavePolicy,
+updatePayrollAnalytics,} from "../api/api";
 
 const payrollService = {
   // ---------------- POLICY LOOKUPS ----------------
@@ -385,7 +388,58 @@ getReimbursements: async (signal) => {
       throw err;
     }
   },
+bulkAllocatePayroll: async (payload) => {
+  // 1. Clean the URL (remove accidental quotes from your api file)
+  const endpoint = postBulkAllocatePayroll.replace(/"/g, ""); 
 
+  try {
+    const { data } = await axiosInstance.post(endpoint, payload);
+    return data;
+  } catch (err) {
+    // 2. Extract the absolute best error info available
+    const errorData = err.response?.data;
+    
+    // Create a custom error object that carries the backend's specific logic
+    const customError = new Error();
+    customError.message = errorData?.message || errorData?.error || "Allocation failed";
+    customError.details = errorData?.errors || null; // For field-specific validation arrays
+    customError.status = err.response?.status;
+    
+    throw customError; 
+  }
+},
+getPayrollAnalyticsRuns: async (month, year, status) => {
+    try {
+      // 1. Generate the dynamic URL using your API constant function
+      const url = getPayrollDataAnalyticsList(month, year, status);
+      
+      // 2. Execute the GET request using the 'url' variable
+      // FIXED: Used the 'url' variable instead of 'getUserPayrollTemplateAllocations'
+      const res = await axiosInstance.get(url); 
+      
+      // 3. Return the data (contains the "runs" array)
+      return res.data;
+    } catch (err) {
+      console.error("Error in getPayrollAnalyticsRuns:", err.response || err);
+      throw err;
+    }
+},
+updatePayrollAnalyticsRuns: async (payload) => {
+    try {
+      const res = await axiosInstance.put(updatePayrollAnalytics, payload);
+      
+      if (process.env.NODE_ENV === "development") {
+        console.log("✅ Payroll Analytics Update Response:", res.data);
+      }
+
+      return res.data;
+    } catch (err) {
+      console.error("❌ Error in updatePayrollAnalyticsRuns:", err.response || err);
+      // Throw the backend error message if available
+      const errorMsg = err.response?.data?.message || "Failed to update payroll analytics";
+      throw new Error(errorMsg);
+    }
+  },
 };
 
 export default payrollService;

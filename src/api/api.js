@@ -311,7 +311,10 @@ export const getEmployeeBankInfo = "/staff/employees/bank-info";
 
 export const getPayrollAnalyticsRun = "/api/payroll/analytics/run";
 export const getPayrollAnalyticsResult = " /api/payroll/analytics/list/all-runs";
-
+export const postBulkAllocatePayroll= "/api/payroll/template-allocations";
+export const getPayrollDataAnalyticsList = (month, year, status) => 
+  `/api/payroll/analytics/list/all-runs?month=${month}&year=${year}&status=${status}`;
+export const updatePayrollAnalytics = "/api/payroll/analytics/update";
 // Attendance Policy
 export const postAttendancePolicyAdd = "/attendance-policy/add";
 
