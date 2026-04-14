@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { X, Calendar, Clock, ChevronDown } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Calendar, Clock, ChevronDown } from "lucide-react";
 import attendancePolicyService from "../service/attendancepolicyService";
 import ColorPicker from "./colorpicker";
-import toast from "react-hot-toast"; // Added toast import
+import toast from "react-hot-toast";
 
 const CreateAttendancePolicyTab = ({ onClose }) => {
   const [formData, setFormData] = useState({
@@ -38,20 +38,31 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
     end_date: "",
     overtime_cap_limit: "",
     overtime_cap_period: "Monthly",
-    // New Fields
     consider_as_halfday: false,
     policy_halfday_type: "",
     for_weekly_off: false,
   });
 
+  // --- Automatic Work Hour Calculation ---
+  useEffect(() => {
+    if (formData.start_time && formData.end_time) {
+      const [sH, sM] = formData.start_time.split(":").map(Number);
+      const [eH, eM] = formData.end_time.split(":").map(Number);
+
+      const start = new Date(0, 0, 0, sH, sM || 0);
+      const end = new Date(0, 0, 0, eH, eM || 0);
+
+      let diff = end.getTime() - start.getTime();
+      if (diff < 0) diff += 24 * 60 * 60 * 1000; // Handle overnight shifts
+
+      const hours = (diff / (1000 * 60 * 60)).toFixed(2);
+      setFormData((prev) => ({ ...prev, working_hours: hours }));
+    }
+  }, [formData.start_time, formData.end_time]);
+
   const handleInputChange = (field, value) => {
     if (
-      [
-        "delay_fine_amount",
-        "late_fine_amount",
-        "over_time_pay",
-        "working_hours",
-      ].includes(field)
+      ["delay_fine_amount", "late_fine_amount", "over_time_pay"].includes(field)
     ) {
       if (value !== "" && parseFloat(value) < 0) return;
     }
@@ -67,7 +78,7 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
 
   const handleSubmit = async () => {
     if (formData.consider_as_halfday && !formData.policy_halfday_type) {
-      toast.error("Please select a Policy Half Day Type"); // Replaced alert
+      toast.error("Please select a Policy Half Day Type");
       return;
     }
 
@@ -77,6 +88,7 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
       return s === "payroll" || s === "hand" ? s : "payroll";
     };
 
+    // Prepare payload exactly like your working version, but ensuring new values are formatted
     const payload = {
       policy_name: formData.policy_name,
       policy_code: formData.policy_code,
@@ -131,29 +143,78 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
     try {
       const response = await attendancePolicyService.createPolicy(payload);
       if (response.status === 200 || response.status === 201) {
-        toast.success("Policy Created Successfully!"); // Replaced alert
+        toast.success("Policy Created Successfully!");
         onClose();
       }
     } catch (error) {
       console.error("Backend Error Detail:", error.response?.data);
-      // Replaced alert with dynamic error toast
       toast.error(error.response?.data?.message || "Internal Server Error");
     }
   };
 
+  // --- Sub-Components for Cleanliness ---
+  const ToggleButton = ({ label, value, field }) => (
+    <div>
+      <label className={labelClass}>{label}</label>
+      <button
+        type="button"
+        onClick={() => handleInputChange(field, !value)}
+        className={`relative inline-flex h-10 w-full items-center rounded-xl transition-all ${
+          value ? "bg-black" : "bg-gray-200"
+        }`}
+      >
+        <span
+          className={`inline-block h-7 w-7 transform rounded-lg bg-white shadow-md transition-transform ${
+            value ? "translate-x-10" : "translate-x-1.5"
+          }`}
+        />
+        <span
+          className={`ml-auto mr-3 text-[10px] font-bold uppercase ${value ? "text-white" : "text-gray-500"}`}
+        >
+          {value ? "Yes" : "No"}
+        </span>
+      </button>
+    </div>
+  );
+
+  const TimeInput = ({ label, field, placeholder }) => {
+    const inputRef = useRef(null);
+    return (
+      <div>
+        <label className={labelClass}>{label}</label>
+        <div className="relative group">
+          <input
+            ref={inputRef}
+            type="time"
+            step="1"
+            placeholder={placeholder}
+            value={formData[field]}
+            className={inputClass}
+            onChange={(e) => handleInputChange(field, e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => inputRef.current?.showPicker()}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+          ></button>
+        </div>
+      </div>
+    );
+  };
+
   const inputClass =
-    "w-full px-4 py-2.5 bg-[#F4F6F8] border border-gray-100 rounded-xl text-[12px] font-normal placeholder:text-gray-400 focus:outline-none transition-all";
+    "w-full px-4 py-2.5 bg-[#F4F6F8] border border-gray-100 rounded-xl text-[12px] font-normal focus:outline-none transition-all";
   const labelClass =
     "text-[12px] font-medium text-gray-700 mb-1.5 block font-['Poppins']";
   const iconWrapper =
     "absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none";
 
   return (
-    <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-6 space-y-6  overflow-y-auto font-['Poppins']">
+    <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-6 space-y-6 overflow-y-auto font-['Poppins']">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Calendar size={20} className="text-gray-900" />
-          <h2 className="text-[16px]  text-gray-900 ">
+          <h2 className="text-[16px] text-gray-900">
             Create Attendance Policy
           </h2>
         </div>
@@ -195,67 +256,29 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Work From Home</label>
-              <select
-                className={inputClass}
-                value={formData.work_from_home}
-                onChange={(e) =>
-                  handleInputChange("work_from_home", e.target.value === "true")
-                }
-              >
-                <option value="false">No</option>
-                <option value="true">Yes</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Over Time Benefit</label>
-              <select
-                className={inputClass}
-                value={formData.over_time_benefit}
-                onChange={(e) =>
-                  handleInputChange(
-                    "over_time_benefit",
-                    e.target.value === "true",
-                  )
-                }
-              >
-                <option value="false">No</option>
-                <option value="true">Yes</option>
-              </select>
-            </div>
+            <ToggleButton
+              label="Work From Home"
+              value={formData.work_from_home}
+              field="work_from_home"
+            />
+            <ToggleButton
+              label="Over Time Benefit"
+              value={formData.over_time_benefit}
+              field="over_time_benefit"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Consider Half Day</label>
-              <select
-                className={inputClass}
-                value={formData.consider_as_halfday}
-                onChange={(e) =>
-                  handleInputChange(
-                    "consider_as_halfday",
-                    e.target.value === "true",
-                  )
-                }
-              >
-                <option value="false">No</option>
-                <option value="true">Yes</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>For Weekly Off</label>
-              <select
-                className={inputClass}
-                value={formData.for_weekly_off}
-                onChange={(e) =>
-                  handleInputChange("for_weekly_off", e.target.value === "true")
-                }
-              >
-                <option value="false">No</option>
-                <option value="true">Yes</option>
-              </select>
-            </div>
+            <ToggleButton
+              label="Consider Half Day"
+              value={formData.consider_as_halfday}
+              field="consider_as_halfday"
+            />
+            <ToggleButton
+              label="For Weekly Off"
+              value={formData.for_weekly_off}
+              field="for_weekly_off"
+            />
           </div>
 
           {formData.consider_as_halfday && (
@@ -324,21 +347,7 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>OverTime Cap Limit</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="HH:MM"
-                  className={inputClass}
-                  value={formData.overtime_cap_limit}
-                  onChange={(e) =>
-                    handleInputChange("overtime_cap_limit", e.target.value)
-                  }
-                />
-                <Clock className={iconWrapper} size={16} />
-              </div>
-            </div>
+            <TimeInput label="OverTime Cap Limit" field="overtime_cap_limit" />
             <div>
               <label className={labelClass}>Period</label>
               <select
@@ -380,77 +389,37 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
 
         <div className="w-[68%] space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm grid grid-cols-2 gap-x-10 gap-y-4">
-            {[
-              {
-                label: "Check in Time",
-                field: "start_time",
-                placeholder: "09:30:00",
-              },
-              {
-                label: "Check out Time",
-                field: "end_time",
-                placeholder: "18:30:00",
-              },
-              {
-                label: "Lunch Break From",
-                field: "lunch_break_from",
-                placeholder: "13:30:00",
-              },
-              {
-                label: "Lunch Break To",
-                field: "lunch_break_to",
-                placeholder: "14:00:00",
-              },
-              {
-                label: "Short Break From",
-                field: "break_time_from",
-                placeholder: "11:00:00",
-              },
-              {
-                label: "Short Break To",
-                field: "break_time_to",
-                placeholder: "11:15:00",
-              },
-              {
-                label: "Half Day Start Time",
-                field: "half_day",
-                placeholder: "13:30:00",
-              },
-              {
-                label: "Total Working Hours",
-                field: "working_hours",
-                placeholder: "8",
-              },
-              {
-                label: "Late Limit (Time)",
-                field: "late",
-                placeholder: "00:30:00",
-              },
-              {
-                label: "Delay Limit (Time)",
-                field: "delay",
-                placeholder: "00:10:00",
-              },
-            ].map((item, idx) => (
-              <div key={idx}>
-                <label className={labelClass}>{item.label}</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder={item.placeholder}
-                    value={formData[item.field]}
-                    className={inputClass}
-                    onChange={(e) =>
-                      handleInputChange(item.field, e.target.value)
-                    }
-                  />
-                  <Clock className={iconWrapper} size={16} />
-                </div>
-              </div>
-            ))}
+            <TimeInput
+              label="Check in Time"
+              field="start_time"
+              placeholder="09:30:00"
+            />
+            <TimeInput
+              label="Check out Time"
+              field="end_time"
+              placeholder="18:30:00"
+            />
+            <TimeInput label="Lunch Break From" field="lunch_break_from" />
+            <TimeInput label="Lunch Break To" field="lunch_break_to" />
+            <TimeInput label="Short Break From" field="break_time_from" />
+            <TimeInput label="Short Break To" field="break_time_to" />
+            <TimeInput label="Half Day Start Time" field="half_day" />
+            <div>
+              <label className={labelClass}>Total Working Hours (Auto)</label>
+              <input
+                type="text"
+                placeholder="8"
+                value={formData.working_hours}
+                className={`${inputClass} bg-blue-50/50 border-blue-100 font-bold text-blue-700`}
+                readOnly
+              />
+            </div>
+            <TimeInput label="Late Limit (Time)" field="late" />
+            <TimeInput label="Delay Limit (Time)" field="delay" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
+            {/* Delay Card */}
             <div className="bg-[#FFF6E9] border border-[#FDE3C3] rounded-2xl p-5 space-y-4">
               <div className="flex justify-between items-center text-gray-800 text-[13px]">
                 <span>Consider Delay</span>
@@ -527,6 +496,7 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
               )}
             </div>
 
+            {/* Late Card */}
             <div className="bg-[#FFEBF3] border border-[#FFD2E5] rounded-2xl p-5 space-y-4">
               <div className="flex justify-between items-center text-gray-800 text-[13px]">
                 <span>Consider Late</span>

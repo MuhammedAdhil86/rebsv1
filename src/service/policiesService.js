@@ -104,3 +104,17 @@ export const allocateLeavePolicy = async (payload) => {
     throw error;
   }
 };
+
+
+export const createShift = async (payload) => {
+  try {
+    // If you haven't defined createShiftUrl in api.js yet, 
+    // you can use "/shifts/add" directly, but consistency is better.
+    const response = await axiosInstance.post("/shifts/add", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Error in createShift service:", error);
+    // We throw the error so the Component's catch block can handle the toast messages
+    throw error;
+  }
+};

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axiosInstance from "../../service/axiosinstance";
 import UniversalTable from "../../ui/universal_table";
-import { Loader2, Download, Play, PlusCircle } from "lucide-react";
+import { Loader2, Download, Play, PlusCircle, CheckCircle } from "lucide-react";
 import * as XLSX from "xlsx-js-style";
 import { postPayrollAttendance } from "../../api/api";
 import CustomSelect from "../../ui/customselect";
@@ -12,10 +12,10 @@ import {
   getDepartmentData,
   getBranchData,
   getDesignationData,
+  getAllStaff,
 } from "../../service/staffservice";
 import toast from "react-hot-toast";
 
-// --- NEW COMPONENT IMPORT ---
 import FinalizePayroll from "./payrollfinalize";
 
 const monthNames = [
@@ -36,22 +36,16 @@ const monthNames = [
 export default function PayrollRunning() {
   const now = new Date();
 
-  // View State (Toggle between List and Finalize Component)
-  const [finalizingEmployee, setFinalizingEmployee] = useState(null);
-
-  // Tab State
+  // --- Main View States ---
   const [activeTab, setActiveTab] = useState("draft");
-
-  // Table States
+  const [finalizingEmployee, setFinalizingEmployee] = useState(null);
   const [month, setMonth] = useState(monthNames[now.getMonth()]);
   const [year, setYear] = useState(String(now.getFullYear()));
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Modal States
+  // --- Allocate Modal States ---
   const [isAllocateModalOpen, setIsAllocateModalOpen] = useState(false);
-
-  // Bulk Allocate States
   const [bulkStep, setBulkStep] = useState(1);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkStaffList, setBulkStaffList] = useState([]);
@@ -63,6 +57,7 @@ export default function PayrollRunning() {
   });
   const [selectedStaffUuids, setSelectedStaffUuids] = useState([]);
   const [bulkSearchQuery, setBulkSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState("employee");
   const [bulkActiveFilters, setBulkActiveFilters] = useState({
     dept: "",
     branch: "",
@@ -74,148 +69,204 @@ export default function PayrollRunning() {
     to_date: "",
   });
 
-  // ================= 1. FETCH MAIN TABLE DATA =================
-  useEffect(() => {
-    fetchData();
-  }, [month, year, activeTab]);
-
-  const fetchData = async () => {
+  // ================= 1. FETCH MAIN DATA =================
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const monthIndex = monthNames.indexOf(month) + 1;
       const res = await payrollService.getPayrollAnalyticsRuns(
-        monthIndex,
+        monthNames.indexOf(month) + 1,
         year,
         activeTab,
       );
-
       const runs = res?.data?.runs || [];
-      if (runs.length > 0) {
-        setRecords(runs[0].employees || []);
-      } else {
-        setRecords([]);
-      }
+      const rawEmployees = runs.length > 0 ? runs[0].employees || [] : [];
+
+      const processedEmployees = rawEmployees.map((emp) => {
+        const b = emp.bank_info;
+        const fullName = `${b?.first_name || ""} ${b?.last_name || ""}`.trim();
+        return {
+          ...emp,
+          full_name:
+            fullName || b?.account_holder_name || `Staff ${emp.user_id}`,
+        };
+      });
+
+      setRecords(processedEmployees);
     } catch (err) {
-      console.error("Fetch Error:", err);
       setRecords([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [month, year, activeTab]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // ================= 2. LOCAL UPDATE LOGIC (NO API) =================
+  const handleLocalUpdate = (updatedStaff) => {
+    setRecords((prev) =>
+      prev.map((r) => (r.user_id === updatedStaff.user_id ? updatedStaff : r)),
+    );
+    setFinalizingEmployee(null); // Return to main table
+    toast.success(`Changes for ${updatedStaff.full_name} staged locally.`);
+  };
+
+  // ================= 3. ALLOCATE MODAL LOGIC =================
+  useEffect(() => {
+    if (isAllocateModalOpen) {
+      (async () => {
+        setBulkLoading(true);
+        try {
+          const [depts, branches, desigs, staff, templates] = await Promise.all(
+            [
+              getDepartmentData(),
+              getBranchData(),
+              getDesignationData(),
+              getAllStaff(),
+              payrollService.getSalaryTemplates(),
+            ],
+          );
+          setBulkFilters({
+            departments: depts?.data || depts || [],
+            branches: branches?.data || branches || [],
+            designations: desigs?.data || desigs || [],
+          });
+          setBulkTemplates(templates || []);
+          setBulkStaffList(staff?.data || staff || []);
+        } finally {
+          setBulkLoading(false);
+        }
+      })();
+    }
+  }, [isAllocateModalOpen]);
+
+  const handleFilterSelect = async (type, id) => {
+    setFilterType(type);
+    setBulkActiveFilters((prev) => ({
+      ...prev,
+      [type === "department" ? "dept" : "branch"]: id,
+    }));
+    setBulkLoading(true);
+    try {
+      let staffData = [];
+      if (type === "employee" || !id) {
+        const res = await getAllStaff();
+        staffData = res?.data || res || [];
+      } else {
+        const params =
+          type === "department" ? { department_id: id } : { branch_id: id };
+        const res = await filterStaff(params);
+        staffData = res?.data || res || [];
+      }
+      setBulkStaffList(staffData);
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkSubmit = async () => {
+    setBulkLoading(true);
+    const payload = {
+      template_id: Number(bulkFormData.template_id),
+      user_ids: selectedStaffUuids,
+      effective_from: `${bulkFormData.from_date}T00:00:00Z`,
+      effective_to: bulkFormData.to_date
+        ? `${bulkFormData.to_date}T00:00:00Z`
+        : "2099-12-31T00:00:00Z",
+    };
+    try {
+      await payrollService.bulkAllocatePayroll(payload);
+      toast.success("Allocated Successfully!");
+      setIsAllocateModalOpen(false);
+      setBulkStep(1); // RESET STEPS
+      setBulkFormData({ template_id: "", from_date: "", to_date: "" });
+      setSelectedStaffUuids([]);
+      fetchData();
+    } catch (err) {
+      toast.error("Allocation failed");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  // ================= 4. RUN & FINALIZE LOGIC =================
+  const handleRunButton = async () => {
+    setLoading(true);
+    try {
+      await axiosInstance.post(postPayrollAttendance, {
+        month: monthNames.indexOf(month) + 1,
+        year: Number(year),
+      });
+      toast.success("Payroll calculated!");
+      fetchData();
+    } catch (err) {
+      toast.error("Failed to run payroll");
     } finally {
       setLoading(false);
     }
   };
 
-  // ================= 2. ACTION HANDLERS =================
-  const handleRunButton = async () => {
-    toast.dismiss();
-    setLoading(true);
-    const payload = {
-      month: monthNames.indexOf(month) + 1,
-      year: Number(year),
-    };
-
-    toast.promise(axiosInstance.post(postPayrollAttendance, payload), {
-      loading: "Calculating payroll components...",
-      success: (res) => {
-        fetchData();
-        return res?.data?.message || "Payroll Calculated Successfully!";
-      },
-      error: (err) => {
-        setLoading(false);
-        return err.response?.data?.message || "Calculation failed";
-      },
-    });
-  };
-
-  const handleBulkSubmit = async () => {
-    if (selectedStaffUuids.length === 0)
-      return toast.error("Select staff members");
-    const payload = {
-      template_id: Number(bulkFormData.template_id),
-      user_ids: selectedStaffUuids,
-      effective_from: `${bulkFormData.from_date}T00:00:00Z`,
-      effective_to: `${bulkFormData.to_date}T00:00:00Z`,
-    };
-
-    toast.promise(payrollService.bulkAllocatePayroll(payload), {
-      loading: "Allocating payroll...",
-      success: () => {
-        fetchData();
-        setIsAllocateModalOpen(false);
-        return "Payroll Allocated Successfully!";
-      },
-      error: (err) => err.response?.data?.message || "Allocation failed",
-    });
-  };
-
-  // ================= 3. UI HELPERS =================
-  const columns = [
-    { label: "User ID", key: "user_id" },
-    { label: "Employee Name", key: "bank_info.account_holder_name" },
-    { label: "Gross Monthly", key: "gross_monthly" },
-    { label: "Total Deductions", key: "total_deductions" },
-    { label: "Net Monthly", key: "net_monthly" },
-    { label: "Net Annual", key: "net_annual" },
-  ];
-
-  const handleDownload = () => {
+  const handleBulkFinalize = async () => {
     if (!records.length) return;
-    const headerRow = [
-      "User ID",
-      "Name",
-      "Gross",
-      "Deductions",
-      "Net Monthly",
-      "Net Annual",
-    ];
-    const dataRows = records.map((r) => [
-      r.user_id,
-      r.bank_info?.account_holder_name || "N/A",
-      r.gross_monthly,
-      r.total_deductions,
-      r.net_monthly,
-      r.net_annual,
-    ]);
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([
-      [`PAYROLL REPORT (${activeTab.toUpperCase()}) - ${month} ${year}`],
-      headerRow,
-      ...dataRows,
-    ]);
-    XLSX.utils.book_append_sheet(wb, ws, "Payroll");
-    XLSX.writeFile(wb, `payroll_${activeTab}_${month}_${year}.xlsx`);
+    setLoading(true);
+    try {
+      const payload = {
+        month: monthNames.indexOf(month) + 1,
+        year: Number(year),
+        employees: records.map((emp) => ({
+          user_id: emp.user_id,
+          components: emp.components.map((c) => ({
+            component_id: c.component_id,
+            monthly_amount: c.monthly_amount,
+            annual_amount: c.annual_amount,
+          })),
+          statutory: {
+            epf_employee: emp.statutory?.epf_employee || 0,
+            esi_employee: emp.statutory?.esi_employee || 0,
+            pt: emp.statutory?.pt || 0,
+            lwf_employee: emp.statutory?.lwf_employee || 0,
+          },
+        })),
+      };
+
+      await payrollService.updatePayrollAnalyticsRuns(payload);
+      toast.success("Batch Payroll Finalized Successfully!");
+      fetchData();
+    } catch (err) {
+      toast.error(err.message || "Finalize failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ================= 4. CONDITIONAL RENDER (FINALIZE VIEW) =================
+  // ================= 5. RENDER LOGIC =================
   if (finalizingEmployee) {
     return (
       <FinalizePayroll
         data={finalizingEmployee}
-        onBack={() => {
-          setFinalizingEmployee(null);
-          fetchData();
-        }}
+        onBack={() => setFinalizingEmployee(null)}
+        onLocalSave={handleLocalUpdate}
       />
     );
   }
 
-  // ================= 5. MAIN LIST VIEW =================
   return (
-    <div className="p-4 bg-white rounded-lg shadow-sm font-poppins font-normal text-[12px]">
+    <div className="p-4 bg-white rounded-lg font-poppins font-normal text-[12px]">
       {/* Tab Switcher */}
       <div className="flex border-b mb-4">
-        <button
-          onClick={() => setActiveTab("draft")}
-          className={`px-6 py-2 transition-all ${activeTab === "draft" ? "border-b-2 border-blue-600 text-blue-600 font-semibold" : "text-gray-500"}`}
-        >
-          Draft
-        </button>
-        <button
-          onClick={() => setActiveTab("finalized")}
-          className={`px-6 py-2 transition-all ${activeTab === "finalized" ? "border-b-2 border-blue-600 text-blue-600 font-semibold" : "text-gray-500"}`}
-        >
-          Finalized
-        </button>
+        {["draft", "finalized"].map((t) => (
+          <button
+            key={t}
+            onClick={() => setActiveTab(t)}
+            className={`px-6 py-2 capitalize transition-all ${activeTab === t ? "border-b-2 border-black text-black" : "text-gray-400"}`}
+          >
+            {t}
+          </button>
+        ))}
       </div>
 
+      {/* Action Bar */}
       <div className="flex gap-3 mb-4 items-center flex-wrap">
         <CustomSelect
           label="Month"
@@ -227,58 +278,73 @@ export default function PayrollRunning() {
           label="Year"
           value={year}
           onChange={setYear}
-          options={[2024, 2025, 2026]}
+          options={["2024", "2025", "2026"]}
         />
-
-        <div className="flex-grow"></div>
-
-        <button
-          onClick={() => setIsAllocateModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-blue-600 text-white hover:bg-blue-700 transition-all"
-        >
-          <PlusCircle size={14} /> Allocate Payroll
-        </button>
+        <div className="flex-grow" />
 
         {activeTab === "draft" && (
-          <button
-            onClick={handleRunButton}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
-          >
-            {loading ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Play size={14} />
-            )}{" "}
-            Run Payroll
-          </button>
+          <>
+            <button
+              onClick={() => setIsAllocateModalOpen(true)}
+              className="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2"
+            >
+              <PlusCircle size={14} /> Allocate
+            </button>
+            <button
+              onClick={handleRunButton}
+              disabled={loading}
+              className="px-4 py-2 bg-zinc-100 text-black border border-black rounded-lg flex items-center gap-2"
+            >
+              {loading ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Play size={14} />
+              )}{" "}
+              Run
+            </button>
+          </>
         )}
 
         <button
-          onClick={handleDownload}
-          disabled={!records.length || loading}
-          className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg border bg-black text-white hover:bg-gray-800 disabled:opacity-50"
+          onClick={handleBulkFinalize}
+          disabled={loading || records.length === 0}
+          className="px-6 py-2 bg-black text-white rounded-lg flex items-center gap-2 shadow-lg"
         >
+          {loading ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <CheckCircle size={14} />
+          )}
+          Finalize All Staff
+        </button>
+
+        <button className="px-4 py-2 border border-black text-black rounded-lg flex items-center gap-2">
           <Download size={14} /> Download
         </button>
       </div>
 
-      {loading ? (
+      {/* Table Section */}
+      {loading && records.length === 0 ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-blue-500" size={32} />
+          <Loader2 className="animate-spin text-black" size={32} />
         </div>
       ) : (
         <UniversalTable
-          columns={columns}
+          columns={[
+            { label: "User ID", key: "user_id" },
+            { label: "Employee Name", key: "full_name" },
+            { label: "Gross Monthly", key: "gross_monthly" },
+            { label: "Total Deductions", key: "total_deductions" },
+            { label: "Net Monthly", key: "net_monthly" },
+          ]}
           data={records}
-          rowClickHandler={(row) => {
-            // Logic: Switch to FinalizePayroll component view on click
-            setFinalizingEmployee(JSON.parse(JSON.stringify(row)));
-          }}
+          rowClickHandler={(row) =>
+            setFinalizingEmployee(JSON.parse(JSON.stringify(row)))
+          }
         />
       )}
 
-      {/* Bulk Allocate Modal remains accessible from this view */}
+      {/* ALLOCATE MODAL Logic preserved */}
       <AllocatePayrollModal
         isOpen={isAllocateModalOpen}
         onClose={() => setIsAllocateModalOpen(false)}
@@ -288,12 +354,13 @@ export default function PayrollRunning() {
         staffList={bulkStaffList}
         templates={bulkTemplates}
         filters={bulkFilters}
+        filterType={filterType}
+        handleFilterSelect={handleFilterSelect}
+        activeFilters={bulkActiveFilters}
         selectedStaff={selectedStaffUuids}
         setSelectedStaff={setSelectedStaffUuids}
         searchQuery={bulkSearchQuery}
         setSearchQuery={setBulkSearchQuery}
-        activeFilters={bulkActiveFilters}
-        setActiveFilters={setBulkActiveFilters}
         formData={bulkFormData}
         setFormData={setBulkFormData}
         onSubmit={handleBulkSubmit}

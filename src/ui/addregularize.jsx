@@ -26,9 +26,6 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
 
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const checkInRef = useRef(null);
-  const checkOutRef = useRef(null);
-
   /* ================= FETCH STAFF ================= */
   useEffect(() => {
     const fetchStaff = async () => {
@@ -42,7 +39,7 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
     fetchStaff();
   }, []);
 
-  /* ================= PREFILL ================= */
+  /* ================= PREFILL DATA ================= */
   useEffect(() => {
     if (!data) return;
 
@@ -59,7 +56,7 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
     });
   }, [data]);
 
-  /* ================= FETCH SHIFT (ARRAY-SAFE) ================= */
+  /* ================= FETCH SHIFT ================= */
   useEffect(() => {
     if (!form.staffId) {
       setShiftName("Not Allocated");
@@ -69,7 +66,6 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
     const loadShift = async () => {
       try {
         const shiftInfo = await getShiftPolicyById(form.staffId);
-        // Since service now returns the first object, access shift_name directly
         setShiftName(shiftInfo?.shift_name || "Not Allocated");
       } catch (err) {
         console.error("Error loading shift policy:", err);
@@ -93,8 +89,9 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
     return dt.toISOString();
   };
 
-  /* ================= WORK HOURS ================= */
+  /* ================= WORK HOURS CALCULATION ================= */
   const workHours = useMemo(() => {
+    // Only calculate if BOTH fields are present
     if (!form.date || !form.checkIn || !form.checkOut) return "--";
 
     const [inH, inM] = form.checkIn.split(":").map(Number);
@@ -115,19 +112,33 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
     return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:00`;
   }, [form.date, form.checkIn, form.checkOut]);
 
-  /* ================= SUBMIT ================= */
+  /* ================= SUBMIT LOGIC ================= */
   const handleSubmit = async () => {
-    if (!form.staffId || !form.date || !form.checkIn || !form.checkOut) {
-      toast.error("Please fill all required fields");
+    // Mandatory fields
+    if (!form.staffId || !form.date) {
+      toast.error("Please select Staff and Date");
       return;
     }
 
+    // Regularization logic: At least one punch (In or Out) must be filled
+    if (!form.checkIn && !form.checkOut) {
+      toast.error("Please provide at least a Check-In or Check-Out time");
+      return;
+    }
+
+    // Construct payload dynamically
     const payload = {
       user_id: String(form.staffId),
-      in: buildDateTimeISO(form.date, form.checkIn),
-      out: buildDateTimeISO(form.date, form.checkOut),
       remarks: form.remarks?.trim() || "",
     };
+
+    if (form.checkIn) {
+      payload.in = buildDateTimeISO(form.date, form.checkIn);
+    }
+
+    if (form.checkOut) {
+      payload.out = buildDateTimeISO(form.date, form.checkOut);
+    }
 
     try {
       setLoading(true);
@@ -136,7 +147,9 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
       onSuccess?.();
       onClose(true);
     } catch (err) {
-      toast.error("Failed to submit regularization");
+      const errorMsg =
+        err.response?.data?.message || "Failed to submit regularization";
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -145,6 +158,7 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl">
+        {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b">
           <h3 className="font-semibold text-sm text-gray-800">
             Attendance Regularization
@@ -157,7 +171,9 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
           </button>
         </div>
 
+        {/* Form Body */}
         <div className="p-6 grid grid-cols-2 gap-6 text-sm">
+          {/* Staff Select */}
           <div>
             <label className="text-gray-500 text-xs font-medium">Staff</label>
             <select
@@ -175,18 +191,20 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
             </select>
           </div>
 
+          {/* Date Picker */}
           <div className="relative">
             <label className="text-gray-500 text-xs font-medium">Date</label>
-            <input
-              readOnly
-              value={
-                form.date && isValid(form.date)
-                  ? format(form.date, "dd/MM/yyyy")
-                  : ""
-              }
-              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50 cursor-pointer"
+            <div
               onClick={() => setShowDatePicker(!showDatePicker)}
-            />
+              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50 cursor-pointer flex justify-between items-center"
+            >
+              <span>
+                {form.date && isValid(form.date)
+                  ? format(form.date, "dd/MM/yyyy")
+                  : "Select Date"}
+              </span>
+              <Calendar size={14} className="text-gray-400" />
+            </div>
             {showDatePicker && (
               <div className="absolute z-50 top-full mt-1">
                 <DatePicker
@@ -201,6 +219,7 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
             )}
           </div>
 
+          {/* Check In */}
           <div>
             <label className="text-gray-500 text-xs font-medium">
               Check In
@@ -215,6 +234,7 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
             />
           </div>
 
+          {/* Check Out */}
           <div>
             <label className="text-gray-500 text-xs font-medium">
               Check Out
@@ -229,15 +249,17 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
             />
           </div>
 
+          {/* Shift (Read Only) */}
           <div>
             <label className="text-gray-500 text-xs font-medium">Shift</label>
             <input
               readOnly
               value={shiftName}
-              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-200"
+              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-100 text-gray-600"
             />
           </div>
 
+          {/* Work Hours (Read Only) */}
           <div>
             <label className="text-gray-500 text-xs font-medium">
               Work Hours
@@ -245,10 +267,11 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
             <input
               readOnly
               value={workHours}
-              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-200 font-bold"
+              className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-100 font-bold text-gray-700"
             />
           </div>
 
+          {/* Remarks */}
           <div className="col-span-2">
             <label className="text-gray-500 text-xs font-medium">Remarks</label>
             <textarea
@@ -256,22 +279,24 @@ function AddRegularizeModal({ open, data, onClose, onSuccess }) {
               value={form.remarks}
               onChange={handleChange}
               rows={3}
+              placeholder="Reason for regularization..."
               className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-50"
             />
           </div>
         </div>
 
+        {/* Footer Actions */}
         <div className="flex justify-end gap-3 px-6 py-4 border-t">
           <button
             onClick={() => onClose(false)}
-            className="px-6 py-2 border rounded-lg"
+            className="px-6 py-2 border rounded-lg hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>
           <button
             disabled={loading}
             onClick={handleSubmit}
-            className="px-6 py-2 bg-black text-white rounded-lg"
+            className={`px-6 py-2 bg-black text-white rounded-lg transition-opacity ${loading ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"}`}
           >
             {loading ? "Submitting..." : "Apply"}
           </button>

@@ -410,17 +410,28 @@ bulkAllocatePayroll: async (payload) => {
 },
 getPayrollAnalyticsRuns: async (month, year, status) => {
     try {
-      // 1. Generate the dynamic URL using your API constant function
+      // 1. Generate the dynamic URL
       const url = getPayrollDataAnalyticsList(month, year, status);
       
-      // 2. Execute the GET request using the 'url' variable
-      // FIXED: Used the 'url' variable instead of 'getUserPayrollTemplateAllocations'
+      // DEBUG: Log the parameters and the final generated URL
+      console.log(`🚀 Fetching Payroll Analytics for: ${month}/${year} (Status: ${status})`);
+      console.log(`🔗 API URL: ${url}`);
+
+      // 2. Execute the GET request
       const res = await axiosInstance.get(url); 
       
-      // 3. Return the data (contains the "runs" array)
+      // DEBUG: Log the response to see the structure of the "runs" array
+      console.log("✅ Payroll Analytics Response:", res.data);
+      
+      // 3. Return the data
       return res.data;
     } catch (err) {
-      console.error("Error in getPayrollAnalyticsRuns:", err.response || err);
+      // DEBUG: Detailed error logging
+      console.error("❌ Error in getPayrollAnalyticsRuns:", {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data
+      });
       throw err;
     }
 },

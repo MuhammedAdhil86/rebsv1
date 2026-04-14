@@ -1,483 +1,423 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import {
-  FiPlus,
-  FiChevronDown,
-  FiCalendar,
-  FiSearch,
   FiChevronLeft,
   FiChevronRight,
+  FiSearch,
+  FiCalendar,
+  FiClock,
+  FiCheckCircle,
 } from "react-icons/fi";
+import { ChevronDown } from "lucide-react";
+
+// API Services
+import {
+  getAllStaff,
+  filterStaff,
+  getDepartmentData,
+  getBranchData,
+  getDesignationData,
+  getShiftList,
+} from "../../service/staffservice";
+import { allocateShiftBulkUpsert } from "../../service/companyService";
 import axiosInstance from "../../service/axiosinstance";
 
-const avatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+const ShiftBulkAllocation = () => {
+  /* ================= STATE ================= */
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
-// ---------------- FILTER BAR ----------------
-const FilterBar = ({
-  employees = [],
-  selectedWeek,
-  setSelectedWeek,
-  handlePrev,
-  handleNext,
-}) => {
-  const [filterMode, setFilterMode] = useState("All Employees");
-  const [selectedValues, setSelectedValues] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  // Sidebar Filter States
+  const [filterType, setFilterType] = useState("employee");
+  const [filterOptions, setFilterOptions] = useState([]);
+  const [selectedFilterId, setSelectedFilterId] = useState("");
 
-  const handleSelectChange = (value) => {
-    setFilterMode(value);
-    setSelectedValues([]);
-    setSearchQuery("");
-    setShowDropdown(false);
-  };
+  // Shift & Policy States
+  const [shifts, setShifts] = useState([]);
+  const [selectedShift, setSelectedShift] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
-  const handleCheckboxChange = (option) => {
-    setSelectedValues((prev) =>
-      prev.includes(option)
-        ? prev.filter((v) => v !== option)
-        : [...prev, option],
-    );
-  };
-
-  const getOptions = () => {
-    switch (filterMode) {
-      case "Designation":
-        return [...new Set(employees.map((e) => e.role))];
-      case "Department":
-        return ["UI/UX", "Development", "QA", "HR"];
-      case "Job Type":
-        return ["Full‑Time", "Part‑Time", "Intern"];
-      case "Branch":
-        return ["Kochi", "Bangalore", "Chennai"];
-      case "Division":
-        return ["Design", "Tech", "Ops"];
-      default:
-        return [];
-    }
-  };
-
-  const options = getOptions();
-  const filteredEmployees = employees.filter((e) =>
-    e.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
-  return (
-    <div className="flex flex-wrap items-end gap-3 mb-3 p-3 mt-1 rounded-lg relative">
-      {/* Staff Type */}
-      <div className="min-w-[100px] w-[130px] relative">
-        <label className="text-[11px] text-gray-500 mb-0.5 block">
-          Staff Type
-        </label>
-        <div className="relative">
-          <select
-            value={filterMode}
-            onChange={(e) => handleSelectChange(e.target.value)}
-            className="w-full border border-gray-300 rounded-md p-1.5 text-xs focus:outline-none focus:border-black appearance-none"
-          >
-            <option>All Employees</option>
-            <option>Individual</option>
-            <option>Designation</option>
-            <option>Department</option>
-            <option>Job Type</option>
-            <option>Branch</option>
-            <option>Division</option>
-          </select>
-          <FiChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-        </div>
-      </div>
-
-      {/* Search box for Individual */}
-      {filterMode === "Individual" && (
-        <div className="min-w-[150px] w-[180px] relative">
-          <label className="text-[11px] text-gray-500 mb-0.5 block">
-            Search Employee
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search employee..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => setShowDropdown(true)}
-              className="w-full border border-gray-300 rounded-md p-1.5 pl-6 text-xs focus:outline-none focus:border-black"
-            />
-            <FiSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-            {showDropdown && (
-              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-sm max-h-32 overflow-y-auto scrollbar-none">
-                {filteredEmployees.length > 0 ? (
-                  filteredEmployees.map((emp) => (
-                    <label
-                      key={emp.id}
-                      className="flex items-center gap-2 p-1.5 hover:bg-gray-50 cursor-pointer text-xs text-gray-700"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedValues.includes(emp.name)}
-                        onChange={() => handleCheckboxChange(emp.name)}
-                        className="scale-90"
-                      />
-                      {emp.name}
-                    </label>
-                  ))
-                ) : (
-                  <div className="p-1.5 text-xs text-gray-500 text-center">
-                    No match found
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Multi-select dropdown for other modes */}
-      {filterMode !== "All Employees" &&
-        filterMode !== "Individual" &&
-        options.length > 0 && (
-          <div className="min-w-[120px] w-[160px] relative">
-            <label className="text-[11px] text-gray-500 mb-0.5 block">
-              {filterMode}
-            </label>
-            <div
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="w-full border border-gray-300 rounded-md p-1.5 text-xs cursor-pointer bg-white flex justify-between items-center"
-            >
-              <span className="truncate">
-                {selectedValues.length > 0
-                  ? selectedValues.join(", ")
-                  : `Select ${filterMode}`}
-              </span>
-              <FiChevronDown className="text-gray-400 text-xs" />
-            </div>
-            {showDropdown && (
-              <div className="absolute mt-1 w-full bg-white z-20 border border-gray-200 rounded-md shadow-sm max-h-32 overflow-y-auto scrollbar-none">
-                {options.map((option) => (
-                  <label
-                    key={option}
-                    className="flex items-center gap-2 p-1.5 hover:bg-gray-50 cursor-pointer text-xs text-gray-700"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedValues.includes(option)}
-                      onChange={() => handleCheckboxChange(option)}
-                      className="scale-90"
-                    />
-                    {option}
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-      {/* From/To Date */}
-      {["From", "To"].map((label) => (
-        <div key={label} className="min-w-[100px] w-[115px]">
-          <label className="text-[11px] text-gray-500 mb-0.5 block">
-            {label}
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              defaultValue="09-10-2025"
-              onFocus={(e) => (e.target.type = "date")}
-              onBlur={(e) => (e.target.type = "text")}
-              className="w-full border border-gray-300 rounded-md p-1.5 text-xs focus:outline-none focus:border-black"
-            />
-            <FiCalendar className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-          </div>
-        </div>
-      ))}
-
-      {/* Shift Type */}
-      <div className="min-w-[100px] w-[115px]">
-        <label className="text-[11px] text-gray-500 mb-0.5 block">Shift</label>
-        <div className="relative">
-          <select className="w-full border border-gray-300 rounded-md p-1.5 text-xs focus:outline-none focus:border-black appearance-none">
-            <option>Select</option>
-            <option>Regular</option>
-            <option>Evening</option>
-          </select>
-          <FiChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-        </div>
-      </div>
-
-      {/* Allocate Button + Arrows */}
-      <div className="flex items-center gap-3">
-        <button className="bg-black text-white px-2.5 py-1.5 rounded-md text-xs flex items-center gap-1.5 h-8">
-          <FiPlus size={12} /> Allocate Shift
-        </button>
-
-        <div className="flex items-center gap-1">
-          <button
-            onClick={handlePrev}
-            className="p-1 text-gray-600 hover:text-black"
-          >
-            <FiChevronLeft size={16} />
-          </button>
-          <button
-            onClick={handleNext}
-            className="p-1 text-gray-600 hover:text-black"
-          >
-            <FiChevronRight size={16} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ---------------- TABLE COMPONENTS ----------------
-const EmployeeInfo = ({ employee }) => (
-  <div className="flex items-center h-full">
-    <div className="flex items-center gap-1.5">
-      <input type="checkbox" className="scale-90 align-middle" />
-      <div className="relative">
-        <div className="w-7 h-7 bg-gray-200 overflow-hidden rounded-full">
-          <img
-            src={avatar}
-            alt={employee.name}
-            className="w-full h-full object-cover"
-          />
-        </div>
-      </div>
-      <div className="flex flex-col">
-        <div className="text-gray-800 text-[12px] " title={employee.name}>
-          {employee.name}
-        </div>
-        <div className="text-[12px] text-gray-500 m" title={employee.role}>
-          {employee.role}
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const ShiftCard = ({ shift }) => {
-  const isRegular = shift.name === "Regular Shift";
-  const isEvening = shift.name === "Evening Shift";
-  const borderColor = isRegular
-    ? "border-green-400"
-    : isEvening
-      ? "border-sky-400"
-      : "border-gray-300";
-  const inTime = shift.in || "00:00 AM";
-  const outTime = shift.out || "00:00 PM";
-  const workHours = shift.work_hours || "00:00:00";
-
-  return (
-    <div
-      className={`w-full border ${borderColor} rounded p-[6px] h-full flex flex-col justify-between bg-white relative text-[12px]`}
-    >
-      <button className="absolute top-1 right-1 p-[2px] bg-black hover:bg-gray-800 rounded-full flex items-center justify-center transition-colors z-10 mt-1">
-        <FiPlus className="text-white text-[8px] " />
-      </button>
-      <div className="flex justify-between items-center mb-[2px]">
-        <div
-          className={`truncate px-2 py-[1px] rounded-xs ${isRegular ? "text-green-500 bg-green-50" : isEvening ? "text-sky-500 bg-sky-50" : "text-gray-700 bg-gray-50"}`}
-        >
-          {shift.name || "Shift"}
-        </div>
-      </div>
-      <div className="flex justify-between text-gray-700 mt-[4px] px-[2px]">
-        <span className="text-gray-600">Work</span>
-        <span className="text-gray-800 ">{workHours}</span>
-      </div>
-      <div className="bg-gray-100 rounded mt-[2px] p-[2px]">
-        <div className="flex justify-between items-center px-[2px] border-b border-gray-200">
-          <span className="text-green-600 ">IN</span>
-          <span>{inTime}</span>
-        </div>
-        <div className="flex justify-between items-center px-[2px] pt-[1px]">
-          <span className="text-red-600">OUT</span>
-          <span>{outTime}</span>
-        </div>
-      </div>
-      <div className="flex justify-between items-center text-[9px] mt-[10px]">
-        <span className="text-gray-500 ">Break</span>
-        <span className="text-gray-500 ">1:00PM–1:30PM</span>
-      </div>
-    </div>
-  );
-};
-
-const WeeklyOffCard = () => (
-  <div className="w-full border border-yellow-400 bg-gray-50 rounded p-1.5 h-[95px] flex items-center justify-center relative">
-    <button className="absolute top-1 right-1 p-[2px] bg-black hover:bg-gray-800 rounded-full flex items-center justify-center transition-colors z-10">
-      <FiPlus className="text-white text-[8px]" />
-    </button>
-    <span className="text-yellow-700 text-[9px] font-medium">Weekly Off</span>
-  </div>
-);
-
-// ---------------- CALENDAR ----------------
-const ShiftCalendar = ({ employees, days, startIndex }) => {
-  const visibleDays = days.slice(startIndex, startIndex + 5);
-
-  return (
-    <div className="overflow-x-auto scrollbar-none">
-      <div className="w-full overflow-y-auto scrollbar-none rounded-xl shadow-sm">
-        {/* Header */}
-        <div className="grid grid-cols-[minmax(120px,_1fr)_repeat(5,_minmax(95px,_0.7fr))] text-[11px] bg-white sticky top-0 z-30 border-b">
-          <div className="p-2 font-medium text-gray-600 flex items-center gap-1 border-r bg-white">
-            <input type="checkbox" className="rounded scale-90" />
-            Name
-          </div>
-          {visibleDays.map((day, idx) => (
-            <div
-              key={`day-${startIndex + idx}`}
-              className="p-2 font-medium text-gray-600 text-center border-r last:border-none bg-white"
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-
-        {/* Rows */}
-        <div className="bg-white">
-          {employees.map((employee) => (
-            <div
-              key={`emp-${employee.id}`}
-              className="grid grid-cols-[minmax(120px,_1fr)_repeat(5,_minmax(95px,_0.7fr))] text-[11px] border-b last:border-none"
-            >
-              <div className="p-2 border-r">
-                <EmployeeInfo employee={employee} />
-              </div>
-              {(employee.shifts || [])
-                .slice(startIndex, startIndex + 5)
-                .map((shift, index) => (
-                  <div
-                    key={`shift-${employee.id}-${startIndex + index}`}
-                    className="p-2 border-r last:border-none w-full"
-                  >
-                    {shift.type === "off" ? (
-                      <WeeklyOffCard />
-                    ) : (
-                      <ShiftCard shift={shift} />
-                    )}
-                  </div>
-                ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ---------------- MAIN EXPORT ----------------
-export default function AllocateShift() {
-  const [employeesData, setEmployeesData] = useState([]);
+  // Calendar Pagination (31-day logic)
   const [startIndex, setStartIndex] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
   const days = Array.from(
     { length: 31 },
     (_, i) => `${String(i + 1).padStart(2, "0")}-Day`,
   );
 
-  const handlePrev = () => setStartIndex((prev) => Math.max(prev - 5, 0));
-  const handleNext = () =>
-    setStartIndex((prev) => Math.min(prev + 5, days.length - 5));
+  /* ================= API ACTIONS ================= */
 
-  useEffect(() => {
-    const fetchShifts = async () => {
-      try {
-        const response = await axiosInstance.get("/shifts/filtered");
-        const data = response.data;
+  const fetchInitialData = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch Shift Types for Sidebar
+      const shiftRes = await getShiftList();
+      setShifts(Array.isArray(shiftRes) ? shiftRes : shiftRes?.data || []);
 
-        const grouped = {};
-        data.forEach((shift) => {
-          const empKey = shift.name || shift.id || Math.random();
-          if (!grouped[empKey]) {
-            grouped[empKey] = {
-              id: empKey,
-              name: shift.name,
-              role: shift.designation,
-              shifts: Array.from({ length: 31 }, () => ({ type: "off" })),
-            };
-          }
-          const dayIndex = new Date(shift.date).getDate() - 1;
-          if (dayIndex >= 0 && dayIndex < 31) {
-            grouped[empKey].shifts[dayIndex] = shift.shift_type
-              ? {
-                  type: "work",
-                  name: shift.shift_type || "Regular Shift",
-                  in: shift.in_time || "00:00 AM",
-                  out: shift.out_time || "00:00 PM",
-                  work_hours: shift.work_hours || "00:00:00",
-                }
-              : { type: "off" };
+      // 2. Fetch All Staff and their assigned shifts
+      const staffRes = await getAllStaff();
+      const staffList = Array.isArray(staffRes)
+        ? staffRes
+        : staffRes?.data || [];
+
+      const shiftDataRes = await axiosInstance.get("/shifts/filtered");
+      const existingShifts = shiftDataRes.data || [];
+
+      // Map assigned shifts to the correct day index (1-31)
+      const processedUsers = staffList.map((staff) => {
+        const staffShifts = Array.from({ length: 31 }, () => ({ type: "off" }));
+
+        existingShifts.forEach((s) => {
+          if (s.uuid === staff.uuid || s.staff_id === staff.id) {
+            const dayIndex = new Date(s.date).getDate() - 1;
+            if (dayIndex >= 0 && dayIndex < 31) {
+              staffShifts[dayIndex] = s.shift_type
+                ? {
+                    type: "work",
+                    name: s.shift_type,
+                    in: s.in_time || "00:00 AM",
+                    out: s.out_time || "00:00 PM",
+                    work_hours: s.work_hours || "00:00:00",
+                  }
+                : { type: "off" };
+            }
           }
         });
 
-        setEmployeesData(Object.values(grouped));
-      } catch (error) {
-        console.error("Error fetching shifts:", error);
-        setEmployeesData([]);
-      }
-    };
-    fetchShifts();
+        return { ...staff, shifts: staffShifts };
+      });
+
+      setUsers(processedUsers);
+    } catch (error) {
+      console.error("Initialization error:", error);
+      toast.error("Failed to load staff data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInitialData();
   }, []);
 
-  // Pagination Logic
-  const totalPages = Math.ceil(employeesData.length / itemsPerPage);
-  const currentEmployees = employeesData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+  /* ================= HANDLERS ================= */
+
+  const handleFilterTypeChange = async (type) => {
+    setFilterType(type);
+    setSelectedFilterId("");
+    setFilterOptions([]);
+
+    if (type === "employee") {
+      setSelectedUsers([]);
+      return;
+    }
+
+    if (type === "all") {
+      setSelectedUsers(users.map((u) => u.uuid));
+      toast.success(`Selected all ${users.length} employees`);
+      return;
+    }
+
+    setSelectedUsers([]);
+    let data = [];
+    if (type === "department") data = await getDepartmentData();
+    if (type === "designation") data = await getDesignationData();
+    if (type === "branch") data = await getBranchData();
+    setFilterOptions(Array.isArray(data) ? data : data?.data || []);
+  };
+
+  const handleFilterSelect = async (id) => {
+    setSelectedFilterId(id);
+    if (!id) return;
+
+    setLoading(true);
+    let params = {};
+    if (filterType === "department") params.department_id = id;
+    if (filterType === "designation") params.designation_id = id;
+    if (filterType === "branch") params.branch_id = id;
+
+    try {
+      const data = await filterStaff(params);
+      const filteredList = Array.isArray(data) ? data : data?.data || [];
+      setSelectedUsers(filteredList.map((u) => u.uuid));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAllocate = async () => {
+    if (!selectedShift || selectedUsers.length === 0 || !fromDate || !toDate) {
+      return toast.error("Please select shift, staff, and dates");
+    }
+
+    const payload = {
+      shift_id: Number(selectedShift),
+      staff_ids: selectedUsers,
+      from_date: `${fromDate}T00:00:00Z`,
+      to_date: `${toDate}T00:00:00Z`,
+    };
+
+    const allocationPromise = allocateShiftBulkUpsert(payload);
+    toast.promise(allocationPromise, {
+      loading: "Allocating shifts...",
+      success: () => {
+        fetchInitialData();
+        return "Shifts allocated successfully!";
+      },
+      error: (err) => `Error: ${err.response?.data?.message || "Failed"}`,
+    });
+  };
+
+  const toggleUserSelection = (uuid) => {
+    setSelectedUsers((prev) =>
+      prev.includes(uuid) ? prev.filter((u) => u !== uuid) : [...prev, uuid],
+    );
+  };
+
+  const filteredUsers = users.filter((u) =>
+    (u.full_name || u.name)?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  /* ================= RENDER COMPONENTS ================= */
 
   return (
-    <div className="bg-[#f9fafb] p-4 rounded-lg">
-      <FilterBar
-        employees={employeesData}
-        handlePrev={handlePrev}
-        handleNext={handleNext}
-      />
-      <ShiftCalendar
-        employees={currentEmployees}
-        days={days}
-        startIndex={startIndex}
-      />
+    <div className="flex gap-4 w-full min-h-screen bg-[#F9FAFB] p-4 font-poppins text-[12px]">
+      <Toaster position="top-right" />
 
-      {/* Pagination Controls */}
-      {employeesData.length > itemsPerPage && (
-        <div className="flex items-center justify-between mt-4 px-2">
-          <span className="text-xs text-gray-500">
-            Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-            {Math.min(currentPage * itemsPerPage, employeesData.length)} of{" "}
-            {employeesData.length} employees
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className={`p-1 rounded border ${currentPage === 1 ? "text-gray-300 border-gray-200" : "text-gray-600 border-gray-300 hover:bg-gray-50"}`}
-            >
-              <FiChevronLeft size={16} />
-            </button>
-            <div className="flex gap-1">
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`px-2 py-1 text-xs rounded ${currentPage === i + 1 ? "bg-black text-white" : "text-gray-600 hover:bg-gray-100"}`}
-                >
-                  {i + 1}
-                </button>
-              ))}
+      {/* --- LEFT SIDEBAR (Internalized) --- */}
+      <div className="w-[240px] space-y-6 font-poppins font-normal">
+        <div className="bg-[#F4981833] border border-[#FFD9A7] rounded-2xl p-3">
+          <div className="space-y-4">
+            <div className="relative">
+              <label className="text-[11px] text-gray-800 block mb-2 font-normal">
+                Select a Shift
+              </label>
+              <select
+                value={selectedShift}
+                onChange={(e) => setSelectedShift(e.target.value)}
+                className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2.5 text-sm appearance-none text-gray-700 focus:outline-none"
+              >
+                <option value="">Select Shift</option>
+                {shifts.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.shift_name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="absolute right-3 top-[38px] text-gray-400"
+                size={16}
+              />
             </div>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className={`p-1 rounded border ${currentPage === totalPages ? "text-gray-300 border-gray-200" : "text-gray-600 border-gray-300 hover:bg-gray-50"}`}
-            >
-              <FiChevronRight size={16} />
-            </button>
+
+            <div className="space-y-3">
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-full bg-white border rounded-xl px-4 py-2 text-sm text-gray-700 outline-none"
+              />
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-full bg-white border rounded-xl px-4 py-2 text-sm text-gray-700 outline-none"
+              />
+            </div>
+
+            <div className="relative">
+              <label className="text-[11px] text-gray-800 block mb-2 font-normal">
+                Select User Category
+              </label>
+              <select
+                value={filterType}
+                onChange={(e) => handleFilterTypeChange(e.target.value)}
+                className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2.5 text-sm appearance-none text-gray-700 focus:outline-none"
+              >
+                <option value="employee">Select Employee</option>
+                <option value="all">All Employees</option>
+                <option value="department">Department</option>
+                <option value="designation">Designation</option>
+                <option value="branch">Branch</option>
+              </select>
+              <ChevronDown
+                className="absolute right-3 top-[38px] text-gray-400"
+                size={16}
+              />
+            </div>
+
+            {["department", "designation", "branch"].includes(filterType) && (
+              <div className="relative">
+                <label className="text-[11px] text-gray-800 block mb-2 font-normal">
+                  Select {filterType}
+                </label>
+                <select
+                  value={selectedFilterId}
+                  onChange={(e) => handleFilterSelect(e.target.value)}
+                  className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2.5 text-sm appearance-none text-gray-700 focus:outline-none"
+                >
+                  <option value="">Select Option</option>
+                  {filterOptions.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  className="absolute right-3 top-[38px] text-gray-400"
+                  size={16}
+                />
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-[#FFD9A7]">
+              <p className="text-[10px] text-orange-700 font-medium">
+                {selectedUsers.length} selection active
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setFilterType("employee");
+                  setSelectedUsers([]);
+                  fetchInitialData();
+                }}
+                className="flex-1 py-1.5 border border-gray-300 rounded-lg text-[11px] text-gray-700 bg-white/50 hover:bg-white"
+              >
+                Clear
+              </button>
+              <button
+                onClick={handleAllocate}
+                className="flex-1 py-1.5 bg-black text-white rounded-lg text-[11px] hover:bg-neutral-800"
+              >
+                Allocate
+              </button>
+            </div>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* --- MAIN CONTENT (Calendar Grid) --- */}
+      <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col min-w-0">
+        <div className="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-10">
+          <div className="relative w-full max-w-sm">
+            <input
+              type="text"
+              placeholder="Search staff..."
+              className="w-full p-2 pl-8 border border-gray-200 rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500 font-normal"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <FiSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex gap-1">
+              <button
+                onClick={() => setStartIndex((prev) => Math.max(0, prev - 5))}
+                className="p-1.5 border rounded-lg hover:bg-gray-50 text-gray-600"
+              >
+                <FiChevronLeft size={16} />
+              </button>
+              <button
+                onClick={() =>
+                  setStartIndex((prev) => Math.min(days.length - 5, prev + 5))
+                }
+                className="p-1.5 border rounded-lg hover:bg-gray-50 text-gray-600"
+              >
+                <FiChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto p-4">
+          {loading ? (
+            <div className="flex justify-center p-20 text-gray-400">
+              Loading Grid...
+            </div>
+          ) : (
+            <div className="border rounded-xl overflow-hidden">
+              {/* Header Row */}
+              <div className="grid grid-cols-[220px_repeat(5,1fr)] bg-gray-50 border-b text-[11px] font-medium text-gray-500">
+                <div className="p-3 border-r">Staff Details</div>
+                {days.slice(startIndex, startIndex + 5).map((day, i) => (
+                  <div
+                    key={i}
+                    className="p-3 text-center border-r last:border-r-0"
+                  >
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Data Rows */}
+              <div className="divide-y">
+                {filteredUsers.map((emp) => (
+                  <div
+                    key={emp.uuid}
+                    className="grid grid-cols-[220px_repeat(5,1fr)] group hover:bg-gray-50/50"
+                  >
+                    <div className="p-3 border-r flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        className="rounded accent-black"
+                        checked={selectedUsers.includes(emp.uuid)}
+                        onChange={() => toggleUserSelection(emp.uuid)}
+                      />
+                      <div className="flex flex-col truncate">
+                        <span className="font-semibold text-gray-800 truncate">
+                          {emp.full_name || emp.name}
+                        </span>
+                        <span className="text-[10px] text-gray-400">
+                          {emp.designation || emp.role || "Staff"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {emp.shifts
+                      .slice(startIndex, startIndex + 5)
+                      .map((shift, i) => (
+                        <div
+                          key={i}
+                          className="p-2 border-r last:border-r-0 min-h-[110px]"
+                        >
+                          {shift.type === "work" ? (
+                            <div className="h-full border border-green-200 bg-green-50/50 rounded-lg p-2 text-[10px] flex flex-col justify-between">
+                              <div className="flex items-center gap-1 text-green-700 font-bold">
+                                <FiCheckCircle size={10} />
+                                <span className="uppercase">{shift.name}</span>
+                              </div>
+                              <div className="space-y-1 mt-2 text-gray-600">
+                                <div className="flex justify-between">
+                                  <span>IN:</span>
+                                  <b>{shift.in}</b>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>OUT:</span>
+                                  <b>{shift.out}</b>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="h-full border border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center text-[10px] text-gray-300 gap-1 bg-gray-50/30">
+                              <FiCalendar size={14} />
+                              <span>Weekly Off</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default ShiftBulkAllocation;
