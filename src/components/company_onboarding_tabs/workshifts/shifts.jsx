@@ -88,7 +88,6 @@ const Shifts = () => {
     try {
       const response = await ShiftDataGet();
       const data = Array.isArray(response) ? response : response?.data || [];
-
       setRawApiData(data);
 
       const mappedData = data.map((shift) => {
@@ -96,7 +95,6 @@ const Shifts = () => {
           shift.policies && shift.policies.length > 0
             ? shift.policies[0]
             : null;
-
         return {
           id: shift.id,
           name: shift.shift_name,
@@ -108,7 +106,6 @@ const Shifts = () => {
             ? `${formatTime(policy.lunch_break_from)} - ${formatTime(policy.lunch_break_to)}`
             : "N/A",
           reg: `${policy?.regularisation_limit || 0}/${policy?.regularisation_type || ""}`,
-          // Status mapping removed
         };
       });
 
@@ -174,7 +171,6 @@ const Shifts = () => {
     { key: "staff", label: "Allocated Staffs" },
     { key: "break", label: "Break Time" },
     { key: "reg", label: "Regularization Count" },
-    // Status column object removed from here
     {
       key: "actions",
       label: "Actions",
@@ -206,29 +202,14 @@ const Shifts = () => {
     },
   ];
 
-  if (viewMode === "create")
-    return (
-      <div className="p-6 bg-white">
-        <CreateShiftModal
-          onClose={() => setViewMode("list")}
-          refreshData={fetchShiftsData}
-        />
-      </div>
-    );
-  if (viewMode === "update")
-    return (
-      <div className="p-6 bg-white">
-        <UpdateShiftTab
-          onClose={() => setViewMode("list")}
-          shiftData={selectedShift}
-          refreshData={fetchShiftsData}
-        />
-      </div>
-    );
-
+  // --- RENDER LOGIC ---
   return (
     <div className="w-full bg-white rounded-xl p-2">
+      {/* CRITICAL: Placing Toaster here ensures it stays mounted 
+          even when viewMode changes to 'create' or 'update' 
+      */}
       <Toaster position="top-right" />
+
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
@@ -236,41 +217,60 @@ const Shifts = () => {
         itemName={shiftToDelete?.name}
       />
 
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-3">
-        <div className="flex gap-2 items-center w-full sm:w-auto">
-          {/* Status CustomSelect removed */}
-          <input
-            type="text"
-            placeholder="Search shifts..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-3 py-2 border border-gray-200 bg-[#f9f9f9] rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-black"
+      {viewMode === "create" ? (
+        <div className="p-6 bg-white">
+          <CreateShiftModal
+            onClose={() => setViewMode("list")}
+            refreshData={fetchShiftsData}
           />
         </div>
-        <button
-          className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-[12px] font-medium active:scale-95 transition-all"
-          onClick={() => setViewMode("create")}
-        >
-          <Plus size={14} /> Create Shift
-        </button>
-      </div>
-
-      <div className="w-full">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400 text-[12px]">
-            <div className="w-6 h-6 border-2 border-gray-200 border-t-black rounded-full animate-spin mb-2" />
-            <span>Loading shifts...</span>
-          </div>
-        ) : (
-          <PayrollTable
-            columns={columns}
-            data={shiftData} // Filter logic removed since status is gone
-            rowsPerPage={8}
-            searchTerm={searchTerm}
-            rowClickHandler={handleRowClick}
+      ) : viewMode === "update" ? (
+        <div className="p-6 bg-white">
+          <UpdateShiftTab
+            onClose={() => setViewMode("list")}
+            shiftData={selectedShift}
+            refreshData={fetchShiftsData}
           />
-        )}
-      </div>
+        </div>
+      ) : (
+        /* LIST VIEW */
+        <>
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-3">
+            <div className="flex gap-2 items-center w-full sm:w-auto">
+              <input
+                type="text"
+                placeholder="Search shifts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="px-3 py-2 border border-gray-200 bg-[#f9f9f9] rounded-lg text-sm w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-black"
+              />
+            </div>
+            <button
+              className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg text-[12px] font-medium active:scale-95 transition-all"
+              onClick={() => setViewMode("create")}
+            >
+              <Plus size={14} /> Create Shift
+            </button>
+          </div>
+
+          <div className="w-full">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-400 text-[12px]">
+                <div className="w-6 h-6 border-2 border-gray-200 border-t-black rounded-full animate-spin mb-2" />
+                <span>Loading shifts...</span>
+              </div>
+            ) : (
+              <PayrollTable
+                columns={columns}
+                data={shiftData}
+                rowsPerPage={8}
+                searchTerm={searchTerm}
+                rowClickHandler={handleRowClick}
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

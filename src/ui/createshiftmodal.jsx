@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, Calendar, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
-import axiosInstance from "../service/axiosinstance"; // Still used for internal policy fetching
+import axiosInstance from "../service/axiosinstance";
 import { createShift } from "../service/policiesService";
 import ColorPicker from "./colorpicker";
 
 const CreateShiftModal = ({ onClose, refreshData }) => {
+  // --- FORM STATE ---
   const [shiftName, setShiftName] = useState("");
   const [shiftCode, setShiftCode] = useState("");
   const [shiftColour, setShiftColour] = useState("");
@@ -18,7 +19,7 @@ const CreateShiftModal = ({ onClose, refreshData }) => {
 
   const dropdownRef = useRef(null);
 
-  // Fetch Policies for the multi-select dropdown
+  // --- FETCH POLICIES FOR DROPDOWN ---
   useEffect(() => {
     const fetchPolicies = async () => {
       try {
@@ -31,7 +32,7 @@ const CreateShiftModal = ({ onClose, refreshData }) => {
     fetchPolicies();
   }, []);
 
-  // Close dropdown when clicking outside
+  // --- CLOSE DROPDOWN WHEN CLICKING OUTSIDE ---
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -42,6 +43,7 @@ const CreateShiftModal = ({ onClose, refreshData }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // --- POLICY SELECTION LOGIC ---
   const togglePolicy = (policyId) => {
     setPolicies((prev) =>
       prev.includes(policyId)
@@ -50,8 +52,9 @@ const CreateShiftModal = ({ onClose, refreshData }) => {
     );
   };
 
+  // --- SUBMIT LOGIC (HANDLES 500 ERRORS FOR HOT TOAST) ---
   const handleSubmit = async () => {
-    // 1. Frontend Validation
+    // Basic Front-end Validation
     if (!shiftName.trim()) return toast.error("Shift Name is required");
     if (policies.length === 0)
       return toast.error("Please select at least one Policy");
@@ -68,43 +71,43 @@ const CreateShiftModal = ({ onClose, refreshData }) => {
       remarks,
     };
 
+    // Start loading toast
+    const tid = toast.loading("Creating shift...");
+
     try {
       setLoading(true);
 
-      // 2. Call Service
       const response = await createShift(payload);
 
-      toast.success(response?.message || "Shift created successfully!");
+      // Success logic
+      toast.success(response?.message || "Shift created successfully!", {
+        id: tid,
+      });
       if (refreshData) refreshData();
       onClose();
     } catch (err) {
-      // 3. Robust Backend Error Handling for hot-toast
-      const res = err.response?.data;
+      // --- CAPTURING THE ERROR FOR THE CLIENT ---
+      // This extracts the "weekly off policies cannot be combined..." string
+      const serverResponse = err.response?.data;
+      const clientErrorMessage =
+        serverResponse?.data ||
+        serverResponse?.message ||
+        "An internal server error occurred.";
 
-      // Check for Laravel-style validation objects { errors: { field: ["msg"] } }
-      if (res?.errors && typeof res.errors === "object") {
-        Object.values(res.errors)
-          .flat()
-          .forEach((msg) => toast.error(msg));
-      }
-      // Check for single error string in "data" property
-      else if (res?.data && typeof res.data === "string") {
-        toast.error(res.data);
-      }
-      // Check for standard "message" property
-      else if (res?.message) {
-        toast.error(res.message);
-      }
-      // Generic fallback
-      else {
-        toast.error("An internal server error occurred.");
-      }
+      // Show the specific backend error in the hot-toast
+      toast.error(clientErrorMessage, {
+        id: tid,
+        duration: 6000, // Keeping it visible longer so user can read instructions
+      });
+
+      // Console log for developer reference
+      console.error("Shift Creation Failed:", clientErrorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // Styles
+  // --- STYLES ---
   const inputStyle =
     "w-full h-11 px-3 bg-[#F4F6F8] border border-gray-200 rounded-xl text-[12px] text-[#797979] font-[Poppins] focus:outline-none focus:ring-1 focus:ring-gray-300 flex items-center";
   const labelStyle = "text-[12px] font-[Poppins] text-black mb-1 block";
