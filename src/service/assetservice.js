@@ -155,3 +155,20 @@ export const updateAsset = async (id, editAsset) => {
     handleError(error, `updateAsset(${id})`);
   }
 };
+
+export const removeAsset = async (id) => {
+  if (!id) throw new Error("Deletion failed: Missing Asset ID");
+  
+  try {
+    // Assuming the delete endpoint follows the pattern of your update endpoint
+    const { data } = await axiosInstance.delete(`/admin/asset/delete/${id}`);
+    
+    if (import.meta.env.DEV) {
+      console.log(`✅ Asset ${id} deleted successfully`);
+    }
+    
+    return data;
+  } catch (error) {
+    handleError(error, `removeAsset(${id})`);
+  }
+};

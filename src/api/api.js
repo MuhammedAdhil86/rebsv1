@@ -49,6 +49,7 @@ export const postAssetAllocation = "/admin/assetallocation/add"
 export const postReturnAsset = "/admin/assetallocation/return"
 export const addAssetType = "/admin/asset-type/add"
 export const FetchAssets = "/admin/asset/get "
+export const deleteAsset = (id) => `/admin/asset/delete/${id}`;
 
 //report
 
@@ -79,6 +80,7 @@ export const getAuthenticator = "/master/authenticators"
 export const postAllocateDigital = "/admin/digital-assetallocation/add"
 export const getDigitalAssetById =(id)=> `/admin/digital-assetallocation/timeline/get/${id}`
 export const postReturnDigital = "/admin/digital-assetallocation/return"
+export const deleteDigitalAsset = (id) => `/admin/digital-asset/delete/${id}`;
 
 //Company Onboarding
 

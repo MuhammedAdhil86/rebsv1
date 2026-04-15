@@ -17,6 +17,7 @@ import {
   TimelineConnector,
   TimelineContent,
 } from "@mui/lab";
+import toast from "react-hot-toast";
 import EmployeeAsset from "./employeeasset";
 import {
   fetchAssetAllocationById,
@@ -70,24 +71,46 @@ const AssetDetailDrawer = ({ asset, onRefresh, onClose }) => {
   }, [asset?.id, fetchAllocations]);
 
   const handleAction = async (type) => {
+    const toastId = toast.loading(
+      type === "return" ? "Processing return..." : "Allocating asset...",
+    );
+
     try {
       if (type === "return") {
-        const staffId =
-          [...allocations].reverse().find((a) => a.status === "Allocated")
-            ?.staff_id || asset.staff_id;
-        if (!staffId) throw new Error("No Staff ID found.");
+        // Find the staff ID from the most recent 'Allocated' record, or fallback to asset prop
+        const activeAllocation = [...allocations]
+          .reverse()
+          .find((a) => a.status === "Allocated");
+        const staffId = activeAllocation?.staff_id || asset.staff_id;
+
+        if (!staffId) {
+          throw new Error("No active Staff ID found for this asset.");
+        }
+
         await returnAsset(asset.id, staffId);
+        toast.success("Asset returned to inventory", { id: toastId });
       } else {
-        if (!selectedEmployee) return alert("Select staff first");
+        if (!selectedEmployee) {
+          toast.error("Please select a staff member", { id: toastId });
+          return;
+        }
+
         await axiosInstance.post("/admin/assetallocation/add", {
           asset_id: asset.id,
           staff_id: selectedEmployee.uuid,
         });
+        toast.success(`Allocated to ${selectedEmployee.name}`, { id: toastId });
       }
+
+      // Success cleanup
       onRefresh();
-      onClose();
+      setTimeout(() => {
+        onClose();
+      }, 600);
     } catch (e) {
-      alert(e.message || "Action failed.");
+      const errorMsg =
+        e.response?.data?.message || e.message || "Action failed";
+      toast.error(errorMsg, { id: toastId });
     }
   };
 

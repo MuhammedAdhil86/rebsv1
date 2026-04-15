@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Plus, MoreHorizontal, Trash2, AlertCircle } from "lucide-react";
 import CreateShiftModal from "../../../ui/createshiftmodal";
-import { ShiftDataGet, deleteshift } from "../../../service/companyService"; // Assuming deleteshift exists
+import { ShiftDataGet, deleteshift } from "../../../service/companyService";
 import PayrollTable from "../../../ui/payrolltable";
-import CustomSelect from "../../../ui/customselect";
 import UpdateShiftTab from "../../../ui/updateshiftmodal";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -57,7 +56,6 @@ const Shifts = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
 
   // Menu & Delete Modal State
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -89,14 +87,11 @@ const Shifts = () => {
     setLoading(true);
     try {
       const response = await ShiftDataGet();
-
-      // FIX: Ensure we are accessing the array correctly if the API wraps it
       const data = Array.isArray(response) ? response : response?.data || [];
 
       setRawApiData(data);
 
       const mappedData = data.map((shift) => {
-        // FIX: Safe access to policies to prevent "cannot read property 0 of undefined"
         const policy =
           shift.policies && shift.policies.length > 0
             ? shift.policies[0]
@@ -113,7 +108,7 @@ const Shifts = () => {
             ? `${formatTime(policy.lunch_break_from)} - ${formatTime(policy.lunch_break_to)}`
             : "N/A",
           reg: `${policy?.regularisation_limit || 0}/${policy?.regularisation_type || ""}`,
-          status: shift.allocated_employees > 0 ? "Active" : "Inactive",
+          // Status mapping removed
         };
       });
 
@@ -179,22 +174,7 @@ const Shifts = () => {
     { key: "staff", label: "Allocated Staffs" },
     { key: "break", label: "Break Time" },
     { key: "reg", label: "Regularization Count" },
-    {
-      key: "status",
-      label: "Status",
-      align: "center",
-      render: (value) => (
-        <span
-          className={`px-3 py-1 rounded-full border text-[11px] font-medium ${
-            value === "Active"
-              ? "bg-green-50 text-green-500 border-green-100"
-              : "bg-indigo-50 text-indigo-500 border-indigo-100"
-          }`}
-        >
-          {value}
-        </span>
-      ),
-    },
+    // Status column object removed from here
     {
       key: "actions",
       label: "Actions",
@@ -258,17 +238,7 @@ const Shifts = () => {
 
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-3">
         <div className="flex gap-2 items-center w-full sm:w-auto">
-          <CustomSelect
-            placeholder="Status"
-            value={filterStatus}
-            onChange={setFilterStatus}
-            options={[
-              { label: "All", value: "" },
-              { label: "Active", value: "Active" },
-              { label: "Inactive", value: "Inactive" },
-            ]}
-            minWidth={120}
-          />
+          {/* Status CustomSelect removed */}
           <input
             type="text"
             placeholder="Search shifts..."
@@ -294,9 +264,7 @@ const Shifts = () => {
         ) : (
           <PayrollTable
             columns={columns}
-            data={shiftData.filter(
-              (s) => !filterStatus || s.status === filterStatus,
-            )}
+            data={shiftData} // Filter logic removed since status is gone
             rowsPerPage={8}
             searchTerm={searchTerm}
             rowClickHandler={handleRowClick}

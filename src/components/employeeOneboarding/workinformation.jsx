@@ -39,37 +39,52 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /** ✅ Load all dropdown data */
+  /** ✅ Load all dropdown data safely */
   useEffect(() => {
     const loadDropdowns = async () => {
       try {
-        const [
-          branchData,
-          orgData,
-          employeeType,
-          employeeStatus,
-          departmentData,
-          designationData,
-        ] = await Promise.all([
-          getBranchData(),
-          getOrganisationDetails(),
-          fetchEmployeeType(),
-          fetchEmployeeStatus(),
-          getDepartmentData(),
-          getDesignationData(),
-        ]);
+        // 1. Pre-check localStorage to prevent the service from throwing an error
+        const storedUser = localStorage.getItem("userData");
+        const userData = storedUser ? JSON.parse(storedUser) : null;
+        const companyId = userData?.company?.id;
+
+        // 2. Fire all requests. If companyId is missing, we pass a resolved null for that specific call.
+        const [branchRes, orgRes, typeRes, statusRes, deptRes, desigRes] =
+          await Promise.allSettled([
+            getBranchData(),
+            companyId ? getOrganisationDetails() : Promise.resolve([]),
+            fetchEmployeeType(),
+            fetchEmployeeStatus(),
+            getDepartmentData(),
+            getDesignationData(),
+          ]);
+
+        /** * Helper to safely extract arrays from the Settled Promises
+         */
+        const extractData = (result) => {
+          if (result.status === "fulfilled" && result.value) {
+            // Our service returns response.data.data directly now
+            return Array.isArray(result.value) ? result.value : [];
+          }
+          return [];
+        };
 
         setDropdowns({
-          employeeStatus: employeeStatus || [],
-          employeeType: employeeType || [],
-          departments: departmentData || [],
-          designations: designationData || [],
-          branches: branchData || [],
-          organisations: orgData || [],
+          branches: extractData(branchRes),
+          organisations: extractData(orgRes),
+          employeeType: extractData(typeRes),
+          employeeStatus: extractData(statusRes),
+          departments: extractData(deptRes),
+          designations: extractData(desigRes),
         });
+
+        // Optional: Alert the user if the company ID was specifically missing
+        if (!companyId) {
+          console.warn("Company ID missing: Organisation details skipped.");
+        }
       } catch (err) {
-        console.error("Dropdown fetch error:", err);
-        toast.error("Failed to load dropdown data.");
+        console.error("Initialization error:", err);
+        toast.error("Failed to load some dropdown options.");
       } finally {
         setLoading(false);
       }
@@ -94,7 +109,7 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
       return;
     }
 
-    // Build payload (exactly like old dev’s)
+    // Prepare Payload
     const payload = {
       ...formData,
       branch_id: Number(branchId),
@@ -105,21 +120,25 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
       designation_id: Number(formData.designation),
     };
 
-    // Convert date_of_join → ISO string like old code
+    // Date formatting to ISO string
     if (payload.date_of_join && !payload.date_of_join.includes("T")) {
-      const isoDate = new Date(payload.date_of_join + "T12:00:00Z").toISOString();
-      payload.date_of_join = isoDate;
+      try {
+        const isoDate = new Date(
+          payload.date_of_join + "T12:00:00Z",
+        ).toISOString();
+        payload.date_of_join = isoDate;
+      } catch (e) {
+        console.error("Invalid Date format");
+      }
     }
 
-    // Remove old field names
+    // Clean up temporary UI keys
     delete payload.branch;
     delete payload.department;
     delete payload.designation;
 
     try {
       setIsSubmitting(true);
-      console.log("🚀 Sending payload:", payload);
-
       await addWorkInformation(payload);
 
       toast.success("Work information saved successfully!");
@@ -128,7 +147,6 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
       if (onStepComplete) onStepComplete();
       else if (goNextStep) goNextStep();
     } catch (error) {
-      console.error("❌ Error updating work info:", error.response?.data || error);
       const msg =
         error.response?.data?.message ||
         error.response?.data?.error ||
@@ -146,7 +164,7 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
       <Toaster />
 
       {/* Header */}
-      <div className="flex justify-between items-center mb-3">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-base font-medium text-gray-900">
             Work Information
@@ -156,13 +174,17 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
         <CommonUploadActions />
       </div>
 
-      {/* Form */}
+      {/* Main Form Section */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         {loading ? (
-          <p className="text-gray-500 text-sm">Loading data...</p>
+          <div className="flex items-center space-x-2 py-10 justify-center">
+            <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-gray-500 text-sm">
+              Loading dropdown data...
+            </span>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {/* Location */}
             <InputField
               label="Location"
               name="location"
@@ -170,7 +192,6 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
               onChange={handleChange}
             />
 
-            {/* Employment Status */}
             <SelectField
               label="Employment Status"
               name="employment_status_id"
@@ -179,7 +200,6 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
               options={employeeStatus}
             />
 
-            {/* Employment Type */}
             <SelectField
               label="Employment Type"
               name="employee_type_id"
@@ -188,7 +208,6 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
               options={employeeType}
             />
 
-            {/* Date of Joining */}
             <InputField
               label="Date of Joining"
               type="date"
@@ -197,7 +216,6 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
               onChange={handleChange}
             />
 
-            {/* Department */}
             <SelectField
               label="Department"
               name="department"
@@ -206,7 +224,6 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
               options={departments}
             />
 
-            {/* Designation */}
             <SelectField
               label="Designation"
               name="designation"
@@ -215,7 +232,6 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
               options={designations}
             />
 
-            {/* Total Experience */}
             <InputField
               label="Total Experience"
               name="total_experience"
@@ -224,7 +240,6 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
               placeholder="e.g. 3 years"
             />
 
-            {/* Source of Hiring */}
             <InputField
               label="Source of Hiring"
               name="source_of_hiring"
@@ -236,20 +251,20 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
         )}
       </div>
 
-      {/* Footer */}
+      {/* Footer Actions */}
       <div className="flex justify-end gap-3 mt-6">
         <button
           onClick={goPrevStep}
           type="button"
-          className="border border-gray-300 text-gray-700 text-sm px-5 py-2 rounded-lg hover:bg-gray-100"
+          className="border border-gray-300 text-gray-700 text-sm px-6 py-2 rounded-lg hover:bg-gray-100 transition-all"
         >
           Previous
         </button>
         <button
           onClick={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || loading}
           type="button"
-          className="bg-gray-900 hover:bg-black text-white text-sm px-5 py-2 rounded-lg shadow disabled:opacity-60"
+          className="bg-gray-900 hover:bg-black text-white text-sm px-6 py-2 rounded-lg shadow disabled:opacity-50 transition-all"
         >
           {isSubmitting ? "Saving..." : "Save & Complete"}
         </button>
@@ -258,35 +273,42 @@ const WorkInformation = ({ goNextStep, goPrevStep, onStepComplete }) => {
   );
 };
 
-/** 🔹 Input Component */
-const InputField = ({ label, name, type = "text", value, onChange, placeholder }) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-700">{label}</label>
+/** 🔹 Atomic Input Component */
+const InputField = ({
+  label,
+  name,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+}) => (
+  <div className="flex flex-col">
+    <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
     <input
       type={type}
       name={name}
-      value={value}
+      value={value || ""}
       onChange={onChange}
       placeholder={placeholder}
-      className="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-700 focus:ring-2 focus:ring-gray-900 focus:outline-none"
+      className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-700 focus:ring-1 focus:ring-gray-900 focus:border-gray-900 focus:outline-none transition-all"
     />
   </div>
 );
 
-/** 🔹 Select Component */
+/** 🔹 Atomic Select Component */
 const SelectField = ({ label, name, value, onChange, options }) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-700">{label}</label>
+  <div className="flex flex-col">
+    <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
     <select
       name={name}
-      value={value}
+      value={value || ""}
       onChange={onChange}
-      className="mt-1 w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-700 focus:ring-2 focus:ring-gray-900 focus:outline-none"
+      className="w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-700 focus:ring-1 focus:ring-gray-900 focus:border-gray-900 focus:outline-none transition-all"
     >
       <option value="">Select {label}</option>
       {options?.map((opt) => (
         <option key={opt.id} value={opt.id}>
-          {opt.name}
+          {opt.name || opt.title || "Unnamed Option"}
         </option>
       ))}
     </select>
