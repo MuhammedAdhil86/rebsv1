@@ -43,18 +43,14 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
     for_weekly_off: false,
   });
 
-  // --- Automatic Work Hour Calculation ---
   useEffect(() => {
     if (formData.start_time && formData.end_time) {
       const [sH, sM] = formData.start_time.split(":").map(Number);
       const [eH, eM] = formData.end_time.split(":").map(Number);
-
       const start = new Date(0, 0, 0, sH, sM || 0);
       const end = new Date(0, 0, 0, eH, eM || 0);
-
       let diff = end.getTime() - start.getTime();
-      if (diff < 0) diff += 24 * 60 * 60 * 1000; // Handle overnight shifts
-
+      if (diff < 0) diff += 24 * 60 * 60 * 1000;
       const hours = (diff / (1000 * 60 * 60)).toFixed(2);
       setFormData((prev) => ({ ...prev, working_hours: hours }));
     }
@@ -66,7 +62,6 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
     ) {
       if (value !== "" && parseFloat(value) < 0) return;
     }
-
     setFormData((prev) => {
       const updated = { ...prev, [field]: value };
       if (field === "consider_as_halfday" && value === false) {
@@ -74,6 +69,14 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
       }
       return updated;
     });
+  };
+
+  const formatTimeToHMS = (timeStr) => {
+    if (!timeStr) return "00:00:00";
+    const parts = timeStr.split(":");
+    if (parts.length === 2) return `${timeStr}:00`;
+    if (parts.length === 1) return `${timeStr}:00:00`;
+    return timeStr;
   };
 
   const handleSubmit = async () => {
@@ -88,57 +91,42 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
       return s === "payroll" || s === "hand" ? s : "payroll";
     };
 
-    // Prepare payload exactly like your working version, but ensuring new values are formatted
     const payload = {
-      policy_name: formData.policy_name,
-      policy_code: formData.policy_code,
-      policy_colour: formData.policy_colour,
-      start_time: formData.start_time || "00:00:00",
-      end_time: formData.end_time || "00:00:00",
-      delay: formData.delay || "00:00:00",
-      late: formData.late || "00:00:00",
-      half_day: formData.half_day || "00:00:00",
-      break_time_from: formData.break_time_from || "00:00:00",
-      break_time_to: formData.break_time_to || "00:00:00",
-      lunch_break_from: formData.lunch_break_from || "00:00:00",
-      lunch_break_to: formData.lunch_break_to || "00:00:00",
-      overtime_cap_limit: formData.overtime_cap_limit || "00:00:00",
+      ...formData,
+      start_time: formatTimeToHMS(formData.start_time),
+      end_time: formatTimeToHMS(formData.end_time),
+      delay: formatTimeToHMS(formData.delay),
+      late: formatTimeToHMS(formData.late),
+      half_day: formatTimeToHMS(formData.half_day),
+      break_time_from: formatTimeToHMS(formData.break_time_from),
+      break_time_to: formatTimeToHMS(formData.break_time_to),
+      lunch_break_from: formatTimeToHMS(formData.lunch_break_from),
+      lunch_break_to: formatTimeToHMS(formData.lunch_break_to),
+      overtime_cap_limit: formatTimeToHMS(formData.overtime_cap_limit),
       working_hours: Number(formData.working_hours) || 0,
       delay_unpaid_count: Number(formData.delay_unpaid_count) || 0,
       late_unpaid_count: Number(formData.late_unpaid_count) || 0,
       over_time_pay: parseFloat(formData.over_time_pay) || 0.0,
       regularisation_limit: Number(formData.regularisation_limit) || 0,
-      delay_action_type: formData.delay_action_type || "email",
       delay_fine_amount:
         formData.delay_action_type === "fine"
           ? Number(formData.delay_fine_amount)
+          : 0,
+      late_fine_amount:
+        formData.late_action_type === "fine"
+          ? Number(formData.late_fine_amount)
           : 0,
       delay_fine_source: getSafeSource(
         formData.delay_action_type,
         formData.delay_fine_source,
       ),
-      delay_cut:
-        formData.delay_action_type === "day" ? formData.delay_cut : null,
-      late_action_type: formData.late_action_type || "email",
-      late_fine_amount:
-        formData.late_action_type === "fine"
-          ? Number(formData.late_fine_amount)
-          : 0,
       late_fine_source: getSafeSource(
         formData.late_action_type,
         formData.late_fine_source,
       ),
-      late_cut: formData.late_action_type === "day" ? formData.late_cut : null,
-      regularisation_type: formData.regularisation_type,
-      overtime_cap_period: formData.overtime_cap_period,
-      work_from_home: Boolean(formData.work_from_home),
-      over_time_benefit: Boolean(formData.over_time_benefit),
-      start_date: formData.start_date || null,
-      end_date: formData.end_date || null,
-      consider_as_halfday: Boolean(formData.consider_as_halfday),
-      policy_halfday_type: formData.policy_halfday_type || null,
-      for_weekly_off: Boolean(formData.for_weekly_off),
     };
+
+    console.log("Payload sent to backend:", payload);
 
     try {
       const response = await attendancePolicyService.createPolicy(payload);
@@ -147,32 +135,29 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
         onClose();
       }
     } catch (error) {
-      console.error("Backend Error Detail:", error.response?.data);
       toast.error(error.response?.data?.message || "Internal Server Error");
     }
   };
 
-  // --- Sub-Components for Cleanliness ---
+  // Shared Styles
+  const inputClass =
+    "w-full px-4 py-2.5 bg-[#F4F6F8] border border-gray-100 rounded-xl text-[12px] font-normal focus:outline-none transition-all appearance-none custom-input-hide-icon";
+  const labelClass =
+    "text-[12px] font-medium text-gray-700 mb-1.5 block font-['Poppins']";
+  const iconWrapper =
+    "absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-black transition-colors";
+
   const ToggleButton = ({ label, value, field }) => (
-    <div>
+    <div className="flex flex-col gap-1.5">
       <label className={labelClass}>{label}</label>
       <button
         type="button"
         onClick={() => handleInputChange(field, !value)}
-        className={`relative inline-flex h-10 w-full items-center rounded-xl transition-all ${
-          value ? "bg-black" : "bg-gray-200"
-        }`}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${value ? "bg-black" : "bg-gray-300"}`}
       >
         <span
-          className={`inline-block h-7 w-7 transform rounded-lg bg-white shadow-md transition-transform ${
-            value ? "translate-x-10" : "translate-x-1.5"
-          }`}
+          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${value ? "translate-x-6" : "translate-x-1"}`}
         />
-        <span
-          className={`ml-auto mr-3 text-[10px] font-bold uppercase ${value ? "text-white" : "text-gray-500"}`}
-        >
-          {value ? "Yes" : "No"}
-        </span>
       </button>
     </div>
   );
@@ -189,32 +174,60 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
             step="1"
             placeholder={placeholder}
             value={formData[field]}
-            className={inputClass}
+            className={`${inputClass} pr-10`}
             onChange={(e) => handleInputChange(field, e.target.value)}
           />
-          <button
-            type="button"
+          {/* Clicking ONLY this div triggers the picker */}
+          <div
+            className={iconWrapper}
             onClick={() => inputRef.current?.showPicker()}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
-          ></button>
+          >
+            <Clock size={14} />
+          </div>
         </div>
       </div>
     );
   };
 
-  const inputClass =
-    "w-full px-4 py-2.5 bg-[#F4F6F8] border border-gray-100 rounded-xl text-[12px] font-normal focus:outline-none transition-all";
-  const labelClass =
-    "text-[12px] font-medium text-gray-700 mb-1.5 block font-['Poppins']";
-  const iconWrapper =
-    "absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none";
+  const DateInput = ({ label, field }) => {
+    const inputRef = useRef(null);
+    return (
+      <div>
+        <label className={labelClass}>{label}</label>
+        <div className="relative group">
+          <input
+            ref={inputRef}
+            type="date"
+            value={formData[field]}
+            className={`${inputClass} pr-10`}
+            onChange={(e) => handleInputChange(field, e.target.value)}
+          />
+          {/* Clicking ONLY this div triggers the picker */}
+          <div
+            className={iconWrapper}
+            onClick={() => inputRef.current?.showPicker()}
+          >
+            <Calendar size={14} />
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-xl border border-gray-200 p-6 space-y-6 overflow-y-auto font-['Poppins']">
+      <style>{`
+        /* Hides native calendar/clock icons in Chrome/Safari/Edge */
+        .custom-input-hide-icon::-webkit-calendar-picker-indicator {
+          display: none;
+          -webkit-appearance: none;
+        }
+      `}</style>
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Calendar size={20} className="text-gray-900" />
-          <h2 className="text-[16px] text-gray-900">
+          <h2 className="text-[16px] text-gray-900 font-semibold">
             Create Attendance Policy
           </h2>
         </div>
@@ -288,7 +301,7 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
               </label>
               <div className="relative">
                 <select
-                  className={`${inputClass} border-blue-100 bg-blue-50/30`}
+                  className={`${inputClass} border-blue-100 bg-blue-50/30 pr-10 appearance-none`}
                   value={formData.policy_halfday_type}
                   onChange={(e) =>
                     handleInputChange("policy_halfday_type", e.target.value)
@@ -298,23 +311,10 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
                   <option value="First Half">First Half</option>
                   <option value="Second Half">Second Half</option>
                 </select>
-                <ChevronDown className={iconWrapper} size={14} />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <ChevronDown size={14} />
+                </div>
               </div>
-            </div>
-          )}
-
-          {formData.over_time_benefit && (
-            <div className="animate-in fade-in slide-in-from-top-1">
-              <label className={labelClass}>OverTime Pay (per hour)</label>
-              <input
-                type="number"
-                placeholder="eg: 150.0"
-                className={inputClass}
-                value={formData.over_time_pay}
-                onChange={(e) =>
-                  handleInputChange("over_time_pay", e.target.value)
-                }
-              />
             </div>
           )}
 
@@ -333,16 +333,21 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
             </div>
             <div>
               <label className={labelClass}>Period</label>
-              <select
-                className={inputClass}
-                value={formData.regularisation_type}
-                onChange={(e) =>
-                  handleInputChange("regularisation_type", e.target.value)
-                }
-              >
-                <option value="Monthly">Monthly</option>
-                <option value="Weekly">Weekly</option>
-              </select>
+              <div className="relative">
+                <select
+                  className={`${inputClass} pr-10 appearance-none`}
+                  value={formData.regularisation_type}
+                  onChange={(e) =>
+                    handleInputChange("regularisation_type", e.target.value)
+                  }
+                >
+                  <option value="Monthly">Monthly</option>
+                  <option value="Weekly">Weekly</option>
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <ChevronDown size={14} />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -350,40 +355,27 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
             <TimeInput label="OverTime Cap Limit" field="overtime_cap_limit" />
             <div>
               <label className={labelClass}>Period</label>
-              <select
-                className={inputClass}
-                value={formData.overtime_cap_period}
-                onChange={(e) =>
-                  handleInputChange("overtime_cap_period", e.target.value)
-                }
-              >
-                <option value="Monthly">Monthly</option>
-                <option value="Weekly">Weekly</option>
-              </select>
+              <div className="relative">
+                <select
+                  className={`${inputClass} pr-10 appearance-none`}
+                  value={formData.overtime_cap_period}
+                  onChange={(e) =>
+                    handleInputChange("overtime_cap_period", e.target.value)
+                  }
+                >
+                  <option value="Monthly">Monthly</option>
+                  <option value="Weekly">Weekly</option>
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <ChevronDown size={14} />
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Effective From</label>
-              <input
-                type="date"
-                className={inputClass}
-                value={formData.start_date}
-                onChange={(e) =>
-                  handleInputChange("start_date", e.target.value)
-                }
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Effective To</label>
-              <input
-                type="date"
-                className={inputClass}
-                value={formData.end_date}
-                onChange={(e) => handleInputChange("end_date", e.target.value)}
-              />
-            </div>
+            <DateInput label="Effective From" field="start_date" />
+            <DateInput label="Effective To" field="end_date" />
           </div>
         </div>
 
@@ -408,7 +400,6 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
               <label className={labelClass}>Total Working Hours (Auto)</label>
               <input
                 type="text"
-                placeholder="8"
                 value={formData.working_hours}
                 className={`${inputClass} bg-blue-50/50 border-blue-100 font-bold text-blue-700`}
                 readOnly
@@ -419,17 +410,16 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {/* Delay Card */}
             <div className="bg-[#FFF6E9] border border-[#FDE3C3] rounded-2xl p-5 space-y-4">
               <div className="flex justify-between items-center text-gray-800 text-[13px]">
-                <span>Consider Delay</span>
-                <span>Compensates</span>
+                <span className="font-medium">Consider Delay</span>
+                <span className="text-gray-500">Compensates</span>
               </div>
               <div className="flex items-center gap-3">
                 <input
                   type="number"
                   placeholder="Count"
-                  className="w-20 bg-white h-10 rounded-xl px-3 text-[12px] shadow-sm border-none"
+                  className="w-20 bg-white h-10 rounded-xl px-3 text-[12px] shadow-sm border-none focus:outline-none"
                   value={formData.delay_unpaid_count}
                   onChange={(e) =>
                     handleInputChange("delay_unpaid_count", e.target.value)
@@ -440,7 +430,7 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
                 </span>
                 <div className="relative flex-1">
                   <select
-                    className="w-full bg-white h-10 rounded-xl px-3 text-[12px] appearance-none shadow-sm border-none"
+                    className="w-full bg-white h-10 rounded-xl pl-3 pr-10 text-[12px] shadow-sm border-none appearance-none focus:outline-none cursor-pointer"
                     value={formData.delay_action_type}
                     onChange={(e) =>
                       handleInputChange("delay_action_type", e.target.value)
@@ -451,13 +441,15 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
                     <option value="fine">Fine</option>
                     <option value="email">Email</option>
                   </select>
-                  <ChevronDown className={iconWrapper} size={14} />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <ChevronDown size={14} />
+                  </div>
                 </div>
               </div>
               {formData.delay_action_type === "day" && (
                 <div className="relative animate-in slide-in-from-top-1">
                   <select
-                    className={inputClass}
+                    className={`${inputClass} bg-white pr-10 border-none shadow-sm appearance-none`}
                     value={formData.delay_cut}
                     onChange={(e) =>
                       handleInputChange("delay_cut", e.target.value)
@@ -467,7 +459,9 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
                     <option value="Half Day">Half Day</option>
                     <option value="Full Day">Full Day</option>
                   </select>
-                  <ChevronDown className={iconWrapper} size={14} />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <ChevronDown size={14} />
+                  </div>
                 </div>
               )}
               {formData.delay_action_type === "fine" && (
@@ -475,38 +469,42 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
                   <input
                     type="number"
                     placeholder="Amt"
-                    className="w-1/2 bg-white h-10 rounded-xl px-3 text-[12px] border-none shadow-sm"
+                    className="w-1/2 bg-white h-10 rounded-xl px-3 text-[12px] border-none shadow-sm focus:outline-none"
                     value={formData.delay_fine_amount}
                     onChange={(e) =>
                       handleInputChange("delay_fine_amount", e.target.value)
                     }
                   />
-                  <select
-                    className="w-1/2 bg-white h-10 rounded-xl px-3 text-[12px] border-none shadow-sm"
-                    value={formData.delay_fine_source}
-                    onChange={(e) =>
-                      handleInputChange("delay_fine_source", e.target.value)
-                    }
-                  >
-                    <option value="">Source</option>
-                    <option value="payroll">Payroll</option>
-                    <option value="hand">Hand</option>
-                  </select>
+                  <div className="relative w-1/2">
+                    <select
+                      className="w-full bg-white h-10 rounded-xl pl-3 pr-10 text-[12px] border-none shadow-sm appearance-none focus:outline-none cursor-pointer"
+                      value={formData.delay_fine_source}
+                      onChange={(e) =>
+                        handleInputChange("delay_fine_source", e.target.value)
+                      }
+                    >
+                      <option value="">Source</option>
+                      <option value="payroll">Payroll</option>
+                      <option value="hand">Hand</option>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                      <ChevronDown size={14} />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Late Card */}
             <div className="bg-[#FFEBF3] border border-[#FFD2E5] rounded-2xl p-5 space-y-4">
               <div className="flex justify-between items-center text-gray-800 text-[13px]">
-                <span>Consider Late</span>
-                <span>Compensates</span>
+                <span className="font-medium">Consider Late</span>
+                <span className="text-gray-500">Compensates</span>
               </div>
               <div className="flex items-center gap-3">
                 <input
                   type="number"
                   placeholder="Count"
-                  className="w-20 bg-white h-10 rounded-xl px-3 text-[12px] shadow-sm border-none"
+                  className="w-20 bg-white h-10 rounded-xl px-3 text-[12px] shadow-sm border-none focus:outline-none"
                   value={formData.late_unpaid_count}
                   onChange={(e) =>
                     handleInputChange("late_unpaid_count", e.target.value)
@@ -517,7 +515,7 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
                 </span>
                 <div className="relative flex-1">
                   <select
-                    className="w-full bg-white h-10 rounded-xl px-3 text-[12px] appearance-none shadow-sm border-none"
+                    className="w-full bg-white h-10 rounded-xl pl-3 pr-10 text-[12px] shadow-sm border-none appearance-none focus:outline-none cursor-pointer"
                     value={formData.late_action_type}
                     onChange={(e) =>
                       handleInputChange("late_action_type", e.target.value)
@@ -528,13 +526,15 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
                     <option value="fine">Fine</option>
                     <option value="email">Email</option>
                   </select>
-                  <ChevronDown className={iconWrapper} size={14} />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <ChevronDown size={14} />
+                  </div>
                 </div>
               </div>
               {formData.late_action_type === "day" && (
                 <div className="relative animate-in slide-in-from-top-1">
                   <select
-                    className={inputClass}
+                    className={`${inputClass} bg-white pr-10 border-none shadow-sm appearance-none`}
                     value={formData.late_cut}
                     onChange={(e) =>
                       handleInputChange("late_cut", e.target.value)
@@ -544,7 +544,9 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
                     <option value="Half Day">Half Day</option>
                     <option value="Full Day">Full Day</option>
                   </select>
-                  <ChevronDown className={iconWrapper} size={14} />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                    <ChevronDown size={14} />
+                  </div>
                 </div>
               )}
               {formData.late_action_type === "fine" && (
@@ -552,23 +554,28 @@ const CreateAttendancePolicyTab = ({ onClose }) => {
                   <input
                     type="number"
                     placeholder="Amt"
-                    className="w-1/2 bg-white h-10 rounded-xl px-3 text-[12px] border-none shadow-sm"
+                    className="w-1/2 bg-white h-10 rounded-xl px-3 text-[12px] border-none shadow-sm focus:outline-none"
                     value={formData.late_fine_amount}
                     onChange={(e) =>
                       handleInputChange("late_fine_amount", e.target.value)
                     }
                   />
-                  <select
-                    className="w-1/2 bg-white h-10 rounded-xl px-3 text-[12px] border-none shadow-sm"
-                    value={formData.late_fine_source}
-                    onChange={(e) =>
-                      handleInputChange("late_fine_source", e.target.value)
-                    }
-                  >
-                    <option value="">Source</option>
-                    <option value="payroll">Payroll</option>
-                    <option value="hand">Hand</option>
-                  </select>
+                  <div className="relative w-1/2">
+                    <select
+                      className="w-full bg-white h-10 rounded-xl pl-3 pr-10 text-[12px] border-none shadow-sm appearance-none focus:outline-none cursor-pointer"
+                      value={formData.late_fine_source}
+                      onChange={(e) =>
+                        handleInputChange("late_fine_source", e.target.value)
+                      }
+                    >
+                      <option value="">Source</option>
+                      <option value="payroll">Payroll</option>
+                      <option value="hand">Hand</option>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                      <ChevronDown size={14} />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
