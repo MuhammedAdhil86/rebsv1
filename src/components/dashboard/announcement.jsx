@@ -3,16 +3,13 @@ import {
   X,
   Paperclip,
   Send,
-  User,
-  Users,
-  Building2,
-  Search,
-  Check,
   Loader2,
   FileText,
+  Search,
+  Check,
 } from "lucide-react";
-// 1. Import Toast
 import toast, { Toaster } from "react-hot-toast";
+import GlowButton from "../helpers/glowbutton";
 
 import { getStaffDetails } from "../../service/employeeService";
 import { getDepartmentData } from "../../service/companyService";
@@ -95,9 +92,8 @@ const AnnouncementModal = ({ isOpen, onClose }) => {
     }
   };
 
-  // --- UPDATED SUBMIT WITH TOASTS ---
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setIsSubmitting(true);
 
     const payload = new FormData();
@@ -118,21 +114,12 @@ const AnnouncementModal = ({ isOpen, onClose }) => {
     }
 
     try {
-      // 2. Trigger Success Toast
       await announceService.addAnnouncement(payload);
-      toast.success("Announcement broadcasted successfully!", {
-        duration: 4000,
-        style: { background: "#000", color: "#fff", borderRadius: "15px" },
-        iconTheme: { primary: "#bef264", secondary: "#000" },
-      });
+      toast.success("Announcement broadcasted successfully!");
       handleClose();
     } catch (err) {
-      // 3. Trigger Error Toast with Backend Message
       const errorMsg = err.response?.data?.message || "Internal Server Error";
-      toast.error(`Push Failed: ${errorMsg}`, {
-        duration: 5000,
-      });
-      console.error("Submission failed:", err.response?.data);
+      toast.error(`Push Failed: ${errorMsg}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -156,7 +143,6 @@ const AnnouncementModal = ({ isOpen, onClose }) => {
 
   return (
     <>
-      {/* 4. Add Toaster Component Here */}
       <Toaster position="top-center" reverseOrder={false} />
 
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm font-poppins text-[12px]">
@@ -183,28 +169,25 @@ const AnnouncementModal = ({ isOpen, onClose }) => {
             onSubmit={handleSubmit}
             className="p-8 space-y-6 overflow-y-auto custom-scrollbar"
           >
-            {/* Title */}
             <div>
-              <label className="block text-gray-400 mb-2 ml-1 text-[10px] tracking-widest">
-                TITLE
+              <label className="block text-gray-400 mb-2 ml-1 text-[10px] tracking-widest uppercase">
+                Title
               </label>
               <input
                 type="text"
-                name="title"
                 value={formData.title}
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
                 placeholder="Enter title..."
-                className="w-full bg-[#F4F6F8] border-none rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all text-gray-700 font-medium"
+                className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-black transition-all text-gray-700 font-medium"
                 required
               />
             </div>
 
-            {/* Content */}
             <div>
-              <label className="block text-gray-400  mb-2 ml-1 text-[10px] tracking-widest">
-                MESSAGE
+              <label className="block text-gray-400 mb-2 ml-1 text-[10px] tracking-widest uppercase">
+                Message
               </label>
               <textarea
                 rows="4"
@@ -213,13 +196,13 @@ const AnnouncementModal = ({ isOpen, onClose }) => {
                   setFormData({ ...formData, content: e.target.value })
                 }
                 placeholder="Write your announcement..."
-                className="w-full bg-[#F4F6F8] border-none rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all text-gray-700 resize-none"
+                className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-black transition-all text-gray-700 resize-none"
                 required
               />
             </div>
 
             {/* Audience Tabs */}
-            <div className="bg-gray-100 p-1 rounded-2xl flex gap-1">
+            <div className="bg-gray-100 p-1 rounded-2xl flex gap-1 border border-gray-300">
               {["All", "Department", "Specific employees"].map((type) => (
                 <button
                   key={type}
@@ -227,116 +210,39 @@ const AnnouncementModal = ({ isOpen, onClose }) => {
                   onClick={() =>
                     setFormData((prev) => ({ ...prev, audienceType: type }))
                   }
-                  className={`flex-1 py-2.5 rounded-xl text-[11px]  transition-all ${
+                  className={`flex-1 py-2.5 rounded-xl text-[11px] transition-all ${
                     formData.audienceType === type
-                      ? "bg-white text-black shadow-sm"
+                      ? "bg-black text-white shadow-sm"
                       : "text-gray-400 hover:text-gray-600"
                   }`}
                 >
-                  {type === "All" && "Everyone"}
-                  {type === "Department" && "Dept"}
-                  {type === "Specific employees" && "Staff"}
+                  {type === "All"
+                    ? "Everyone"
+                    : type === "Department"
+                      ? "Dept"
+                      : "Staff"}
                 </button>
               ))}
             </div>
 
-            {/* Department Dropdown */}
-            {formData.audienceType === "Department" && (
-              <div className="animate-in slide-in-from-top-2">
-                <select
-                  value={formData.selectedDepartmentId}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      selectedDepartmentId: e.target.value,
-                    })
-                  }
-                  className="w-full bg-[#F4F6F8] rounded-2xl px-5 py-4 outline-none border-none text-gray-700 font-medium"
-                  required
-                >
-                  <option value="">Choose Department...</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Staff Multi-Select */}
-            {formData.audienceType === "Specific employees" && (
-              <div className="space-y-3 animate-in slide-in-from-top-2">
-                <div className="relative">
-                  <Search
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                    size={14}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search name..."
-                    className="w-full bg-white border border-gray-100 rounded-xl pl-10 py-3 outline-none focus:border-lime-500 text-[11px]"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <div className="bg-gray-50 rounded-2xl border border-gray-100 max-h-[160px] overflow-y-auto p-2">
-                  {staff.length === 0 ? (
-                    <p className="text-center py-4 text-gray-400">
-                      Loading staff...
-                    </p>
-                  ) : (
-                    filteredStaff.map((emp) => {
-                      const fullName =
-                        emp.name ||
-                        `${emp.first_name || ""} ${emp.last_name || ""}`;
-                      const empId = emp.uuid || emp.id;
-                      return (
-                        <div
-                          key={empId}
-                          onClick={() => toggleEmployee(empId)}
-                          className="flex items-center justify-between p-3 hover:bg-white rounded-xl cursor-pointer transition-all border border-transparent hover:border-gray-100"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-lime-100 rounded-full flex items-center justify-center text-[10px] font-bold text-lime-700 uppercase">
-                              {fullName.charAt(0)}
-                            </div>
-                            <span className="text-gray-700 font-medium">
-                              {fullName}
-                            </span>
-                          </div>
-                          <div
-                            className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${formData.selectedEmployees.includes(empId) ? "bg-lime-500 border-lime-500 text-white" : "bg-white border-gray-300"}`}
-                          >
-                            {formData.selectedEmployees.includes(empId) && (
-                              <Check size={12} strokeWidth={4} />
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Attachment Preview */}
             {formData.attachment && (
-              <div className="flex items-center justify-between p-3 bg-lime-50 rounded-2xl border border-lime-100 animate-in zoom-in-95">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-300 animate-in zoom-in-95">
                 <div className="flex items-center gap-3 overflow-hidden">
                   {filePreview !== "file_icon" ? (
                     <img
                       src={filePreview}
                       className="w-10 h-10 rounded-lg object-cover shadow-sm"
+                      alt="preview"
                     />
                   ) : (
-                    <FileText className="text-lime-600" size={20} />
+                    <FileText className="text-black" size={20} />
                   )}
                   <div className="overflow-hidden">
-                    <p className="text-[11px] font-bold text-lime-900 truncate">
+                    <p className="text-[11px] font-bold text-black truncate">
                       {formData.attachment.name}
                     </p>
-                    <p className="text-[9px] text-lime-600">
+                    <p className="text-[9px] text-gray-500">
                       {(formData.attachment.size / 1024).toFixed(1)} KB
                     </p>
                   </div>
@@ -347,15 +253,15 @@ const AnnouncementModal = ({ isOpen, onClose }) => {
                     setFormData((p) => ({ ...p, attachment: null }));
                     setFilePreview(null);
                   }}
-                  className="p-1.5 hover:bg-white rounded-full text-lime-600 transition-colors"
+                  className="p-1.5 hover:bg-gray-200 rounded-full text-black"
                 >
                   <X size={14} />
                 </button>
               </div>
             )}
 
-            {/* Footer */}
-            <div className="pt-4 flex items-center justify-between border-t border-gray-100 sticky bottom-0 bg-white">
+            {/* Standardized Footer */}
+            <div className="pt-6 flex items-center justify-between border-t border-gray-100 sticky bottom-0 bg-white">
               <div className="relative">
                 <input
                   type="file"
@@ -366,33 +272,31 @@ const AnnouncementModal = ({ isOpen, onClose }) => {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 text-gray-600 bg-gray-100 px-5 py-3 rounded-2xl hover:bg-gray-200 transition-all font-bold text-[11px]"
+                  className="flex items-center gap-2 text-white bg-black px-5 py-3 rounded-xl hover:bg-gray-800 transition-all font-medium text-[11px]"
                 >
                   <Paperclip size={16} /> Attach
                 </button>
               </div>
+
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-5 py-2 text-gray-400 hover:text-gray-600 font-bold transition-colors"
+                  className="px-5 py-3 text-white bg-black rounded-xl hover:bg-gray-800 transition-all font-medium text-[11px]"
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex items-center gap-3 bg-black text-white px-8 py-3.5 rounded-2xl hover:bg-gray-800 transition-all shadow-xl shadow-gray-200 disabled:opacity-50"
-                >
+
+                <GlowButton onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting ? (
                     <Loader2 className="animate-spin" size={16} />
                   ) : (
-                    <>
-                      <span className=" text-[13px]">Push Now</span>
-                      <Send size={14} />
-                    </>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px] text-white">Send</span>
+                      <Send size={14} className="text-white" />
+                    </div>
                   )}
-                </button>
+                </GlowButton>
               </div>
             </div>
           </form>

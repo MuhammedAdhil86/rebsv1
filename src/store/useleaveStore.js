@@ -57,20 +57,44 @@ const useLeaveStore = create((set, get) => ({
   // -------------------------------
   // APPLY LEAVE (ADMIN)
   // -------------------------------
-  applyLeaveAdmin: async (employeeId, leaveData) => {
+applyLeaveAdmin: async (employeeId, leaveData) => {
     set({ loading: true, error: null });
+
     try {
+      // Data Sanitization for Go Backend
+      const sanitizedPayload = {
+        leave_date: leaveData.leave_date.map((d) => ({
+          date: String(d.date),
+          half_day: Boolean(d.half_day),
+          half_day_type: d.half_day ? Number(d.half_day_type || 1) : 0,
+        })),
+        reason: leaveData.reason || "Applied by Admin",
+        leave_policy: 1,
+        lop: false,
+        cc: Array.isArray(leaveData.cc) ? leaveData.cc : [], // Ensures valid UUID array
+      };
+
       const response = await axiosInstance.post(
         `/admin/leave/apply?employeeId=${employeeId}`,
-        leaveData
+        sanitizedPayload
       );
-      await get().fetchLeaves(); // refresh leave list
+
+      // Refresh data on success
+      await get().fetchLeaves();
       set({ loading: false });
       return response.data;
+
     } catch (error) {
-      console.error("Error applying leave:", error);
-      set({ error: error.message, loading: false });
-      throw error;
+      // EXTRACTING THE SPECIFIC ERROR (e.g., "Conflicts found")
+      const errorData = error.response?.data;
+      const serverMessage = typeof errorData === "string" 
+        ? errorData 
+        : (errorData?.message || error.message || "Internal Server Error");
+
+      set({ error: serverMessage, loading: false });
+      
+      // Throw the clean string so the Modal can display it
+      throw new Error(serverMessage);
     }
   },
 

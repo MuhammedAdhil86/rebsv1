@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import dashboardService from "../../service/dashboardService";
 import { Icon } from "@iconify/react";
+import { Toaster } from "react-hot-toast"; // 1. Import Toaster
+import dashboardService from "../../service/dashboardService";
 import AnnouncementModal from "./announcement";
+import AdminLeaveModal from "../../ui/addleavemodal";
 
 function DashboardHead({ userName, activeTab, setActiveTab }) {
   const [dashboardData, setDashboardData] = useState({
@@ -16,6 +18,7 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
 
   // Modal & Sidebar State
   const [isAnnounceModalOpen, setIsAnnounceModalOpen] = useState(false);
+  const [isAdminLeaveModalOpen, setIsAdminLeaveModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   useEffect(() => {
@@ -95,7 +98,7 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
       value: dashboardData.happiness_rate,
       bg: "#FFFBDB",
       icon: "cil:smile",
-      isClickable: false, // UI remains, logic click disabled
+      isClickable: false,
     },
     {
       id: "absent_today",
@@ -109,6 +112,15 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
 
   return (
     <div className="w-full bg-white font-poppins relative">
+      {/* 2. Global Toaster: Ensures toasts are visible over modals */}
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          style: { zIndex: 99999 },
+        }}
+      />
+
       {/* --- HEADER --- */}
       <div className="flex justify-between items-center w-full sm:px-6 pt-3 pb-3">
         <p className="text-sm text-gray-600">
@@ -150,7 +162,10 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
               Announce
             </div>
           </GlowButton>
-          <button className="px-3 sm:px-4 py-3 text-xs rounded-lg border bg-black text-white transition-all hover:bg-gray-800">
+          <button
+            onClick={() => setIsAdminLeaveModalOpen(true)}
+            className="px-3 sm:px-4 py-3 text-xs rounded-lg border bg-black text-white transition-all hover:bg-gray-800"
+          >
             + Add Leave
           </button>
         </div>
@@ -192,7 +207,6 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
       >
         {selectedCategory && (
           <div className="flex flex-col h-full">
-            {/* Header */}
             <div className="p-6 border-b flex justify-between items-center bg-white">
               <div>
                 <h3 className="font-medium text-xl text-gray-900">
@@ -214,8 +228,6 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
                 />
               </button>
             </div>
-
-            {/* List */}
             <div className="flex-1 overflow-y-auto p-6 bg-gray-50/50">
               {dashboardData[selectedCategory.id]?.employees?.length > 0 ? (
                 <div className="grid gap-3">
@@ -223,9 +235,9 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
                     (emp, i) => (
                       <div
                         key={i}
-                        className="bg-white p-4 rounded-xl border border-gray-100 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow"
+                        className="bg-white p-4 rounded-xl border border-gray-100 flex items-center gap-4 shadow-sm"
                       >
-                        <div className="w-11 h-11 rounded-full bg-black flex items-center justify-center text-white  text-sm">
+                        <div className="w-11 h-11 rounded-full bg-black flex items-center justify-center text-white text-sm">
                           {emp.name
                             .split(" ")
                             .map((n) => n[0])
@@ -233,15 +245,10 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
                             .slice(0, 2)}
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm  text-gray-900">{emp.name}</p>
+                          <p className="text-sm text-gray-900">{emp.name}</p>
                           <p className="text-[11px] text-gray-500 font-medium">
                             {emp.designation || "No Designation"}
                           </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[9px] bg-gray-100 px-2 py-0.5 rounded text-gray-600">
-                              {emp.department || "N/A"}
-                            </span>
-                          </div>
                         </div>
                       </div>
                     ),
@@ -266,7 +273,7 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
       {/* --- OVERLAY --- */}
       {selectedCategory && (
         <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40 transition-opacity"
+          className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40"
           onClick={() => setSelectedCategory(null)}
         />
       )}
@@ -296,9 +303,14 @@ function DashboardHead({ userName, activeTab, setActiveTab }) {
         </div>
       </section>
 
+      {/* --- MODALS --- */}
       <AnnouncementModal
         isOpen={isAnnounceModalOpen}
         onClose={() => setIsAnnounceModalOpen(false)}
+      />
+      <AdminLeaveModal
+        isOpen={isAdminLeaveModalOpen}
+        onClose={() => setIsAdminLeaveModalOpen(false)}
       />
     </div>
   );
