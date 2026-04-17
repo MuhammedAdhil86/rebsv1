@@ -1,10 +1,75 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { FiBell, FiSearch, FiPlus } from "react-icons/fi";
-import { fetchDashboard, fetchAssets } from "../../service/assetservice";
+import { FiBell, FiSearch, FiPlus, FiTrash2 } from "react-icons/fi";
+import {
+  fetchDashboard,
+  fetchAssets,
+  removeAsset,
+} from "../../service/assetservice";
+import toast from "react-hot-toast";
+
 import AssetTable from "./assettable";
 import AssetDetailDrawer from "./assetdeatailsdrawer";
 import CreateAssetDrawer from "./createasset";
+import UniversalActionMenu from "./universalmenu";
+import DeleteConfirmationModal from "../../ui/deletemodal";
 
+// --- GLOW BUTTON COMPONENT ---
+function GlowButton({ children = "Edit in Chat", onClick }) {
+  return (
+    <>
+      <button className="chat-btn" onClick={onClick}>
+        <span className="label">{children}</span>
+        <span className="glow" />
+      </button>
+
+      <style>{`
+        .chat-btn {
+          position: relative;
+          padding: 10px 20px;
+          border: none;
+          border-radius: 8px;
+          font-weight: 100;
+          font-family: "Poppins", sans-serif;
+          font-size: 12px;
+          background: linear-gradient(180deg, #14161c, #0d0f14);
+          color: white;
+          overflow: visible;
+          cursor: pointer;
+          transition: transform 180ms cubic-bezier(.22, .61, .36, 1);
+        }
+        .chat-btn::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          padding: 0px 0px 3px 0px;
+          border-radius: inherit;
+          background: linear-gradient(90deg, #6d7cff, #a855f7, #ec4899, #6d7cff);
+          background-size: 300% 100%;
+          animation: slide 3s linear infinite;
+          transition: padding 180ms cubic-bezier(.22, .61, .36, 1);
+          -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+        }
+        .chat-btn:hover::before { padding: 1px 1px 5px 1px; }
+        .chat-btn:hover .glow { opacity: 0.8; filter: blur(18px); }
+        .glow {
+          position: absolute; left: 12%; right: 12%; bottom: -8px; height: 10px;
+          border-radius: 9999px;
+          background: linear-gradient(90deg, #6d7cff, #a855f7, #ec4899, #6d7cff);
+          background-size: 300% 100%;
+          animation: slide 3s linear infinite;
+          filter: blur(16px); opacity: 0.55;
+          transition: opacity 180ms ease, filter 180ms ease;
+        }
+        @keyframes slide { from { background-position: 0% 0; } to { background-position: 300% 0; } }
+        .label { position: relative; z-index: 2; display: flex; align-items: center; gap: 8px; }
+      `}</style>
+    </>
+  );
+}
+
+// --- MAIN TAB COMPONENT ---
 function PhysicalAssetTab() {
   const [assets, setAssets] = useState([]);
   const [dashboardData, setDashboardData] = useState(null);
@@ -18,7 +83,9 @@ function PhysicalAssetTab() {
     direction: "ascending",
   });
 
-  // 1. Define the handleRequestSort function
+  // --- DELETE MODAL STATE ---
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, data: null });
+
   const handleRequestSort = (key) => {
     let direction = "ascending";
     if (sortConfig.key === key && sortConfig.direction === "ascending") {
@@ -27,7 +94,47 @@ function PhysicalAssetTab() {
     setSortConfig({ key, direction });
   };
 
-  // 2. Define the columns (This was missing!)
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [assetData, stats] = await Promise.all([
+        fetchAssets(),
+        fetchDashboard(),
+      ]);
+      const physicalOnly = Array.isArray(assetData)
+        ? assetData.filter((a) => !a.isDigital)
+        : [];
+      setAssets(physicalOnly);
+      setDashboardData(stats);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to load inventory data");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // --- DELETE EXECUTION ---
+  const handleConfirmDelete = async () => {
+    const row = deleteModal.data;
+    if (!row) return;
+
+    setDeleteModal({ isOpen: false, data: null });
+    const loadingToast = toast.loading("Deleting physical asset...");
+
+    try {
+      await removeAsset(row.id);
+      toast.success("Asset deleted successfully", { id: loadingToast });
+      loadData(); // Refresh list and stats
+    } catch (err) {
+      toast.error("Deletion failed", { id: loadingToast });
+    }
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -78,34 +185,30 @@ function PhysicalAssetTab() {
           );
         },
       },
+      // --- ACTION COLUMN ---
+      {
+        key: "actions",
+        label: "Action",
+        align: "center",
+        render: (_, row) => (
+          <UniversalActionMenu
+            row={row}
+            actions={[
+              {
+                label: "Delete Asset",
+                icon: <FiTrash2 size={16} />,
+                onClick: (rowData) =>
+                  setDeleteModal({ isOpen: true, data: rowData }),
+                isDelete: true,
+              },
+            ]}
+          />
+        ),
+      },
     ],
     [sortConfig],
   );
 
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [assetData, stats] = await Promise.all([
-        fetchAssets(),
-        fetchDashboard(),
-      ]);
-      const physicalOnly = Array.isArray(assetData)
-        ? assetData.filter((a) => !a.isDigital)
-        : [];
-      setAssets(physicalOnly);
-      setDashboardData(stats);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  // 3. Define the processedAssets logic (This was also missing!)
   const processedAssets = useMemo(() => {
     let filtered = assets.filter((asset) => {
       const isAllocated = asset.asset_status === "Allocated";
@@ -138,19 +241,24 @@ function PhysicalAssetTab() {
 
   return (
     <>
+      {/* DELETE CONFIRMATION MODAL */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, data: null })}
+        onConfirm={handleConfirmDelete}
+        itemName={deleteModal.data?.asset_name || "this asset"}
+      />
+
       <div className="bg-white flex justify-between items-center p-4 mb-4 shadow-sm rounded-lg">
         <h1 className="text-lg text-gray-800">Physical Asset Inventory</h1>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-2 bg-black text-white px-5 py-2 rounded-full"
-          >
+          <GlowButton onClick={() => setIsCreateOpen(true)}>
             <FiPlus /> Add Physical Asset
-          </button>
+          </GlowButton>
         </div>
       </div>
 
-      {/* Physical Stats Cards */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
         {[
           {
@@ -186,7 +294,7 @@ function PhysicalAssetTab() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-visible">
         <div className="p-4 border-b flex justify-between items-center bg-white">
           <div className="flex gap-6 text-sm">
             {["all", "Allocated", "available"].map((status) => (

@@ -191,19 +191,16 @@ export const fetchDigitalAssets = async () => {
   try {
     const { data } = await axiosInstance.get(getDigitalAsset);
 
-    // ✅ Added clean logging for debugging
-    if (import.meta.env.DEV) {
-      console.groupCollapsed("📡 API Trace: fetchDigitalAssets");
-      console.log("Raw Response:", data);
-      if (data?.data) console.table(data.data);
-      console.groupEnd();
-    }
+    const assets = data?.data;
 
-    if (!data?.data || !Array.isArray(data.data)) return [];
-    
-    return data.data.map(transformAsset);
+    if (!Array.isArray(assets)) return [];
+
+    // ✅ RETURN RAW DATA (SAFE)
+    return assets;
+
   } catch (error) {
     handleError(error, "fetchDigitalAssets");
+    return [];
   }
 };
 export const fetchDigitalDashboard = async () => {
