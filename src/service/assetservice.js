@@ -1,5 +1,6 @@
 import axiosInstance from "./axiosinstance";
 import { 
+  // --- Physical Asset Endpoints ---
   getAssetDashboard, 
   postCreateAsset, 
   getAssetType, 
@@ -8,17 +9,26 @@ import {
   postAssetAllocation, 
   postReturnAsset, 
   FetchAssets, 
-  addAssetType 
+  addAssetType,
+  // --- Digital Asset Endpoints ---
+  getDigitalDashboard,
+  getDigitalAsset,
+  postCreateDigitalAsset,
+  getAccountType,
+  getAuthenticator,
+  postAllocateDigital,
+  getDigitalAssetById,
+  postReturnDigital,
+  deleteDigitalAsset
 } from "../api/api";
 
 /**
  * @description Senior Developer Transformation Layer.
- * This is the "Gatekeeper" that ensures the Detail Component 
- * receives the image and correct naming conventions.
+ * Unified gatekeeper for both Physical and Digital data structures.
  */
 const transformAsset = (asset) => ({
   id: asset.id ?? "",
-  asset_name: asset.asset_name || asset.name || "N/A", 
+  asset_name: asset.asset_name || asset.name || asset.account_name || "N/A", 
   asset_type: asset.asset_type || asset.type || "General",
   asset_type_id: asset.asset_type_id || "N/A",
   asset_status: asset.asset_status || asset.status || "available",
@@ -27,18 +37,19 @@ const transformAsset = (asset) => ({
   last_maintenance: asset.last_maintenance ?? null,
   created_on: asset.created_on || asset.createdOn || null,
   
-  // ✅ CRITICAL: Ensure the image URL is passed through
+  // Media & Identification
   image: asset.image || null,
-  
-  // ✅ CRITICAL: Staff details for the Detail Component
   staff_id: asset.staff_id || null,
   staff_name: asset.staff_name || "N/A",
 
-  // Digital Assets logic
+  // Digital-Specific logic
   isDigital: Boolean(
     asset.is_digital || 
+    asset.account_type || 
     (asset.asset_type || asset.type || "").toLowerCase().includes("digital")
   ),
+  login_url: asset.login_url || null,
+  username: asset.username || null,
 });
 
 /**
@@ -57,20 +68,19 @@ const handleError = (error, context) => {
   throw normalizedError;
 };
 
-// --- SERVICES ---
+// ==========================================
+// 1. PHYSICAL ASSET SERVICES (Existing)
+// ==========================================
 
 export const fetchAssets = async () => {
   try {
     const { data } = await axiosInstance.get(FetchAssets);
-    
     if (import.meta.env.DEV) {
-      console.groupCollapsed("📡 API Trace: fetchAssets (Inventory)");
+      console.groupCollapsed("📡 API Trace: fetchAssets (Physical)");
       console.table(data?.data?.slice(0, 5));
       console.groupEnd();
     }
-
     if (!data?.data || !Array.isArray(data.data)) return [];
-
     return data.data.map(transformAsset);
   } catch (error) {
     handleError(error, "fetchAssets");
@@ -88,13 +98,20 @@ export const fetchDashboard = async () => {
 
 export const createAsset = async (assetData) => {
   try {
-    const { data } = await axiosInstance.post(postCreateAsset, assetData);
+    const { data } = await axiosInstance.post(
+      postCreateAsset, 
+      assetData, 
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
     return data?.data ?? data;
   } catch (error) {
     handleError(error, "createAsset");
   }
 };
-
 export const assetType = async () => {
   try {
     const { data } = await axiosInstance.get(getAssetType);
@@ -158,17 +175,137 @@ export const updateAsset = async (id, editAsset) => {
 
 export const removeAsset = async (id) => {
   if (!id) throw new Error("Deletion failed: Missing Asset ID");
-  
   try {
-    // Assuming the delete endpoint follows the pattern of your update endpoint
     const { data } = await axiosInstance.delete(`/admin/asset/delete/${id}`);
-    
-    if (import.meta.env.DEV) {
-      console.log(`✅ Asset ${id} deleted successfully`);
-    }
-    
     return data;
   } catch (error) {
     handleError(error, `removeAsset(${id})`);
+  }
+};
+
+// ==========================================
+// 2. DIGITAL ASSET SERVICES (New)
+// ==========================================
+
+export const fetchDigitalAssets = async () => {
+  try {
+    const { data } = await axiosInstance.get(getDigitalAsset);
+
+    // ✅ Added clean logging for debugging
+    if (import.meta.env.DEV) {
+      console.groupCollapsed("📡 API Trace: fetchDigitalAssets");
+      console.log("Raw Response:", data);
+      if (data?.data) console.table(data.data);
+      console.groupEnd();
+    }
+
+    if (!data?.data || !Array.isArray(data.data)) return [];
+    
+    return data.data.map(transformAsset);
+  } catch (error) {
+    handleError(error, "fetchDigitalAssets");
+  }
+};
+export const fetchDigitalDashboard = async () => {
+  try {
+    const { data } = await axiosInstance.get(getDigitalDashboard);
+    return data?.data ?? null;
+  } catch (error) {
+    handleError(error, "fetchDigitalDashboard");
+  }
+};
+
+export const createDigitalAsset = async (digitalData) => {
+  try {
+    const { data } = await axiosInstance.post(
+      postCreateDigitalAsset, 
+      digitalData, // This must be the FormData object from your component
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return data?.data ?? data;
+  } catch (error) {
+    handleError(error, "createDigitalAsset");
+  }
+};
+export const fetchAccountTypes = async () => {
+  try {
+    const { data } = await axiosInstance.get(getAccountType);
+    return data?.data ?? [];
+  } catch (error) {
+    handleError(error, "fetchAccountTypes");
+  }
+};
+
+export const fetchAuthenticators = async () => {
+  try {
+    const { data } = await axiosInstance.get(getAuthenticator);
+    return data?.data ?? [];
+  } catch (error) {
+    handleError(error, "fetchAuthenticators");
+  }
+};
+
+export const allocateDigitalAsset = async (payload) => {
+  try {
+    const { data } = await axiosInstance.post(postAllocateDigital, payload);
+    return data;
+  } catch (error) {
+    handleError(error, "allocateDigitalAsset");
+  }
+};
+
+export const fetchDigitalTimelineById = async (id) => {
+  // Validate ID early to save a network request
+  if (!id) {
+    console.warn("fetchDigitalTimelineById: No ID provided");
+    return null;
+  }
+
+  try {
+    console.log(`[API Request] Fetching Timeline for ID: ${id}...`);
+    
+    const { data, status } = await axiosInstance.get(getDigitalAssetById(id));
+
+    // Log success with status and preview of data
+    console.log(`[API Success] ID: ${id} | Status: ${status}`, data);
+
+    // Ensure we return the data or a fallback empty array if data is null
+    return data || []; 
+    
+  } catch (error) {
+    // Enhanced console error for faster debugging
+    console.error(`[API Error] fetchDigitalTimelineById(${id}):`, {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+
+    // Pass it to your global handler
+    handleError(error, `fetchDigitalTimelineById(${id})`);
+    
+    // Return null or throw so the UI can handle the error state
+    throw error; 
+  }
+};
+export const returnDigitalAsset = async (payload) => {
+  try {
+    const { data } = await axiosInstance.post(postReturnDigital, payload);
+    return data;
+  } catch (error) {
+    handleError(error, "returnDigitalAsset");
+  }
+};
+
+export const removeDigitalAsset = async (id) => {
+  if (!id) throw new Error("Deletion failed: Missing Digital Asset ID");
+  try {
+    const { data } = await axiosInstance.delete(deleteDigitalAsset(id));
+    return data;
+  } catch (error) {
+    handleError(error, `removeDigitalAsset(${id})`);
   }
 };

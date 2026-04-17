@@ -1,37 +1,56 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Drawer } from "@mui/material";
-import { FiX, FiCamera, FiPlus, FiTag } from "react-icons/fi";
+import {
+  FiX,
+  FiGlobe,
+  FiUser,
+  FiShield,
+  FiLock,
+  FiPlus,
+  FiCamera,
+  FiLink,
+} from "react-icons/fi";
 import toast from "react-hot-toast";
-import { createAsset, assetType } from "../../service/assetservice";
+import {
+  createDigitalAsset,
+  fetchAccountTypes,
+  fetchAuthenticators,
+} from "../../service/assetservice";
 
-const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
+const CreateDigitalAssetDrawer = ({ open, onClose, onAssetCreated }) => {
   const fileInputRef = useRef(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [assetTypes, setAssetTypes] = useState([]);
+  const [accountTypes, setAccountTypes] = useState([]);
+  const [authenticators, setAuthenticators] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
 
   const [formData, setFormData] = useState({
-    asset_name: "",
-    asset_type: "",
-    condition: "New",
-    purchase_date: "",
-    last_maintenance: "",
-    asset_status: "Available",
+    account_name: "",
+    account_type: "",
+    username: "",
+    password: "",
+    account_url: "",
+    authentication_mode: "",
+    passkey: "",
+    account_status: "Available",
     image: null,
   });
 
-  // Load Asset Types for dropdown
   useEffect(() => {
     if (open) {
-      const loadTypes = async () => {
+      const loadMetadata = async () => {
         try {
-          const res = await assetType();
-          setAssetTypes(res || []);
+          const [types, auths] = await Promise.all([
+            fetchAccountTypes(),
+            fetchAuthenticators(),
+          ]);
+          setAccountTypes(types);
+          setAuthenticators(auths);
         } catch (err) {
-          toast.error("Failed to load asset types");
+          toast.error("Failed to load metadata");
         }
       };
-      loadTypes();
+      loadMetadata();
     }
   }, [open]);
 
@@ -52,29 +71,25 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Helper to format dates to ISO string as seen in your Postman (e.g., 2025-11-29T00:00:00Z)
-    const formatToISO = (dateStr) => {
-      if (!dateStr) return "";
-      const date = new Date(dateStr);
-      return date.toISOString();
-    };
-
-    // ✅ MULTIPART PAYLOAD MATCHING POSTMAN KEYS EXACTLY
+    // ✅ Multipart payload matching Postman keys
     const payload = new FormData();
-    payload.append("asset_name", formData.asset_name);
-    payload.append("asset_type", formData.asset_type); // ID from dropdown
-    payload.append("asset_status", formData.asset_status);
-    payload.append("purchase_date", formatToISO(formData.purchase_date));
-    payload.append("condition", formData.condition);
-    payload.append("last_maintenance", formatToISO(formData.last_maintenance));
+    payload.append("account_name", formData.account_name);
+    payload.append("account_type", formData.account_type);
+    payload.append("username", formData.username);
+    payload.append("password", formData.password);
+    payload.append("account_url", formData.account_url);
+    payload.append("authentication_mode", formData.authentication_mode);
+    payload.append("passkey", formData.passkey);
+    payload.append("account_status", formData.account_status);
+    payload.append("created_date", new Date().toISOString().split("T")[0]);
 
     if (formData.image) {
       payload.append("image", formData.image);
     }
 
     try {
-      await createAsset(payload);
-      toast.success("Successfully added Asset");
+      await createDigitalAsset(payload);
+      toast.success("Successfully added digital Asset");
       onAssetCreated();
       handleClose();
     } catch (err) {
@@ -87,12 +102,14 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
 
   const handleClose = () => {
     setFormData({
-      asset_name: "",
-      asset_type: "",
-      condition: "New",
-      purchase_date: "",
-      last_maintenance: "",
-      asset_status: "Available",
+      account_name: "",
+      account_type: "",
+      username: "",
+      password: "",
+      account_url: "",
+      authentication_mode: "",
+      passkey: "",
+      account_status: "Available",
       image: null,
     });
     setImagePreview(null);
@@ -111,15 +128,15 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
         <div className="px-8 py-6 flex items-center justify-between border-b border-gray-100 bg-white">
           <div>
             <h2 className="text-gray-900 text-[16px] font-medium tracking-tight uppercase">
-              New Physical Asset
+              New Digital Entry
             </h2>
             <p className="text-gray-400 text-[10px] tracking-wider mt-1 font-bold uppercase">
-              Register hardware to inventory
+              Provide account access details
             </p>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-full text-gray-400"
           >
             <FiX size={20} />
           </button>
@@ -144,7 +161,7 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
                   size={30}
                 />
                 <p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest">
-                  Asset Photo
+                  Icon / Proof
                 </p>
               </div>
             )}
@@ -160,97 +177,125 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
               onClick={() => fileInputRef.current.click()}
               className="absolute inset-0 w-full h-full bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center text-transparent group-hover:text-white font-bold"
             >
-              Upload Image
+              Change Image
             </button>
           </div>
 
-          {/* Asset Name */}
+          {/* Account Name */}
           <div className="space-y-2">
             <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
-              Asset Name
+              Account Name
             </label>
-            <div className="relative">
-              <FiTag className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                required
-                name="asset_name"
-                value={formData.asset_name}
-                onChange={handleChange}
-                placeholder="e.g. Dell Laptop"
-                className="w-full bg-white border border-gray-300 rounded-2xl pl-12 pr-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700 font-medium"
-              />
-            </div>
+            <input
+              required
+              name="account_name"
+              value={formData.account_name}
+              onChange={handleChange}
+              placeholder="e.g. AWS Root Account"
+              className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700 font-medium"
+            />
           </div>
 
-          {/* Category & Condition */}
+          {/* Dynamic Dropdowns */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
-                Category (Type ID)
+                Type ID
               </label>
               <select
                 required
-                name="asset_type"
-                value={formData.asset_type}
+                name="account_type"
+                value={formData.account_type}
                 onChange={handleChange}
-                className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700 appearance-none"
+                className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
               >
                 <option value="">Select ID</option>
-                {assetTypes.map((t) => (
+                {accountTypes.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name || t.asset_type}
+                    {t.name || t.id}
                   </option>
                 ))}
               </select>
             </div>
             <div className="space-y-2">
               <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
-                Condition
+                Auth Mode ID
               </label>
               <select
-                name="condition"
-                value={formData.condition}
+                required
+                name="authentication_mode"
+                value={formData.authentication_mode}
                 onChange={handleChange}
-                className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700 appearance-none"
+                className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
               >
-                <option value="New">New</option>
-                <option value="Good">Good</option>
-                <option value="Fair">Fair</option>
-                <option value="Damaged">Damaged</option>
+                <option value="">Select ID</option>
+                {authenticators.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name || a.id}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
-          {/* Purchase Date & Last Maintenance */}
+          {/* URL */}
+          <div className="space-y-2">
+            <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
+              Account URL
+            </label>
+            <div className="relative">
+              <FiLink className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                name="account_url"
+                value={formData.account_url}
+                onChange={handleChange}
+                className="w-full bg-white border border-gray-300 rounded-2xl pl-12 pr-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
+                placeholder="https://..."
+              />
+            </div>
+          </div>
+
+          {/* Credentials */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
-                Purchase Date
+                Username
               </label>
               <input
-                type="date"
-                name="purchase_date"
-                value={formData.purchase_date}
+                name="username"
+                value={formData.username}
                 onChange={handleChange}
                 className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
               />
             </div>
             <div className="space-y-2">
               <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
-                Last Maintenance
+                Passkey
               </label>
               <input
-                type="date"
-                name="last_maintenance"
-                value={formData.last_maintenance}
+                name="passkey"
+                value={formData.passkey}
                 onChange={handleChange}
                 className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
               />
             </div>
           </div>
+
+          <div className="space-y-2">
+            <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
+              Password
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
+            />
+          </div>
         </form>
 
-        {/* Footer */}
+        {/* Footer Actions */}
         <div className="p-8 border-t border-gray-100 flex items-center justify-between bg-white sticky bottom-0">
           <button
             type="button"
@@ -272,4 +317,4 @@ const CreateAssetDrawer = ({ open, onClose, onAssetCreated }) => {
   );
 };
 
-export default CreateAssetDrawer;
+export default CreateDigitalAssetDrawer;
