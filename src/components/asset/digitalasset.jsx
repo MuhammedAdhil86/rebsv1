@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { FiSearch, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiSearch, FiPlus, FiTrash2, FiEdit3 } from "react-icons/fi"; // Added FiEdit3
 import toast from "react-hot-toast";
 
 import {
@@ -11,6 +11,7 @@ import {
 import AssetTable from "./assettable";
 import DigitalAssetDetailDrawer from "./digitalaseestdetails";
 import CreateDigitalAssetDrawer from "./createdigitalasset";
+import UpdateDigitalAssetDrawer from "./updatedigitalassetdrawer";
 import UniversalActionMenu from "./universalmenu";
 import DeleteConfirmationModal from "../../ui/deletemodal";
 
@@ -58,10 +59,15 @@ function DigitalAssetTab() {
   const [activeStatus, setActiveStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState(null);
 
-  // --- DELETE MODAL STATE ---
+  // Drawer visibility states
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isUpdateOpen, setIsUpdateOpen] = useState(false);
+
+  // Data states
+  const [selectedAsset, setSelectedAsset] = useState(null); // For Details
+  const [editingAsset, setEditingAsset] = useState(null); // For Update
+
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, data: null });
 
   const loadData = useCallback(async () => {
@@ -85,14 +91,11 @@ function DigitalAssetTab() {
     loadData();
   }, [loadData]);
 
-  // --- FINAL DELETE EXECUTION ---
   const handleConfirmDelete = async () => {
     const row = deleteModal.data;
     if (!row) return;
-
-    setDeleteModal({ isOpen: false, data: null }); // Close modal first
+    setDeleteModal({ isOpen: false, data: null });
     const loadingToast = toast.loading("Removing asset...");
-
     try {
       const targetId = row.id || row._id;
       await removeDigitalAsset(targetId);
@@ -178,10 +181,18 @@ function DigitalAssetTab() {
             row={row}
             actions={[
               {
+                label: "Edit Asset",
+                icon: <FiEdit3 size={16} />,
+                onClick: (rowData) => {
+                  setEditingAsset(rowData);
+                  setIsUpdateOpen(true);
+                },
+              },
+              {
                 label: "Delete Asset",
                 icon: <FiTrash2 size={16} />,
                 onClick: (rowData) =>
-                  setDeleteModal({ isOpen: true, data: rowData }), // Open Modal
+                  setDeleteModal({ isOpen: true, data: rowData }),
                 isDelete: true,
               },
             ]}
@@ -194,7 +205,6 @@ function DigitalAssetTab() {
 
   return (
     <>
-      {/* CONFIRMATION MODAL */}
       <DeleteConfirmationModal
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, data: null })}
@@ -286,6 +296,17 @@ function DigitalAssetTab() {
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onAssetCreated={loadData}
+      />
+
+      {/* UPDATE DRAWER */}
+      <UpdateDigitalAssetDrawer
+        open={isUpdateOpen}
+        asset={editingAsset}
+        onClose={() => {
+          setIsUpdateOpen(false);
+          setEditingAsset(null);
+        }}
+        onAssetUpdated={loadData}
       />
     </>
   );

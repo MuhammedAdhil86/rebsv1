@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { FiBell, FiSearch, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiBell, FiSearch, FiPlus, FiTrash2, FiEdit3 } from "react-icons/fi"; // Added FiEdit3
 import {
   fetchDashboard,
   fetchAssets,
@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import AssetTable from "./assettable";
 import AssetDetailDrawer from "./assetdeatailsdrawer";
 import CreateAssetDrawer from "./createasset";
+import UpdateAssetDrawer from "./updateassetdrawer";
 import UniversalActionMenu from "./universalmenu";
 import DeleteConfirmationModal from "../../ui/deletemodal";
 
@@ -76,14 +77,20 @@ function PhysicalAssetTab() {
   const [activeStatus, setActiveStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
+  // Drawer visibility states
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [isUpdateOpen, setIsUpdateOpen] = useState(false);
+
+  // Data states
+  const [selectedAsset, setSelectedAsset] = useState(null); // For Detail Drawer
+  const [editingAsset, setEditingAsset] = useState(null); // For Update Drawer
+
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: "ascending",
   });
 
-  // --- DELETE MODAL STATE ---
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, data: null });
 
   const handleRequestSort = (key) => {
@@ -118,7 +125,6 @@ function PhysicalAssetTab() {
     loadData();
   }, [loadData]);
 
-  // --- DELETE EXECUTION ---
   const handleConfirmDelete = async () => {
     const row = deleteModal.data;
     if (!row) return;
@@ -129,7 +135,7 @@ function PhysicalAssetTab() {
     try {
       await removeAsset(row.id);
       toast.success("Asset deleted successfully", { id: loadingToast });
-      loadData(); // Refresh list and stats
+      loadData();
     } catch (err) {
       toast.error("Deletion failed", { id: loadingToast });
     }
@@ -185,7 +191,6 @@ function PhysicalAssetTab() {
           );
         },
       },
-      // --- ACTION COLUMN ---
       {
         key: "actions",
         label: "Action",
@@ -194,6 +199,14 @@ function PhysicalAssetTab() {
           <UniversalActionMenu
             row={row}
             actions={[
+              {
+                label: "Edit Asset",
+                icon: <FiEdit3 size={16} />,
+                onClick: (rowData) => {
+                  setEditingAsset(rowData);
+                  setIsUpdateOpen(true);
+                },
+              },
               {
                 label: "Delete Asset",
                 icon: <FiTrash2 size={16} />,
@@ -241,7 +254,6 @@ function PhysicalAssetTab() {
 
   return (
     <>
-      {/* DELETE CONFIRMATION MODAL */}
       <DeleteConfirmationModal
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, data: null })}
@@ -258,7 +270,6 @@ function PhysicalAssetTab() {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
         {[
           {
@@ -327,16 +338,30 @@ function PhysicalAssetTab() {
         <AssetTable
           columns={columns}
           data={processedAssets}
-          onRowClick={setSelectedAsset}
+          onRowClick={(row) => setSelectedAsset(row)} // This opens the Detail/View drawer
           sortConfig={sortConfig}
         />
       </div>
 
+      {/* 1. Create Drawer */}
       <CreateAssetDrawer
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onAssetCreated={loadData}
       />
+
+      {/* 2. Update/Edit Drawer */}
+      <UpdateAssetDrawer
+        open={isUpdateOpen}
+        asset={editingAsset}
+        onClose={() => {
+          setIsUpdateOpen(false);
+          setEditingAsset(null);
+        }}
+        onAssetUpdated={loadData}
+      />
+
+      {/* 3. Detail/View Drawer */}
       <AssetDetailDrawer
         asset={selectedAsset}
         onClose={() => setSelectedAsset(null)}

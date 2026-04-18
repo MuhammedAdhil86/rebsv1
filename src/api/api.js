@@ -81,6 +81,7 @@ export const postAllocateDigital = "/admin/digital-assetallocation/add"
 export const getDigitalAssetById =(id)=> `/admin/digital-assetallocation/timeline/get/${id}`
 export const postReturnDigital = "/admin/digital-assetallocation/return"
 export const deleteDigitalAsset = (id) => `/admin/digital-asset/delete/${id}`;
+export const updateDigitalAsset = (id) => `/admin/digital-asset/update/${id}`;
 
 //Company Onboarding
 

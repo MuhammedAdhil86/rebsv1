@@ -14,6 +14,7 @@ import {
   getDigitalDashboard,
   getDigitalAsset,
   postCreateDigitalAsset,
+  updateDigitalAsset,
   getAccountType,
   getAuthenticator,
   postAllocateDigital,
@@ -240,12 +241,15 @@ export const fetchAccountTypes = async () => {
 export const fetchAuthenticators = async () => {
   try {
     const { data } = await axiosInstance.get(getAuthenticator);
+
+    // ✅ Add this line
+    console.log("Authenticators API Response:", data);
+
     return data?.data ?? [];
   } catch (error) {
     handleError(error, "fetchAuthenticators");
   }
 };
-
 export const allocateDigitalAsset = async (payload) => {
   try {
     const { data } = await axiosInstance.post(postAllocateDigital, payload);
@@ -304,5 +308,26 @@ export const removeDigitalAsset = async (id) => {
     return data;
   } catch (error) {
     handleError(error, `removeDigitalAsset(${id})`);
+  }
+};
+
+export const editDigitalAsset = async (id, digitalData) => {
+  if (!id) throw new Error("Update failed: Missing Digital Asset ID");
+
+  try {
+    const { data } = await axiosInstance.put( // ⚠️ or PUT depending on backend
+      updateDigitalAsset(id),
+      digitalData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    return data?.data ?? data;
+
+  } catch (error) {
+    handleError(error, `editDigitalAsset(${id})`);
   }
 };
