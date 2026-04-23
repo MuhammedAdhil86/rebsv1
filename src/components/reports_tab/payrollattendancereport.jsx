@@ -42,17 +42,35 @@ export default function PayrollAttendanceReport() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // ✅ ADDED: State to hold top-level company branding from API
+  const [companyBranding, setCompanyBranding] = useState({
+    name: "",
+    address: "",
+    logo: "",
+    horizontal_logo: "",
+  });
+
   // ================== FETCH PAYROLL ANALYTICS ==================
   const fetchData = async () => {
     try {
       setLoading(true);
-      const data = await fetchPayrollAnalytics(
+      const response = await fetchPayrollAnalytics(
         monthNames.indexOf(month) + 1,
         Number(year),
       );
 
-      const processedRecords = Array.isArray(data.employees)
-        ? data.employees.map((emp) => {
+      // ✅ ADDED: Capture top-level company info from
+      if (response) {
+        setCompanyBranding({
+          name: response.name || "N/A",
+          address: response.address || "N/A",
+          logo: response.logo || "",
+          horizontal_logo: response.horizontal_logo || "",
+        });
+      }
+
+      const processedRecords = Array.isArray(response.employees)
+        ? response.employees.map((emp) => {
             const info = emp.bank_info || {};
             const stat = emp.statutory || {};
 
@@ -89,8 +107,17 @@ export default function PayrollAttendanceReport() {
     fetchData();
   }, [month, year]);
 
+  // ✅ UPDATED: Passing company branding to the Payslip route
   const handleRowClick = (row) => {
-    navigate("/payslip", { state: { employeeData: row } });
+    navigate("/payslip", {
+      state: {
+        employeeData: row,
+        name: companyBranding.name,
+        address: companyBranding.address,
+        logo: companyBranding.logo,
+        horizontal_logo: companyBranding.horizontal_logo,
+      },
+    });
   };
 
   const columns = [
@@ -118,13 +145,11 @@ export default function PayrollAttendanceReport() {
     { label: "Net Annual", key: "net_annual", align: "center", width: 130 },
   ];
 
-  // ================== UPDATED EXCEL WITH DYNAMIC COMPONENTS ==================
+  // ================== EXCEL LOGIC (UNCHANGED) ==================
   const handleDownloadSalary = async () => {
     if (!records.length) return;
     try {
       setLoading(true);
-
-      // 1. Identify unique components across all records to build headers
       const componentNames = [];
       records.forEach((r) => {
         (r.components || []).forEach((c) => {
@@ -132,7 +157,6 @@ export default function PayrollAttendanceReport() {
         });
       });
 
-      // 2. Build Headers (Row 1: Main Names, Row 2: Monthly/Annual labels)
       const headerRow1 = [
         "User ID",
         "Employee Name",
@@ -144,7 +168,7 @@ export default function PayrollAttendanceReport() {
       const headerRow2 = ["", "", "", "", "", ""];
 
       componentNames.forEach((name) => {
-        headerRow1.push(name, ""); // Component name spanning two columns
+        headerRow1.push(name, "");
         headerRow2.push("Monthly", "Annual");
       });
 
@@ -157,7 +181,6 @@ export default function PayrollAttendanceReport() {
       );
       headerRow2.push("", "", "", "", "");
 
-      // 3. Build Data Rows
       const dataRows = records.map((r) => {
         const row = [
           r.user_id || "N/A",
@@ -167,14 +190,11 @@ export default function PayrollAttendanceReport() {
           r.account_no || "N/A",
           r.ifsc || "N/A",
         ];
-
-        // Fill dynamic component values
         componentNames.forEach((name) => {
           const comp = (r.components || []).find((c) => c.name === name);
           row.push(comp ? comp.monthly_amount : 0);
           row.push(comp ? comp.annual_amount : 0);
         });
-
         row.push(
           r.gross_monthly || 0,
           r.pt || 0,
@@ -189,9 +209,8 @@ export default function PayrollAttendanceReport() {
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(sheetData);
 
-      // Apply styling and Merges for component headers
       const merges = [];
-      let colIdx = 6; // Components start at 7th column (index 6)
+      let colIdx = 6;
       componentNames.forEach(() => {
         merges.push({ s: { r: 0, c: colIdx }, e: { r: 0, c: colIdx + 1 } });
         colIdx += 2;
@@ -225,7 +244,6 @@ export default function PayrollAttendanceReport() {
       setLoading(true);
       const today = new Date();
       const formattedDate = `${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`;
-
       const dataRows = records.map((r) => {
         const bank = r.bank_info || {};
         return [
@@ -241,7 +259,6 @@ export default function PayrollAttendanceReport() {
           SALARY_ACCOUNT_NUMBER,
         ];
       });
-
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet(dataRows);
       XLSX.utils.book_append_sheet(wb, ws, "Bank Sheet");
@@ -255,9 +272,7 @@ export default function PayrollAttendanceReport() {
 
   return (
     <div className="p-1 rounded-xl font-poppins text-[12px] ">
-      {/* --- Filters & Actions in a Single Row --- */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-        {/* Left Side: Filters */}
         <div className="flex items-center gap-3">
           <CustomSelect
             label="Month"
@@ -273,8 +288,6 @@ export default function PayrollAttendanceReport() {
             minWidth={80}
           />
         </div>
-
-        {/* Right Side: Buttons */}
         <div className="flex items-center gap-2">
           <button
             onClick={handleDownloadSalary}
@@ -283,7 +296,6 @@ export default function PayrollAttendanceReport() {
           >
             <Download className="w-4 h-4" /> Download
           </button>
-
           <button
             onClick={handleDownloadBankExcel}
             disabled={!records.length || loading}
@@ -302,7 +314,6 @@ export default function PayrollAttendanceReport() {
             </p>
           </div>
         ) : (
-          /* ✅ Added scrollbar-none to the wrapper div */
           <div className="w-full overflow-x-auto scrollbar-none">
             <ReportTable
               columns={columns}

@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import Drawer from "@mui/material/Drawer";
-import { FiX, FiClock, FiInfo, FiUser } from "react-icons/fi";
+import {
+  FiX,
+  FiClock,
+  FiInfo,
+  FiUser,
+  FiArrowLeftCircle,
+} from "react-icons/fi";
 import {
   Timeline,
   TimelineItem,
@@ -26,33 +32,30 @@ const AssetDetailDrawer = ({ asset, onRefresh, onClose }) => {
 
   const [isEmployeeDrawerOpen, setIsEmployeeDrawerOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-
-  const [isActionLoading, setIsActionLoading] = useState(false); // ✅ for buttons
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
   const getPlaceholderImage = (name) =>
     `https://ui-avatars.com/api/?name=${encodeURIComponent(
       name,
     )}&background=f3f4f6&color=a1a1aa&size=512&bold=true`;
 
-  // ✅ FETCH ALLOCATIONS
   const fetchAllocations = async () => {
     if (!asset?.id) return;
-
     setIsLoading(true);
     try {
       const response = await fetchAssetAllocationById(asset.id);
-
       if (response?.status_code === 200) {
-        setAllocations(response.data || []);
+        const data = response.data || [];
+        setAllocations(data);
 
-        setCurrentStatus(
-          response.data?.length > 0
-            ? response.data[response.data.length - 1].status
-            : asset.asset_status,
-        );
+        // Logic: If there is an allocation history, take the status of the latest record
+        // Otherwise, fallback to the asset's main status
+        const latestStatus =
+          data.length > 0 ? data[data.length - 1].status : asset.asset_status;
+
+        setCurrentStatus(latestStatus);
       }
     } catch (err) {
-      console.error(err);
       toast.error(
         err.response?.data?.message || "Failed to load asset history",
       );
@@ -65,41 +68,30 @@ const AssetDetailDrawer = ({ asset, onRefresh, onClose }) => {
     if (asset?.id) fetchAllocations();
   }, [asset?.id]);
 
-  // ✅ RETURN ASSET
   const handleReturn = async () => {
-    const active = [...allocations]
+    // Find the most recent "Allocated" entry to get the staff_id
+    const activeEntry = [...allocations]
       .reverse()
-      .find((a) => a.status === "Allocated");
+      .find((a) => a.status.toLowerCase() === "allocated");
 
-    if (!active) {
-      toast.error("No active allocation found");
+    if (!activeEntry) {
+      toast.error("No active allocation found to return");
       return;
     }
 
     setIsActionLoading(true);
-
     try {
-      const res = await returnAsset(asset.id, active.staff_id);
-
+      const res = await returnAsset(asset.id, activeEntry.staff_id);
       toast.success(res?.data?.message || "Asset returned successfully");
-
       onRefresh();
       onClose();
     } catch (err) {
-      console.error(err);
-
-      const message =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        "Failed to return asset";
-
-      toast.error(message);
+      toast.error(err.response?.data?.message || "Failed to return asset");
     } finally {
       setIsActionLoading(false);
     }
   };
 
-  // ✅ ALLOCATE ASSET
   const handleAllocate = async () => {
     if (!selectedEmployee) {
       toast.error("Please select a staff member");
@@ -107,38 +99,16 @@ const AssetDetailDrawer = ({ asset, onRefresh, onClose }) => {
     }
 
     setIsActionLoading(true);
-
     try {
       const res = await axiosInstance.post("/admin/assetallocation/add", {
         asset_id: asset.id,
         staff_id: selectedEmployee.uuid,
       });
-
       toast.success(res?.data?.message || "Asset allocated successfully");
-
       onRefresh();
       onClose();
     } catch (err) {
-      console.error(err);
-
-      const message =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        "Allocation failed";
-
-      const fieldErrors = err.response?.data?.errors;
-
-      if (fieldErrors && typeof fieldErrors === "object") {
-        Object.values(fieldErrors).forEach((errorArr) => {
-          if (Array.isArray(errorArr)) {
-            errorArr.forEach((msg) => toast.error(msg));
-          } else {
-            toast.error(errorArr);
-          }
-        });
-      } else {
-        toast.error(message);
-      }
+      toast.error(err.response?.data?.message || "Allocation failed");
     } finally {
       setIsActionLoading(false);
     }
@@ -146,156 +116,207 @@ const AssetDetailDrawer = ({ asset, onRefresh, onClose }) => {
 
   if (!asset) return null;
 
+  // Normalize status for conditional rendering
+  const isCurrentlyAllocated = currentStatus?.toLowerCase() === "allocated";
+
   return (
     <Drawer
       anchor="right"
       open={!!asset}
       onClose={onClose}
-      PaperProps={{ className: "w-full max-w-[500px] shadow-2xl" }}
+      PaperProps={{ className: "w-full max-w-[500px] shadow-2xl border-none" }}
     >
-      <div className="h-full flex flex-col bg-white">
+      <div className="h-full flex flex-col bg-white font-poppins">
         {/* HEADER */}
-        <div className="p-6 border-b flex justify-between items-center">
+        <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-white">
           <div>
-            <h2 className="text-xl font-bold">{asset.asset_name}</h2>
-            <p className="text-sm text-gray-500">{asset.asset_type}</p>
+            <h2 className="text-gray-900 text-[18px] uppercase tracking-tight">
+              {asset.asset_name}
+            </h2>
+            <p className="text-gray-400 text-[10px]  uppercase tracking-widest mt-1">
+              {asset.asset_type}
+            </p>
           </div>
-
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors"
           >
             <FiX size={20} />
           </button>
         </div>
 
         {/* TABS */}
-        <div className="flex px-6 pt-4 gap-6 border-b">
-          <button
-            onClick={() => setActiveSubTab("details")}
-            className={`pb-3 text-sm flex items-center gap-2 ${
-              activeSubTab === "details"
-                ? "border-b-2 border-black font-bold"
-                : "text-gray-400"
-            }`}
-          >
-            <FiInfo /> Info
-          </button>
-
-          <button
-            onClick={() => setActiveSubTab("history")}
-            className={`pb-3 text-sm flex items-center gap-2 ${
-              activeSubTab === "history"
-                ? "border-b-2 border-black font-bold"
-                : "text-gray-400"
-            }`}
-          >
-            <FiClock /> History
-          </button>
+        <div className="flex px-8 pt-2 gap-8 border-b border-gray-100">
+          {["details", "history"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveSubTab(tab)}
+              className={`pb-4 text-[11px] uppercase tracking-widest  flex items-center gap-2 transition-all ${
+                activeSubTab === tab
+                  ? "border-b-2 border-black text-black"
+                  : "text-gray-400"
+              }`}
+            >
+              {tab === "details" ? <FiInfo /> : <FiClock />} {tab}
+            </button>
+          ))}
         </div>
 
         {/* CONTENT */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
           {activeSubTab === "details" ? (
-            <div className="space-y-6">
-              <div className="rounded-2xl border overflow-hidden aspect-video bg-gray-50">
+            <div className="space-y-8">
+              <div className="rounded-[2rem] border-2 border-dashed border-gray-200 overflow-hidden aspect-video bg-gray-50 relative group">
                 <img
                   src={asset.image || getPlaceholderImage(asset.asset_name)}
-                  className="w-full h-full object-cover"
-                  onError={(e) =>
-                    (e.target.src = getPlaceholderImage(asset.asset_name))
-                  }
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  alt="Asset"
                 />
+                <div className="absolute top-4 right-4">
+                  <span
+                    className={`px-4 py-1.5 rounded-full text-[9px] uppercase tracking-widest shadow-sm ${
+                      isCurrentlyAllocated
+                        ? "bg-orange-100 text-orange-600"
+                        : "bg-green-100 text-green-600"
+                    }`}
+                  >
+                    {currentStatus}
+                  </span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-y-6">
+              <div className="grid grid-cols-2 gap-8">
                 {[
-                  { l: "Condition", v: asset.condition },
-                  { l: "Status", v: asset.asset_status },
-                  { l: "Staff ID", v: asset.staff_id || "Unassigned" },
-                ].map((x, i) => (
-                  <div key={i}>
-                    <label className="text-[10px] uppercase text-gray-400">
-                      {x.l}
+                  { label: "Condition", value: asset.condition },
+                  { label: "Status", value: currentStatus },
+                  {
+                    label: "Current Holder",
+                    value: asset.staff_name || "Unassigned",
+                  },
+                ].map((item, i) => (
+                  <div key={i} className="space-y-1">
+                    <label className="text-[10px] uppercase text-gray-400 tracking-widest ml-1">
+                      {item.label}
                     </label>
-                    <p className="text-sm font-semibold mt-1">{x.v}</p>
+                    <p className="text-sm font-medium text-gray-800 bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
+                      {item.value}
+                    </p>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div>
+            <div className="py-4">
               {isLoading ? (
-                <p className="text-gray-400 animate-pulse">Loading...</p>
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                  <p className="text-[10px] uppercase  text-gray-400 tracking-widest">
+                    Fetching History
+                  </p>
+                </div>
               ) : allocations.length > 0 ? (
-                <Timeline position="right">
+                <Timeline position="right" sx={{ p: 0 }}>
                   {[...allocations].reverse().map((item, idx) => (
-                    <TimelineItem key={idx}>
+                    <TimelineItem
+                      key={idx}
+                      sx={{ "&:before": { display: "none" } }}
+                    >
                       <TimelineSeparator>
-                        <TimelineDot sx={{ bgcolor: "black" }} />
+                        <TimelineDot
+                          sx={{ bgcolor: "black", boxShadow: "none" }}
+                        />
                         {idx !== allocations.length - 1 && (
-                          <TimelineConnector />
+                          <TimelineConnector sx={{ bgcolor: "#f3f4f6" }} />
                         )}
                       </TimelineSeparator>
-
-                      <TimelineContent>
-                        <div className="bg-gray-50 p-4 rounded-xl border">
-                          <div className="flex justify-between">
-                            <p className="font-bold">{item.staff_name}</p>
-                            <span className="text-xs">{item.status}</span>
+                      <TimelineContent sx={{ py: "12px", px: 2 }}>
+                        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start">
+                            <p className=" text-gray-900 text-sm">
+                              {item.staff_name}
+                            </p>
+                            <span
+                              className={`text-[9px] uppercase tracking-tighter px-2 py-0.5 rounded ${
+                                item.status.toLowerCase() === "allocated"
+                                  ? "text-blue-600 bg-blue-50"
+                                  : "text-gray-500 bg-gray-100"
+                              }`}
+                            >
+                              {item.status}
+                            </span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {new Date(item.date).toLocaleDateString()}
-                          </p>
+                          <div className="flex items-center gap-2 mt-3 text-gray-400">
+                            <FiClock size={12} />
+                            <p className="text-[10px] font-medium italic">
+                              {new Date(item.date).toLocaleDateString(
+                                undefined,
+                                { dateStyle: "long" },
+                              )}
+                            </p>
+                          </div>
                         </div>
                       </TimelineContent>
                     </TimelineItem>
                   ))}
                 </Timeline>
               ) : (
-                <p className="text-gray-400 text-center">No History Found</p>
+                <div className="text-center py-20">
+                  <p className="text-gray-400 text-[10px] uppercase tracking-widest">
+                    No Allocation History Found
+                  </p>
+                </div>
               )}
             </div>
           )}
         </div>
 
-        {/* FOOTER */}
-        <div className="p-6 border-t bg-gray-50">
-          {currentStatus === "Allocated" ? (
+        {/* FOOTER ACTIONS */}
+        <div className="p-8 border-t border-gray-100 bg-white sticky bottom-0">
+          {isCurrentlyAllocated ? (
             <button
               onClick={handleReturn}
               disabled={isActionLoading}
-              className="w-full border border-black py-3 rounded-xl font-bold"
+              className="w-full flex items-center justify-center gap-3 bg-white border-2 border-black text-black py-4 rounded-2xl uppercase tracking-widest hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50"
             >
-              {isActionLoading ? "Processing..." : "Return Asset"}
+              {isActionLoading ? (
+                "Processing..."
+              ) : (
+                <>
+                  <FiArrowLeftCircle size={18} /> Return Asset
+                </>
+              )}
             </button>
           ) : (
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <button
                 onClick={() => setIsEmployeeDrawerOpen(true)}
-                className="flex-[1.5] border py-3 rounded-xl flex items-center justify-center gap-2"
+                className="flex-[1.5] bg-gray-50 border border-gray-200 text-gray-700 py-4 rounded-2xl flex items-center justify-center gap-3 uppercase tracking-widest text-[11px] hover:bg-gray-100 transition-all"
               >
-                <FiUser />
-                {selectedEmployee ? selectedEmployee.name : "Select Staff"}
+                <FiUser size={16} />
+                <span className="truncate">
+                  {selectedEmployee ? selectedEmployee.name : "Select Staff"}
+                </span>
               </button>
 
               <button
                 disabled={!selectedEmployee || isActionLoading}
                 onClick={handleAllocate}
-                className="flex-1 bg-black text-white py-3 rounded-xl disabled:opacity-30"
+                className="flex-1 bg-black text-white py-4 rounded-2xl uppercase tracking-widest text-[11px] shadow-lg hover:bg-gray-800 transition-all active:scale-95 disabled:opacity-30"
               >
-                {isActionLoading ? "Allocating..." : "Allocate"}
+                {isActionLoading ? "..." : "Allocate"}
               </button>
             </div>
           )}
         </div>
 
-        {/* EMPLOYEE DRAWER */}
+        {/* EMPLOYEE SELECTION DRAWER */}
         <Drawer
           anchor="right"
           open={isEmployeeDrawerOpen}
           onClose={() => setIsEmployeeDrawerOpen(false)}
-          PaperProps={{ style: { width: "500px" } }}
+          PaperProps={{
+            className: "w-full max-w-[500px] border-none shadow-2xl",
+          }}
         >
           <EmployeeAsset
             onBack={() => setIsEmployeeDrawerOpen(false)}

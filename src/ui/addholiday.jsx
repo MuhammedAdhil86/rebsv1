@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Upload } from "lucide-react";
 import toast from "react-hot-toast";
-import { addHoliday, modifyHoliday } from "../service/holidayservices"; // Import both
+import { addHoliday, modifyHoliday } from "../service/holidayservices";
 import { getBranchData } from "../service/companyService";
 
 const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
@@ -14,10 +14,8 @@ const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
     image: null,
   });
 
-  // 1. Determine if we are in Edit Mode
   const isEditMode = !!editData;
 
-  // 2. Fetch branches and Pre-fill data if editing
   useEffect(() => {
     if (isOpen) {
       const loadBranches = async () => {
@@ -25,13 +23,13 @@ const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
           const data = await getBranchData();
           if (data) setBranches(data);
         } catch (error) {
-          console.error("Failed to fetch branches", error);
+          // Toast for data fetching errors
+          toast.error("Failed to load branches. Please check your connection.");
         }
       };
       loadBranches();
 
       if (editData) {
-        // Format date to YYYY-MM-DD for the input field
         const formattedDate = editData.date
           ? new Date(editData.date).toISOString().split("T")[0]
           : "";
@@ -39,10 +37,9 @@ const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
           title: editData.Reason || editData.title || "",
           date: formattedDate,
           branch: editData.branch?.toString() || "0",
-          image: null, // Keep null unless user chooses a NEW image
+          image: null,
         });
       } else {
-        // Reset for Add Mode
         setFormData({ title: "", date: "", branch: "0", image: null });
       }
     }
@@ -52,6 +49,8 @@ const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return; // Prevent double submission
+
     setLoading(true);
 
     const data = new FormData();
@@ -60,28 +59,49 @@ const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
     data.append("branch", formData.branch);
     if (formData.image) data.append("image", formData.image);
 
-    // 3. Logic for Add vs Update
-    const actionPromise = isEditMode
+    // Using toast.promise to handle UI feedback
+    const action = isEditMode
       ? modifyHoliday(editData.id, data)
       : addHoliday(data);
 
-    toast.promise(actionPromise, {
-      loading: isEditMode ? "Updating holiday..." : "Adding holiday...",
-      success: (res) => {
-        onRefresh();
-        onClose();
-        return (
-          res?.message ||
-          (isEditMode ? "Updated successfully!" : "Added successfully!")
-        );
+    toast.promise(
+      action,
+      {
+        loading: <b>{isEditMode ? "Updating..." : "Saving..."}</b>,
+        success: (res) => {
+          onRefresh(); // Refresh parent lists
+          onClose(); // Close modal
+          return (
+            res?.message || (isEditMode ? "Holiday updated!" : "Holiday added!")
+          );
+        },
+        error: (err) => {
+          // Extracts error message from API response if available
+          const errorMsg =
+            err?.response?.data?.message ||
+            err?.message ||
+            "Something went wrong.";
+          return <b>{errorMsg}</b>;
+        },
       },
-      error: (err) => err?.response?.data?.message || "Something went wrong.",
-    });
+      {
+        style: {
+          minWidth: "250px",
+        },
+        success: {
+          duration: 4000,
+          icon: "🎉",
+        },
+        error: {
+          duration: 5000,
+        },
+      },
+    );
 
     try {
-      await actionPromise;
+      await action;
     } catch (error) {
-      console.error("Submission failed", error);
+      console.error("Submit Error:", error);
     } finally {
       setLoading(false);
     }
@@ -89,9 +109,10 @@ const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-        onClick={onClose}
+        onClick={!loading ? onClose : undefined} // Disable close during loading
       />
 
       <div className="relative bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
@@ -100,14 +121,16 @@ const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
             {isEditMode ? "Edit Holiday" : "Add New Holiday"}
           </h2>
           <button
+            disabled={loading}
             onClick={onClose}
-            className="p-1.5 hover:bg-black/5 rounded-full transition-colors"
+            className="p-1.5 hover:bg-black/5 rounded-full transition-colors disabled:opacity-30"
           >
             <X size={20} className="text-black/50" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* ... Inputs remain the same ... */}
           <div>
             <label className="text-[10px] font-bold text-black/40 uppercase tracking-widest block mb-1.5">
               Holiday Title
@@ -115,8 +138,9 @@ const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
             <input
               type="text"
               required
+              disabled={loading}
               value={formData.title}
-              className="w-full border border-black/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-black transition-colors"
+              className="w-full border border-black/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-black transition-colors disabled:bg-gray-50"
               placeholder="e.g. Independence Day"
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
@@ -132,6 +156,7 @@ const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
               <input
                 type="date"
                 required
+                disabled={loading}
                 value={formData.date}
                 className="w-full border border-black/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-black transition-colors"
                 onChange={(e) =>
@@ -146,6 +171,7 @@ const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
               </label>
               <select
                 required
+                disabled={loading}
                 value={formData.branch}
                 className="w-full border border-black/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-black transition-colors bg-white"
                 onChange={(e) =>
@@ -169,8 +195,9 @@ const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
             <div className="relative border-2 border-dashed border-black/5 rounded-xl p-6 text-center hover:bg-black/[0.02] transition-colors cursor-pointer">
               <input
                 type="file"
+                disabled={loading}
                 accept="image/*"
-                className="absolute inset-0 opacity-0 cursor-pointer"
+                className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
                 onChange={(e) =>
                   setFormData({ ...formData, image: e.target.files[0] })
                 }
@@ -185,18 +212,19 @@ const HolidayModal = ({ isOpen, onClose, onRefresh, editData = null }) => {
           <div className="flex gap-3 pt-4">
             <button
               type="button"
+              disabled={loading}
               onClick={onClose}
-              className="flex-1 py-3 text-sm font-medium border border-black/10 rounded-xl hover:bg-black/5"
+              className="flex-1 py-3 text-sm font-medium border border-black/10 rounded-xl hover:bg-black/5 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 text-sm font-bold bg-black text-white rounded-xl hover:bg-black/90 disabled:opacity-50"
+              className="flex-1 py-3 text-sm font-bold bg-black text-white rounded-xl hover:bg-black/90 disabled:bg-zinc-600"
             >
               {loading
-                ? "Saving..."
+                ? "Processing..."
                 : isEditMode
                   ? "Update Changes"
                   : "Save Holiday"}

@@ -25,7 +25,6 @@ const HolidayList = ({ holidays, getBranchName, onRefresh }) => {
     (a, b) => new Date(a.date) - new Date(b.date),
   );
 
-  // Handle Edit Click
   const handleEdit = (holiday) => {
     setSelectedHoliday(holiday);
     setIsEditModalOpen(true);
@@ -104,7 +103,7 @@ const HolidayList = ({ holidays, getBranchName, onRefresh }) => {
         </div>
       )}
 
-      {/* --- UNIVERSAL MODAL (Add & Update) --- */}
+      {/* --- UNIVERSAL MODAL --- */}
       <HolidayModal
         isOpen={isEditModalOpen}
         onClose={() => {
@@ -112,7 +111,7 @@ const HolidayList = ({ holidays, getBranchName, onRefresh }) => {
           setSelectedHoliday(null);
         }}
         onRefresh={onRefresh}
-        editData={selectedHoliday} // This tells the modal it's an update
+        editData={selectedHoliday}
       />
 
       {/* --- CARD GRID --- */}
@@ -123,19 +122,21 @@ const HolidayList = ({ holidays, getBranchName, onRefresh }) => {
             className="group relative bg-white border border-black/5 shadow-sm hover:shadow-md transition-all duration-300"
             style={{ zIndex: activeMenu === h.id ? 50 : 1 }}
           >
-            <div className="relative h-32 w-full overflow-hidden rounded-md bg-gray-100">
+            {/* SQUARE IMAGE CONTAINER */}
+            <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
               {h.image ? (
                 <img
                   src={h.image}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-all"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500"
                   alt=""
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-black/5">
-                  <CalendarIcon size={40} />
+                  <CalendarIcon size={48} />
                 </div>
               )}
 
+              {/* ACTION MENU BUTTON */}
               <div className="absolute top-3 right-3">
                 <button
                   onClick={() =>
@@ -172,10 +173,11 @@ const HolidayList = ({ holidays, getBranchName, onRefresh }) => {
               </div>
             </div>
 
+            {/* CARD CONTENT */}
             <div className="p-4">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1 truncate">
-                  <h3 className="text-gray-900 leading-tight truncate">
+                  <h3 className="text-gray-900 font-medium leading-tight truncate">
                     {h.Reason || h.title}
                   </h3>
                   <div className="flex items-center gap-1 text-gray-400 mt-1">

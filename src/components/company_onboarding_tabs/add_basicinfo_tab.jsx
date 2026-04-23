@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { FiUpload } from "react-icons/fi";
 import { Icon } from "@iconify/react";
-import toast from "react-hot-toast"; // 👈 Import toast
+import toast from "react-hot-toast";
 import GlowButton from "../helpers/glowbutton";
 
 /* ===== API SERVICES ===== */
@@ -23,8 +23,11 @@ const AddBasicInformation = () => {
   const [loading, setLoading] = useState(false);
   const [showUploadOptions, setShowUploadOptions] = useState(false);
 
+  // Raw File Objects for API
   const [logoFile, setLogoFile] = useState(null);
   const [horizontalLogoFile, setHorizontalLogoFile] = useState(null);
+
+  // Preview URLs for UI
   const [logoPreview, setLogoPreview] = useState("");
   const [horizontalLogoPreview, setHorizontalLogoPreview] = useState("");
 
@@ -55,19 +58,17 @@ const AddBasicInformation = () => {
     swift_ifsc_code: "",
   });
 
-  /* ================= FETCH DATA ================= */
   useEffect(() => {
     const loadData = async () => {
       try {
-        const previewRes = await getCompanyPreview();
-        const [countryRes, orgRes, tzRes] = await Promise.all([
+        const [previewRes, countryRes, orgRes, tzRes] = await Promise.all([
+          getCompanyPreview(),
           getCountryName(),
           OrganizationType(),
           fetchTimeZone(),
         ]);
 
         const company = previewRes?.data?.data?.company || previewRes?.company;
-
         setCountries(countryRes || []);
         setOrgTypes(orgRes || []);
         setTimeZones(tzRes || []);
@@ -96,7 +97,6 @@ const AddBasicInformation = () => {
             postal_code: company.postal_code || "",
             swift_ifsc_code: company.swift_ifsc_code || "",
           });
-
           if (company.logo) setLogoPreview(company.logo);
           if (company.horizontal_logo)
             setHorizontalLogoPreview(company.horizontal_logo);
@@ -108,52 +108,19 @@ const AddBasicInformation = () => {
     loadData();
   }, []);
 
-  /* ================= HANDLERS ================= */
-  const handleFetchLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
-      return;
-    }
-    const loadId = toast.loading("Fetching location...");
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setFormData((prev) => ({
-          ...prev,
-          latitude: latitude.toString(),
-          longitude: longitude.toString(),
-        }));
-        const geoAddress = await getGeolocation(latitude, longitude);
-        if (geoAddress) {
-          setFormData((prev) => ({ ...prev, address: geoAddress }));
-          toast.success("Location updated", { id: loadId });
-        } else {
-          toast.dismiss(loadId);
-        }
-      },
-      () => toast.error("Location access denied", { id: loadId }),
-    );
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const localUrl = URL.createObjectURL(file);
     if (type === "vertical") {
-      setLogoFile(file);
+      setLogoFile(file); // This is the actual file for the API
       setLogoPreview(localUrl);
-      toast.success("Vertical logo selected");
     } else {
-      setHorizontalLogoFile(file);
+      setHorizontalLogoFile(file); // This is the actual file for the API
       setHorizontalLogoPreview(localUrl);
-      toast.success("Horizontal logo selected");
     }
+    toast.success("Image selected");
     setShowUploadOptions(false);
   };
 
@@ -162,31 +129,36 @@ const AddBasicInformation = () => {
     if (!formData.email) return toast.error("Email is mandatory");
 
     setLoading(true);
-    const savingToast = toast.loading("Saving changes...");
+    const savingToast = toast.loading("Saving updates...");
 
     const data = new FormData();
+
+    // 1. Append Text Fields exactly as per your working Postman -F
     Object.keys(formData).forEach((key) => {
       data.append(key, formData[key] ?? "");
     });
 
-    if (logoFile) data.append("logo", logoFile);
-    if (horizontalLogoFile) data.append("horizontal_logo", horizontalLogoFile);
+    // 2. Append Image Files (Strictly using 'image' and 'horizontal_image' keys)
+    if (logoFile instanceof File) {
+      data.append("image", logoFile);
+    }
+    if (horizontalLogoFile instanceof File) {
+      data.append("horizontal_image", horizontalLogoFile);
+    }
 
     try {
+      // Logic Check: updateCompanyDetails must call axios.post(url, data)
       const response = await updateCompanyDetails(data);
+      toast.success(response?.message || "All details updated!", {
+        id: savingToast,
+      });
 
-      // ✅ SUCCESS TOAST
-      toast.success(
-        response?.message || "Company details updated successfully!",
-        {
-          id: savingToast,
-        },
-      );
+      // Clear file state so they don't re-upload on next text change
+      setLogoFile(null);
+      setHorizontalLogoFile(null);
     } catch (err) {
-      // ✅ ERROR TOAST (Extracting backend message)
-      const errorMsg =
-        err.response?.data?.message || "Update failed. Please try again.";
-      toast.error(errorMsg, {
+      console.error("API Error:", err.response?.data);
+      toast.error(err.response?.data?.message || "Upload failed", {
         id: savingToast,
       });
     } finally {
@@ -196,45 +168,33 @@ const AddBasicInformation = () => {
 
   return (
     <div className="flex flex-col gap-6 pb-10">
-      {/* SESSION 1: BASIC INFORMATION */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-        {/* LOGO UPLOAD SECTION */}
+        {/* LOGO SECTION */}
         <div className="border border-gray-200 rounded-lg p-4 mb-8 bg-[#fafafa]">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-8">
               <div>
-                <h3 className="text-sm font-medium text-gray-800 mb-1">
-                  Organization Logo
+                <h3 className="text-sm font-semibold text-gray-800">
+                  Company Logos
                 </h3>
-                <p className="text-[10px] text-gray-500 leading-none">
-                  Upload horizontal and vertical versions.
+                <p className="text-[10px] text-gray-500">
+                  Update your brand visibility.
                 </p>
               </div>
-
               <div className="flex gap-4">
                 {logoPreview && (
-                  <div className="flex flex-col items-center gap-1">
-                    <img
-                      src={logoPreview}
-                      alt="Vertical"
-                      className="h-12 w-12 object-contain bg-white border rounded p-1 shadow-sm"
-                    />
-                    <span className="text-[8px] uppercase text-gray-400 font-bold">
-                      Vertical
-                    </span>
-                  </div>
+                  <img
+                    src={logoPreview}
+                    className="h-12 w-12 object-contain bg-white border rounded p-1 shadow-sm"
+                    alt="V"
+                  />
                 )}
                 {horizontalLogoPreview && (
-                  <div className="flex flex-col items-center gap-1">
-                    <img
-                      src={horizontalLogoPreview}
-                      alt="Horizontal"
-                      className="h-12 w-28 object-contain bg-white border rounded p-1 shadow-sm"
-                    />
-                    <span className="text-[8px] uppercase text-gray-400 font-bold">
-                      Horizontal
-                    </span>
-                  </div>
+                  <img
+                    src={horizontalLogoPreview}
+                    className="h-12 w-28 object-contain bg-white border rounded p-1 shadow-sm"
+                    alt="H"
+                  />
                 )}
               </div>
             </div>
@@ -243,25 +203,25 @@ const AddBasicInformation = () => {
               <button
                 type="button"
                 onClick={() => setShowUploadOptions(!showUploadOptions)}
-                className="flex items-center gap-2 bg-black text-white text-sm px-3 py-1.5 rounded-md hover:bg-gray-800 transition"
+                className="flex items-center gap-2 bg-black text-white text-sm px-3 py-1.5 rounded-md"
               >
-                <FiUpload className="text-sm" /> Upload Image
+                <FiUpload /> Upload Image
               </button>
               {showUploadOptions && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-xl z-20 overflow-hidden">
                   <button
                     type="button"
                     onClick={() => logoInputRef.current.click()}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-b"
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 border-b"
                   >
-                    Upload Logo (Vertical)
+                    Vertical Logo
                   </button>
                   <button
                     type="button"
                     onClick={() => horizontalLogoInputRef.current.click()}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50"
                   >
-                    Upload Horizontal Logo
+                    Horizontal Logo
                   </button>
                 </div>
               )}
@@ -294,13 +254,15 @@ const AddBasicInformation = () => {
             />
             <div className="relative">
               <label className="block text-sm text-gray-700 mb-1">
-                Country<span className="text-red-500">*</span>
+                Country*
               </label>
               <select
                 name="country_id"
                 value={formData.country_id}
-                onChange={handleChange}
-                className="w-full appearance-none border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-black"
+                onChange={(e) =>
+                  setFormData({ ...formData, country_id: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none"
               >
                 <option value="">Select</option>
                 {countries.map((c) => (
@@ -309,42 +271,48 @@ const AddBasicInformation = () => {
                   </option>
                 ))}
               </select>
-              <Icon
-                icon="material-symbols:arrow-left-rounded"
-                className="absolute right-3 top-9 text-gray-500 rotate-[-90deg] text-lg pointer-events-none"
-              />
             </div>
             <Field
               label="Website"
               name="website"
               value={formData.website}
-              onChange={handleChange}
-              placeholder="https://..."
+              onChange={(e) =>
+                setFormData({ ...formData, website: e.target.value })
+              }
             />
           </div>
 
           <div className="grid grid-cols-3 gap-6">
-            <div className="row-span-2">
+            <div className="h-[125px]">
               <label className="block text-sm text-gray-700 mb-1">
                 Description
               </label>
               <textarea
                 name="description"
                 value={formData.description}
-                onChange={handleChange}
-                className="w-full h-[120px] border border-gray-300 rounded-md px-3 py-2 text-sm resize-none focus:outline-none"
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                className="w-full h-[95px] border border-gray-300 rounded-md px-3 py-2 text-sm resize-none outline-none"
               />
             </div>
-            <div className="flex flex-col justify-between h-[120px]">
+
+            {/* Gap Matching Column 2 */}
+            <div className="flex flex-col justify-between h-[125px]">
               <div>
                 <label className="block text-sm text-gray-700 mb-1">
-                  Type of Organization
+                  Organization Type
                 </label>
                 <select
                   name="organisation_type_id"
                   value={formData.organisation_type_id}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      organisation_type_id: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none"
                 >
                   <option value="">Select</option>
                   {orgTypes.map((o) => (
@@ -358,17 +326,23 @@ const AddBasicInformation = () => {
                 label="Primary Address"
                 name="address"
                 value={formData.address}
-                onChange={handleChange}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
               />
             </div>
-            <div className="flex flex-col justify-between h-[120px]">
+
+            {/* Gap Matching Column 3 */}
+            <div className="flex flex-col justify-between h-[125px]">
               <Field
                 label="Location Name"
                 name="location"
                 value={formData.location}
-                onChange={handleChange}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
               />
-              <div className="flex items-end pt-4">
+              <div className="flex items-end">
                 <div className="flex-1">
                   <label className="block text-sm text-gray-700 mb-1">
                     Time Zone
@@ -376,8 +350,10 @@ const AddBasicInformation = () => {
                   <select
                     name="time_zone_id"
                     value={formData.time_zone_id}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    onChange={(e) =>
+                      setFormData({ ...formData, time_zone_id: e.target.value })
+                    }
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none"
                   >
                     <option value="">Select</option>
                     {timeZones.map((t) => (
@@ -387,15 +363,12 @@ const AddBasicInformation = () => {
                     ))}
                   </select>
                 </div>
-                <div
-                  onClick={handleFetchLocation}
-                  className="ml-2 flex items-center justify-center w-9 h-9 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-100 transition shadow-sm"
+                <button
+                  type="button"
+                  className="ml-2 w-9 h-9 border border-gray-300 rounded-md flex items-center justify-center hover:bg-gray-50"
                 >
-                  <Icon
-                    icon="mdi:location"
-                    className="text-gray-600 text-[18px]"
-                  />
-                </div>
+                  <Icon icon="solar:gps-bold" />
+                </button>
               </div>
             </div>
           </div>
@@ -405,19 +378,25 @@ const AddBasicInformation = () => {
               label="Latitude"
               name="latitude"
               value={formData.latitude}
-              onChange={handleChange}
+              onChange={(e) =>
+                setFormData({ ...formData, latitude: e.target.value })
+              }
             />
             <Field
               label="Longitude"
               name="longitude"
               value={formData.longitude}
-              onChange={handleChange}
+              onChange={(e) =>
+                setFormData({ ...formData, longitude: e.target.value })
+              }
             />
             <Field
               label="Contact Person"
               name="contact_person"
               value={formData.contact_person}
-              onChange={handleChange}
+              onChange={(e) =>
+                setFormData({ ...formData, contact_person: e.target.value })
+              }
             />
           </div>
 
@@ -426,81 +405,93 @@ const AddBasicInformation = () => {
               label="Contact Number"
               name="phone_number"
               value={formData.phone_number}
-              onChange={handleChange}
+              onChange={(e) =>
+                setFormData({ ...formData, phone_number: e.target.value })
+              }
             />
-            <div>
-              <label className="block text-sm text-gray-700 mb-1 font-semibold">
-                Contact Email<span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm border-blue-100"
-              />
-            </div>
+            <Field
+              label="Contact Email*"
+              name="email"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              type="email"
+            />
           </div>
         </form>
       </div>
 
-      {/* SESSION 2: BANK INFORMATION */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-        <div className="flex items-center gap-2 mb-6 border-b pb-3 text-emerald-600 font-semibold uppercase text-[12px] tracking-widest">
-          <Icon icon="solar:bank-bold-duotone" className="text-2xl" /> Bank
+        <div className="flex items-center gap-2 mb-6 border-b pb-3 text-emerald-600 font-bold uppercase text-[11px] tracking-widest">
+          <Icon icon="solar:bank-bold-duotone" className="text-xl" /> Bank
           Information
         </div>
         <div className="grid grid-cols-3 gap-6">
           <Field
-            label="Account Holder Name"
+            label="Account Holder"
             name="account_holder_name"
             value={formData.account_holder_name}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData({ ...formData, account_holder_name: e.target.value })
+            }
           />
           <Field
             label="Bank Name"
             name="bank_name"
             value={formData.bank_name}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData({ ...formData, bank_name: e.target.value })
+            }
           />
           <Field
             label="Account Number"
             name="account_number"
             value={formData.account_number}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData({ ...formData, account_number: e.target.value })
+            }
           />
           <Field
             label="Branch Address"
             name="branch_address"
             value={formData.branch_address}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData({ ...formData, branch_address: e.target.value })
+            }
           />
           <Field
             label="City"
             name="city"
             value={formData.city}
-            onChange={handleChange}
+            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
           />
           <Field
             label="State / Province"
             name="state_province"
             value={formData.state_province}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData({ ...formData, state_province: e.target.value })
+            }
           />
           <Field
             label="Postal Code"
             name="postal_code"
             value={formData.postal_code}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData({ ...formData, postal_code: e.target.value })
+            }
           />
           <Field
             label="IFSC / SWIFT Code"
             name="swift_ifsc_code"
             value={formData.swift_ifsc_code}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData({ ...formData, swift_ifsc_code: e.target.value })
+            }
           />
         </div>
-        <div className="flex justify-end gap-4 pt-8">
+        <div className="flex justify-end pt-10">
           <GlowButton onClick={handleSubmit} disabled={loading}>
             {loading ? "Saving..." : "Save All Changes"}
           </GlowButton>
@@ -510,16 +501,15 @@ const AddBasicInformation = () => {
   );
 };
 
-/* ===== REUSABLE FIELD ===== */
 const Field = ({ label, isLight, ...props }) => (
-  <div>
+  <div className="w-full">
     <label className="block text-sm text-gray-700 mb-1">{label}</label>
     <input
       {...props}
-      className={`w-full border rounded-md px-3 py-2 text-sm outline-none focus:border-black transition ${
+      className={`w-full border rounded-md px-3 py-2 text-sm outline-none transition focus:ring-1 focus:ring-black ${
         isLight
-          ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
-          : "border-gray-300"
+          ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
+          : "bg-white border-gray-300"
       }`}
     />
   </div>

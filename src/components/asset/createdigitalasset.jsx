@@ -1,15 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Drawer } from "@mui/material";
-import {
-  FiX,
-  FiGlobe,
-  FiUser,
-  FiShield,
-  FiLock,
-  FiPlus,
-  FiCamera,
-  FiLink,
-} from "react-icons/fi";
+import { FiX, FiPlus, FiCamera, FiLink } from "react-icons/fi";
 import toast from "react-hot-toast";
 import {
   createDigitalAsset,
@@ -32,9 +23,21 @@ const CreateDigitalAssetDrawer = ({ open, onClose, onAssetCreated }) => {
     account_url: "",
     authentication_mode: "",
     passkey: "",
-    account_status: "Available",
+    account_status: "available", // Default set to lowercase
     image: null,
   });
+
+  // Custom styling for the select arrow to ensure perfect positioning
+  const selectStyle = `
+    appearance-none 
+    bg-no-repeat 
+    bg-[length:16px] 
+    bg-[right_10px_center] 
+    w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700
+  `;
+
+  // Standard SVG for the down arrow
+  const arrowIcon = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E")`;
 
   useEffect(() => {
     if (open) {
@@ -44,8 +47,8 @@ const CreateDigitalAssetDrawer = ({ open, onClose, onAssetCreated }) => {
             fetchAccountTypes(),
             fetchAuthenticators(),
           ]);
-          setAccountTypes(types);
-          setAuthenticators(auths);
+          setAccountTypes(types || []);
+          setAuthenticators(auths || []);
         } catch (err) {
           toast.error("Failed to load metadata");
         }
@@ -56,7 +59,9 @@ const CreateDigitalAssetDrawer = ({ open, onClose, onAssetCreated }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Logic: Force lowercase for status so backend is happy
+    const finalValue = name === "account_status" ? value.toLowerCase() : value;
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
   };
 
   const handleFileChange = (e) => {
@@ -71,7 +76,6 @@ const CreateDigitalAssetDrawer = ({ open, onClose, onAssetCreated }) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // ✅ Multipart payload matching Postman keys
     const payload = new FormData();
     payload.append("account_name", formData.account_name);
     payload.append("account_type", formData.account_type);
@@ -80,7 +84,7 @@ const CreateDigitalAssetDrawer = ({ open, onClose, onAssetCreated }) => {
     payload.append("account_url", formData.account_url);
     payload.append("authentication_mode", formData.authentication_mode);
     payload.append("passkey", formData.passkey);
-    payload.append("account_status", formData.account_status);
+    payload.append("account_status", formData.account_status); // Lowercase
     payload.append("created_date", new Date().toISOString().split("T")[0]);
 
     if (formData.image) {
@@ -109,7 +113,7 @@ const CreateDigitalAssetDrawer = ({ open, onClose, onAssetCreated }) => {
       account_url: "",
       authentication_mode: "",
       passkey: "",
-      account_status: "Available",
+      account_status: "available",
       image: null,
     });
     setImagePreview(null);
@@ -200,16 +204,17 @@ const CreateDigitalAssetDrawer = ({ open, onClose, onAssetCreated }) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
-                Type ID
+                Account Type
               </label>
               <select
                 required
                 name="account_type"
                 value={formData.account_type}
                 onChange={handleChange}
-                className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
+                style={{ backgroundImage: arrowIcon }}
+                className={selectStyle}
               >
-                <option value="">Select ID</option>
+                <option value="">Select Type</option>
                 {accountTypes.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name || t.id}
@@ -219,16 +224,17 @@ const CreateDigitalAssetDrawer = ({ open, onClose, onAssetCreated }) => {
             </div>
             <div className="space-y-2">
               <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
-                Auth Mode ID
+                Auth Mode
               </label>
               <select
                 required
                 name="authentication_mode"
                 value={formData.authentication_mode}
                 onChange={handleChange}
-                className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
+                style={{ backgroundImage: arrowIcon }}
+                className={selectStyle}
               >
-                <option value="">Select ID</option>
+                <option value="">Select Mode</option>
                 {authenticators.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name || a.id}
@@ -236,6 +242,23 @@ const CreateDigitalAssetDrawer = ({ open, onClose, onAssetCreated }) => {
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Account Status - ADDED */}
+          <div className="space-y-2">
+            <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
+              Account Status
+            </label>
+            <select
+              name="account_status"
+              value={formData.account_status}
+              onChange={handleChange}
+              style={{ backgroundImage: arrowIcon }}
+              className={selectStyle}
+            >
+              <option value="available">Available</option>
+              <option value="maintenance">Maintenance</option>
+            </select>
           </div>
 
           {/* URL */}

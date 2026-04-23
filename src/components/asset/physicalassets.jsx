@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { FiBell, FiSearch, FiPlus, FiTrash2, FiEdit3 } from "react-icons/fi"; // Added FiEdit3
+import { FiBell, FiSearch, FiPlus, FiTrash2, FiEdit3 } from "react-icons/fi";
 import {
   fetchDashboard,
   fetchAssets,
@@ -78,13 +78,10 @@ function PhysicalAssetTab() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  // Drawer visibility states
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
-
-  // Data states
-  const [selectedAsset, setSelectedAsset] = useState(null); // For Detail Drawer
-  const [editingAsset, setEditingAsset] = useState(null); // For Update Drawer
+  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [editingAsset, setEditingAsset] = useState(null);
 
   const [sortConfig, setSortConfig] = useState({
     key: null,
@@ -108,9 +105,13 @@ function PhysicalAssetTab() {
         fetchAssets(),
         fetchDashboard(),
       ]);
+
+      // LOGIC: If this is the PHYSICAL tab, we exclude "DIGITAL ASSET"
+      // If you want to show ALL 5 assets, remove the .filter() and just use setAssets(assetData)
       const physicalOnly = Array.isArray(assetData)
-        ? assetData.filter((a) => !a.isDigital)
+        ? assetData.filter((a) => a.asset_type !== "DIGITAL ASSET")
         : [];
+
       setAssets(physicalOnly);
       setDashboardData(stats);
     } catch (e) {
@@ -130,7 +131,7 @@ function PhysicalAssetTab() {
     if (!row) return;
 
     setDeleteModal({ isOpen: false, data: null });
-    const loadingToast = toast.loading("Deleting physical asset...");
+    const loadingToast = toast.loading("Deleting asset...");
 
     try {
       await removeAsset(row.id);
@@ -177,7 +178,8 @@ function PhysicalAssetTab() {
         label: "Status",
         align: "center",
         render: (val) => {
-          const isAllocated = val === "Allocated";
+          // Normalize to lowercase to catch both 'allocated' and 'Allocated'
+          const isAllocated = val?.toLowerCase() === "allocated";
           return (
             <span
               className={`px-3 py-1 rounded-full text-[12px] border ${
@@ -224,7 +226,9 @@ function PhysicalAssetTab() {
 
   const processedAssets = useMemo(() => {
     let filtered = assets.filter((asset) => {
-      const isAllocated = asset.asset_status === "Allocated";
+      const status = asset.asset_status?.toLowerCase();
+      const isAllocated = status === "allocated";
+
       const statusMatch =
         activeStatus === "all" ||
         (activeStatus === "Allocated" && isAllocated) ||
@@ -262,7 +266,9 @@ function PhysicalAssetTab() {
       />
 
       <div className="bg-white flex justify-between items-center p-4 mb-4 shadow-sm rounded-lg">
-        <h1 className="text-lg text-gray-800">Physical Asset Inventory</h1>
+        <h1 className="text-lg text-gray-800 font-medium">
+          Physical Asset Inventory
+        </h1>
         <div className="flex items-center gap-3">
           <GlowButton onClick={() => setIsCreateOpen(true)}>
             <FiPlus /> Add Physical Asset
@@ -314,7 +320,7 @@ function PhysicalAssetTab() {
                 onClick={() => setActiveStatus(status)}
                 className={`pb-2 capitalize transition-all relative ${
                   activeStatus === status
-                    ? "text-black after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-black "
+                    ? "text-black font-medium after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-black "
                     : "text-gray-400 hover:text-gray-600"
                 }`}
               >
@@ -338,19 +344,16 @@ function PhysicalAssetTab() {
         <AssetTable
           columns={columns}
           data={processedAssets}
-          onRowClick={(row) => setSelectedAsset(row)} // This opens the Detail/View drawer
+          onRowClick={(row) => setSelectedAsset(row)}
           sortConfig={sortConfig}
         />
       </div>
 
-      {/* 1. Create Drawer */}
       <CreateAssetDrawer
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onAssetCreated={loadData}
       />
-
-      {/* 2. Update/Edit Drawer */}
       <UpdateAssetDrawer
         open={isUpdateOpen}
         asset={editingAsset}
@@ -360,8 +363,6 @@ function PhysicalAssetTab() {
         }}
         onAssetUpdated={loadData}
       />
-
-      {/* 3. Detail/View Drawer */}
       <AssetDetailDrawer
         asset={selectedAsset}
         onClose={() => setSelectedAsset(null)}

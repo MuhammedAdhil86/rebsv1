@@ -1,20 +1,40 @@
-import React, { useRef } from "react"; // Added useRef
+import React, { useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiBell } from "react-icons/fi";
 import { Printer, Download } from "lucide-react";
 import DashboardLayout from "../ui/pagelayout";
-import html2pdf from "html2pdf.js"; // Added library
+import html2pdf from "html2pdf.js";
 
 const avatar =
   "https://ui-avatars.com/api/?name=Admin&background=000000&color=ffffff";
-const companyLogo = "https://cdn-icons-png.flaticon.com/512/9119/9119104.png";
 
 const Payslip = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const payslipRef = useRef(); // Ref for the PDF area
+  const payslipRef = useRef();
+
+  // --- LOG 1: FULL INCOMING STATE ---
+  useEffect(() => {
+    console.log(">>> [STATE RECEIVED]:", location.state);
+  }, [location.state]);
 
   const employee = location.state?.employeeData;
+
+  // --- DYNAMIC DATA FROM API ---
+  const companyName = location.state?.name || "N?A";
+  const companyAddress = location.state?.address || "N/A";
+
+  // Logo Logic: Primary Logo -> Horizontal Logo -> Default Avatar
+  const logo = location.state?.logo;
+  const hLogo = location.state?.horizontal_logo;
+  const activeCompanyLogo = logo || hLogo || avatar;
+
+  // --- LOG 2: BRANDING DATA ---
+  console.log(">>> [BRANDING LOGIC]:", {
+    name: companyName,
+    logoUrl: activeCompanyLogo,
+    isFallback: !logo && !hLogo,
+  });
 
   const formatINR = (amount) => {
     return new Intl.NumberFormat("en-IN", {
@@ -24,8 +44,12 @@ const Payslip = () => {
     }).format(amount || 0);
   };
 
-  // --- NEW DOWNLOAD LOGIC ---
   const handleDownloadPDF = () => {
+    console.log(
+      ">>> [ACTION]: Downloading PDF for",
+      employee?.bank_info?.first_name,
+    );
+
     const element = payslipRef.current;
     const opt = {
       margin: 0,
@@ -39,14 +63,13 @@ const Payslip = () => {
 
   const renderContent = () => {
     if (!employee) {
+      console.warn(">>> [DATA WARNING]: No employee data found in state.");
       return (
         <div className="p-20 text-center bg-white rounded-2xl border border-dashed border-gray-300">
-          <p className="text-gray-500 mb-4">
-            No employee data found. Please select a record from reports.
-          </p>
+          <p className="text-gray-500 mb-4">No employee data found.</p>
           <button
             onClick={() => navigate(-1)}
-            className="text-indigo-600 font-medium flex items-center justify-center gap-2 mx-auto"
+            className="text-indigo-600 flex items-center gap-2 mx-auto"
           >
             <FiArrowLeft /> Go Back
           </button>
@@ -57,33 +80,40 @@ const Payslip = () => {
     const { bank_info, consolidated_summary, statutory, components } = employee;
     const earnings =
       components?.filter((c) => c.component_type === "earning") || [];
-    const payDateStr = employee.pay_date || "2026-02-14T08:42:23.210776Z";
-    const displayLocation =
-      bank_info?.branch_location ||
-      "Changampuzha Nagar 5th Floor Crescence Tower";
+    const payDateStr = employee.pay_date || "2026-04-21T06:54:04.92377Z";
+
+    console.log(">>> [EMPLOYEE DATA]:", {
+      id: bank_info?.employee_ref_no,
+      name: `${bank_info?.first_name} ${bank_info?.last_name}`,
+      totalEarnings: earnings.length,
+      netPayable: employee.net_monthly,
+    });
 
     return (
       <div className="min-h-screen flex flex-col items-center">
-        {/* Added Ref here */}
         <div
           ref={payslipRef}
           className="w-full bg-white px-8 pt-3 pb-7 shadow-md print:shadow-none print:p-0 text-[#333] font-sans border border-gray-100"
         >
+          {/* HEADER SECTION WITH LOGO */}
           <div className="flex justify-between items-start mb-8 border-b border-gray-200 pb-6">
             <div className="flex gap-4">
-              <div className="w-14 h-14 flex items-center justify-center">
+              <div className="w-16 h-16 flex items-center justify-center overflow-hidden">
                 <img
-                  src={companyLogo}
-                  alt="Iresco Logo"
-                  className="w-full h-full object-contain"
+                  src={activeCompanyLogo}
+                  alt={`${companyName} Logo`}
+                  className="max-w-full max-h-full object-contain"
+                  onError={(e) => {
+                    e.target.src = avatar; // Fallback if image fails to load
+                  }}
                 />
               </div>
               <div>
                 <h1 className="text-2xl font-medium text-gray-800 ">
-                  A e d e n
+                  {companyName}
                 </h1>
                 <p className="text-[12px] text-gray-500 leading-relaxed mt-1">
-                  {displayLocation}
+                  {companyAddress}
                 </p>
               </div>
             </div>
@@ -104,7 +134,6 @@ const Payslip = () => {
           <h2 className="text-[11px] font-medium text-gray-400 uppercase tracking-[0.2em] pb-2">
             Employee Summary
           </h2>
-
           <div className="flex flex-col md:flex-row justify-between gap-10 mb-10">
             <div className="flex-1 grid grid-cols-2 gap-y-2 text-[13px]">
               <span className="text-gray-500">Employee Name</span>
@@ -113,7 +142,7 @@ const Payslip = () => {
               </span>
               <span className="text-gray-500">Designation</span>
               <span className="font-semibold text-gray-800">
-                : {bank_info?.designation}
+                : {bank_info?.designation || "N/A"}
               </span>
               <span className="text-gray-500">Employee ID</span>
               <span className="font-semibold text-gray-800">
@@ -121,12 +150,14 @@ const Payslip = () => {
               </span>
               <span className="text-gray-500">Department</span>
               <span className="font-semibold text-gray-800">
-                : {bank_info?.department}
+                : {bank_info?.department || "N/A"}
               </span>
               <span className="text-gray-500">Date of Joining</span>
               <span className="font-semibold text-gray-800">
                 :{" "}
-                {new Date(bank_info?.date_of_join).toLocaleDateString("en-GB")}
+                {bank_info?.date_of_join
+                  ? new Date(bank_info.date_of_join).toLocaleDateString("en-GB")
+                  : "N/A"}
               </span>
               <span className="text-gray-500">Pay Period</span>
               <span className="font-semibold text-gray-800">
@@ -167,7 +198,6 @@ const Payslip = () => {
             </div>
           </div>
 
-          {/* Account/Statutory Table, Earnings, etc remain exactly as you provided... */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 text-[12px] border-t border-dashed py-8 mb-6">
             <div className="flex flex-col">
               <span className="text-gray-400 uppercase font-bold text-[10px] mb-1">
@@ -189,19 +219,25 @@ const Payslip = () => {
               <span className="text-gray-400 uppercase font-bold text-[10px] mb-1">
                 Bank Account No
               </span>
-              <span className="font-medium">{bank_info?.account_number}</span>
+              <span className="font-medium">
+                {bank_info?.account_number || "N/A"}
+              </span>
             </div>
             <div className="flex flex-col">
               <span className="text-gray-400 uppercase font-bold text-[10px] mb-1">
                 PAN
               </span>
-              <span className="font-medium">{bank_info?.pan_number}</span>
+              <span className="font-medium">
+                {bank_info?.pan_number || "N/A"}
+              </span>
             </div>
             <div className="flex flex-col">
               <span className="text-gray-400 uppercase font-bold text-[10px] mb-1">
                 Work Location
               </span>
-              <span className="font-medium">{bank_info?.bank_branch}</span>
+              <span className="font-medium">
+                {bank_info?.bank_branch || "N/A"}
+              </span>
             </div>
             <div className="flex flex-col">
               <span className="text-gray-400 uppercase font-bold text-[10px] mb-1">
@@ -269,10 +305,8 @@ const Payslip = () => {
               {formatINR(employee.net_monthly)}
             </p>
           </div>
-
           <p className="text-center text-[10px] text-gray-400 italic mt-10">
-            -- This is a system-generated document and does not require a
-            signature. --
+            -- System-generated document --
           </p>
         </div>
       </div>
@@ -281,24 +315,23 @@ const Payslip = () => {
 
   return (
     <DashboardLayout userName="Admin" onLogout={() => {}}>
-      {/* Scrollbar hidden via CSS in the className below */}
-      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
-
+      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
       <div className="bg-white pt-4 px-4 pb-0 w-full max-w-full print:hidden">
         <div className="flex justify-between items-center py-1 border-b border-gray-200 mb-5 flex-wrap gap-4">
           <h1 className="text-[15px] font-semibold text-gray-800">Payslip</h1>
           <div className="flex items-center gap-3 flex-wrap">
-            {/* NEW DOWNLOAD BUTTON */}
             <button
               onClick={handleDownloadPDF}
-              className="flex items-center gap-2 text-[13px] bg-indigo-600 text-white px-4 py-1.5 rounded-full hover:bg-indigo-700 transition-colors"
+              className="flex items-center gap-2 text-[13px] bg-indigo-600 text-white px-4 py-1.5 rounded-full"
             >
               <Download size={14} /> Download PDF
             </button>
-
             <div
               className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-300 cursor-pointer"
-              onClick={() => window.print()}
+              onClick={() => {
+                console.log(">>> [ACTION]: Browser Print Triggered");
+                window.print();
+              }}
             >
               <Printer className="text-gray-600 text-lg" size={18} />
             </div>
@@ -318,8 +351,6 @@ const Payslip = () => {
           </div>
         </div>
       </div>
-
-      {/* Apply no-scrollbar here */}
       <div className="w-full overflow-auto h-full no-scrollbar">
         {renderContent()}
       </div>

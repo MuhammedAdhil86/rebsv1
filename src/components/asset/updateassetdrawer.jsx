@@ -21,20 +21,30 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
   const [formData, setFormData] = useState({
     asset_name: "",
     asset_type: "",
-    condition: "New",
+    condition: "new",
     purchase_date: "",
     last_maintenance: "",
-    asset_status: "Available",
+    asset_status: "available",
     image: null,
   });
 
-  // --- HELPERS ---
+  // Custom Select Style for perfect arrow positioning
+  const selectStyle = `
+    appearance-none 
+    bg-no-repeat 
+    bg-[length:16px] 
+    bg-[right_1.25rem_center] 
+    w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700 font-normal
+  `;
+
+  // SVG for the down arrow
+  const arrowIcon = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E")`;
+
   const formatDateForInput = (isoString) => {
     if (!isoString) return "";
     return isoString.split("T")[0];
   };
 
-  // --- EFFECTS ---
   useEffect(() => {
     if (open && asset) {
       const loadMetadata = async () => {
@@ -47,26 +57,29 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
       };
       loadMetadata();
 
-      // Populate form with existing asset data
       setFormData({
         asset_name: asset.asset_name || "",
         asset_type: asset.asset_type_id || asset.asset_type || "",
-        condition: asset.condition || "New",
+        condition: (asset.condition || "new").toLowerCase(),
         purchase_date: formatDateForInput(asset.purchase_date),
         last_maintenance: formatDateForInput(asset.last_maintenance),
-        asset_status: asset.asset_status || "Available",
-        image: null, // New file upload stays null until changed
+        asset_status: (asset.asset_status || "available").toLowerCase(),
+        image: null,
       });
 
-      // Handle initial image preview
       setImagePreview(asset.image_url || asset.image || null);
     }
   }, [open, asset]);
 
-  // --- HANDLERS ---
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Logic: Convert status and condition to lowercase for backend compatibility
+    const finalValue =
+      name === "asset_status" || name === "condition"
+        ? value.toLowerCase()
+        : value;
+
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
   };
 
@@ -101,7 +114,6 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
         new Date(formData.last_maintenance).toISOString(),
       );
     }
-
     if (formData.image) {
       payload.append("image", formData.image);
     }
@@ -133,14 +145,14 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
       onClose={onClose}
       PaperProps={{ className: "w-full max-w-[500px] border-none shadow-2xl" }}
     >
-      <div className="h-full flex flex-col bg-white font-poppins text-[12px]">
+      <div className="h-full flex flex-col bg-white font-poppins text-[12px] font-normal">
         {/* Header */}
         <div className="px-8 py-6 flex items-center justify-between border-b border-gray-100">
           <div>
-            <h2 className="text-gray-900 text-[16px] font-medium tracking-tight uppercase">
+            <h2 className="text-gray-900 text-[16px] font-normal tracking-tight uppercase">
               Update Physical Asset
             </h2>
-            <p className="text-gray-400 text-[10px] tracking-wider mt-1 font-bold uppercase">
+            <p className="text-gray-400 text-[10px] tracking-wider mt-1 font-normal uppercase">
               ID: #{asset?.id || "N/A"} • Modify details
             </p>
           </div>
@@ -156,8 +168,8 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
           onSubmit={handleSubmit}
           className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar"
         >
-          {/* Professional Image Area */}
-          <div className="relative group h-44 w-full border-2 border-dashed border-gray-300 rounded-[2rem] bg-gray-50 overflow-hidden flex items-center justify-center transition-all duration-300 hover:border-black/20 hover:bg-gray-100">
+          {/* Image Area */}
+          <div className="relative group h-44 w-full border-2 border-dashed border-gray-300 rounded-[2rem] bg-gray-50 overflow-hidden flex items-center justify-center transition-all duration-300">
             {imagePreview ? (
               <>
                 <img
@@ -165,14 +177,13 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   alt="asset"
                 />
-                {/* Professional Glassmorphism Overlay */}
                 <div
                   onClick={() => fileInputRef.current.click()}
                   className="absolute inset-0 bg-black/20 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center cursor-pointer"
                 >
                   <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md px-5 py-2.5 rounded-full shadow-xl border border-white/20 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
                     <FiEdit2 size={14} className="text-black" />
-                    <span className="text-black font-bold uppercase tracking-[0.1em] text-[10px]">
+                    <span className="text-black font-normal uppercase tracking-[0.1em] text-[10px]">
                       Edit Photo
                     </span>
                   </div>
@@ -181,20 +192,16 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
             ) : (
               <div
                 onClick={() => fileInputRef.current.click()}
-                className="text-center cursor-pointer flex flex-col items-center group/empty"
+                className="text-center cursor-pointer flex flex-col items-center"
               >
-                <div className="p-4 rounded-full bg-white mb-3 shadow-sm group-hover/empty:shadow-md transition-all">
-                  <FiCamera
-                    size={24}
-                    className="text-gray-400 group-hover/empty:text-black transition-colors"
-                  />
+                <div className="p-4 rounded-full bg-white mb-3 shadow-sm">
+                  <FiCamera size={24} className="text-gray-400" />
                 </div>
-                <p className="text-gray-400 text-[10px] uppercase font-bold tracking-[0.15em]">
+                <p className="text-gray-400 text-[10px] uppercase font-normal tracking-[0.15em]">
                   Upload Asset Image
                 </p>
               </div>
             )}
-
             <input
               type="file"
               ref={fileInputRef}
@@ -204,9 +211,9 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
             />
           </div>
 
-          {/* Name Section */}
+          {/* Asset Name */}
           <div className="space-y-2">
-            <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
+            <label className="text-gray-400 text-[10px] tracking-widest uppercase font-normal ml-1">
               Asset Name
             </label>
             <input
@@ -215,14 +222,14 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
               value={formData.asset_name}
               onChange={handleChange}
               placeholder="e.g. Dell UltraSharp 27"
-              className={`w-full bg-white border ${errors.asset_name ? "border-red-500" : "border-gray-300"} rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700 font-medium transition-all`}
+              className={`w-full bg-white border ${errors.asset_name ? "border-red-500" : "border-gray-300"} rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700 font-normal transition-all`}
             />
           </div>
 
           {/* Type and Condition Row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
+              <label className="text-gray-400 text-[10px] tracking-widest uppercase font-normal ml-1">
                 Asset Type
               </label>
               <select
@@ -230,7 +237,8 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
                 name="asset_type"
                 value={formData.asset_type}
                 onChange={handleChange}
-                className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
+                style={{ backgroundImage: arrowIcon }}
+                className={selectStyle}
               >
                 <option value="">Select Type</option>
                 {assetTypes.map((t) => (
@@ -241,19 +249,20 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
+              <label className="text-gray-400 text-[10px] tracking-widest uppercase font-normal ml-1">
                 Condition
               </label>
               <select
                 name="condition"
                 value={formData.condition}
                 onChange={handleChange}
-                className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
+                style={{ backgroundImage: arrowIcon }}
+                className={selectStyle}
               >
-                <option value="New">New</option>
-                <option value="Used">Used</option>
-                <option value="Refurbished">Refurbished</option>
-                <option value="Damaged">Damaged</option>
+                <option value="new">New</option>
+                <option value="used">Used</option>
+                <option value="refurbished">Refurbished</option>
+                <option value="damaged">Damaged</option>
               </select>
             </div>
           </div>
@@ -261,7 +270,7 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
           {/* Dates Section */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
+              <label className="text-gray-400 text-[10px] tracking-widest uppercase font-normal ml-1">
                 Purchase Date
               </label>
               <div className="relative">
@@ -271,12 +280,12 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
                   name="purchase_date"
                   value={formData.purchase_date}
                   onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-2xl pl-12 pr-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
+                  className="w-full bg-white border border-gray-300 rounded-2xl pl-12 pr-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700 font-normal"
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
+              <label className="text-gray-400 text-[10px] tracking-widest uppercase font-normal ml-1">
                 Maintenance
               </label>
               <div className="relative">
@@ -286,7 +295,7 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
                   name="last_maintenance"
                   value={formData.last_maintenance}
                   onChange={handleChange}
-                  className="w-full bg-white border border-gray-300 rounded-2xl pl-12 pr-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
+                  className="w-full bg-white border border-gray-300 rounded-2xl pl-12 pr-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700 font-normal"
                 />
               </div>
             </div>
@@ -294,19 +303,20 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
 
           {/* Status Field */}
           <div className="space-y-2">
-            <label className="text-gray-400 text-[10px] tracking-widest uppercase font-bold ml-1">
+            <label className="text-gray-400 text-[10px] tracking-widest uppercase font-normal ml-1">
               Current Status
             </label>
             <select
               name="asset_status"
               value={formData.asset_status}
               onChange={handleChange}
-              className="w-full bg-white border border-gray-300 rounded-2xl px-5 py-4 outline-none focus:ring-1 focus:ring-black text-gray-700"
+              style={{ backgroundImage: arrowIcon }}
+              className={selectStyle}
             >
-              <option value="Available">Available</option>
-              <option value="Allocated">Allocated</option>
-              <option value="Maintenance">Maintenance</option>
-              <option value="Retired">Retired</option>
+              <option value="available">Available</option>
+              <option value="allocated">Allocated</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="retired">Retired</option>
             </select>
           </div>
         </form>
@@ -316,14 +326,14 @@ const UpdateAssetDrawer = ({ open, onClose, asset, onAssetUpdated }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-10 py-4 bg-white border border-black rounded-2xl text-black hover:bg-gray-50 transition-all font-bold uppercase tracking-widest"
+            className="px-10 py-4 bg-white border border-black rounded-2xl text-black hover:bg-gray-50 transition-all font-normal uppercase tracking-widest"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex items-center gap-3 bg-black text-white px-10 py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-3 bg-black text-white px-10 py-4 rounded-2xl font-normal uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg active:scale-95 disabled:opacity-50"
           >
             {isSubmitting ? "Updating..." : "Save Changes"} <FiCheck />
           </button>
